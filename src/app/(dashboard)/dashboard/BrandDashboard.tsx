@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModelCard } from "@/components/models/model-card";
@@ -9,6 +8,7 @@ import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { BRAND_SUBSCRIPTION_TIERS } from "@/lib/stripe-config";
 import {
   ArrowRight,
+  ArrowUpRight,
   Sparkles,
   Users,
   Clock,
@@ -21,6 +21,7 @@ import {
   BarChart3,
   Circle,
   Heart,
+  Plus,
 } from "lucide-react";
 
 const BRAND_SERVICE_LABELS: Record<string, string> = {
@@ -178,268 +179,317 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
       .filter(Boolean);
   }
 
+  const displayName = brand?.company_name || "Brand";
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Welcome Header */}
-      <div>
-        <h1 className="text-2xl font-bold">
-          Welcome back{brand?.company_name ? `, ${brand.company_name}` : ""}
-        </h1>
-        <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your account</p>
-      </div>
+      {/* ──────────────────────────────────────────────
+          HERO — brand identity + quick actions
+         ────────────────────────────────────────────── */}
+      <section
+        className="relative overflow-hidden rounded-3xl border border-white/10 p-5 md:p-7"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(0,191,255,0.15) 0%, rgba(139,92,246,0.08) 50%, rgba(255,105,180,0.12) 100%)",
+        }}
+      >
+        <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-cyan-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-pink-500/25 blur-3xl" />
 
-      {/* Stats Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-violet-500/10">
-                <Megaphone className="h-5 w-5 text-violet-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Campaigns</p>
-                <p className="text-2xl font-bold">{activeCampaignCount}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-pink-500/10">
-                <Heart className="h-5 w-5 text-pink-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Favorites</p>
-                <p className="text-2xl font-bold">{favoriteModels.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-amber-500/10">
-                <Mail className="h-5 w-5 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Pending Responses</p>
-                <p className="text-2xl font-bold">{pendingResponseCount}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-green-500/10">
-                <Calendar className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Upcoming Shows</p>
-                <p className="text-2xl font-bold">{upcomingEventCount}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* EXA Live Chat */}
-      <LiveWallServer actorId={actorId} actorType="brand" />
-
-      {/* Pending Approval Notice */}
-      {isPending && (
-        <Card className="border-amber-500/50 bg-amber-500/5">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-full bg-amber-500/20">
-                <Clock className="h-6 w-6 text-amber-500" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Application Under Review</h3>
-                <p className="text-muted-foreground mt-1">
-                  We&apos;re reviewing your brand application. You&apos;ll receive an email once approved.
-                  In the meantime, feel free to browse our models!
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Getting Started Checklist */}
-      {completedSteps < 3 && (
-        <Card className="border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-blue-500/5">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-cyan-500" />
-                Getting Started
-              </CardTitle>
-              <Badge variant="secondary" className="bg-cyan-500/10 text-cyan-600">
-                {completedSteps}/3
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Link
-                href="/settings"
-                className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-              >
-                {hasProfile ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                ) : (
-                  <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                )}
-                <div>
-                  <p className={`font-medium text-sm ${hasProfile ? "line-through text-muted-foreground" : ""}`}>
-                    Complete your profile
-                  </p>
-                  <p className="text-xs text-muted-foreground">Add your logo and company details</p>
+        <div className="relative flex flex-col md:flex-row md:items-center gap-5">
+          <div className="flex items-center gap-4 min-w-0 flex-1">
+            <div className="relative shrink-0">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500 via-violet-500 to-pink-500 blur-md opacity-60" />
+              {brand?.logo_url ? (
+                <Image
+                  src={brand.logo_url}
+                  alt={displayName}
+                  width={80}
+                  height={80}
+                  className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover ring-2 ring-white/30"
+                />
+              ) : (
+                <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-cyan-500/40 to-pink-500/40 ring-2 ring-white/30 flex items-center justify-center text-2xl font-bold text-white">
+                  {displayName.charAt(0).toUpperCase()}
                 </div>
-              </Link>
-              <Link
-                href="/campaigns"
-                className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-              >
-                {hasCampaign ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                ) : (
-                  <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                )}
-                <div>
-                  <p className={`font-medium text-sm ${hasCampaign ? "line-through text-muted-foreground" : ""}`}>
-                    Create a campaign
-                  </p>
-                  <p className="text-xs text-muted-foreground">Organize models into campaigns</p>
-                </div>
-              </Link>
-              <Link
-                href="/brands/offers"
-                className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-              >
-                {hasSentOffer ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                ) : (
-                  <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                )}
-                <div>
-                  <p className={`font-medium text-sm ${hasSentOffer ? "line-through text-muted-foreground" : ""}`}>
-                    Send your first offer
-                  </p>
-                  <p className="text-xs text-muted-foreground">Reach out to models with an offer</p>
-                </div>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Subscription Widget + Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 rounded-full bg-violet-500/10">
-                <Crown className="h-5 w-5 text-violet-500" />
-              </div>
-              <div>
-                <p className="font-semibold">{tierConfig.name} Plan</p>
-                <Badge variant="outline" className="text-xs mt-0.5">
-                  {isApproved ? "Active" : "Pending"}
-                </Badge>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Coin Balance</span>
-                  <span className="font-medium">
-                    {coinBalance.toLocaleString()}{monthlyCoins > 0 ? ` / ${monthlyCoins.toLocaleString()}` : ""}
-                  </span>
-                </div>
-                {monthlyCoins > 0 && (
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div
-                      className="bg-gradient-to-r from-violet-500 to-purple-500 h-2 rounded-full transition-all"
-                      style={{ width: `${Math.min((coinBalance / monthlyCoins) * 100, 100)}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-              {currentTier !== "enterprise" && (
-                <Button asChild size="sm" variant="outline" className="w-full">
-                  <Link href="/brands/subscription">Upgrade Plan</Link>
-                </Button>
               )}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="md:col-span-2">
-          <CardContent className="pt-6">
-            <p className="font-semibold mb-4">Quick Actions</p>
-            <div className="grid grid-cols-2 gap-3">
-              <Link
-                href="/models"
-                className="flex items-center gap-3 p-3 rounded-lg bg-pink-500/5 border border-pink-500/20 hover:border-pink-500/40 transition-colors group"
-              >
-                <div className="p-2 rounded-full bg-pink-500/10 group-hover:bg-pink-500/20 transition-colors">
-                  <Search className="h-4 w-4 text-pink-500" />
-                </div>
-                <span className="font-medium text-sm">Browse Models</span>
-              </Link>
-              <Link
-                href="/campaigns"
-                className="flex items-center gap-3 p-3 rounded-lg bg-violet-500/5 border border-violet-500/20 hover:border-violet-500/40 transition-colors group"
-              >
-                <div className="p-2 rounded-full bg-violet-500/10 group-hover:bg-violet-500/20 transition-colors">
-                  <Megaphone className="h-4 w-4 text-violet-500" />
-                </div>
-                <span className="font-medium text-sm">Campaigns</span>
-              </Link>
-              <Link
-                href="/brands/offers"
-                className="flex items-center gap-3 p-3 rounded-lg bg-blue-500/5 border border-blue-500/20 hover:border-blue-500/40 transition-colors group"
-              >
-                <div className="p-2 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                  <Mail className="h-4 w-4 text-blue-500" />
-                </div>
-                <span className="font-medium text-sm">View Offers</span>
-              </Link>
-              <Link
-                href="/brands/analytics"
-                className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20 hover:border-green-500/40 transition-colors group"
-              >
-                <div className="p-2 rounded-full bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
-                  <BarChart3 className="h-4 w-4 text-green-500" />
-                </div>
-                <span className="font-medium text-sm">Analytics</span>
-              </Link>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Welcome back</p>
+              <h1 className="text-2xl md:text-4xl font-bold tracking-tight truncate">
+                <span className="exa-gradient-text">{displayName}</span>
+              </h1>
+              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/40 shadow-[0_0_10px_rgba(167,139,250,0.2)]">
+                  <Crown className="h-3 w-3 text-violet-300" />
+                  <span className="text-[11px] font-semibold text-violet-200">{tierConfig.name}</span>
+                </span>
+                {isApproved ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/40">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-300" />
+                    <span className="text-[11px] font-semibold text-emerald-200">Verified</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/40">
+                    <Clock className="h-3 w-3 text-amber-300" />
+                    <span className="text-[11px] font-semibold text-amber-200">Pending</span>
+                  </span>
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 md:gap-3 md:flex md:items-center">
+            <Link
+              href="/models"
+              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-xs md:text-sm font-semibold text-white shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all"
+            >
+              <Search className="h-4 w-4" />
+              <span className="hidden sm:inline">Browse</span>
+            </Link>
+            <Link
+              href="/campaigns/new"
+              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-400 hover:to-cyan-400 text-xs md:text-sm font-semibold text-white shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Campaign</span>
+            </Link>
+            <Link
+              href="/brands/offers/new"
+              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs md:text-sm font-semibold text-white transition-all"
+            >
+              <Mail className="h-4 w-4" />
+              <span className="hidden sm:inline">Offer</span>
+            </Link>
+          </div>
+        </div>
+      </section>
 
-      {/* Active Campaigns + Recent Responses */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Megaphone className="h-5 w-5 text-violet-500" />
-              Active Campaigns
-            </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/campaigns" className="text-violet-500">
-                View All
-                <ArrowRight className="ml-1 h-4 w-4" />
+      {/* ──────────────────────────────────────────────
+          KPI RAIL
+         ────────────────────────────────────────────── */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Link href="/campaigns" className="group relative overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-4 transition-all hover:border-violet-500/50 hover:bg-violet-500/10">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-violet-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs text-white/60">
+              <Megaphone className="h-3.5 w-3.5 text-violet-400" />
+              <span className="font-medium uppercase tracking-wider">Campaigns</span>
+            </div>
+            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">{activeCampaignCount}</p>
+            <p className="text-xs text-white/50 mt-0.5">active</p>
+          </div>
+        </Link>
+
+        <Link href="/favorites" className="group relative overflow-hidden rounded-2xl border border-pink-500/25 bg-gradient-to-br from-pink-500/10 to-pink-500/5 p-4 transition-all hover:border-pink-500/50 hover:bg-pink-500/10">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-pink-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs text-white/60">
+              <Heart className="h-3.5 w-3.5 text-pink-400 fill-pink-400/50" />
+              <span className="font-medium uppercase tracking-wider">Favorites</span>
+            </div>
+            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">{favoriteModels.length}</p>
+            <p className="text-xs text-white/50 mt-0.5">saved models</p>
+          </div>
+        </Link>
+
+        <Link href="/brands/offers" className="group relative overflow-hidden rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/10 to-amber-500/5 p-4 transition-all hover:border-amber-500/50 hover:bg-amber-500/10">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-amber-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs text-white/60">
+              <Mail className="h-3.5 w-3.5 text-amber-400" />
+              <span className="font-medium uppercase tracking-wider">Pending</span>
+            </div>
+            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">{pendingResponseCount}</p>
+            <p className="text-xs text-white/50 mt-0.5">responses</p>
+          </div>
+        </Link>
+
+        <Link href="/bookings" className="group relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-4 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/10">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-emerald-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs text-white/60">
+              <Calendar className="h-3.5 w-3.5 text-emerald-400" />
+              <span className="font-medium uppercase tracking-wider">Upcoming</span>
+            </div>
+            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">{upcomingEventCount}</p>
+            <p className="text-xs text-white/50 mt-0.5">shows booked</p>
+          </div>
+        </Link>
+      </section>
+
+      {/* ──────────────────────────────────────────────
+          Pending approval notice
+         ────────────────────────────────────────────── */}
+      {isPending && (
+        <div className="flex items-start gap-4 p-5 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+          <div className="p-3 rounded-xl bg-amber-500/20 ring-1 ring-amber-500/40">
+            <Clock className="h-6 w-6 text-amber-300" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-white text-lg">Application under review</h3>
+            <p className="text-white/60 text-sm mt-1">
+              We&apos;re reviewing your brand application. You&apos;ll receive an email once approved.
+              In the meantime, feel free to browse our models!
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────
+          Getting Started Checklist
+         ────────────────────────────────────────────── */}
+      {completedSteps < 3 && (
+        <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
+          <header className="flex items-center justify-between p-5 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-cyan-400" />
+              <h2 className="text-base font-semibold text-white">Getting started</h2>
+            </div>
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+              {completedSteps}/3
+            </span>
+          </header>
+          <div className="p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { href: "/settings", done: hasProfile, title: "Complete your profile", sub: "Add logo + company details" },
+                { href: "/campaigns", done: hasCampaign, title: "Create a campaign", sub: "Organize models by project" },
+                { href: "/brands/offers", done: hasSentOffer, title: "Send your first offer", sub: "Reach out to models" },
+              ].map((step) => (
+                <Link
+                  key={step.href}
+                  href={step.href}
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                    step.done
+                      ? "bg-emerald-500/5 border-emerald-500/25 hover:border-emerald-500/40"
+                      : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20"
+                  }`}
+                >
+                  {step.done ? (
+                    <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
+                  ) : (
+                    <Circle className="h-5 w-5 text-white/30 shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <p className={`font-medium text-sm truncate ${step.done ? "line-through text-white/50" : "text-white"}`}>
+                      {step.title}
+                    </p>
+                    <p className="text-xs text-white/50 truncate">{step.sub}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────
+          Subscription widget + Quick Actions
+         ────────────────────────────────────────────── */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Subscription */}
+        <div className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2.5 rounded-xl bg-violet-500/20 ring-1 ring-violet-500/40">
+              <Crown className="h-5 w-5 text-violet-300" />
+            </div>
+            <div>
+              <p className="font-semibold text-white">{tierConfig.name} Plan</p>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                isApproved
+                  ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                  : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+              }`}>
+                {isApproved ? "ACTIVE" : "PENDING"}
+              </span>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-white/60">Coin balance</span>
+                <span className="font-semibold text-white">
+                  {coinBalance.toLocaleString()}
+                  {monthlyCoins > 0 && <span className="text-white/40"> / {monthlyCoins.toLocaleString()}</span>}
+                </span>
+              </div>
+              {monthlyCoins > 0 && (
+                <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-pink-500 shadow-[0_0_10px_rgba(167,139,250,0.5)] transition-all"
+                    style={{ width: `${Math.min((coinBalance / monthlyCoins) * 100, 100)}%` }}
+                  />
+                </div>
+              )}
+            </div>
+            {currentTier !== "enterprise" && (
+              <Link
+                href="/brands/subscription"
+                className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-white/5 hover:bg-violet-500/15 border border-white/10 hover:border-violet-500/40 text-sm font-semibold text-white/80 hover:text-white transition-all"
+              >
+                Upgrade Plan
+                <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-white/60 mb-4">Quick actions</p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { href: "/models", icon: Search, label: "Browse Models", color: "pink", rgb: "236,72,153" },
+              { href: "/campaigns", icon: Megaphone, label: "Campaigns", color: "violet", rgb: "167,139,250" },
+              { href: "/brands/offers", icon: Mail, label: "View Offers", color: "cyan", rgb: "34,211,238" },
+              { href: "/brands/analytics", icon: BarChart3, label: "Analytics", color: "emerald", rgb: "52,211,153" },
+            ].map((action) => (
+              <Link
+                key={action.href}
+                href={action.href}
+                className="group flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 transition-all"
+                style={{
+                  transition: "all 0.2s",
+                } as React.CSSProperties}
+              >
+                <div
+                  className="p-2 rounded-lg transition-all group-hover:scale-110"
+                  style={{
+                    background: `rgba(${action.rgb}, 0.15)`,
+                    boxShadow: `inset 0 0 0 1px rgba(${action.rgb}, 0.3)`,
+                  }}
+                >
+                  <action.icon className={`h-4 w-4 text-${action.color}-300`} />
+                </div>
+                <span className="font-semibold text-sm text-white group-hover:text-white">{action.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ──────────────────────────────────────────────
+          EXA Live Wall
+         ────────────────────────────────────────────── */}
+      <LiveWallServer actorId={actorId} actorType="brand" />
+
+      {/* ──────────────────────────────────────────────
+          Active Campaigns + Recent Responses
+         ────────────────────────────────────────────── */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-transparent overflow-hidden">
+          <header className="flex items-center justify-between p-5 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <Megaphone className="h-5 w-5 text-violet-400" />
+              <h2 className="text-base font-semibold text-white">Active campaigns</h2>
+            </div>
+            <Link href="/campaigns" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1 font-semibold">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </header>
+          <div className="p-3">
             {(campaignsList || []).length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {(campaignsList || []).map((campaign: any) => {
                   const modelCount = campaign.campaign_models?.length || 0;
                   const offerSummary = campaignOfferMap.get(campaign.id);
@@ -447,89 +497,90 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
                     <Link
                       key={campaign.id}
                       href={`/campaigns/${campaign.id}`}
-                      className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-violet-500/30 transition-all group"
                     >
                       <div
-                        className="w-3 h-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: campaign.color || "#ec4899" }}
+                        className="w-3 h-3 rounded-full flex-shrink-0 shadow-[0_0_8px_currentColor]"
+                        style={{ backgroundColor: campaign.color || "#ec4899", color: campaign.color || "#ec4899" }}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{campaign.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="font-medium text-sm text-white truncate">{campaign.name}</p>
+                        <p className="text-xs text-white/50">
                           {modelCount} {modelCount === 1 ? "model" : "models"}
                           {offerSummary && (offerSummary.accepted > 0 || offerSummary.pending > 0) && (
                             <>
                               {" · "}
                               {offerSummary.accepted > 0 && (
-                                <span className="text-green-500">{offerSummary.accepted} accepted</span>
+                                <span className="text-emerald-300">{offerSummary.accepted} accepted</span>
                               )}
                               {offerSummary.accepted > 0 && offerSummary.pending > 0 && ", "}
                               {offerSummary.pending > 0 && (
-                                <span className="text-amber-500">{offerSummary.pending} pending</span>
+                                <span className="text-amber-300">{offerSummary.pending} pending</span>
                               )}
                             </>
                           )}
                         </p>
                       </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-white/80 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
                     </Link>
                   );
                 })}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <div className="p-3 rounded-full bg-violet-500/10 inline-block mb-3">
-                  <Megaphone className="h-6 w-6 text-violet-500" />
+              <div className="text-center py-10">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-violet-500/10 ring-1 ring-violet-500/30 mb-3">
+                  <Megaphone className="h-6 w-6 text-violet-300" />
                 </div>
-                <p className="text-sm text-muted-foreground mb-3">No campaigns yet</p>
-                <Button asChild size="sm">
-                  <Link href="/campaigns">Create Campaign</Link>
-                </Button>
+                <p className="text-sm text-white/60 mb-3">No campaigns yet</p>
+                <Link
+                  href="/campaigns/new"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-400 hover:to-pink-400 text-sm font-semibold text-white shadow-[0_0_18px_rgba(167,139,250,0.4)] transition-all"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create Campaign
+                </Link>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-blue-500" />
-              Recent Responses
-            </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/brands/offers" className="text-blue-500">
-                View All
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
+        <div className="rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
+          <header className="flex items-center justify-between p-5 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-cyan-400" />
+              <h2 className="text-base font-semibold text-white">Recent responses</h2>
+            </div>
+            <Link href="/brands/offers" className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </header>
+          <div className="p-4">
             {recentResponses.length > 0 ? (
               <div className="space-y-3">
                 {recentResponses.map((response: any) => {
                   const model = enrichMap.get(response.model_id);
-                  const displayName = model?.first_name
+                  const respName = model?.first_name
                     ? `${model.first_name} ${model.last_name || ""}`.trim()
                     : model?.username || "Model";
                   return (
                     <div key={response.id} className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
+                      <Avatar className="h-9 w-9 ring-1 ring-white/10">
                         <AvatarImage src={model?.profile_photo_url || undefined} />
-                        <AvatarFallback className="text-xs">
-                          {displayName.charAt(0).toUpperCase()}
+                        <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-500 text-white text-xs">
+                          {respName.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{displayName}</p>
-                        <p className="text-xs text-muted-foreground truncate">{response.offer_title}</p>
+                        <p className="font-medium text-sm text-white truncate">{respName}</p>
+                        <p className="text-xs text-white/50 truncate">{response.offer_title}</p>
                       </div>
                       <Badge
                         variant="outline"
-                        className={
+                        className={`text-[10px] uppercase tracking-wider font-semibold px-2 ${
                           response.status === "accepted" || response.status === "confirmed"
-                            ? "text-green-500 border-green-500/30 bg-green-500/5"
-                            : "text-red-500 border-red-500/30 bg-red-500/5"
-                        }
+                            ? "text-emerald-300 border-emerald-500/40 bg-emerald-500/10"
+                            : "text-rose-300 border-rose-500/40 bg-rose-500/10"
+                        }`}
                       >
                         {response.status}
                       </Badge>
@@ -538,74 +589,70 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
                 })}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <div className="p-3 rounded-full bg-blue-500/10 inline-block mb-3">
-                  <Mail className="h-6 w-6 text-blue-500" />
+              <div className="text-center py-10">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-cyan-500/10 ring-1 ring-cyan-500/30 mb-3">
+                  <Mail className="h-6 w-6 text-cyan-300" />
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-white/60">
                   Responses to your offers will appear here
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </div>
+      </section>
 
-      {/* Upcoming Events */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-green-500" />
-            Upcoming Shows
-          </CardTitle>
+      {/* ──────────────────────────────────────────────
+          Upcoming Shows
+         ────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent overflow-hidden">
+        <header className="flex items-center justify-between p-5 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-emerald-400" />
+            <h2 className="text-base font-semibold text-white">Upcoming shows</h2>
+          </div>
           {upcomingEventCount > 0 && (
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/bookings" className="text-green-500">
-                View All
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
+            <Link href="/bookings" className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
           )}
-        </CardHeader>
-        <CardContent>
+        </header>
+        <div className="p-4">
           {(upcomingBookings || []).length > 0 ? (
             <div className="space-y-3">
               {(upcomingBookings || []).map((booking: any) => {
                 const model = enrichMap.get(booking.model_id);
-                const displayName = model?.first_name
+                const respName = model?.first_name
                   ? `${model.first_name} ${model.last_name || ""}`.trim()
                   : model?.username || "Model";
                 return (
-                  <div key={booking.id} className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
+                  <div key={booking.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                    <Avatar className="h-10 w-10 ring-1 ring-white/10">
                       <AvatarImage src={model?.profile_photo_url || undefined} />
-                      <AvatarFallback>
-                        {displayName.charAt(0).toUpperCase()}
+                      <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-cyan-500 text-white">
+                        {respName.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       {model?.username ? (
-                        <Link
-                          href={`/${model.username}`}
-                          className="font-medium text-sm hover:text-cyan-500 truncate block"
-                        >
-                          {displayName}
+                        <Link href={`/${model.username}`} className="font-medium text-sm text-white hover:text-cyan-300 truncate block transition-colors">
+                          {respName}
                         </Link>
                       ) : (
-                        <p className="font-medium text-sm truncate">{displayName}</p>
+                        <p className="font-medium text-sm text-white truncate">{respName}</p>
                       )}
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-white/50">
                         {BRAND_SERVICE_LABELS[booking.service_type] || booking.service_type}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-semibold text-white">
                         {new Date(booking.event_date).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                         })}
                       </p>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0">
                         {booking.status}
                       </Badge>
                     </div>
@@ -614,77 +661,72 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
               })}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <div className="p-3 rounded-full bg-green-500/10 inline-block mb-3">
-                <Calendar className="h-6 w-6 text-green-500" />
+            <div className="text-center py-10">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/30 mb-3">
+                <Calendar className="h-6 w-6 text-emerald-300" />
               </div>
-              <p className="text-sm text-muted-foreground">No upcoming events</p>
+              <p className="text-sm text-white/60">No upcoming shows</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Favorites */}
+      {/* ──────────────────────────────────────────────
+          Favorites
+         ────────────────────────────────────────────── */}
       {favoriteModels.length > 0 ? (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
-              Favorites
-            </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/favorites" className="text-pink-500">
-                View All
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
+        <div className="rounded-2xl border border-pink-500/25 bg-gradient-to-br from-pink-500/10 via-rose-500/5 to-transparent overflow-hidden">
+          <header className="flex items-center justify-between p-5 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-pink-400 fill-pink-400" />
+              <h2 className="text-base font-semibold text-white">Favorites</h2>
+            </div>
+            <Link href="/favorites" className="text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 font-semibold">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </header>
+          <div className="p-5">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {favoriteModels.slice(0, 4).map((model: any) => (
                 <ModelCard key={model.id} model={model} showFavorite={true} isFavorited={true} />
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
-        <Card className="border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-violet-500/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-pink-500/10">
-                <Heart className="h-6 w-6 text-pink-500" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold">Save your favorite models</h3>
-                <p className="text-sm text-muted-foreground">
-                  Click the heart icon on models you work with frequently for quick access.
-                </p>
-              </div>
-              <Button asChild size="sm" className="bg-gradient-to-r from-pink-500 to-violet-500">
-                <Link href="/models">
-                  Browse Models
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-4 p-5 rounded-2xl border border-pink-500/25 bg-gradient-to-r from-pink-500/10 via-violet-500/5 to-transparent shadow-[0_0_18px_rgba(236,72,153,0.15)]">
+          <div className="p-3 rounded-xl bg-pink-500/15 ring-1 ring-pink-500/30">
+            <Heart className="h-6 w-6 text-pink-300" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-white">Save your favorite models</h3>
+            <p className="text-sm text-white/60">
+              Click the heart icon on models you work with frequently for quick access.
+            </p>
+          </div>
+          <Link
+            href="/models"
+            className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-sm font-semibold text-white shadow-[0_0_16px_rgba(236,72,153,0.4)] transition-all"
+          >
+            Browse Models
+          </Link>
+        </div>
       )}
 
-      {/* Discover Models */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-cyan-500" />
-            Discover Models
-          </CardTitle>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/models" className="text-cyan-500">
-              View All
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
+      {/* ──────────────────────────────────────────────
+          Discover Models
+         ────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
+        <header className="flex items-center justify-between p-5 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-cyan-400" />
+            <h2 className="text-base font-semibold text-white">Discover models</h2>
+          </div>
+          <Link href="/models" className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold">
+            View all <ArrowRight className="h-3 w-3" />
+          </Link>
+        </header>
+        <div className="p-5">
           {discoverModels.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {discoverModels.slice(0, 8).map((model: any) => (
@@ -692,21 +734,22 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <div className="p-4 rounded-full bg-muted inline-block mb-4">
-                <Users className="h-8 w-8 text-muted-foreground" />
+            <div className="text-center py-10">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/5 ring-1 ring-white/10 mb-3">
+                <Users className="h-6 w-6 text-white/40" />
               </div>
-              <p className="text-muted-foreground">Explore our top models</p>
-              <Button asChild className="mt-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700">
-                <Link href="/models">
-                  <Users className="mr-2 h-4 w-4" />
-                  Browse All Models
-                </Link>
-              </Button>
+              <p className="text-sm text-white/60">Explore our top models</p>
+              <Link
+                href="/models"
+                className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-sm font-semibold text-white shadow-[0_0_18px_rgba(34,211,238,0.4)] transition-all"
+              >
+                <Users className="h-4 w-4" />
+                Browse All Models
+              </Link>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -18,6 +18,33 @@ interface BottomNavProps {
   unreadCount?: number;
 }
 
+// Shared class helper for each bottom-nav item
+function NavItem({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all",
+        active ? "text-white" : "text-white/50 hover:text-white/80"
+      )}
+    >
+      {children}
+      {/* Active glow underbar */}
+      {active && (
+        <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 shadow-[0_0_10px_rgba(236,72,153,0.7)]" />
+      )}
+    </Link>
+  );
+}
+
 export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) {
   const pathname = usePathname();
   const coinBalanceContext = useCoinBalanceOptional();
@@ -35,124 +62,82 @@ export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) 
     return pathname.startsWith(path);
   };
 
+  const isCreator = actorType === "model" || actorType === "admin";
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-t border-border/40 safe-area-pb">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#0a0014]/90 backdrop-blur-xl border-t border-violet-500/15 safe-area-pb shadow-[0_-8px_24px_rgba(0,0,0,0.4)]">
       <div className="flex items-center justify-around h-16 px-2">
         {/* Home */}
-        <Link
-          href={homePath}
-          className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
-            isActive(homePath) ? "text-pink-500" : "text-muted-foreground"
-          )}
-        >
-          <Home className="h-5 w-5" />
+        <NavItem href={homePath} active={isActive(homePath)}>
+          <Home className={cn("h-5 w-5", isActive(homePath) && "text-pink-400")} />
           <span className="text-[10px] font-medium">{t.nav.home}</span>
-        </Link>
+        </NavItem>
 
         {/* Content (for models) or Explore (for fans/brands) */}
         {actorType === "model" ? (
-          <Link
-            href="/content"
-            className={cn(
-              "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
-              isActive("/content") ? "text-pink-500" : "text-muted-foreground"
-            )}
-          >
-            <Images className="h-5 w-5" />
+          <NavItem href="/content" active={isActive("/content")}>
+            <Images className={cn("h-5 w-5", isActive("/content") && "text-pink-400")} />
             <span className="text-[10px] font-medium">{t.nav.content}</span>
-          </Link>
+          </NavItem>
         ) : actorType === "fan" || actorType === "brand" ? (
-          <Link
-            href="/models"
-            className={cn(
-              "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
-              isActive("/models") ? "text-pink-500" : "text-muted-foreground"
-            )}
-          >
-            <Users className="h-5 w-5" />
+          <NavItem href="/models" active={isActive("/models")}>
+            <Users className={cn("h-5 w-5", isActive("/models") && "text-pink-400")} />
             <span className="text-[10px] font-medium">{t.nav.explore}</span>
-          </Link>
+          </NavItem>
         ) : null}
 
         {/* Chats */}
-        <Link
-          href="/chats"
-          className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors relative",
-            isActive("/chats") ? "text-pink-500" : "text-muted-foreground"
-          )}
-        >
+        <NavItem href="/chats" active={isActive("/chats")}>
           <div className="relative">
-            <MessageCircle className="h-5 w-5" />
+            <MessageCircle className={cn("h-5 w-5", isActive("/chats") && "text-pink-400")} />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-pink-500 text-white rounded-full">
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-pink-500 text-white rounded-full shadow-[0_0_8px_rgba(236,72,153,0.7)]">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
           </div>
           <span className="text-[10px] font-medium">{t.nav.chats}</span>
-        </Link>
+        </NavItem>
 
-        {/* Wallet (for models) or Buy Coins (for fans) or Campaigns (for brands) */}
+        {/* Wallet/Coins (for creators: earnings; for fans: spend; for brands: campaigns) */}
         {actorType === "brand" ? (
-          <Link
-            href="/campaigns"
-            className={cn(
-              "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
-              isActive("/campaigns") ? "text-pink-500" : "text-muted-foreground"
-            )}
-          >
-            <Megaphone className="h-5 w-5" />
+          <NavItem href="/campaigns" active={isActive("/campaigns")}>
+            <Megaphone className={cn("h-5 w-5", isActive("/campaigns") && "text-pink-400")} />
             <span className="text-[10px] font-medium">{t.nav.campaigns}</span>
-          </Link>
-        ) : actorType === "fan" ? (
-          <Link
-            href="/wallet"
-            className={cn(
-              "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
-              isActive("/wallet") ? "text-pink-500" : "text-muted-foreground"
-            )}
-          >
-            <Coins className="h-5 w-5" />
-            <span className="text-[10px] font-medium">{t.nav.wallet}</span>
-          </Link>
-        ) : (
-          <Link
-            href="/wallet"
-            className={cn(
-              "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
-              isActive("/wallet") ? "text-pink-500" : "text-muted-foreground"
-            )}
-          >
-            <div className="relative">
-              <Coins className="h-5 w-5" />
-            </div>
+          </NavItem>
+        ) : isCreator ? (
+          <NavItem href="/wallet" active={isActive("/wallet")}>
+            <Coins className={cn("h-5 w-5", isActive("/wallet") && "text-pink-400")} />
             <span className="text-[10px] font-medium tabular-nums">
               {coinBalance.toLocaleString()}
             </span>
-          </Link>
+          </NavItem>
+        ) : (
+          <NavItem href="/wallet" active={isActive("/wallet")}>
+            <Coins className={cn("h-5 w-5", isActive("/wallet") && "text-pink-400")} />
+            <span className="text-[10px] font-medium tabular-nums">
+              {coinBalance.toLocaleString()}
+            </span>
+          </NavItem>
         )}
 
         {/* Settings */}
-        <Link
-          href="/settings"
-          className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
-            isActive("/settings") ? "text-pink-500" : "text-muted-foreground"
-          )}
-        >
-          <Avatar className={cn(
-            "h-6 w-6 ring-2 transition-all",
-            isActive("/settings") ? "ring-pink-500" : "ring-transparent"
-          )}>
+        <NavItem href="/settings" active={isActive("/settings")}>
+          <Avatar
+            className={cn(
+              "h-6 w-6 ring-2 transition-all",
+              isActive("/settings")
+                ? "ring-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.6)]"
+                : "ring-white/15"
+            )}
+          >
             <AvatarImage src={user.avatar_url} alt={user.name || ""} />
             <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white text-xs">
               {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
             </AvatarFallback>
           </Avatar>
           <span className="text-[10px] font-medium">{t.nav.settings}</span>
-        </Link>
+        </NavItem>
       </div>
     </nav>
   );

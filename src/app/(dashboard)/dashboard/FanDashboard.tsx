@@ -2,17 +2,21 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import Link from "next/link";
 import Image from "next/image";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   Users,
   Heart,
   Coins,
+  Lock,
+  Gavel,
+  Sparkles,
+  Search,
+  Plus,
 } from "lucide-react";
 import { ModelCard } from "@/components/models/model-card";
 import { ForYouFeed, type FeedItem } from "./ForYouFeed";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
+import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 
 // Re-sign a storage path or expired signed URL to get a fresh 1-hour signed URL
 function extractStoragePath(url: string): string | null {
@@ -267,37 +271,167 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   // Append discover content at the end
   sortedFeed.push(...discoverItems);
 
+  const displayName = fanData?.display_name || "there";
+  const unlockedCount = (myUnlocks || []).length;
+  const activeBidsCount = (myBids || []).filter(
+    (b: any) => b.status === "winning" || b.status === "active"
+  ).length;
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Low Coin CTA */}
-      {coinBalance < 20 && (
-        <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-yellow-500/5">
-          <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Coins className="h-6 w-6 text-amber-500" />
-              <div>
-                <p className="font-medium">Get coins to start connecting</p>
-                <p className="text-sm text-muted-foreground">Packages start at just $3.99</p>
-              </div>
+      {/* ──────────────────────────────────────────────
+          HERO — fan identity + quick actions
+         ────────────────────────────────────────────── */}
+      <section
+        className="relative overflow-hidden rounded-3xl border border-white/10 p-5 md:p-7"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(255,105,180,0.08) 50%, rgba(139,92,246,0.12) 100%)",
+        }}
+      >
+        <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-amber-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-pink-500/25 blur-3xl" />
+
+        <div className="relative flex flex-col md:flex-row md:items-center gap-5">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Welcome back</p>
+            <h1 className="text-2xl md:text-4xl font-bold tracking-tight">
+              <span className="exa-gradient-text">{displayName}</span>
+            </h1>
+            <p className="text-xs md:text-sm text-white/70 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span className="text-amber-300 font-semibold">
+                {coinBalance.toLocaleString()} coins
+              </span>
+              <span className="text-white/30">·</span>
+              <span className="text-white/60">
+                {formatUsd(coinsToUsd(coinBalance))} to spend
+              </span>
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 md:gap-3 md:flex md:items-center">
+            <Link
+              href="/coins"
+              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-xs md:text-sm font-semibold text-black shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all"
+            >
+              <Coins className="h-4 w-4" />
+              <span className="hidden sm:inline">Get Coins</span>
+            </Link>
+            <Link
+              href="/models"
+              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-xs md:text-sm font-semibold text-white shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all"
+            >
+              <Search className="h-4 w-4" />
+              <span className="hidden sm:inline">Browse</span>
+            </Link>
+            <Link
+              href="/bids"
+              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs md:text-sm font-semibold text-white transition-all"
+            >
+              <Gavel className="h-4 w-4" />
+              <span className="hidden sm:inline">Live Bids</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ──────────────────────────────────────────────
+          KPI RAIL
+         ────────────────────────────────────────────── */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Link href="/coins" className="group relative overflow-hidden rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/10 to-amber-500/5 p-4 transition-all hover:border-amber-500/50 hover:bg-amber-500/10">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-amber-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs text-white/60">
+              <Coins className="h-3.5 w-3.5 text-amber-400" />
+              <span className="font-medium uppercase tracking-wider">Balance</span>
             </div>
-            <Button asChild className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-semibold">
-              <Link href="/coins">
-                <Coins className="mr-2 h-4 w-4" />
-                Get Coins
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">
+              {coinBalance.toLocaleString()}
+            </p>
+            <p className="text-xs text-white/50 mt-0.5">{formatUsd(coinsToUsd(coinBalance))}</p>
+          </div>
+        </Link>
+
+        <Link href="/favorites" className="group relative overflow-hidden rounded-2xl border border-pink-500/25 bg-gradient-to-br from-pink-500/10 to-pink-500/5 p-4 transition-all hover:border-pink-500/50 hover:bg-pink-500/10">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-pink-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs text-white/60">
+              <Heart className="h-3.5 w-3.5 text-pink-400 fill-pink-400/50" />
+              <span className="font-medium uppercase tracking-wider">Following</span>
+            </div>
+            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">
+              {favoriteModels.length}
+            </p>
+            <p className="text-xs text-white/50 mt-0.5">
+              {favoriteModels.length === 1 ? "creator" : "creators"}
+            </p>
+          </div>
+        </Link>
+
+        <Link href="/my-content" className="group relative overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-4 transition-all hover:border-violet-500/50 hover:bg-violet-500/10">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-violet-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs text-white/60">
+              <Lock className="h-3.5 w-3.5 text-violet-400" />
+              <span className="font-medium uppercase tracking-wider">Unlocked</span>
+            </div>
+            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">
+              {unlockedCount}
+            </p>
+            <p className="text-xs text-white/50 mt-0.5">
+              {unlockedCount === 1 ? "PPV item" : "PPV items"}
+            </p>
+          </div>
+        </Link>
+
+        <Link href="/bids" className="group relative overflow-hidden rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 p-4 transition-all hover:border-cyan-500/50 hover:bg-cyan-500/10">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-cyan-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs text-white/60">
+              <Gavel className="h-3.5 w-3.5 text-cyan-400" />
+              <span className="font-medium uppercase tracking-wider">Active Bids</span>
+            </div>
+            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">
+              {activeBidsCount}
+            </p>
+            <p className="text-xs text-white/50 mt-0.5">
+              {activeBidsCount === 1 ? "auction" : "auctions"}
+            </p>
+          </div>
+        </Link>
+      </section>
+
+      {/* ──────────────────────────────────────────────
+          Low Coin CTA
+         ────────────────────────────────────────────── */}
+      {coinBalance < 20 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-500/20 ring-1 ring-amber-500/40">
+              <Coins className="h-5 w-5 text-amber-300" />
+            </div>
+            <div>
+              <p className="font-semibold text-white">Get coins to start connecting</p>
+              <p className="text-xs text-white/60">Packages start at just $3.99</p>
+            </div>
+          </div>
+          <Link
+            href="/coins"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-sm font-bold text-black shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            Get Coins
+          </Link>
+        </div>
       )}
 
-      {/* EXA Live Chat */}
-      <LiveWallServer actorId={actorId} actorType="fan" />
-
-      {/* Favorites */}
+      {/* ──────────────────────────────────────────────
+          Favorites strip
+         ────────────────────────────────────────────── */}
       {favoriteModels.length > 0 && (
         <div>
-          <h3 className="flex items-center gap-2 text-lg font-semibold mb-4">
-            <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
+          <h3 className="flex items-center gap-2 text-base font-semibold mb-3 text-white">
+            <Heart className="h-5 w-5 text-pink-400 fill-pink-400" />
             Your Favorites
           </h3>
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
@@ -308,7 +442,8 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
                 className="flex-shrink-0 flex flex-col items-center gap-2 group"
               >
                 <div className="relative">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full ring-2 ring-pink-500/50 group-hover:ring-pink-500 transition-all overflow-hidden">
+                  <div className="absolute inset-0 rounded-full bg-pink-500/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full ring-2 ring-pink-500/50 group-hover:ring-pink-500 group-hover:shadow-[0_0_20px_rgba(236,72,153,0.5)] transition-all overflow-hidden">
                     {model.profile_photo_url ? (
                       <Image
                         src={model.profile_photo_url}
@@ -324,14 +459,14 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
                     )}
                   </div>
                   {model.is_verified && (
-                    <div className="absolute -bottom-0.5 -right-0.5 bg-blue-500 rounded-full p-0.5">
+                    <div className="absolute -bottom-0.5 -right-0.5 bg-cyan-500 rounded-full p-0.5 ring-2 ring-background shadow-[0_0_8px_rgba(34,211,238,0.6)]">
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors truncate max-w-[80px] text-center">
+                <span className="text-xs text-white/60 group-hover:text-white transition-colors truncate max-w-[80px] text-center">
                   {model.first_name || model.username}
                 </span>
               </Link>
@@ -340,24 +475,34 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
         </div>
       )}
 
-      {/* For You Feed */}
+      {/* ──────────────────────────────────────────────
+          EXA Live Wall
+         ────────────────────────────────────────────── */}
+      <LiveWallServer actorId={actorId} actorType="fan" />
+
+      {/* ──────────────────────────────────────────────
+          For You Feed
+         ────────────────────────────────────────────── */}
       <ForYouFeed items={sortedFeed} coinBalance={coinBalance} />
 
-      {/* Discover Models */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-cyan-500" />
-            Discover Models
-          </CardTitle>
-          <Button asChild size="sm" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700">
-            <Link href="/models">
-              Browse All Models
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
+      {/* ──────────────────────────────────────────────
+          Discover Models
+         ────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
+        <header className="flex items-center justify-between p-5 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-cyan-400" />
+            <h2 className="text-base font-semibold text-white">Discover models</h2>
+          </div>
+          <Link
+            href="/models"
+            className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold"
+          >
+            Browse all
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </header>
+        <div className="p-5">
           {featuredModels.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {featuredModels.map((model: any) => (
@@ -365,21 +510,22 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <div className="p-4 rounded-full bg-muted inline-block mb-4">
-                <Users className="h-8 w-8 text-muted-foreground" />
+            <div className="text-center py-10">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/5 ring-1 ring-white/10 mb-3">
+                <Users className="h-6 w-6 text-white/40" />
               </div>
-              <p className="text-muted-foreground">No models yet</p>
-              <Button asChild size="sm" className="mt-3 bg-gradient-to-r from-pink-500 to-violet-500">
-                <Link href="/models">
-                  Browse Models
-                </Link>
-              </Button>
+              <p className="text-sm text-white/60">No models yet</p>
+              <Link
+                href="/models"
+                className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-sm font-semibold text-white shadow-[0_0_18px_rgba(236,72,153,0.4)] transition-all"
+              >
+                Browse Models
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           )}
-        </CardContent>
-      </Card>
-
+        </div>
+      </div>
     </div>
   );
 }
