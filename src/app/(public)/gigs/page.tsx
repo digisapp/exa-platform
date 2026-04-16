@@ -217,9 +217,14 @@ export default async function GigsPage() {
       <main className="container px-8 md:px-16 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Gigs</h1>
-          <p className="text-muted-foreground">
-            Apply to fashion shows, travel experiences, and brand campaigns
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+            Casting Calls
+          </p>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            <span className="exa-gradient-text">Gigs</span>
+          </h1>
+          <p className="text-sm text-white/60">
+            Apply to fashion shows, travel experiences, and brand campaigns.
           </p>
         </div>
 
@@ -283,6 +288,14 @@ export default async function GigsPage() {
           )}
         </Tabs>
       </main>
+
+      {/* Footer */}
+      <footer className="relative mt-16 border-t border-violet-500/15 bg-gradient-to-b from-transparent to-[#0a0014]/60 backdrop-blur-sm py-8 text-center">
+        <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+        <p className="text-xs text-white/40">
+          &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+        </p>
+      </footer>
     </div>
     </CoinBalanceProvider>
   );
@@ -291,10 +304,17 @@ export default async function GigsPage() {
 function GigGrid({ gigs }: { gigs: any[] }) {
   if (gigs.length === 0) {
     return (
-      <div className="text-center py-16">
-        <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-        <h3 className="text-xl font-semibold mb-2">No gigs available</h3>
-        <p className="text-muted-foreground">Check back soon for new gigs!</p>
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-12 text-center">
+        <div className="relative inline-flex items-center justify-center mb-4">
+          <div className="absolute inset-0 rounded-full bg-pink-500/30 blur-2xl" />
+          <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 ring-1 ring-pink-500/40 flex items-center justify-center">
+            <Sparkles className="h-8 w-8 text-pink-300" />
+          </div>
+        </div>
+        <h3 className="text-lg font-semibold text-white mb-1">
+          <span className="exa-gradient-text">No gigs available</span>
+        </h3>
+        <p className="text-sm text-white/50">Check back soon for new opportunities.</p>
       </div>
     );
   }
@@ -451,13 +471,23 @@ const statusConfig: Record<string, { icon: any; label: string; className: string
 function MyApplicationsGrid({ applications }: { applications: any[] }) {
   if (applications.length === 0) {
     return (
-      <div className="text-center py-16">
-        <ClipboardList className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-        <h3 className="text-xl font-semibold mb-2">No applications yet</h3>
-        <p className="text-muted-foreground mb-4">Browse gigs and apply to get started!</p>
-        <Button asChild>
-          <Link href="/gigs">Browse Gigs</Link>
-        </Button>
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-12 text-center">
+        <div className="relative inline-flex items-center justify-center mb-4">
+          <div className="absolute inset-0 rounded-full bg-cyan-500/30 blur-2xl" />
+          <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 ring-1 ring-cyan-500/40 flex items-center justify-center">
+            <ClipboardList className="h-8 w-8 text-cyan-300" />
+          </div>
+        </div>
+        <h3 className="text-lg font-semibold text-white mb-1">
+          <span className="exa-gradient-text">No applications yet</span>
+        </h3>
+        <p className="text-sm text-white/50 mb-5">Browse gigs and apply to get started.</p>
+        <Link
+          href="/gigs"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-white text-sm font-bold shadow-[0_0_18px_rgba(236,72,153,0.4)] hover:shadow-[0_0_24px_rgba(236,72,153,0.6)] transition-all"
+        >
+          Browse Gigs
+        </Link>
       </div>
     );
   }
@@ -590,10 +620,17 @@ function ApplicationCard({ application }: { application: any }) {
 function OffersGrid({ offers }: { offers: any[] }) {
   if (offers.length === 0) {
     return (
-      <div className="text-center py-16">
-        <Gift className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-        <h3 className="text-xl font-semibold mb-2">No offers yet</h3>
-        <p className="text-muted-foreground">When brands send you offers, they&apos;ll appear here!</p>
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-12 text-center">
+        <div className="relative inline-flex items-center justify-center mb-4">
+          <div className="absolute inset-0 rounded-full bg-amber-500/30 blur-2xl" />
+          <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 ring-1 ring-amber-500/40 flex items-center justify-center">
+            <Gift className="h-8 w-8 text-amber-300" />
+          </div>
+        </div>
+        <h3 className="text-lg font-semibold text-white mb-1">
+          <span className="exa-gradient-text">No offers yet</span>
+        </h3>
+        <p className="text-sm text-white/50">When brands send you offers, they&apos;ll appear here.</p>
       </div>
     );
   }
