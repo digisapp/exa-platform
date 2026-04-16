@@ -25,6 +25,7 @@ import {
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
 import { LiveWall } from "@/components/live-wall/LiveWall";
+import { enrichLiveWallAvatars } from "@/lib/live-wall-avatars";
 import { formatCoins, coinsToFanUsd, formatUsd } from "@/lib/coin-config";
 import { format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -134,12 +135,20 @@ export default async function HomePage() {
     .single();
 
   // Fetch live wall messages (last 50, newest last)
-  const { data: liveWallMessages } = await (supabase as any)
+  const { data: rawLiveWallMessages } = await (supabase as any)
     .from("live_wall_messages")
     .select("id, actor_id, actor_type, display_name, avatar_url, profile_slug, content, message_type, reactions, image_url, image_type, is_pinned, tip_total, created_at")
     .eq("is_deleted", false)
     .order("created_at", { ascending: true })
     .limit(50);
+
+  // Re-resolve avatars from current profile data — the column on
+  // live_wall_messages is captured at insert time and goes stale
+  // when a user uploads/changes their photo after posting.
+  const liveWallMessages = (await enrichLiveWallAvatars(
+    supabase as any,
+    rawLiveWallMessages || []
+  )) as any[];
 
   // Get actual EXA Boost leaderboard from top_model_leaderboard table
   const { data: leaderboardModels } = await (supabase as any)

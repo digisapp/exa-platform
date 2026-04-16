@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { LiveWall } from "./LiveWall";
+import { enrichLiveWallAvatars } from "@/lib/live-wall-avatars";
 
 interface Props {
   actorId: string;
@@ -14,7 +15,7 @@ export async function LiveWallServer({ actorId, actorType }: Props) {
   const supabase = await createClient();
 
   // Fetch initial messages
-  const { data: messages } = await (supabase as any)
+  const { data: rawMessages } = await (supabase as any)
     .from("live_wall_messages")
     .select(
       "id, actor_id, actor_type, display_name, avatar_url, profile_slug, content, message_type, reactions, image_url, image_type, is_pinned, tip_total, created_at"
@@ -22,6 +23,14 @@ export async function LiveWallServer({ actorId, actorType }: Props) {
     .eq("is_deleted", false)
     .order("created_at", { ascending: true })
     .limit(50);
+
+  // Re-resolve avatars from current profile data — the column on
+  // live_wall_messages is captured at insert time and goes stale
+  // when a user uploads/changes their photo after posting.
+  const messages = (await enrichLiveWallAvatars(
+    supabase as any,
+    rawMessages || []
+  )) as any[];
 
   // Fetch coin balance
   const {
@@ -56,7 +65,7 @@ export async function LiveWallServer({ actorId, actorType }: Props) {
 
   return (
     <LiveWall
-      initialMessages={messages || []}
+      initialMessages={messages}
       currentUser={{ actorId, actorType, coinBalance }}
     />
   );
