@@ -313,30 +313,39 @@ export default async function ModelProfilePage({ params }: Props) {
   // Display name - show first_name + last_name, or fallback to username
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
 
-  // PORTRAIT HERO EXPERIMENT — gated by username so we can A/B by hand
-  // To enable for more models: add their username (lowercase) to this array.
-  // To revert entirely: empty the array (one-line change).
-  const PORTRAIT_HERO_USERNAMES = ["miriam"];
-  const useHeroLayout = PORTRAIT_HERO_USERNAMES.includes(model.username.toLowerCase());
   const isOnline = !!model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000;
 
-  // Pick the best image source for the hero ONLY. The square `profile_photo_url`
-  // continues to power every circle on the platform (chats, DMs, leaderboards,
-  // dashboard, etc.) — those circles never see this value.
-  // The helper prefers high-res sources and falls back gracefully.
-  const heroSource = useHeroLayout
-    ? getHeroPortrait({
-        profilePhotoUrl: profilePhotoUrl,
-        profilePhotoWidth: null, // not yet stored on models table
-        profilePhotoHeight: null,
-        portfolioPhotos: (rawPhotos || []).map((p: any) => ({
-          url: resolveMediaUrl(p.media_url),
-          width: p.width ?? null,
-          height: p.height ?? null,
-          createdAt: p.created_at,
-        })),
-      })
-    : null;
+  // PORTRAIT HERO ROLLOUT — fully data-driven, no username gate.
+  // Every model whose photo data qualifies gets the hero layout automatically.
+  // The square `profile_photo_url` continues to power every circle on the
+  // platform (chats, DMs, leaderboards, dashboard, etc.) — those circles
+  // never see this value.
+  const heroSource = getHeroPortrait({
+    profilePhotoUrl: profilePhotoUrl,
+    profilePhotoWidth: null, // not yet stored on models table
+    profilePhotoHeight: null,
+    portfolioPhotos: (rawPhotos || []).map((p: any) => ({
+      url: resolveMediaUrl(p.media_url),
+      width: p.width ?? null,
+      height: p.height ?? null,
+      createdAt: p.created_at,
+    })),
+  });
+
+  // Graceful-degradation safeguard: only show the hero layout if the helper
+  // returned a KNOWN-sharp source. We accept:
+  //   - "profile":            high-res profile pic (>=1200px)
+  //   - "portfolio-high-res": backfilled portfolio photo, portrait, >=1500px
+  // We REJECT:
+  //   - "portfolio-legacy":   portfolio photo without dimensions yet (could be
+  //                           landscape, low-res, or weird crop — wait for backfill)
+  //   - "profile-low-res":    profile pic that won't render sharply at hero size
+  //   - null:                 no usable image at all
+  // Models in any rejected case silently keep the existing circle layout —
+  // zero visual regression for them, automatic upgrade once their data qualifies.
+  const useHeroLayout =
+    !!heroSource &&
+    (heroSource.source === "profile" || heroSource.source === "portfolio-high-res");
   const heroPhotoUrl = heroSource?.url ?? profilePhotoUrl;
 
   // Social media links (with follower counts for brand discovery)
