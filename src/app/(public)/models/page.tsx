@@ -286,15 +286,36 @@ export default async function ModelsPage({
       <main className={`container px-8 md:px-16 py-8 ${isFreeBrand || isFanWithoutCoins ? "blur-sm pointer-events-none select-none" : ""}`}>
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Models</h1>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+            Directory
+          </p>
+          <h1 className="text-3xl md:text-4xl font-bold">
+            <span className="exa-gradient-text">Models</span>
+          </h1>
+          {totalCount !== null && totalCount > 0 && (
+            <p className="text-sm text-white/60 mt-1">
+              Browse {totalCount.toLocaleString()} verified models worldwide
+            </p>
+          )}
         </div>
 
         {/* Featured Models */}
         {featured && featured.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <span className="text-2xl">✨</span> Featured Models
-            </h2>
+          <div className="mb-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-xl bg-amber-500/40 blur-lg opacity-40" />
+                <div className="relative p-2 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 ring-1 ring-amber-500/40">
+                  <span className="text-lg leading-none">✨</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold">Handpicked</p>
+                <h2 className="text-lg md:text-xl font-bold text-white">
+                  <span className="exa-gradient-text">Featured Models</span>
+                </h2>
+              </div>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {featured.map((model) => (
                 <ModelCard key={model.id} model={model} variant="compact" />
@@ -304,7 +325,7 @@ export default async function ModelsPage({
         )}
 
         {/* Filters */}
-        <Suspense fallback={<div className="h-24 animate-pulse bg-muted rounded-lg" />}>
+        <Suspense fallback={<div className="h-24 rounded-2xl bg-gradient-to-br from-pink-500/10 via-violet-500/10 to-cyan-500/10 animate-pulse" />}>
           <ModelFilters />
         </Suspense>
 
@@ -319,13 +340,13 @@ export default async function ModelsPage({
 
           {/* Pagination — uses Next.js Link for client-side navigation */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3 mt-8">
+            <div className="flex items-center justify-center gap-2 mt-10">
               {hasPrevPage && (
                 <Link
                   href={buildPageUrl(currentPage - 1)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border bg-background hover:bg-muted transition-colors text-sm font-medium"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/40 text-white/80 hover:text-white text-sm font-semibold transition-all"
                 >
-                  Previous
+                  ← Previous
                 </Link>
               )}
               <div className="flex items-center gap-1">
@@ -344,10 +365,10 @@ export default async function ModelsPage({
                     <Link
                       key={pageNum}
                       href={buildPageUrl(pageNum)}
-                      className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                      className={`w-9 h-9 flex items-center justify-center rounded-full text-sm font-semibold transition-all ${
                         pageNum === currentPage
-                          ? "bg-pink-500 text-white"
-                          : "hover:bg-muted"
+                          ? "bg-gradient-to-br from-pink-500 to-violet-500 text-white shadow-[0_0_14px_rgba(236,72,153,0.5)]"
+                          : "text-white/60 hover:text-white hover:bg-white/10"
                       }`}
                     >
                       {pageNum}
@@ -358,15 +379,23 @@ export default async function ModelsPage({
               {hasNextPage && (
                 <Link
                   href={buildPageUrl(currentPage + 1)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border bg-background hover:bg-muted transition-colors text-sm font-medium"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/40 text-white/80 hover:text-white text-sm font-semibold transition-all"
                 >
-                  Next
+                  Next →
                 </Link>
               )}
             </div>
           )}
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="relative mt-16 border-t border-violet-500/15 bg-gradient-to-b from-transparent to-[#0a0014]/60 backdrop-blur-sm py-8 text-center">
+        <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+        <p className="text-xs text-white/40">
+          &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+        </p>
+      </footer>
     </div>
     </CoinBalanceProvider>
   );

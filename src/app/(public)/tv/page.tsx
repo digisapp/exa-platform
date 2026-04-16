@@ -104,23 +104,33 @@ export default async function TVPage() {
         />
 
         {/* Hero Section */}
-        <div className="relative bg-gradient-to-br from-violet-950 via-black to-pink-950 pt-16 pb-10 md:pt-20 md:pb-14">
-          <div className="absolute inset-0 opacity-20">
+        <div className="relative bg-gradient-to-br from-violet-950 via-black to-pink-950 pt-16 pb-10 md:pt-20 md:pb-14 overflow-hidden">
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(168,85,247,0.4),transparent_50%)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(236,72,153,0.4),transparent_50%)]" />
           </div>
+          <div className="pointer-events-none absolute -top-20 -left-20 w-64 h-64 rounded-full bg-pink-500/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -right-20 w-64 h-64 rounded-full bg-violet-500/20 blur-3xl" />
           <div className="relative container px-4 md:px-8">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="h-5 w-5 text-pink-500" />
-              <Badge className="bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-3 py-1">
-                {TV_VIDEOS.length} Videos
-              </Badge>
+              <Sparkles className="h-5 w-5 text-pink-400" />
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs font-bold shadow-[0_0_16px_rgba(236,72,153,0.5)]">
+                {TV_VIDEOS.length} VIDEOS
+              </span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-3 drop-shadow-lg flex items-center gap-4">
-              <Tv className="h-10 w-10 md:h-14 md:w-14 text-pink-500" />
-              EXA TV
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/60 font-semibold mb-2">
+              Runway Archive
+            </p>
+            <h1 className="text-4xl md:text-6xl font-bold mb-3 drop-shadow-lg flex items-center gap-4">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-xl bg-pink-500/40 blur-lg opacity-60" />
+                <div className="relative p-2 md:p-3 rounded-xl bg-gradient-to-br from-pink-500/25 to-violet-500/25 ring-1 ring-pink-500/40">
+                  <Tv className="h-8 w-8 md:h-10 md:w-10 text-pink-300" />
+                </div>
+              </div>
+              <span className="exa-gradient-text">EXA TV</span>
             </h1>
-            <p className="text-lg text-white/60 max-w-2xl">
+            <p className="text-base md:text-lg text-white/70 max-w-2xl">
               Watch runway shows, backstage footage, and highlights from our
               fashion events.
             </p>
@@ -130,6 +140,14 @@ export default async function TVPage() {
         <main className="container px-4 md:px-8 py-10">
           <TVGrid videos={TV_VIDEOS} />
         </main>
+
+        {/* Footer */}
+        <footer className="relative mt-8 border-t border-violet-500/15 bg-gradient-to-b from-transparent to-[#0a0014]/60 backdrop-blur-sm py-8 text-center">
+          <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+          <p className="text-xs text-white/40">
+            &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+          </p>
+        </footer>
       </div>
     </CoinBalanceProvider>
   );
