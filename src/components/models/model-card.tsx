@@ -132,19 +132,30 @@ export const ModelCard = memo(function ModelCard({
     ecommerce: "E-Comm", promo: "Promo", luxury: "Luxury", lifestyle: "Lifestyle"
   };
 
+  // Prefer the high-res portrait (portfolio photo) for the card, fall back to
+  // the square profile_photo_url. The helper at /models/page.tsx attaches
+  // hero_portrait_url per model using the same criteria as the profile-page
+  // hero (>=1500px, portrait orientation). This fixes the pre-existing crop
+  // issue where a square face photo was forced into a 3:4 card and lost
+  // composition.
+  const cardImageUrl = model.hero_portrait_url || model.profile_photo_url;
+
   return (
     <Link href={`/${model.username}`}>
       <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
         {/* Image with Hover Overlay */}
         <div className="aspect-[3/4] relative bg-gradient-to-br from-[#FF69B4]/20 to-[#9400D3]/20 overflow-hidden">
-          {model.profile_photo_url ? (
+          {cardImageUrl ? (
             <Image
-              src={model.profile_photo_url}
+              src={cardImageUrl}
               alt={displayName}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
               priority={priority}
-              className="object-cover group-hover:scale-110 transition-transform duration-300"
+              // object-top so the face stays at the top when a tall portrait
+              // is cropped to the 3:4 card. For square profile_photo_url
+              // fallback, this is effectively the same as object-center.
+              className="object-cover object-top group-hover:scale-110 transition-transform duration-300"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">

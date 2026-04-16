@@ -194,6 +194,44 @@ export default async function ModelsPage({
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
 
+  // Fetch the best hero-portrait photo for each model on this page.
+  // This fixes the pre-existing grid crop issue: profile_photo_url is a
+  // square face crop and aspect-[3/4] cards were losing the top/bottom of
+  // every face. Uses the same high-res-portrait criteria as the profile-page
+  // hero. Models without an eligible photo keep their profile_photo_url.
+  const modelIdsOnPage = (models || []).map((m: any) => m.id);
+  const heroByModel = new Map<string, string>();
+  if (modelIdsOnPage.length > 0) {
+    const { data: heroPhotos } = await (supabase as any)
+      .from("content_items")
+      .select("model_id, media_url, width, height")
+      .in("model_id", modelIdsOnPage)
+      .eq("media_type", "image")
+      .eq("status", "portfolio")
+      .not("width", "is", null)
+      .gte("height", 1500)
+      .order("height", { ascending: false })
+      .limit(500);
+
+    const resolveMediaUrl = (url: string) =>
+      url.startsWith("http")
+        ? url
+        : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
+
+    for (const photo of heroPhotos || []) {
+      // portrait-or-square only; take the first (highest-resolution) per model
+      if (photo.height >= photo.width && !heroByModel.has(photo.model_id)) {
+        heroByModel.set(photo.model_id, resolveMediaUrl(photo.media_url));
+      }
+    }
+  }
+
+  // Attach hero_portrait_url to each model before passing to the client grid
+  const modelsWithHero = (models || []).map((m: any) => ({
+    ...m,
+    hero_portrait_url: heroByModel.get(m.id) || null,
+  }));
+
   // Now run actor-dependent queries in parallel
   let favoriteModelIds: string[] = [];
   const actorType: "model" | "fan" | "brand" | "admin" | null = actor?.type || null;
@@ -338,7 +376,7 @@ export default async function ModelsPage({
         {/* Results */}
         <div className="mt-6">
           <ModelsGrid
-            models={models || []}
+            models={modelsWithHero}
             isLoggedIn={!!user}
             favoriteModelIds={favoriteModelIds}
             actorType={actorType}
