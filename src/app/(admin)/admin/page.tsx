@@ -25,6 +25,7 @@ import {
   Megaphone,
   Mail,
   ListOrdered,
+  Ticket,
 } from "lucide-react";
 
 type Color =
@@ -110,6 +111,7 @@ export default async function AdminPage() {
     { href: "/admin/usernames", label: "Usernames", icon: AtSign, color: "purple" },
     { href: "/admin/gigs", label: "Manage Gigs", icon: Sparkles, color: "violet" },
     { href: "/admin/shows", label: "Show Lineups", icon: ListOrdered, color: "pink", featured: true },
+    { href: "/admin/events", label: "Events & Tickets", icon: Ticket, color: "pink", featured: true },
     {
       href: "/admin/brands",
       label: "Brands",
