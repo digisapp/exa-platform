@@ -28,13 +28,16 @@ export default function SwimCrownEntryPage() {
       <main className="container mx-auto px-4 py-8 pb-24 md:pb-8">
         {/* Header */}
         <div className="text-center mb-10">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-pink-300/80 font-bold mb-2">
+            Entry form
+          </p>
           <h1 className="relative inline-flex items-center justify-center gap-2">
-            <Crown className="h-7 w-7 text-amber-400" />
+            <Crown className="h-7 w-7 text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.6)]" />
             <span className="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-pink-300 via-rose-400 to-pink-400 bg-clip-text text-transparent">
               Enter SwimCrown
             </span>
           </h1>
-          <p className="mt-2 text-white">
+          <p className="mt-3 text-white/70">
             Fill in your details, pick your tier, and you&apos;re in!
           </p>
         </div>

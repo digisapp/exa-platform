@@ -128,16 +128,20 @@ export default async function SwimCrownContestantsPage() {
         <main className="container mx-auto px-4 py-8 pb-24 md:pb-8">
           {/* Header */}
           <div className="text-center mb-8">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-amber-300/80 font-bold mb-2">
+              Cast your vote
+            </p>
             <h1 className="relative inline-flex items-center justify-center gap-2">
-              <Crown className="h-7 w-7 text-amber-400" />
+              <Crown className="h-7 w-7 text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.6)]" />
               <span className="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-teal-300 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
                 SwimCrown Contestants
               </span>
-              <Crown className="h-7 w-7 text-amber-400" />
+              <Crown className="h-7 w-7 text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.6)]" />
             </h1>
             {competition && (
-              <p className="mt-2 text-muted-foreground">
-                {competition.name} — Vote for your favorite!
+              <p className="mt-2 text-white/70">
+                <span className="text-white font-semibold">{competition.name}</span>
+                <span className="text-white/50"> — Vote for your favorite!</span>
               </p>
             )}
           </div>

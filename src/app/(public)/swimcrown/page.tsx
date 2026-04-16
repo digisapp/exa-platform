@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Crown,
   Sparkles,
@@ -317,25 +316,31 @@ export default async function SwimCrownPage() {
                 { name: "TBA", role: "Celebrity Judge", image: null },
                 { name: "TBA", role: "Industry Expert", image: null },
               ].map((judge, i) => (
-                <Card key={i} className="border-white/10 bg-white/[0.03] p-6 text-center rounded-3xl">
-                  <div className="mx-auto mb-4 relative h-24 w-24 rounded-full overflow-hidden border-2 border-pink-500/20">
-                    {judge.image ? (
-                      <Image
-                        src={judge.image}
-                        alt={judge.name}
-                        fill
-                        className="object-cover"
-                        sizes="96px"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-500/20 to-rose-500/10">
-                        <UserCircle className="h-12 w-12 text-pink-400/40" />
-                      </div>
-                    )}
+                <div
+                  key={i}
+                  className="rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 text-center hover:border-pink-500/30 hover:shadow-[0_0_18px_rgba(236,72,153,0.2)] transition-all"
+                >
+                  <div className="relative mx-auto mb-4 h-24 w-24">
+                    <div className="absolute inset-0 rounded-full bg-pink-500/30 blur-lg opacity-60" />
+                    <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-pink-500/40">
+                      {judge.image ? (
+                        <Image
+                          src={judge.image}
+                          alt={judge.name}
+                          fill
+                          className="object-cover"
+                          sizes="96px"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-500/20 to-rose-500/10">
+                          <UserCircle className="h-12 w-12 text-pink-400/50" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <h3 className="text-base font-bold text-white">{judge.name}</h3>
-                  <p className="mt-1 text-sm text-white/80">{judge.role}</p>
-                </Card>
+                  <p className="mt-1 text-sm text-white/70">{judge.role}</p>
+                </div>
               ))}
             </div>
           </div>
@@ -346,23 +351,29 @@ export default async function SwimCrownPage() {
         <section className="py-24 sm:py-32">
           <div className="container mx-auto px-4 text-center">
             <div className="mx-auto max-w-2xl">
-              <Crown className="mx-auto h-14 w-14 text-amber-400 mb-6 drop-shadow-[0_0_20px_rgba(251,191,36,0.4)]" />
-              <h2 className="text-4xl sm:text-5xl font-black mb-5 text-white">
-                Will You Be Crowned?
+              <div className="relative inline-flex items-center justify-center mb-6">
+                <div className="absolute inset-0 rounded-full bg-amber-500/40 blur-2xl opacity-70" />
+                <Crown className="relative h-14 w-14 text-amber-300 drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]" />
+              </div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-amber-300/80 font-bold mb-2">
+                Your move
+              </p>
+              <h2 className="text-4xl sm:text-5xl font-black mb-5">
+                <span className="bg-gradient-to-r from-pink-300 via-rose-400 to-amber-300 bg-clip-text text-transparent">
+                  Will You Be Crowned?
+                </span>
               </h2>
-              <p className="text-white mb-8 text-lg leading-relaxed">
+              <p className="text-white/75 mb-8 text-lg leading-relaxed">
                 Models from around the world are entering for their chance to step onto the
                 runway at Miami Swim Week — and earn the title of Miss SwimCrown 2026.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link href="/swimcrown/enter">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold px-10 py-7 text-xl rounded-full shadow-lg shadow-pink-500/30"
-                  >
-                    <Crown className="mr-2 h-6 w-6" />
-                    Enter Now
-                  </Button>
+                <Link
+                  href="/swimcrown/enter"
+                  className="inline-flex items-center justify-center gap-2 px-10 py-5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-400 hover:via-rose-400 hover:to-amber-400 text-white font-bold text-xl transition-all shadow-[0_0_28px_rgba(236,72,153,0.5)] hover:shadow-[0_0_36px_rgba(236,72,153,0.7)] active:scale-[0.98]"
+                >
+                  <Crown className="h-6 w-6" />
+                  Enter Now
                 </Link>
               </div>
             </div>
