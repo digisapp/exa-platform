@@ -42,15 +42,15 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Sponsor Miami Swim Week 2026 | EXA Models",
   description:
-    "Partner with EXA Models at Miami Swim Week 2026 (May 25–31, Miami Beach Hotel, Miami Beach). 600+ models, 7 days, runway shows, casting call sponsorships, activations, gift bags, and more.",
+    "Partner with EXA Models at Miami Swim Week 2026 (May 25–31, The Alexander Hotel, Miami Beach). 600+ models, 7 days, runway shows, casting call sponsorships, activations, gift bags, and more.",
   openGraph: {
     title: "Sponsor Miami Swim Week 2026 | EXA Models",
     description:
-      "Get your brand in front of 600+ models and thousands of fashion, beauty, and lifestyle consumers at Miami Swim Week 2026. Packages from $500 to $20,000.",
+      "Get your brand in front of 300+ curated models and creators, 6 runway shows, and a full-week takeover of The Alexander Hotel at Miami Swim Week 2026. Packages from $2,000 to $45,000.",
   },
 };
 
-const VENUE = "Miami Beach Hotel, Miami Beach";
+const VENUE = "The Alexander Hotel, Miami Beach";
 
 const SCHEDULE = [
   {
@@ -81,14 +81,14 @@ const SCHEDULE = [
     day: "Thursday",
     date: "May 28",
     title: "Sunset Beach Show",
-    description: "Stunning sand runway show on the beach at sunset — the most iconic show of the week",
+    description: "Daytime Emerging Designers showcase, plus our iconic sand runway at sunset — the most shareable moment of the week",
     highlight: true,
     badge: "Beach Runway",
   },
   {
     day: "Friday",
     date: "May 29",
-    title: "Day 4 Show",
+    title: "Signature Runway",
     description: "Runway show plus VIP cocktail hour and brand activations",
     highlight: false,
     badge: null,
@@ -96,7 +96,7 @@ const SCHEDULE = [
   {
     day: "Saturday",
     date: "May 30",
-    title: "Day 5 Show",
+    title: "Signature Runway",
     description: "Runway show featuring designer collections and brand activations",
     highlight: false,
     badge: null,
@@ -346,7 +346,7 @@ const HOTEL_PACKAGES = [
   {
     id: "content-studio",
     name: "Branded Content Studio",
-    tagline: "Branded photo/video studio at Miami Beach Hotel for models to create content with your product",
+    tagline: "Branded photo/video studio at The Alexander Hotel for models to create content with your product",
     price: 4500,
     badge: null,
     badgeGradient: "",
@@ -355,7 +355,7 @@ const HOTEL_PACKAGES = [
     color: "from-violet-500/10 to-purple-500/5",
     icon: <Camera className="h-5 w-5 text-violet-400" />,
     features: [
-      "Branded photo/video studio set up at Miami Beach Hotel",
+      "Branded photo/video studio set up at The Alexander Hotel",
       "Ring lights, backdrops, and props — all branded with your product",
       "EXA social media amplification",
       "2 VIP passes to runway shows",
@@ -391,7 +391,7 @@ const PACKAGES = [
     id: "presenting",
     name: "Presenting Sponsor",
     tagline: "Miami Swim Week 2026 Presented by [Your Brand]",
-    price: 25000,
+    price: 45000,
     badge: "Only 1 Available",
     badgeGradient: "from-yellow-500 to-amber-500",
     borderColor: "border-yellow-500/30",
@@ -402,7 +402,7 @@ const PACKAGES = [
       "Top billing — \u201cPresented by [Brand]\u201d across all event materials",
       "Logo on all 6 runway backdrops (every show)",
       "2-minute branded video played at Opening Night",
-      "Full-week brand activation booth at Miami Beach Hotel",
+      "Full-week brand activation booth at The Alexander Hotel",
       "10 VIP passes to all shows",
       "Dedicated EXA model brand ambassador for the week",
       "Product placement in 200+ model & VIP gift bags",
@@ -411,6 +411,7 @@ const PACKAGES = [
       "Backstage content access & photo opportunity",
       "Full photo & video rights from all shows",
       "Logo on Red Carpet Promo Wall",
+      "Category exclusivity — no competing brand partners this tier",
     ],
   },
   {
@@ -426,7 +427,7 @@ const PACKAGES = [
     icon: <Megaphone className="h-5 w-5 text-pink-400" />,
     features: [
       "Logo on runway backdrop — all 6 shows",
-      "Brand activation booth at Miami Beach Hotel",
+      "Brand activation booth at The Alexander Hotel",
       "6 VIP passes per show",
       "1 show-opening brand moment (logo card + PA mention)",
       "EXA model brand ambassador (3 days)",
@@ -522,7 +523,7 @@ const PACKAGES = [
   {
     id: "brand-activation",
     name: "Pop-Up Experience",
-    tagline: "Branded pop-up at Miami Beach Hotel — sample, demo, or sell all week",
+    tagline: "Branded pop-up at The Alexander Hotel — sample, demo, or sell all week",
     price: 2500,
     badge: null,
     badgeGradient: "",
@@ -531,7 +532,7 @@ const PACKAGES = [
     color: "from-teal-500/10 to-cyan-500/5",
     icon: <ShoppingBag className="h-5 w-5 text-teal-400" />,
     features: [
-      "Branded pop-up space at Miami Beach Hotel during Swim Week",
+      "Branded pop-up space at The Alexander Hotel during Swim Week",
       "Reach attendees, press, buyers, and models in person",
       "Product sampling, demos, or sales — your call",
       "2 VIP passes",
@@ -656,7 +657,7 @@ export default async function SponsorMswPage() {
             </div>
             <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
               <MapPin className="h-4 w-4 text-cyan-400" />
-              <span className="font-semibold text-sm">Miami Beach Hotel, Miami Beach</span>
+              <span className="font-semibold text-sm">The Alexander Hotel, Miami Beach</span>
             </div>
           </div>
         </div>
@@ -678,17 +679,37 @@ export default async function SponsorMswPage() {
               <span className="exa-gradient-text">Position Your Brand at the Center of Miami Swim Week</span>
             </h2>
             <p className="text-white/70 text-lg leading-relaxed mb-8">
-              600+ models and creators with audiences ranging from 5K to 5M. From a sunset beach runway to a 120ft yacht and a full hotel takeover, your brand is seamlessly integrated into every moment — captured, shared, and distributed across millions of viewers worldwide. <span className="text-white font-semibold">This level of access doesn&apos;t exist anywhere else.</span>
+              A full 7-day takeover of The Alexander Hotel with creators whose audiences range from 5K to 5M. From a sunset beach runway to a 120ft yacht and on-site content production all week, your brand is seamlessly integrated into every moment — captured, shared, and distributed across millions of viewers worldwide. <span className="text-white font-semibold">This level of access doesn&apos;t exist anywhere else.</span>
             </p>
+
+            {/* Model ladder — honest breakdown by role */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+              <div className="text-center p-3 rounded-xl bg-white/[0.03] border border-white/10">
+                <p className="text-xl font-bold text-amber-300">600+</p>
+                <p className="text-[10px] text-white/55 mt-0.5 uppercase tracking-wider">At Casting</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/[0.03] border border-white/10">
+                <p className="text-xl font-bold text-pink-300">300+</p>
+                <p className="text-[10px] text-white/55 mt-0.5 uppercase tracking-wider">Curated Roster</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/[0.03] border border-white/10">
+                <p className="text-xl font-bold text-violet-300">150+</p>
+                <p className="text-[10px] text-white/55 mt-0.5 uppercase tracking-wider">On The Runway</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/[0.03] border border-white/10">
+                <p className="text-xl font-bold text-cyan-300">100+</p>
+                <p className="text-[10px] text-white/55 mt-0.5 uppercase tracking-wider">Onsite All Week</p>
+              </div>
+            </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div className="text-center p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-amber-500/30 transition-colors">
-                <p className="text-2xl md:text-3xl font-bold text-amber-300">600+</p>
-                <p className="text-xs text-white/60 mt-1">Models at Casting</p>
+                <p className="text-2xl md:text-3xl font-bold text-amber-300">50M+</p>
+                <p className="text-xs text-white/60 mt-1">Combined Reach</p>
               </div>
               <div className="text-center p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-pink-500/30 transition-colors">
-                <p className="text-2xl md:text-3xl font-bold text-pink-300">50M+</p>
-                <p className="text-xs text-white/60 mt-1">Combined Reach</p>
+                <p className="text-2xl md:text-3xl font-bold text-pink-300">6</p>
+                <p className="text-xs text-white/60 mt-1">Runway Shows</p>
               </div>
               <div className="text-center p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-cyan-500/30 transition-colors">
                 <p className="text-2xl md:text-3xl font-bold text-cyan-300">7 Days</p>
@@ -775,7 +796,7 @@ export default async function SponsorMswPage() {
           {
             title: "Premium Experience Sponsorships",
             subtitle: "Beach · Yacht · Pool Deck",
-            description: "Miami Beach Hotel sits right on the beach with the Intracoastal across the street. A sunset sand runway show, a 120ft yacht for VIP cruises and photoshoots — these are the moments brands dream about.",
+            description: "The Alexander Hotel sits right on the beach with the Intracoastal across the street. A sunset sand runway show, a 120ft yacht for VIP cruises and photoshoots — these are the moments brands dream about.",
             badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20",
             checkColor: "from-blue-500/20 to-cyan-500/20",
             checkIcon: "text-blue-400",
@@ -784,7 +805,7 @@ export default async function SponsorMswPage() {
           {
             title: "Hotel Activation Packages",
             subtitle: "100+ Models Staying On-Site · Full Hotel Takeover",
-            description: "100+ models are staying at Miami Beach Hotel all week. That means your brand has access to them 24/7 — in their rooms, at breakfast, poolside, backstage, and everywhere in between.",
+            description: "100+ models are staying at The Alexander Hotel all week. That means your brand has access to them 24/7 — in their rooms, at breakfast, poolside, backstage, and everywhere in between.",
             badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/20",
             checkColor: "from-rose-500/20 to-pink-500/20",
             checkIcon: "text-rose-400",
@@ -895,6 +916,40 @@ export default async function SponsorMswPage() {
 
 
 
+        {/* Cross-links — Also Participating in Miami Swim Week? */}
+        <div className="mb-14">
+          <p className="text-center text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+            Also participating in Miami Swim Week?
+          </p>
+          <h3 className="text-center text-xl md:text-2xl font-bold mb-6">
+            <span className="exa-gradient-text">Explore the full week</span>
+          </h3>
+          <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+            <Link
+              href="/designers/miami-swim-week"
+              className="group flex items-center justify-between gap-4 px-6 py-5 rounded-2xl border border-violet-500/30 bg-violet-500/5 hover:border-violet-500/60 hover:bg-violet-500/10 transition-all hover:shadow-[0_0_20px_rgba(167,139,250,0.25)]"
+            >
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-violet-300 font-bold mb-1">For Designers</p>
+                <p className="font-semibold text-white">Book a Runway Show</p>
+                <p className="text-xs text-white/55 mt-0.5">Showcase your collection — from $1,000</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-violet-300 transition-colors flex-shrink-0" />
+            </Link>
+            <Link
+              href="/shows/miami-swim-week-2026"
+              className="group flex items-center justify-between gap-4 px-6 py-5 rounded-2xl border border-pink-500/30 bg-pink-500/5 hover:border-pink-500/60 hover:bg-pink-500/10 transition-all hover:shadow-[0_0_20px_rgba(236,72,153,0.25)]"
+            >
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-pink-300 font-bold mb-1">For Fans &amp; Press</p>
+                <p className="font-semibold text-white">View the Shows &amp; Get Tickets</p>
+                <p className="text-xs text-white/55 mt-0.5">Confirmed lineup · venue map · ticket tiers</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-pink-300 transition-colors flex-shrink-0" />
+            </Link>
+          </div>
+        </div>
+
         {/* Bottom CTA */}
         <div className="relative overflow-hidden text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-amber-500/12 via-orange-500/12 to-pink-500/12 border border-amber-500/40 shadow-[0_0_32px_rgba(245,158,11,0.15)]">
           <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-amber-500/25 blur-3xl" />
@@ -908,8 +963,8 @@ export default async function SponsorMswPage() {
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-xl mx-auto mb-8">
               <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                <p className="text-lg font-bold text-amber-300">600+</p>
-                <p className="text-xs text-white/60">Creators</p>
+                <p className="text-lg font-bold text-amber-300">300+</p>
+                <p className="text-xs text-white/60">Curated Creators</p>
               </div>
               <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
                 <p className="text-lg font-bold text-pink-300">7 Days</p>
@@ -920,8 +975,8 @@ export default async function SponsorMswPage() {
                 <p className="text-xs text-white/60">Runway Shows</p>
               </div>
               <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                <p className="text-lg font-bold text-cyan-300">$500</p>
-                <p className="text-xs text-white/60">Starting At</p>
+                <p className="text-lg font-bold text-cyan-300">50M+</p>
+                <p className="text-xs text-white/60">Combined Reach</p>
               </div>
             </div>
             <a

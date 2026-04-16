@@ -507,6 +507,40 @@ export default async function MswBrandPage() {
         )}
 
 
+        {/* Cross-links — Also Participating in Miami Swim Week? */}
+        <div className="mb-14">
+          <p className="text-center text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+            Also participating in Miami Swim Week?
+          </p>
+          <h3 className="text-center text-xl md:text-2xl font-bold mb-6">
+            <span className="exa-gradient-text">Explore the full week</span>
+          </h3>
+          <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+            <Link
+              href="/sponsors/miami-swim-week"
+              className="group flex items-center justify-between gap-4 px-6 py-5 rounded-2xl border border-cyan-500/30 bg-cyan-500/5 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all hover:shadow-[0_0_20px_rgba(34,211,238,0.25)]"
+            >
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-cyan-300 font-bold mb-1">For Brands</p>
+                <p className="font-semibold text-white">Become a Sponsor</p>
+                <p className="text-xs text-white/55 mt-0.5">Partner with us · from $2,000</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-cyan-300 transition-colors flex-shrink-0" />
+            </Link>
+            <Link
+              href="/shows/miami-swim-week-2026"
+              className="group flex items-center justify-between gap-4 px-6 py-5 rounded-2xl border border-pink-500/30 bg-pink-500/5 hover:border-pink-500/60 hover:bg-pink-500/10 transition-all hover:shadow-[0_0_20px_rgba(236,72,153,0.25)]"
+            >
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-pink-300 font-bold mb-1">For Fans &amp; Press</p>
+                <p className="font-semibold text-white">View the Shows &amp; Get Tickets</p>
+                <p className="text-xs text-white/55 mt-0.5">Confirmed lineup · venue map · ticket tiers</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-pink-300 transition-colors flex-shrink-0" />
+            </Link>
+          </div>
+        </div>
+
         {/* Bottom CTA */}
         <div className="relative overflow-hidden text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-pink-500/12 via-violet-500/12 to-cyan-500/12 border border-pink-500/30 shadow-[0_0_32px_rgba(236,72,153,0.15)]">
           <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-pink-500/25 blur-3xl" />
