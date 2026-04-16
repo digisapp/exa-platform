@@ -463,13 +463,6 @@ export default async function EventPage({ params, searchParams }: Props) {
               {/* Sign Up Buttons */}
               <div className="space-y-2">
                 <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold px-1">Join the Show</p>
-                <Link href="/signup" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-semibold transition-all shadow-[0_0_18px_rgba(236,72,153,0.4)] hover:shadow-[0_0_24px_rgba(236,72,153,0.6)]">
-                  <span className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Models — Apply Now
-                  </span>
-                  <ArrowRight className="h-4 w-4 opacity-80" />
-                </Link>
                 <Link href="/designers/miami-swim-week" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/40 hover:border-violet-500/70 text-violet-200 font-semibold transition-all hover:shadow-[0_0_16px_rgba(167,139,250,0.3)]">
                   <span className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
@@ -484,13 +477,6 @@ export default async function EventPage({ params, searchParams }: Props) {
                   </span>
                   <ArrowRight className="h-4 w-4 opacity-80" />
                 </Link>
-                <a href="mailto:nathan@examodels.com?subject=Media%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 hover:border-amber-500/70 text-amber-200 font-semibold transition-all hover:shadow-[0_0_16px_rgba(245,158,11,0.3)]">
-                  <span className="flex items-center gap-2">
-                    <Instagram className="h-4 w-4" />
-                    Media — Request Credentials
-                  </span>
-                  <ArrowRight className="h-4 w-4 opacity-80" />
-                </a>
               </div>
 
               {/* Sponsor Card */}
