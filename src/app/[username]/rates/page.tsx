@@ -206,19 +206,20 @@ export default async function ModelRatesPage({ params }: Props) {
           </div>
 
           {/* Availability Status - based on real activity */}
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10 mb-6">
-            {model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000 ? (
-              <>
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <span className="text-white font-medium">Available for Booking</span>
-              </>
-            ) : (
-              <>
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <span className="text-white/60 font-medium">Offline</span>
-              </>
-            )}
-          </div>
+          {model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000 ? (
+            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/40 shadow-[0_0_16px_rgba(52,211,153,0.2)] mb-6">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+              </span>
+              <span className="text-emerald-300 font-semibold">Available for booking</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/10 mb-6">
+              <Clock className="h-4 w-4 text-white/40" />
+              <span className="text-white/50 font-medium text-sm">Currently offline</span>
+            </div>
+          )}
 
           {/* Bio */}
           {model.bio && (
@@ -231,27 +232,36 @@ export default async function ModelRatesPage({ params }: Props) {
           {!isOwner && (
             <Link
               href={user ? `/chats?new=${model.username}` : "/signin"}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium transition-colors w-full"
+              className="group flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/[0.06] hover:bg-pink-500/15 border border-white/10 hover:border-pink-500/40 text-white font-semibold transition-all hover:shadow-[0_0_18px_rgba(236,72,153,0.3)] w-full"
             >
-              <MessageCircle className="h-5 w-5" />
-              Send Message
+              <MessageCircle className="h-5 w-5 group-hover:text-pink-300 transition-colors" />
+              <span className="group-hover:text-pink-100 transition-colors">Send Message</span>
             </Link>
           )}
         </div>
 
         {/* Rates Cards */}
         {hasAnyRates && !isOwner && (
-          <p className="text-center text-white/50 text-sm mb-4">
-            Click any service below to book
-          </p>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <span className="h-px w-8 bg-gradient-to-r from-transparent to-pink-500/40" />
+            <p className="text-center text-white/60 text-xs uppercase tracking-[0.2em] font-semibold">
+              Tap any service to book
+            </p>
+            <span className="h-px w-8 bg-gradient-to-l from-transparent to-pink-500/40" />
+          </div>
         )}
         {!hasAnyRates ? (
           <div className="profile-card rounded-3xl p-8 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-4">
-              <Calendar className="h-8 w-8 text-white/50" />
+            <div className="relative inline-flex items-center justify-center mb-4">
+              <div className="absolute inset-0 rounded-full bg-pink-500/30 blur-2xl" />
+              <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 ring-1 ring-pink-500/40 flex items-center justify-center">
+                <Calendar className="h-8 w-8 text-pink-300" />
+              </div>
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">No Rates Set</h2>
-            <p className="text-white/60">
+            <h2 className="text-xl font-semibold text-white mb-2">
+              <span className="exa-gradient-text">No rates set yet</span>
+            </h2>
+            <p className="text-white/60 max-w-sm mx-auto">
               {isOwner
                 ? "Add your booking rates in Settings to start accepting bookings."
                 : "This model hasn't set their booking rates yet."}
@@ -259,7 +269,7 @@ export default async function ModelRatesPage({ params }: Props) {
             {isOwner && (
               <Link
                 href="/settings?tab=rates"
-                className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-medium transition-colors"
+                className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-white font-semibold transition-all hover:scale-[1.02] shadow-[0_0_18px_rgba(236,72,153,0.4)] hover:shadow-[0_0_24px_rgba(236,72,153,0.6)]"
               >
                 Set Your Rates
               </Link>
@@ -493,21 +503,27 @@ export default async function ModelRatesPage({ params }: Props) {
               <h3 className="text-lg font-semibold text-white">Portfolio</h3>
               <Link
                 href={`/${model.username}`}
-                className="text-sm text-pink-400 hover:text-pink-300 transition-colors"
+                className="text-sm text-pink-400 hover:text-pink-300 transition-colors flex items-center gap-1"
               >
                 View Full Profile
+                <ArrowLeft className="h-3 w-3 rotate-180" />
               </Link>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {photos.map((photo: any) => (
-                <div key={photo.id} className="relative aspect-square rounded-xl overflow-hidden">
+                <Link
+                  key={photo.id}
+                  href={`/${model.username}`}
+                  className="group relative aspect-square rounded-xl overflow-hidden ring-1 ring-white/10 hover:ring-pink-500/50 hover:shadow-[0_0_16px_rgba(236,72,153,0.4)] transition-all"
+                >
                   <Image
                     src={photo.url}
                     alt="Portfolio"
                     fill
-                    className="object-cover"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
               ))}
             </div>
           </div>
@@ -517,14 +533,14 @@ export default async function ModelRatesPage({ params }: Props) {
         {!isOwner && hasAnyRates && (
           <div className="mt-6 profile-card rounded-2xl p-5">
             <p className="text-center text-white/70 mb-4">
-              Have questions? Send {displayName} a message.
+              Have questions? Send <span className="text-white font-semibold">{displayName}</span> a message.
             </p>
             <Link
               href={user ? `/chats?new=${model.username}` : "/signin"}
-              className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium transition-colors"
+              className="group flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-white/[0.06] hover:bg-pink-500/15 border border-white/10 hover:border-pink-500/40 text-white font-semibold transition-all hover:shadow-[0_0_18px_rgba(236,72,153,0.3)]"
             >
-              <MessageCircle className="h-5 w-5" />
-              {user ? "Send Message" : "Sign In to Message"}
+              <MessageCircle className="h-5 w-5 group-hover:text-pink-300 transition-colors" />
+              <span className="group-hover:text-pink-100 transition-colors">{user ? "Send Message" : "Sign In to Message"}</span>
             </Link>
           </div>
         )}

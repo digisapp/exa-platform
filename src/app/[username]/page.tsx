@@ -519,9 +519,12 @@ export default async function ModelProfilePage({ params }: Props) {
 
           {/* Status Pill - online if active within last 5 minutes */}
           {model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000 && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 border border-green-500/50 mb-3">
-              <span className="w-2 h-2 bg-green-500 rounded-full" />
-              <span className="text-green-400 text-sm font-medium">Online</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/50 shadow-[0_0_16px_rgba(52,211,153,0.35)] mb-3">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              </span>
+              <span className="text-emerald-300 text-sm font-semibold">Online now</span>
             </div>
           )}
 
@@ -537,33 +540,44 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Social Media Icons + Follower Counts */}
+          {/* Social Media Icons + Follower Counts — per-platform neon hover */}
           {model.show_social_media && (socialLinks.length > 0 || model.email) && (
             <div className="flex items-center justify-center gap-3 mb-5 flex-wrap">
-              {socialLinks.map((link) => (
-                <a
-                  key={link.platform}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-1 group"
-                  title={`@${link.username}`}
-                >
-                  <div className="w-8 h-8 rounded-full bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-all group-hover:scale-110 active:scale-95">
-                    {link.platform === "instagram" && <Instagram className="h-4 w-4 text-white" />}
-                    {link.platform === "tiktok" && <TikTokIcon className="h-4 w-4 text-white" />}
-                    {link.platform === "snapchat" && <SnapchatIcon className="h-4 w-4 text-white" />}
-                    {link.platform === "x" && <XIcon className="h-4 w-4 text-white" />}
-                    {link.platform === "youtube" && <Youtube className="h-4 w-4 text-white" />}
-                    {link.platform === "twitch" && <Twitch className="h-4 w-4 text-white" />}
-                  </div>
-                  {link.followers && (
-                    <span className="text-[10px] text-white/50 group-hover:text-white/70 transition-colors leading-none">
-                      {formatFollowers(link.followers)}
-                    </span>
-                  )}
-                </a>
-              ))}
+              {socialLinks.map((link) => {
+                // Per-platform color theming
+                const PLATFORM_GLOW: Record<string, string> = {
+                  instagram: "group-hover:bg-pink-500/20 group-hover:border-pink-500/50 group-hover:shadow-[0_0_16px_rgba(236,72,153,0.5)] group-hover:[&_svg]:text-pink-300",
+                  tiktok: "group-hover:bg-cyan-500/20 group-hover:border-cyan-500/50 group-hover:shadow-[0_0_16px_rgba(34,211,238,0.5)] group-hover:[&_svg]:text-cyan-300",
+                  snapchat: "group-hover:bg-amber-500/20 group-hover:border-amber-500/50 group-hover:shadow-[0_0_16px_rgba(245,158,11,0.5)] group-hover:[&_svg]:text-amber-300",
+                  x: "group-hover:bg-white/20 group-hover:border-white/50 group-hover:shadow-[0_0_16px_rgba(255,255,255,0.4)]",
+                  youtube: "group-hover:bg-rose-500/20 group-hover:border-rose-500/50 group-hover:shadow-[0_0_16px_rgba(244,63,94,0.5)] group-hover:[&_svg]:text-rose-300",
+                  twitch: "group-hover:bg-violet-500/20 group-hover:border-violet-500/50 group-hover:shadow-[0_0_16px_rgba(167,139,250,0.5)] group-hover:[&_svg]:text-violet-300",
+                };
+                return (
+                  <a
+                    key={link.platform}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1 group"
+                    title={`@${link.username}`}
+                  >
+                    <div className={`w-9 h-9 rounded-full bg-white/10 border border-white/10 flex items-center justify-center transition-all group-hover:scale-110 active:scale-95 ${PLATFORM_GLOW[link.platform]}`}>
+                      {link.platform === "instagram" && <Instagram className="h-4 w-4 text-white transition-colors" />}
+                      {link.platform === "tiktok" && <TikTokIcon className="h-4 w-4 text-white transition-colors" />}
+                      {link.platform === "snapchat" && <SnapchatIcon className="h-4 w-4 text-white transition-colors" />}
+                      {link.platform === "x" && <XIcon className="h-4 w-4 text-white transition-colors" />}
+                      {link.platform === "youtube" && <Youtube className="h-4 w-4 text-white transition-colors" />}
+                      {link.platform === "twitch" && <Twitch className="h-4 w-4 text-white transition-colors" />}
+                    </div>
+                    {link.followers && (
+                      <span className="text-[10px] text-white/50 group-hover:text-white/80 transition-colors leading-none font-medium">
+                        {formatFollowers(link.followers)}
+                      </span>
+                    )}
+                  </a>
+                );
+              })}
               {/* Email icon */}
               {model.email && (
                 <a
@@ -571,10 +585,10 @@ export default async function ModelProfilePage({ params }: Props) {
                   className="flex flex-col items-center gap-1 group"
                   title={model.email}
                 >
-                  <div className="w-8 h-8 rounded-full bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-all group-hover:scale-110 active:scale-95">
-                    <Mail className="h-4 w-4 text-white" />
+                  <div className="w-9 h-9 rounded-full bg-white/10 border border-white/10 flex items-center justify-center transition-all group-hover:scale-110 active:scale-95 group-hover:bg-emerald-500/20 group-hover:border-emerald-500/50 group-hover:shadow-[0_0_16px_rgba(52,211,153,0.5)] group-hover:[&_svg]:text-emerald-300">
+                    <Mail className="h-4 w-4 text-white transition-colors" />
                   </div>
-                  <span className="text-[10px] text-white/50 group-hover:text-white/70 transition-colors leading-none">
+                  <span className="text-[10px] text-white/50 group-hover:text-white/80 transition-colors leading-none font-medium">
                     Email
                   </span>
                 </a>
@@ -599,9 +613,9 @@ export default async function ModelProfilePage({ params }: Props) {
             allowTips={model.allow_tips ?? true}
           />
 
-          {/* Affiliate Links - Linktree Style */}
+          {/* Affiliate Links - Linktree Style with neon hover glow */}
           {model.affiliate_links && model.affiliate_links.length > 0 && (
-            <div className="mb-6 space-y-3">
+            <div className="mb-6 space-y-2.5">
               {model.affiliate_links.map((link: { title: string; url: string; icon?: string }, index: number) => {
                 if (!link.title || !link.url) return null;
                 return (
@@ -610,16 +624,19 @@ export default async function ModelProfilePage({ params }: Props) {
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group relative flex items-center justify-center w-full px-5 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] active:scale-[0.97] active:opacity-90 hover:shadow-lg hover:shadow-pink-500/10"
+                    className="group relative flex items-center justify-center w-full px-5 py-4 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 hover:border-pink-500/40 transition-all hover:scale-[1.02] active:scale-[0.97] hover:shadow-[0_0_20px_rgba(236,72,153,0.25)] overflow-hidden"
                   >
+                    {/* Hover gradient sweep */}
+                    <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-pink-500/5 via-violet-500/5 to-cyan-500/5" />
                     <span className="absolute left-4 w-6 h-6 flex items-center justify-center">
                       {link.icon ? (
-                        <span className="text-lg leading-none">{link.icon}</span>
+                        <span className="text-lg leading-none transition-transform group-hover:scale-110">{link.icon}</span>
                       ) : (
-                        <ExternalLink className="h-4 w-4 text-white/60" />
+                        <ExternalLink className="h-4 w-4 text-white/60 group-hover:text-pink-300 transition-colors" />
                       )}
                     </span>
-                    <span className="font-medium text-white">{link.title}</span>
+                    <span className="relative font-semibold text-white group-hover:text-white">{link.title}</span>
+                    <ExternalLink className="absolute right-4 h-3.5 w-3.5 text-white/30 opacity-0 group-hover:opacity-100 group-hover:text-pink-300 transition-all group-hover:translate-x-0.5" />
                   </a>
                 );
               })}
@@ -655,10 +672,12 @@ export default async function ModelProfilePage({ params }: Props) {
                 <div className="mt-6">
                   <Link
                     href={`/${model.username}/rates`}
-                    className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-pink-500/25"
+                    className="group relative flex items-center justify-center gap-2 w-full py-4 px-4 rounded-2xl bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 hover:from-pink-400 hover:via-violet-400 hover:to-cyan-400 text-white font-bold text-base transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_24px_rgba(236,72,153,0.4)] hover:shadow-[0_0_32px_rgba(236,72,153,0.6)] overflow-hidden"
                   >
                     <Calendar className="h-5 w-5" />
-                    View Rates & Book
+                    <span>View Rates &amp; Book</span>
+                    {/* Animated shimmer */}
+                    <span className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                   </Link>
                 </div>
               );
