@@ -548,7 +548,7 @@ export default async function ModelProfilePage({ params }: Props) {
                         key={idx}
                         href={`/shows/${eb.badges.events.slug}?ref=${model.affiliate_code}`}
                         title={`Confirmed ${eb.badges.events.name} Model`}
-                        className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-[0_4px_12px_rgba(0,0,0,0.4)] border border-amber-200/60 hover:scale-105 transition-transform"
+                        className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-sm font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.45)] border border-amber-200/70 hover:scale-105 transition-transform"
                       >
                         <span>💧</span>
                         <span>{eb.badges.events.short_name}</span>
@@ -557,8 +557,10 @@ export default async function ModelProfilePage({ params }: Props) {
                   </div>
                 </div>
 
-                {/* BOTTOM GLASS DOCK: name, location, socials, action buttons all overlaid */}
-                <div className="absolute inset-x-0 bottom-0 z-10 pt-20 pb-5 px-5 bg-gradient-to-t from-black/95 via-black/75 via-40% to-transparent text-left">
+                {/* BOTTOM GLASS DOCK: name, location, socials, action buttons all overlaid.
+                    Bottom color is matched to the profile-card body (rgba(25,10,45)) so the photo
+                    melts seamlessly into the card content section below — no visible seam. */}
+                <div className="absolute inset-x-0 bottom-0 z-10 pt-20 pb-5 px-5 bg-gradient-to-t from-[#190a2d] via-[#190a2d]/85 via-30% to-transparent text-left">
                   {/* Synthwave gradient accent — top edge of dock */}
                   <div className="absolute top-16 left-5 right-5 h-px bg-gradient-to-r from-transparent via-pink-400/70 to-transparent" />
 
@@ -726,8 +728,13 @@ export default async function ModelProfilePage({ params }: Props) {
 
           {/* After-hero content section. Hero variant gets its own padding here
               because the parent profile-card was rendered padless to let the
-              photo bleed edge-to-edge. */}
-          <div className={useHeroLayout ? "p-6 pt-5 text-center" : "contents"}>
+              photo bleed edge-to-edge. The negative-margin pseudo-bridge above
+              fades the photo's dark dock into the card body color so there's
+              no visible seam between the photo and the content. */}
+          {useHeroLayout && (
+            <div className="relative h-16 -mt-16 pointer-events-none bg-gradient-to-b from-[#190a2d] to-transparent z-0" aria-hidden />
+          )}
+          <div className={useHeroLayout ? "p-6 pt-5 text-center relative" : "contents"}>
 
           {/* Bio - under name (or under hero) */}
           {model.bio && <BioExpand bio={model.bio} />}
