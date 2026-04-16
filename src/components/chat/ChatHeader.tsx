@@ -24,7 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { VideoCallButton } from "@/components/video";
 import { TipDialog } from "./TipDialog";
-import { ArrowLeft, MoreVertical, Ban, Circle, Gift, Users, Building2, Search } from "lucide-react";
+import { ArrowLeft, MoreVertical, Ban, Circle, Gift, Users, Building2, Search, Volume2, VolumeX } from "lucide-react";
 import { ChatSearch } from "./ChatSearch";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -50,6 +50,8 @@ interface ChatHeaderProps {
   canTip: boolean;
   localCoinBalance: number;
   onBalanceChange: (newBalance: number) => void;
+  soundEnabled?: boolean;
+  onToggleSound?: () => void;
 }
 
 export function ChatHeader({
@@ -63,6 +65,8 @@ export function ChatHeader({
   canTip,
   localCoinBalance,
   onBalanceChange,
+  soundEnabled = true,
+  onToggleSound,
 }: ChatHeaderProps) {
   const router = useRouter();
   const [showTipDialog, setShowTipDialog] = useState(false);
@@ -234,6 +238,24 @@ export function ChatHeader({
               <Search className="h-4 w-4 mr-2 text-cyan-400" />
               Search messages
             </DropdownMenuItem>
+            {onToggleSound && (
+              <DropdownMenuItem
+                onClick={onToggleSound}
+                className="cursor-pointer text-white/80 focus:bg-white/10 focus:text-white"
+              >
+                {soundEnabled ? (
+                  <>
+                    <VolumeX className="h-4 w-4 mr-2 text-white/60" />
+                    Mute sounds
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="h-4 w-4 mr-2 text-pink-400" />
+                    Unmute sounds
+                  </>
+                )}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator className="bg-white/10" />
             <DropdownMenuItem
               onClick={() => setShowBlockDialog(true)}

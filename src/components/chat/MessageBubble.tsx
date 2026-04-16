@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
-import { MoreVertical, Trash2, Lock, Coins, Loader2 as Spinner, Reply } from "lucide-react";
+import { MoreVertical, Trash2, Lock, Coins, Loader2 as Spinner, Reply, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { ImageLightbox } from "./ImageLightbox";
 import { LinkPreview } from "./LinkPreview";
@@ -83,6 +83,24 @@ export const MessageBubble = memo(function MessageBubble({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleted, setIsDeleted] = useState(!!(message as any).deleted_at);
   const [isUnlocking, setIsUnlocking] = useState(false);
+  // Edit state — content shown in bubble can diverge from message.content during/after editing
+  const [editedContent, setEditedContent] = useState<string | null>(
+    (message as any).content ?? null
+  );
+  const [editedAt, setEditedAt] = useState<string | null>((message as any).edited_at ?? null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDraft, setEditDraft] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Editing is allowed for own text messages within 15 min of send.
+  const EDIT_WINDOW_MS = 15 * 60 * 1000;
+  const sentMs = message.created_at ? new Date(message.created_at).getTime() : 0;
+  const canEdit =
+    isOwn &&
+    !!editedContent &&
+    !message.media_url &&
+    !(message as any).is_system &&
+    Date.now() - sentMs < EDIT_WINDOW_MS;
 
   // PPV: determine if media is locked
   const hasMediaPrice = (message.media_price ?? 0) > 0;
@@ -129,6 +147,45 @@ export const MessageBubble = memo(function MessageBubble({
       toast.error("Failed to delete message");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const startEdit = () => {
+    setEditDraft(editedContent ?? "");
+    setIsEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditDraft("");
+  };
+
+  const saveEdit = async () => {
+    const trimmed = editDraft.trim();
+    if (!trimmed || trimmed === editedContent || isSavingEdit) {
+      cancelEdit();
+      return;
+    }
+    setIsSavingEdit(true);
+    try {
+      const response = await fetch("/api/messages/edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId: message.id, content: trimmed }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        toast.error(data.error || "Failed to edit message");
+        return;
+      }
+      setEditedContent(trimmed);
+      setEditedAt(data.message?.edited_at || new Date().toISOString());
+      setIsEditing(false);
+      setEditDraft("");
+    } catch {
+      toast.error("Failed to edit message");
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -236,6 +293,12 @@ export const MessageBubble = memo(function MessageBubble({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
+                {canEdit && (
+                  <DropdownMenuItem onClick={startEdit}>
+                    <Pencil className="h-4 w-4 mr-2 text-cyan-400" />
+                    Edit message
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={handleDelete}
                   className="text-destructive focus:text-destructive"
@@ -280,16 +343,69 @@ export const MessageBubble = memo(function MessageBubble({
             </div>
           )}
 
-          {message.content && (
+          {/* Edit mode: inline textarea + save/cancel */}
+          {isEditing ? (
+            <div className="space-y-2">
+              <textarea
+                value={editDraft}
+                onChange={(e) => setEditDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    saveEdit();
+                  } else if (e.key === "Escape") {
+                    cancelEdit();
+                  }
+                }}
+                disabled={isSavingEdit}
+                autoFocus
+                rows={Math.min(6, Math.max(1, editDraft.split("\n").length))}
+                className={cn(
+                  "w-full text-[15px] leading-relaxed resize-none rounded-lg p-2 outline-none transition-all",
+                  isOwn
+                    ? "bg-white/10 text-white placeholder:text-white/40 focus:bg-white/15"
+                    : "bg-black/30 text-white placeholder:text-white/40 focus:bg-black/40"
+                )}
+              />
+              <div className="flex items-center justify-end gap-1.5 text-xs">
+                <button
+                  onClick={cancelEdit}
+                  disabled={isSavingEdit}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                  Cancel
+                </button>
+                <button
+                  onClick={saveEdit}
+                  disabled={isSavingEdit || !editDraft.trim() || editDraft.trim() === editedContent}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md bg-pink-500/20 hover:bg-pink-500/30 text-pink-200 hover:text-pink-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSavingEdit ? (
+                    <Spinner className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Check className="h-3 w-3" />
+                  )}
+                  Save
+                </button>
+              </div>
+              <p className={cn(
+                "text-[10px]",
+                isOwn ? "text-white/50" : "text-white/40"
+              )}>
+                Esc to cancel · Enter to save
+              </p>
+            </div>
+          ) : editedContent && (
             <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
-              {message.content}
+              {editedContent}
             </p>
           )}
 
           {/* Link preview for first URL in message */}
-          {message.content && extractFirstUrl(message.content) && (
+          {!isEditing && editedContent && extractFirstUrl(editedContent) && (
             <LinkPreview
-              url={extractFirstUrl(message.content)!}
+              url={extractFirstUrl(editedContent)!}
               isOwn={isOwn}
             />
           )}
@@ -421,10 +537,18 @@ export const MessageBubble = memo(function MessageBubble({
         </div>
       </div>
 
-      {/* Timestamp to the right/left of the bubble */}
+      {/* Timestamp to the right/left of the bubble (with "edited" tag if applicable) */}
       {showTimestamp && (
-        <span className="text-[10px] text-muted-foreground whitespace-nowrap self-end mb-1">
+        <span className="text-[10px] text-muted-foreground whitespace-nowrap self-end mb-1 flex items-center gap-1">
           {message.created_at && formatMessageTimestamp(message.created_at)}
+          {editedAt && (
+            <span
+              className="text-pink-300/80 italic"
+              title={`Edited ${formatMessageTimestamp(editedAt)}`}
+            >
+              · edited
+            </span>
+          )}
         </span>
       )}
     </div>

@@ -46,6 +46,26 @@ function generateTempId() {
   return `temp_${Date.now()}_${++tempIdCounter}`;
 }
 
+// Two-note gentle chime played on incoming messages (C5 → E5, matches LiveWall)
+function playChime(ctx: AudioContext) {
+  try {
+    if (ctx.state === "suspended") ctx.resume();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(523, ctx.currentTime); // C5
+    osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1); // E5
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.25);
+  } catch {
+    // Ignore audio errors
+  }
+}
+
 export function ChatView({
   conversation,
   initialMessages,
@@ -69,9 +89,55 @@ export function ChatView({
   const [isNearBottom, setIsNearBottom] = useState(true);
   const isNearBottomRef = useRef(true);
   const [newMessageCount, setNewMessageCount] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const chatMessagesRef = useRef<ChatMessagesHandle>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioInitRef = useRef(false);
+  const soundEnabledRef = useRef(true);
   const supabase = createClient();
+
+  // Keep soundEnabled in a ref so the realtime callback reads the latest value
+  // without needing to re-subscribe when the user toggles.
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
+
+  // Initialize audio context on first user interaction (required by browsers).
+  // Restore saved preference from localStorage.
+  useEffect(() => {
+    const stored = localStorage.getItem("chatSoundMuted");
+    if (stored === "true") setSoundEnabled(false);
+
+    const initAudio = () => {
+      if (audioInitRef.current) return;
+      audioInitRef.current = true;
+      try {
+        const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+        if (Ctx) audioCtxRef.current = new Ctx();
+      } catch {
+        // No audio support
+      }
+    };
+
+    const events = ["touchstart", "click", "keydown"];
+    const handler = () => {
+      initAudio();
+      events.forEach((e) => document.removeEventListener(e, handler, true));
+    };
+    events.forEach((e) => document.addEventListener(e, handler, true));
+    return () => {
+      events.forEach((e) => document.removeEventListener(e, handler, true));
+    };
+  }, []);
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem("chatSoundMuted", (!next).toString());
+      return next;
+    });
+  }, []);
 
   // Get current user's display name for typing indicator
   const currentUserName = currentModel?.first_name
@@ -173,9 +239,15 @@ export function ChatView({
         }
         return [...prev, newMessage];
       });
-      // Track unread count only when scrolled away from bottom
-      if (newMessage.sender_id !== currentActor.id && !isNearBottomRef.current) {
-        setNewMessageCount((prev) => prev + 1);
+      // Play chime on incoming (not-own) messages if sound is enabled
+      if (newMessage.sender_id !== currentActor.id) {
+        if (soundEnabledRef.current && audioCtxRef.current) {
+          playChime(audioCtxRef.current);
+        }
+        // Track unread count only when scrolled away from bottom
+        if (!isNearBottomRef.current) {
+          setNewMessageCount((prev) => prev + 1);
+        }
       }
     }, [currentActor.id]),
     onSystemTip: useCallback(() => {
@@ -533,6 +605,8 @@ export function ChatView({
         canTip={canTip}
         localCoinBalance={localCoinBalance}
         onBalanceChange={handleBalanceChange}
+        soundEnabled={soundEnabled}
+        onToggleSound={toggleSound}
       />
 
       {/* Incoming Call Dialog */}
