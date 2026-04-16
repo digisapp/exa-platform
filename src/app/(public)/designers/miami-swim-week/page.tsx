@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   MapPin,
   Calendar,
@@ -203,23 +202,26 @@ export default async function MswBrandPage() {
 
         {/* Overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
-          <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-4 py-1.5 text-sm font-semibold tracking-wide">
-            For Designers
-          </Badge>
+          <span className="inline-flex items-center mb-4 px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs font-bold shadow-[0_0_16px_rgba(236,72,153,0.5)]">
+            FOR DESIGNERS
+          </span>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-pink-300/90 font-bold mb-2 drop-shadow-lg">
+            Runway 2026
+          </p>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
             Miami Swim Week 2026
           </h1>
-          <p className="text-white/90 text-lg md:text-xl mb-5 max-w-2xl leading-relaxed">
+          <p className="text-white/90 text-lg md:text-xl mb-5 max-w-2xl leading-relaxed drop-shadow">
             Showcase your collection. Own the runway. Own the moment.
           </p>
-          <div className="flex flex-wrap gap-3 text-white/90">
-            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+          <div className="flex flex-wrap gap-2 text-white/90">
+            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
               <MapPin className="h-4 w-4 text-pink-400" />
-              <span className="font-medium text-sm">The Alexander Hotel, Miami Beach</span>
+              <span className="font-semibold text-sm">The Alexander Hotel, Miami Beach</span>
             </div>
-            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
               <Calendar className="h-4 w-4 text-cyan-400" />
-              <span className="font-medium text-sm">May 26–31, 2026</span>
+              <span className="font-semibold text-sm">May 26–31, 2026</span>
             </div>
           </div>
         </div>
@@ -229,50 +231,63 @@ export default async function MswBrandPage() {
 
         {/* Pitch Section */}
         <div className="text-center max-w-3xl mx-auto mb-16">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+            Runway showcase
+          </p>
           <h2 className="text-3xl md:text-4xl font-bold mb-5">
-            Showcase Your Collection on the Runway
+            <span className="exa-gradient-text">Showcase Your Collection on the Runway</span>
           </h2>
         </div>
 
         {/* Show Packages */}
         <div className="mb-20">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3">Choose Your Show</h2>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+              Packages
+            </p>
+            <h2 className="text-3xl font-bold mb-3">
+              <span className="exa-gradient-text">Choose Your Show</span>
+            </h2>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             {PACKAGES.map((pkg, index) => (
-              <Card
+              <div
                 key={pkg.id}
-                className={`relative overflow-hidden border ${pkg.borderColor} ${
-                  pkg.highlight ? "shadow-2xl shadow-yellow-500/10" : ""
+                className={`relative overflow-hidden rounded-2xl border ${pkg.borderColor} bg-white/[0.03] backdrop-blur-sm p-6 md:p-8 transition-all hover:border-pink-500/40 ${
+                  pkg.highlight
+                    ? "shadow-[0_0_28px_rgba(245,158,11,0.25)] hover:shadow-[0_0_40px_rgba(245,158,11,0.4)]"
+                    : "hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
                 } ${PACKAGES.length % 2 !== 0 && index === PACKAGES.length - 1 ? "md:col-span-2 max-w-xl mx-auto w-full" : ""}`}
               >
+                {pkg.highlight && (
+                  <div className="pointer-events-none absolute -top-20 -right-20 w-48 h-48 rounded-full bg-yellow-500/20 blur-3xl" />
+                )}
                 {pkg.badge && (
                   <div className="absolute top-5 right-5 z-10">
                     <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${pkg.badgeGradient} text-white shadow-md`}
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${pkg.badgeGradient} text-white shadow-[0_0_12px_rgba(245,158,11,0.5)]`}
                     >
                       {pkg.badge}
                     </span>
                   </div>
                 )}
-                <CardContent className="p-6 md:p-8">
-                  <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium mb-0.5">
+                <div className="relative">
+                  <p className="text-[10px] text-white/50 uppercase tracking-[0.2em] font-semibold mb-0.5">
                     {pkg.date}
                   </p>
-                  <p className="text-xs text-muted-foreground/60 flex items-center gap-1 mb-3">
+                  <p className="text-xs text-white/40 flex items-center gap-1 mb-3">
                     <MapPin className="h-3 w-3 flex-shrink-0" />{VENUE}
                   </p>
-                  <h3 className="text-2xl font-bold mb-5">{pkg.name}</h3>
+                  <h3 className="text-2xl font-bold text-white mb-5">{pkg.name}</h3>
 
                   <div className="space-y-3 mb-7">
                     {pkg.features.map((feature) => (
                       <div key={feature} className="flex items-center gap-3 text-sm">
-                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center">
-                          <Check className="h-3 w-3 text-pink-400" />
+                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 ring-1 ring-pink-500/30 flex items-center justify-center">
+                          <Check className="h-3 w-3 text-pink-300" />
                         </div>
-                        <span className="text-muted-foreground">{feature}</span>
+                        <span className="text-white/70">{feature}</span>
                       </div>
                     ))}
                   </div>
@@ -281,8 +296,8 @@ export default async function MswBrandPage() {
                     pkg={pkg.id}
                     fullPrice={pkg.price}
                   />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -387,7 +402,12 @@ export default async function MswBrandPage() {
 
         {/* Additional Opportunities */}
         <div className="mb-20">
-          <h2 className="text-2xl font-bold text-center mb-8">Additional Opportunities</h2>
+          <p className="text-center text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+            Add-ons
+          </p>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+            <span className="exa-gradient-text">Additional Opportunities</span>
+          </h2>
 
           <div className="max-w-3xl mx-auto space-y-3">
             {/* Miami Beach Shoot Day */}
@@ -438,12 +458,18 @@ export default async function MswBrandPage() {
         {eventModels.length > 0 && (
           <div className="mb-20">
             <div className="flex items-center gap-3 mb-8">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-                <Sparkles className="h-6 w-6 text-pink-500" />
+              <div className="relative">
+                <div className="absolute inset-0 rounded-xl bg-pink-500/40 blur-lg opacity-50" />
+                <div className="relative p-2 rounded-xl bg-gradient-to-br from-pink-500/25 to-violet-500/25 ring-1 ring-pink-500/40">
+                  <Sparkles className="h-6 w-6 text-pink-300" />
+                </div>
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Confirmed Models</h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold">The Lineup</p>
+                <h2 className="text-2xl font-bold text-white">
+                  <span className="exa-gradient-text">Confirmed Models</span>
+                </h2>
+                <p className="text-sm text-white/60">
                   {eventModels.length} professional models walking our runway
                 </p>
               </div>
@@ -482,16 +508,25 @@ export default async function MswBrandPage() {
 
 
         {/* Bottom CTA */}
-        <div className="text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-cyan-500/10 border border-pink-500/20">
-          <h2 className="text-2xl md:text-3xl font-bold mb-3">Questions? Let&apos;s Talk.</h2>
-          <a
-            href="mailto:nathan@examodels.com"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold px-8 py-4 rounded-xl transition-all hover:shadow-lg hover:shadow-pink-500/25 hover:scale-[1.02]"
-          >
-            <Mail className="h-5 w-5" />
-            nathan@examodels.com
-            <ArrowRight className="h-4 w-4" />
-          </a>
+        <div className="relative overflow-hidden text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-pink-500/12 via-violet-500/12 to-cyan-500/12 border border-pink-500/30 shadow-[0_0_32px_rgba(236,72,153,0.15)]">
+          <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-pink-500/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-cyan-500/25 blur-3xl" />
+          <div className="relative">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/60 font-semibold mb-2">
+              Get in touch
+            </p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-5">
+              <span className="exa-gradient-text">Questions? Let&apos;s Talk.</span>
+            </h2>
+            <a
+              href="mailto:nathan@examodels.com"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 hover:from-pink-400 hover:via-violet-400 hover:to-cyan-400 text-white font-bold px-8 py-4 rounded-full transition-all shadow-[0_0_24px_rgba(236,72,153,0.5)] hover:shadow-[0_0_32px_rgba(236,72,153,0.7)] active:scale-[0.98]"
+            >
+              <Mail className="h-5 w-5" />
+              nathan@examodels.com
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </div>
         </div>
       </main>
       <Footer />
