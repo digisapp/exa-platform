@@ -35,6 +35,7 @@ import {
   CircleDollarSign,
   Share2,
   Eye,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -52,6 +53,7 @@ interface NavbarProps {
   } | null;
   actorType?: "model" | "brand" | "admin" | "fan" | null;
   unreadCount?: number;
+  notificationCount?: number;
 }
 
 const publicLinks: { href: string; label: string; icon: any }[] = [];
@@ -68,11 +70,19 @@ const DROPDOWN_GLASS_CLASS =
 const DROPDOWN_ITEM_CLASS =
   "cursor-pointer rounded-lg px-2.5 py-2 text-sm text-white/80 focus:bg-white/10 focus:text-white data-[highlighted]:bg-white/10 data-[highlighted]:text-white";
 
-export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
+export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0 }: NavbarProps) {
   const pathname = usePathname();
   const coinBalanceContext = useCoinBalanceOptional();
   const coinBalance = coinBalanceContext?.balance ?? 0;
   const { t } = useTranslation();
+
+  // Notification destination by actor type
+  // Models: dashboard's Priority Inbox shows offers/bookings/auctions
+  // Fans: bids page shows their auction status
+  // Brands: dashboard shows pending campaigns + responses + upcoming bookings
+  // Admins: admin dashboard
+  const notificationHref =
+    actorType === "fan" ? "/bids" : actorType === "admin" ? "/admin" : "/dashboard";
 
   // Translated nav links
   // Models now get Bookings + Bids promoted to the top nav (revenue-critical)
@@ -253,6 +263,25 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                   <span className="hidden sm:inline text-[10px] text-white/40 font-medium">
                     {formatUsd(usdValue)}
                   </span>
+                </Link>
+              )}
+
+              {/* ───────── Notification bell ───────── */}
+              {actorType !== "admin" && (
+                <Link
+                  href={notificationHref}
+                  aria-label={`Notifications${notificationCount > 0 ? ` (${notificationCount})` : ""}`}
+                  className="relative flex items-center justify-center h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/40 text-white/60 hover:text-pink-300 transition-all"
+                >
+                  <Bell className={cn(
+                    "h-4 w-4 transition-colors",
+                    notificationCount > 0 && "text-pink-300"
+                  )} />
+                  {notificationCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-4.5 px-1 flex items-center justify-center text-[10px] font-bold bg-pink-500 text-white rounded-full shadow-[0_0_10px_rgba(236,72,153,0.8)]">
+                      {notificationCount > 9 ? "9+" : notificationCount}
+                    </span>
+                  )}
                 </Link>
               )}
 

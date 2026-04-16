@@ -110,6 +110,68 @@ export default async function DashboardLayout({
     // Non-critical, default to 0
   }
 
+  // Compute notification count per actor type (fed to navbar bell).
+  // All queries wrapped in try/catch and non-blocking — bell just shows 0 on failure.
+  let notificationCount = 0;
+  if (actor) {
+    try {
+      if (actor.type === "model") {
+        // Models: pending offers + pending bookings + active auctions ending in <24h
+        const modelRow = (profileData as any)?.id
+          ? { id: (profileData as any).id }
+          : await (supabase.from("models") as any)
+              .select("id")
+              .eq("user_id", user.id)
+              .maybeSingle()
+              .then((res: any) => res.data);
+
+        if (modelRow?.id) {
+          const endsBefore = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+          const [offers, bookings, auctions] = await Promise.all([
+            (supabase.from("offer_responses") as any)
+              .select("id", { count: "exact", head: true })
+              .eq("model_id", modelRow.id)
+              .eq("status", "pending"),
+            (supabase.from("bookings") as any)
+              .select("id", { count: "exact", head: true })
+              .eq("model_id", modelRow.id)
+              .in("status", ["pending", "counter"]),
+            (supabase.from("auctions") as any)
+              .select("id", { count: "exact", head: true })
+              .eq("model_id", modelRow.id)
+              .eq("status", "active")
+              .gt("ends_at", new Date().toISOString())
+              .lt("ends_at", endsBefore),
+          ]);
+          notificationCount =
+            (offers.count || 0) + (bookings.count || 0) + (auctions.count || 0);
+        }
+      } else if (actor.type === "brand") {
+        // Brands: recent offer_responses that aren't yet viewed (accepted/declined)
+        // + upcoming bookings in next 7 days
+        const in7Days = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        const [upcoming] = await Promise.all([
+          (supabase.from("bookings") as any)
+            .select("id", { count: "exact", head: true })
+            .eq("client_id", actor.id)
+            .in("status", ["accepted", "confirmed"])
+            .gte("event_date", new Date().toISOString().split("T")[0])
+            .lte("event_date", in7Days.split("T")[0]),
+        ]);
+        notificationCount = upcoming.count || 0;
+      } else if (actor.type === "fan") {
+        // Fans: outbid auctions (action needed)
+        const { count } = await (supabase.from("auction_bids") as any)
+          .select("id", { count: "exact", head: true })
+          .eq("bidder_id", actor.id)
+          .eq("status", "outbid");
+        notificationCount = count || 0;
+      }
+    } catch {
+      // Non-critical, fall through to 0
+    }
+  }
+
   return (
     <I18nProvider>
     <CoinBalanceProvider initialBalance={coinBalance}>
@@ -126,6 +188,7 @@ export default async function DashboardLayout({
           }}
           actorType={actor?.type || null}
           unreadCount={unreadCount}
+          notificationCount={notificationCount}
         />
         <DashboardClientWrapper actorId={actor?.id || null} actorType={actor?.type || null}>
           <main className="container px-4 md:px-8 py-8 pb-24 md:pb-8">{children}</main>
