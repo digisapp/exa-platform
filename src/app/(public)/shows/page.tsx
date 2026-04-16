@@ -6,7 +6,6 @@ import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 // Cache page for 5 minutes - events don't change frequently
 export const revalidate = 300;
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import {
   MapPin,
   Calendar,
@@ -125,14 +124,20 @@ export default async function EventsPage() {
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 pointer-events-none">
           <div className="container px-4 md:px-8">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="h-5 w-5 text-pink-500" />
-              <Badge className="bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-3 py-1">
-                {events && events.length > 0 ? `${events.length} Upcoming` : "Coming Soon"}
-              </Badge>
+              <Sparkles className="h-5 w-5 text-pink-400" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs font-bold shadow-[0_0_16px_rgba(236,72,153,0.5)]">
+                {events && events.length > 0 ? `${events.length} UPCOMING` : "COMING SOON"}
+              </span>
             </div>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/70 font-semibold mb-2 drop-shadow">
+              Live Runway
+            </p>
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-3 drop-shadow-lg">
-              EXA Shows
+              <span className="exa-gradient-text">EXA Shows</span>
             </h1>
+            <p className="text-sm md:text-base text-white/80 max-w-xl drop-shadow">
+              Miami Swim Week, NY Fashion Week, Art Week — discover shows featuring EXA models around the world.
+            </p>
           </div>
         </div>
       </div>
@@ -141,11 +146,13 @@ export default async function EventsPage() {
         {/* EXA TV Link */}
         <Link
           href="/tv"
-          className="group mb-8 flex items-center gap-3 rounded-xl bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-cyan-500/10 border border-white/10 hover:border-pink-500/40 p-4 transition-all hover:shadow-lg hover:shadow-pink-500/10"
+          className="group mb-8 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-cyan-500/10 border border-white/10 hover:border-pink-500/40 p-4 transition-all hover:shadow-[0_0_20px_rgba(236,72,153,0.25)]"
         >
-          <Tv className="h-5 w-5 text-pink-500" />
+          <div className="p-2 rounded-xl bg-pink-500/15 ring-1 ring-pink-500/30 group-hover:shadow-[0_0_12px_rgba(236,72,153,0.4)] transition-all">
+            <Tv className="h-4 w-4 text-pink-300" />
+          </div>
           <span className="text-sm font-semibold text-white">Watch Past Shows on EXA TV</span>
-          <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto transition-transform group-hover:translate-x-1" />
+          <ArrowRight className="h-4 w-4 text-white/40 ml-auto transition-all group-hover:text-pink-300 group-hover:translate-x-1" />
         </Link>
 
         {/* Events List */}
@@ -238,13 +245,28 @@ export default async function EventsPage() {
             })}
           </div>
         ) : (
-          <Card className="p-12 text-center">
-            <p className="text-muted-foreground text-lg">
-              No upcoming shows at the moment. Check back soon!
-            </p>
-          </Card>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-12 text-center">
+            <div className="relative inline-flex items-center justify-center mb-4">
+              <div className="absolute inset-0 rounded-full bg-pink-500/30 blur-2xl" />
+              <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 ring-1 ring-pink-500/40 flex items-center justify-center">
+                <Calendar className="h-8 w-8 text-pink-300" />
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-1">
+              <span className="exa-gradient-text">No upcoming shows</span>
+            </h3>
+            <p className="text-sm text-white/60">Check back soon for fresh runway dates.</p>
+          </div>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="relative mt-16 border-t border-violet-500/15 bg-gradient-to-b from-transparent to-[#0a0014]/60 backdrop-blur-sm py-8 text-center">
+        <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+        <p className="text-xs text-white/40">
+          &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+        </p>
+      </footer>
     </div>
     </CoinBalanceProvider>
   );
