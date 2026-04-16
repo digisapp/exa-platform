@@ -26,7 +26,7 @@ export const revalidate = 120;
 
 // Only select fields needed for model cards
 const MODEL_CARD_FIELDS = `
-  id, username, first_name, profile_photo_url, is_verified, is_featured,
+  id, username, first_name, last_name, profile_photo_url, is_verified, is_featured,
   last_active_at, reliability_score, show_location, city, state, height,
   show_measurements, instagram_followers, tiktok_followers, focus_tags
 `;
@@ -292,10 +292,16 @@ export default async function ModelsPage({
           <h1 className="text-3xl md:text-4xl font-bold">
             <span className="exa-gradient-text">Models</span>
           </h1>
-          {totalCount !== null && totalCount > 0 && (
-            <p className="text-sm text-white/60 mt-1">
-              Browse {totalCount.toLocaleString()} verified models worldwide
-            </p>
+          {totalCount !== null && (
+            totalCount > 0 ? (
+              <p className="text-sm text-white/60 mt-1">
+                Browse {totalCount.toLocaleString()} verified models worldwide
+              </p>
+            ) : (
+              <p className="text-sm text-white/40 mt-1 italic">
+                No models match these filters
+              </p>
+            )
           )}
         </div>
 

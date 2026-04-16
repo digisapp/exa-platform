@@ -15,7 +15,7 @@ interface ModelsGridProps {
 function ModelCardSkeleton() {
   return (
     <div className="glass-card rounded-2xl overflow-hidden">
-      <div className="aspect-[3/4] bg-muted animate-pulse" />
+      <div className="aspect-[3/4] bg-gradient-to-br from-pink-500/10 via-violet-500/10 to-cyan-500/10 animate-pulse" />
     </div>
   );
 }

@@ -270,7 +270,7 @@ export function ModelFilters() {
       </Button>
 
       {hasFilters && (
-        <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground">
+        <Button variant="ghost" onClick={clearFilters} className="text-white/60 hover:text-pink-300 hover:bg-pink-500/10">
           <X className="h-4 w-4 mr-2" />
           Clear filters
         </Button>
@@ -351,9 +351,9 @@ export function ModelFilters() {
       <div className="flex gap-3">
         <div className="relative flex-1">
           {isSearching ? (
-            <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+            <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-400 animate-spin" />
           ) : (
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
           )}
           <Input
             placeholder="Search by name or username..."
