@@ -407,7 +407,13 @@ export default async function ModelProfilePage({ params }: Props) {
       <div className="relative z-10 container max-w-lg md:max-w-3xl mx-auto py-6 px-4">
         {/* Main Profile Card */}
         <div
-          className={`profile-card rounded-3xl relative ${useHeroLayout ? "overflow-hidden" : "p-6 text-center"}`}
+          // [&::before]:z-30 makes the gradient border render ON TOP of children
+          // (photo, dock, content). Without this, the photo's edge-to-edge bleed
+          // hides the border on the photo's area and the border only becomes
+          // visible where the content section starts — creating a "halfway line"
+          // discontinuity. With z-30, the 1px gradient ring continuously wraps
+          // the entire card frame.
+          className={`profile-card rounded-3xl relative ${useHeroLayout ? "overflow-hidden [&::before]:z-30" : "p-6 text-center"}`}
           // Hero variant overrides the translucent gradient body with a solid
           // dark fill matching the dock's bottom color, so the photo melts into
           // the card body with zero color discontinuity. backdropFilter:none
