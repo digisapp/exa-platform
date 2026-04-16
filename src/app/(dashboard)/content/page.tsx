@@ -174,9 +174,9 @@ export default function ContentPage() {
           <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-cyan-500/25 blur-3xl" />
           <div className="relative flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Creator</p>
+              <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Library</p>
               <h1 className="text-2xl md:text-4xl font-bold tracking-tight">
-                <span className="exa-gradient-text">Studio</span>
+                <span className="exa-gradient-text">My Content</span>
               </h1>
               <p className="text-xs md:text-sm text-white/60 mt-1">
                 Upload, manage, and monetize your content.
