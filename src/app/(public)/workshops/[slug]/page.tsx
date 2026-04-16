@@ -4,8 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   MapPin,
   Calendar,
@@ -224,9 +222,9 @@ export default async function WorkshopPage({ params }: Props) {
           {/* Back Link */}
           <Link
             href="/workshops"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-pink-500/10 border border-white/10 hover:border-pink-500/30 text-xs font-semibold text-white/70 hover:text-pink-300 transition-all mb-6"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5" />
             Back to Workshops
           </Link>
 
@@ -234,7 +232,7 @@ export default async function WorkshopPage({ params }: Props) {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
               {/* Cover Image / Flyer */}
-              <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-pink-500/30 via-violet-500/30 to-cyan-500/30">
+              <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 bg-gradient-to-br from-pink-500/30 via-violet-500/30 to-cyan-500/30">
                 {workshop.cover_image_url ? (
                   <Image
                     src={workshop.cover_image_url}
@@ -251,40 +249,45 @@ export default async function WorkshopPage({ params }: Props) {
                   </div>
                 )}
                 {isSoldOut && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <Badge className="bg-red-500 text-white text-xl px-6 py-2 border-0">
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                    <span className="px-6 py-2 rounded-full bg-rose-500 text-white text-xl font-bold shadow-[0_0_24px_rgba(244,63,94,0.6)]">
                       Sold Out
-                    </Badge>
+                    </span>
                   </div>
                 )}
               </div>
 
               {/* Title & Details */}
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">{workshop.title}</h1>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-pink-300/90 font-bold mb-2">
+                  Workshop
+                </p>
+                <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white">
+                  <span className="exa-gradient-text">{workshop.title}</span>
+                </h1>
                 {workshop.subtitle && (
-                  <p className="text-xl text-muted-foreground">{workshop.subtitle}</p>
+                  <p className="text-xl text-white/70">{workshop.subtitle}</p>
                 )}
 
                 {/* Quick Info */}
-                <div className="flex flex-wrap gap-4 mt-4 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>{format(workshopDate, "EEEE, MMMM d, yyyy")}</span>
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs">
+                    <Calendar className="h-3.5 w-3.5 text-pink-400" />
+                    <span className="font-semibold text-white">{format(workshopDate, "EEEE, MMMM d, yyyy")}</span>
                   </div>
                   {workshop.start_time && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs">
+                      <Clock className="h-3.5 w-3.5 text-cyan-400" />
+                      <span className="font-semibold text-white">
                         {format(new Date(`2000-01-01T${workshop.start_time}`), "h:mm a")}
                         {workshop.end_time && ` - ${format(new Date(`2000-01-01T${workshop.end_time}`), "h:mm a")}`}
                       </span>
                     </div>
                   )}
                   {(workshop.location_city || workshop.location_state) && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs">
+                      <MapPin className="h-3.5 w-3.5 text-violet-400" />
+                      <span className="font-semibold text-white">
                         {workshop.location_city && workshop.location_state
                           ? `${workshop.location_city}, ${workshop.location_state}`
                           : workshop.location_city || workshop.location_state}
@@ -292,9 +295,15 @@ export default async function WorkshopPage({ params }: Props) {
                     </div>
                   )}
                   {spotsLeft !== null && spotsLeft > 0 && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      <span>{spotsLeft} spots remaining</span>
+                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs ${
+                      spotsLeft <= 5
+                        ? "bg-amber-500/10 border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                        : "bg-white/5 border-white/10"
+                    }`}>
+                      <Users className={`h-3.5 w-3.5 ${spotsLeft <= 5 ? "text-amber-300" : "text-emerald-400"}`} />
+                      <span className={`font-semibold ${spotsLeft <= 5 ? "text-amber-200" : "text-white"}`}>
+                        {spotsLeft <= 5 ? `Only ${spotsLeft} spots left!` : `${spotsLeft} spots remaining`}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -302,57 +311,57 @@ export default async function WorkshopPage({ params }: Props) {
 
               {/* Description */}
               {workshop.description && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <h2 className="text-lg font-semibold mb-3">About This Workshop</h2>
-                    <div className="prose prose-sm prose-invert max-w-none">
-                      {workshop.description.split("\n").map((paragraph, i) => (
-                        <p key={i} className="text-muted-foreground mb-3 last:mb-0">
-                          {paragraph.startsWith("**") && paragraph.endsWith("**")
-                            ? <strong className="text-pink-500">{paragraph.slice(2, -2)}</strong>
-                            : paragraph}
-                        </p>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6">
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold mb-3">
+                    About this workshop
+                  </p>
+                  <div className="prose prose-sm prose-invert max-w-none">
+                    {workshop.description.split("\n").map((paragraph, i) => (
+                      <p key={i} className="text-white/70 mb-3 last:mb-0 leading-relaxed">
+                        {paragraph.startsWith("**") && paragraph.endsWith("**")
+                          ? <strong className="text-pink-300">{paragraph.slice(2, -2)}</strong>
+                          : paragraph}
+                      </p>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Highlights */}
               {workshop.highlights && workshop.highlights.length > 0 && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <h2 className="text-lg font-semibold mb-4">What You&apos;ll Learn</h2>
-                    <ul className="space-y-3">
-                      {workshop.highlights.map((highlight, i) => (
-                        <li key={i} className="flex items-start gap-3">
-                          <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                          <span className="text-muted-foreground">{highlight}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+                <div className="rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/8 to-emerald-500/3 backdrop-blur-sm p-6">
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-emerald-300/80 font-semibold mb-4">
+                    What you&apos;ll learn
+                  </p>
+                  <ul className="space-y-3">
+                    {workshop.highlights.map((highlight, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <CheckCircle className="h-5 w-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                        <span className="text-white/80">{highlight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
 
               {/* What to Bring */}
               {workshop.what_to_bring && workshop.what_to_bring.length > 0 && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Briefcase className="h-5 w-5" />
-                      What to Bring
-                    </h2>
-                    <ul className="space-y-2">
-                      {workshop.what_to_bring.map((item, i) => (
-                        <li key={i} className="flex items-center gap-3 text-muted-foreground">
-                          <span className="h-1.5 w-1.5 rounded-full bg-pink-500" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6">
+                  <h2 className="text-base font-semibold mb-4 flex items-center gap-2 text-white">
+                    <div className="p-1.5 rounded-lg bg-pink-500/15 ring-1 ring-pink-500/30">
+                      <Briefcase className="h-4 w-4 text-pink-300" />
+                    </div>
+                    What to Bring
+                  </h2>
+                  <ul className="space-y-2">
+                    {workshop.what_to_bring.map((item, i) => (
+                      <li key={i} className="flex items-center gap-3 text-white/70">
+                        <span className="h-1.5 w-1.5 rounded-full bg-pink-400 shadow-[0_0_6px_rgba(236,72,153,0.7)] shrink-0" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
 
               {/* 3-Month Coaching Program info (runway-workshop only) */}
@@ -363,13 +372,18 @@ export default async function WorkshopPage({ params }: Props) {
               {/* Gallery */}
               {workshop.gallery_media && workshop.gallery_media.length > 0 && (
                 <div>
-                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Camera className="h-5 w-5" />
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold mb-2">
+                    Memories
+                  </p>
+                  <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-white">
+                    <div className="p-1.5 rounded-lg bg-violet-500/15 ring-1 ring-violet-500/30">
+                      <Camera className="h-4 w-4 text-violet-300" />
+                    </div>
                     Gallery
                   </h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     {workshop.gallery_media.map((url, i) => (
-                      <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-muted group">
+                      <div key={i} className="relative aspect-square rounded-xl overflow-hidden ring-1 ring-white/10 bg-white/5 group hover:ring-pink-500/40 hover:shadow-[0_0_16px_rgba(236,72,153,0.3)] transition-all">
                         {url.match(/\.(mp4|mov)$/i) ? (
                           <video
                             src={url}
@@ -410,6 +424,14 @@ export default async function WorkshopPage({ params }: Props) {
             </div>
           </div>
         </main>
+
+        {/* Footer */}
+        <footer className="relative mt-16 border-t border-violet-500/15 bg-gradient-to-b from-transparent to-[#0a0014]/60 backdrop-blur-sm py-8 text-center">
+          <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+          <p className="text-xs text-white/40">
+            &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+          </p>
+        </footer>
       </div>
     </CoinBalanceProvider>
   );

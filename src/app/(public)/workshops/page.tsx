@@ -4,8 +4,6 @@ import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   MapPin,
   Calendar,
@@ -129,14 +127,20 @@ export default async function WorkshopsPage() {
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 pointer-events-none">
             <div className="container px-4 md:px-8">
               <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="h-5 w-5 text-pink-500" />
-                <Badge className="bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-3 py-1">
-                  Professional Training
-                </Badge>
+                <Sparkles className="h-5 w-5 text-pink-400" />
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs font-bold shadow-[0_0_16px_rgba(236,72,153,0.5)]">
+                  PROFESSIONAL TRAINING
+                </span>
               </div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-white/70 font-semibold mb-2 drop-shadow">
+                Hands-on Training
+              </p>
               <h1 className="text-4xl md:text-6xl font-bold text-white mb-3 drop-shadow-lg">
-                Model Workshops
+                <span className="exa-gradient-text">Model Workshops</span>
               </h1>
+              <p className="text-sm md:text-base text-white/80 max-w-xl drop-shadow">
+                Runway technique, posing, on-camera presence — taught by coaches who&apos;ve worked with top fashion events.
+              </p>
             </div>
           </div>
         </div>
@@ -248,46 +252,90 @@ export default async function WorkshopsPage() {
               })}
             </div>
           ) : (
-            <Card className="p-12 text-center">
-              <div className="text-6xl mb-4">👠</div>
-              <h2 className="text-xl font-semibold mb-2">No Upcoming Workshops</h2>
-              <p className="text-muted-foreground text-lg mb-6">
-                Check back soon for new workshop announcements!
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-12 text-center">
+              <div className="relative inline-flex items-center justify-center mb-4">
+                <div className="absolute inset-0 rounded-full bg-pink-500/30 blur-2xl" />
+                <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 ring-1 ring-pink-500/40 flex items-center justify-center text-4xl">
+                  👠
+                </div>
+              </div>
+              <h2 className="text-xl font-semibold text-white mb-1">
+                <span className="exa-gradient-text">No Upcoming Workshops</span>
+              </h2>
+              <p className="text-sm text-white/60 mb-6">
+                Check back soon for new workshop announcements.
               </p>
-              <Button asChild variant="outline">
-                <Link href="/shows">View Upcoming Shows</Link>
-              </Button>
-            </Card>
+              <Link
+                href="/shows"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 hover:bg-pink-500/15 border border-white/15 hover:border-pink-500/40 text-sm font-semibold text-white/80 hover:text-white transition-all hover:shadow-[0_0_16px_rgba(236,72,153,0.25)]"
+              >
+                View Upcoming Shows
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           )}
 
           {/* Why Attend Section */}
           <div className="mt-16">
-            <h2 className="text-2xl font-bold text-center mb-8">Why Attend Our Workshops?</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="p-6 text-center">
-                <div className="text-4xl mb-4">🎯</div>
-                <h3 className="font-semibold mb-2">Industry Experts</h3>
-                <p className="text-sm text-muted-foreground">
-                  Learn from professionals who have coached models for top fashion events worldwide.
-                </p>
-              </Card>
-              <Card className="p-6 text-center">
-                <div className="text-4xl mb-4">⭐</div>
-                <h3 className="font-semibold mb-2">Show Opportunities</h3>
-                <p className="text-sm text-muted-foreground">
-                  Workshop attendees get priority casting for our Miami Swim Week Shows.
-                </p>
-              </Card>
-              <Card className="p-6 text-center">
-                <div className="text-4xl mb-4">🤝</div>
-                <h3 className="font-semibold mb-2">Networking</h3>
-                <p className="text-sm text-muted-foreground">
-                  Connect with designers, industry professionals, and fellow aspiring models.
-                </p>
-              </Card>
+            <p className="text-center text-[10px] uppercase tracking-[0.3em] text-white/40 font-semibold mb-2">
+              Why EXA
+            </p>
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+              <span className="exa-gradient-text">Why Attend Our Workshops?</span>
+            </h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              {[
+                {
+                  emoji: "🎯",
+                  title: "Industry Experts",
+                  desc: "Learn from professionals who have coached models for top fashion events worldwide.",
+                  color: "pink",
+                  rgb: "236,72,153",
+                },
+                {
+                  emoji: "⭐",
+                  title: "Show Opportunities",
+                  desc: "Workshop attendees get priority casting for our Miami Swim Week Shows.",
+                  color: "amber",
+                  rgb: "245,158,11",
+                },
+                {
+                  emoji: "🤝",
+                  title: "Networking",
+                  desc: "Connect with designers, industry professionals, and fellow aspiring models.",
+                  color: "cyan",
+                  rgb: "34,211,238",
+                },
+              ].map((feature) => (
+                <div
+                  key={feature.title}
+                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 text-center hover:border-white/25 transition-all"
+                  style={{
+                    boxShadow: `0 0 0 0 rgba(${feature.rgb}, 0)`,
+                  }}
+                >
+                  <div
+                    className="pointer-events-none absolute -top-12 -right-12 w-24 h-24 rounded-full blur-2xl opacity-0 group-hover:opacity-50 transition-opacity"
+                    style={{ background: `rgba(${feature.rgb}, 0.5)` }}
+                  />
+                  <div className="relative">
+                    <div className="text-4xl mb-3">{feature.emoji}</div>
+                    <h3 className="font-bold text-white mb-2">{feature.title}</h3>
+                    <p className="text-sm text-white/60">{feature.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </main>
+
+        {/* Footer */}
+        <footer className="relative mt-16 border-t border-violet-500/15 bg-gradient-to-b from-transparent to-[#0a0014]/60 backdrop-blur-sm py-8 text-center">
+          <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+          <p className="text-xs text-white/40">
+            &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+          </p>
+        </footer>
       </div>
     </CoinBalanceProvider>
   );
