@@ -378,7 +378,8 @@ export default async function ModelProfilePage({ params }: Props) {
       <div className="relative z-10 container max-w-lg md:max-w-3xl mx-auto py-6 px-4">
         {/* Main Profile Card */}
         <div className="profile-card rounded-3xl p-6 text-center relative">
-          {/* Header Row: centered wordmark with floating actions on the right */}
+          {/* Header Row — only for circle layout. Hero variant moves wordmark/share into the hero overlay. */}
+          {!useHeroLayout && (
           <div className="relative flex items-center justify-center mb-6 min-h-8">
             <Link
               href={user ? "/dashboard" : "/"}
@@ -403,6 +404,7 @@ export default async function ModelProfilePage({ params }: Props) {
               <ShareButton title={displayName} />
             </div>
           </div>
+          )}
 
           {/* Live Bids Strip — compact rows matching homepage EXA Bids style */}
           {liveAuctions && liveAuctions.length > 0 && (
@@ -454,13 +456,14 @@ export default async function ModelProfilePage({ params }: Props) {
 
           {useHeroLayout ? (
             /* ============================================
-               PORTRAIT HERO (experimental, gated by username)
-               Square photo with bottom glass dock containing name + location.
-               Online + event badges float as glass chips on the photo.
+               MEGA-HERO (experimental, gated by username)
+               4:5 portrait with EVERYTHING overlaid as glass chips:
+               - Top row: online (left) | exa models wordmark (center) | share + brand actions (right)
+               - Bottom dock: name + location + compact socials + ProfileActionButtons (chat input + video/voice/tip)
+               - Below the hero card: only bio + affiliate links + content tabs + rates CTA
                ============================================ */
-            <div className="relative mb-5 rounded-2xl overflow-hidden ring-1 ring-pink-500/25 shadow-[0_0_40px_rgba(236,72,153,0.25),0_0_80px_rgba(139,92,246,0.15)]">
-              {/* Square portrait — preserves the entire photo, no cropping */}
-              <div className="relative aspect-square w-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69]">
+            <div className="relative mb-5 rounded-2xl overflow-hidden ring-1 ring-pink-500/30 shadow-[0_0_50px_rgba(236,72,153,0.3),0_0_100px_rgba(139,92,246,0.18)]">
+              <div className="relative aspect-[4/5] w-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69]">
                 {profilePhotoUrl ? (
                   <Image
                     src={profilePhotoUrl}
@@ -478,53 +481,139 @@ export default async function ModelProfilePage({ params }: Props) {
                   </div>
                 )}
 
-                {/* Online chip — top left */}
-                {isOnline && (
-                  <div className="absolute top-4 left-4 z-10">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/50 shadow-[0_0_18px_rgba(52,211,153,0.45)]">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-                      </span>
-                      <span className="text-emerald-300 text-xs font-semibold tracking-wide">Online</span>
-                    </div>
+                {/* TOP FLOATING ROW: online (left) | wordmark (center) | actions (right) */}
+                <div className="absolute top-0 inset-x-0 z-20 p-3 flex items-start justify-between gap-2 bg-gradient-to-b from-black/45 via-black/15 to-transparent">
+                  {/* Left column: online chip */}
+                  <div className="flex flex-col items-start gap-1.5 min-w-0">
+                    {isOnline && (
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md border border-emerald-400/50 shadow-[0_0_18px_rgba(52,211,153,0.45)]">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                        </span>
+                        <span className="text-emerald-300 text-[11px] font-semibold tracking-wide">Online</span>
+                      </div>
+                    )}
                   </div>
-                )}
 
-                {/* Event badges — top right */}
-                {eventBadges && eventBadges.length > 0 && (
-                  <div className="absolute top-4 right-4 z-10 flex flex-col gap-1.5 items-end">
-                    {eventBadges.map((eb: any, idx: number) => (
+                  {/* Center: exa models wordmark — glass pill */}
+                  <Link
+                    href={user ? "/dashboard" : "/"}
+                    aria-label="exa models home"
+                    className={`${glacialIndifference.className} px-3 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/15 text-white text-base lowercase tracking-[0.02em] leading-none flex items-center hover:bg-black/65 transition-colors shadow-[0_4px_14px_rgba(0,0,0,0.35)] shrink-0`}
+                  >
+                    exa models
+                  </Link>
+
+                  {/* Right column: brand actions (if brand) + share + event badges stacked */}
+                  <div className="flex flex-col items-end gap-1.5 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      {isBrand && !isOwner && (
+                        <>
+                          <div className="rounded-full bg-black/45 backdrop-blur-md border border-white/15 shadow-[0_4px_12px_rgba(0,0,0,0.35)]">
+                            <ModelNotesDialog modelId={model.id} modelName={displayName} />
+                          </div>
+                          <div className="rounded-full bg-black/45 backdrop-blur-md border border-white/15 shadow-[0_4px_12px_rgba(0,0,0,0.35)]">
+                            <AddToCampaignButton modelId={model.id} modelName={displayName} />
+                          </div>
+                        </>
+                      )}
+                      <div className="rounded-full bg-black/45 backdrop-blur-md border border-white/15 shadow-[0_4px_12px_rgba(0,0,0,0.35)]">
+                        <ShareButton title={displayName} />
+                      </div>
+                    </div>
+                    {eventBadges && eventBadges.length > 0 && eventBadges.map((eb: any, idx: number) => (
                       <Link
                         key={idx}
                         href={`/shows/${eb.badges.events.slug}?ref=${model.affiliate_code}`}
                         title={`Confirmed ${eb.badges.events.name} Model`}
-                        className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-[0_4px_12px_rgba(0,0,0,0.4)] border border-amber-200/60 hover:scale-105 transition-transform"
+                        className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-[0_4px_12px_rgba(0,0,0,0.4)] border border-amber-200/60 hover:scale-105 transition-transform"
                       >
                         <span>💧</span>
                         <span>{eb.badges.events.short_name}</span>
                       </Link>
                     ))}
                   </div>
-                )}
+                </div>
 
-                {/* Glass dock — bottom of hero, contains name + location */}
-                <div className="absolute inset-x-0 bottom-0 pt-16 pb-5 px-5 bg-gradient-to-t from-black/90 via-black/55 to-transparent">
-                  {/* Synthwave edge accent — gradient line above the name */}
-                  <div className="absolute top-14 left-5 right-5 h-px bg-gradient-to-r from-transparent via-pink-400/70 to-transparent" />
+                {/* BOTTOM GLASS DOCK: name, location, socials, action buttons all overlaid */}
+                <div className="absolute inset-x-0 bottom-0 z-10 pt-20 pb-5 px-5 bg-gradient-to-t from-black/95 via-black/75 via-40% to-transparent text-left">
+                  {/* Synthwave gradient accent — top edge of dock */}
+                  <div className="absolute top-16 left-5 right-5 h-px bg-gradient-to-r from-transparent via-pink-400/70 to-transparent" />
 
-                  <h1 className="text-left text-4xl md:text-5xl font-bold text-white tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)] leading-[1.05]">
+                  {/* Name */}
+                  <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)] leading-[1.05]">
                     {displayName}
                   </h1>
 
+                  {/* Location */}
                   {model.show_location && (model.city || model.state) && (
-                    <div className="flex items-center gap-1.5 mt-2 text-white/85">
+                    <div className="flex items-center gap-1.5 mt-1.5 text-white/85">
                       <MapPin className="h-3.5 w-3.5 text-pink-300 drop-shadow-[0_0_6px_rgba(236,72,153,0.6)]" />
                       <span className="text-sm font-medium drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
                         {model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}
                       </span>
                     </div>
                   )}
+
+                  {/* Compact socials — icon-only glass chips with per-platform glow on hover */}
+                  {model.show_social_media && (socialLinks.length > 0 || model.email) && (
+                    <div className="flex items-center gap-1.5 mt-3 mb-3 flex-wrap">
+                      {socialLinks.map((link) => {
+                        const PLATFORM_GLOW: Record<string, string> = {
+                          instagram: "hover:bg-pink-500/30 hover:border-pink-400/60 hover:shadow-[0_0_14px_rgba(236,72,153,0.55)] hover:[&_svg]:text-pink-200",
+                          tiktok: "hover:bg-cyan-500/30 hover:border-cyan-400/60 hover:shadow-[0_0_14px_rgba(34,211,238,0.55)] hover:[&_svg]:text-cyan-200",
+                          snapchat: "hover:bg-amber-500/30 hover:border-amber-400/60 hover:shadow-[0_0_14px_rgba(245,158,11,0.55)] hover:[&_svg]:text-amber-200",
+                          x: "hover:bg-white/25 hover:border-white/60 hover:shadow-[0_0_14px_rgba(255,255,255,0.45)]",
+                          youtube: "hover:bg-rose-500/30 hover:border-rose-400/60 hover:shadow-[0_0_14px_rgba(244,63,94,0.55)] hover:[&_svg]:text-rose-200",
+                          twitch: "hover:bg-violet-500/30 hover:border-violet-400/60 hover:shadow-[0_0_14px_rgba(167,139,250,0.55)] hover:[&_svg]:text-violet-200",
+                        };
+                        return (
+                          <a
+                            key={link.platform}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`@${link.username}${link.followers ? ` · ${formatFollowers(link.followers)}` : ""}`}
+                            className={`w-8 h-8 rounded-full bg-white/12 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${PLATFORM_GLOW[link.platform]}`}
+                          >
+                            {link.platform === "instagram" && <Instagram className="h-3.5 w-3.5 text-white" />}
+                            {link.platform === "tiktok" && <TikTokIcon className="h-3.5 w-3.5 text-white" />}
+                            {link.platform === "snapchat" && <SnapchatIcon className="h-3.5 w-3.5 text-white" />}
+                            {link.platform === "x" && <XIcon className="h-3.5 w-3.5 text-white" />}
+                            {link.platform === "youtube" && <Youtube className="h-3.5 w-3.5 text-white" />}
+                            {link.platform === "twitch" && <Twitch className="h-3.5 w-3.5 text-white" />}
+                          </a>
+                        );
+                      })}
+                      {model.email && (
+                        <a
+                          href={`mailto:${model.email}`}
+                          title={model.email}
+                          className="w-8 h-8 rounded-full bg-white/12 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all hover:scale-110 active:scale-95 hover:bg-emerald-500/30 hover:border-emerald-400/60 hover:shadow-[0_0_14px_rgba(52,211,153,0.55)] hover:[&_svg]:text-emerald-200"
+                        >
+                          <Mail className="h-3.5 w-3.5 text-white" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action buttons (chat input + video/voice/tip grid) */}
+                  <ProfileActionButtons
+                    isLoggedIn={!!user}
+                    isOwner={isOwner}
+                    modelUsername={model.username}
+                    modelActorId={modelActorId}
+                    modelName={displayName}
+                    coinBalance={coinBalance}
+                    messageRate={model.message_rate || 0}
+                    videoCallRate={model.video_call_rate || 0}
+                    voiceCallRate={model.voice_call_rate || 0}
+                    allowChat={model.allow_chat ?? true}
+                    allowVideoCall={model.allow_video_call ?? true}
+                    allowVoiceCall={model.allow_voice_call ?? true}
+                    allowTips={model.allow_tips ?? true}
+                  />
                 </div>
               </div>
             </div>
@@ -626,8 +715,8 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Social Media Icons + Follower Counts — per-platform neon hover */}
-          {model.show_social_media && (socialLinks.length > 0 || model.email) && (
+          {/* Social Media Icons + Follower Counts — per-platform neon hover. Hero layout has these in the dock. */}
+          {!useHeroLayout && model.show_social_media && (socialLinks.length > 0 || model.email) && (
             <div className="flex items-center justify-center gap-3 mb-5 flex-wrap">
               {socialLinks.map((link) => {
                 // Per-platform color theming
@@ -682,22 +771,24 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Action Buttons */}
-          <ProfileActionButtons
-            isLoggedIn={!!user}
-            isOwner={isOwner}
-            modelUsername={model.username}
-            modelActorId={modelActorId}
-            modelName={displayName}
-            coinBalance={coinBalance}
-            messageRate={model.message_rate || 0}
-            videoCallRate={model.video_call_rate || 0}
-            voiceCallRate={model.voice_call_rate || 0}
-            allowChat={model.allow_chat ?? true}
-            allowVideoCall={model.allow_video_call ?? true}
-            allowVoiceCall={model.allow_voice_call ?? true}
-            allowTips={model.allow_tips ?? true}
-          />
+          {/* Action Buttons — hero layout has these in the dock */}
+          {!useHeroLayout && (
+            <ProfileActionButtons
+              isLoggedIn={!!user}
+              isOwner={isOwner}
+              modelUsername={model.username}
+              modelActorId={modelActorId}
+              modelName={displayName}
+              coinBalance={coinBalance}
+              messageRate={model.message_rate || 0}
+              videoCallRate={model.video_call_rate || 0}
+              voiceCallRate={model.voice_call_rate || 0}
+              allowChat={model.allow_chat ?? true}
+              allowVideoCall={model.allow_video_call ?? true}
+              allowVoiceCall={model.allow_voice_call ?? true}
+              allowTips={model.allow_tips ?? true}
+            />
+          )}
 
           {/* Affiliate Links - Linktree Style with neon hover glow */}
           {model.affiliate_links && model.affiliate_links.length > 0 && (
