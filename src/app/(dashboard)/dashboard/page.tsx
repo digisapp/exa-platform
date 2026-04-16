@@ -37,7 +37,7 @@ import {
   Clock,
   CircleDollarSign,
 } from "lucide-react";
-import { formatCoins, coinsToUsd, formatUsd } from "@/lib/coin-config";
+import { formatCoins, coinsToUsd, formatUsd, MIN_WITHDRAWAL_COINS } from "@/lib/coin-config";
 import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
@@ -142,16 +142,6 @@ export default async function DashboardPage() {
   const monthDeltaPct = prevMonthEarnings > 0
     ? Math.round(((thisMonthEarnings - prevMonthEarnings) / prevMonthEarnings) * 100)
     : (thisMonthEarnings > 0 ? 100 : 0);
-
-  // Bin daily earnings for the 30-day chart
-  const dailyEarnings: number[] = Array(30).fill(0);
-  const today = new Date();
-  for (const t of monthlyTransactions || []) {
-    const txDate = new Date(t.created_at);
-    const dayDiff = Math.floor((today.getTime() - txDate.getTime()) / 86_400_000);
-    const idx = 29 - dayDiff;
-    if (idx >= 0 && idx < 30) dailyEarnings[idx] += t.amount;
-  }
 
   // Filter for pending/counter bookings in JS
   const pendingBookings = (allBookings || []).filter(
@@ -593,13 +583,13 @@ export default async function DashboardPage() {
                     {pendingBookings?.length} {pendingBookings?.length === 1 ? "booking" : "bookings"}
                   </span>
                 )}
-                {(pendingBookings?.length || 0) > 0 && (model.coin_balance || 0) > 0 && <span className="text-white/30">·</span>}
-                {(model.coin_balance || 0) > 0 && (
+                {(pendingBookings?.length || 0) > 0 && (model.coin_balance || 0) >= MIN_WITHDRAWAL_COINS && <span className="text-white/30">·</span>}
+                {(model.coin_balance || 0) >= MIN_WITHDRAWAL_COINS && (
                   <span className="text-emerald-300 font-medium">
                     {formatUsd(coinsToUsd(model.coin_balance || 0))} ready to withdraw
                   </span>
                 )}
-                {pendingOffers.length === 0 && (pendingBookings?.length || 0) === 0 && (model.coin_balance || 0) === 0 && (
+                {pendingOffers.length === 0 && (pendingBookings?.length || 0) === 0 && (model.coin_balance || 0) < MIN_WITHDRAWAL_COINS && (
                   <span className="text-white/50">Ready to earn — let&apos;s get started</span>
                 )}
               </p>
@@ -892,34 +882,6 @@ export default async function DashboardPage() {
       </section>
 
       {/* ──────────────────────────────────────────────────────
-          EARNINGS CHART — 30 day trend
-         ────────────────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
-        <header className="flex items-center justify-between p-5 border-b border-white/5">
-          <div>
-            <h2 className="text-base font-semibold flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-emerald-400" />
-              Earnings · last 30 days
-            </h2>
-            <p className="text-xs text-white/50 mt-0.5">
-              {monthDeltaPct >= 0 ? (
-                <span className="text-emerald-400 font-semibold">+{monthDeltaPct}%</span>
-              ) : (
-                <span className="text-rose-400 font-semibold">{monthDeltaPct}%</span>
-              )}
-              <span> vs previous period · {formatCoins(thisMonthEarnings)} total</span>
-            </p>
-          </div>
-          <Link href="/analytics" className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-            Full analytics <ArrowUpRight className="h-3 w-3" />
-          </Link>
-        </header>
-        <div className="p-4">
-          <EarningsChart data={dailyEarnings} />
-        </div>
-      </section>
-
-      {/* ──────────────────────────────────────────────────────
           EXA Live Wall (kept as standalone section)
          ────────────────────────────────────────────────────── */}
       <LiveWallServer actorId={actor.id} actorType={actor.type} />
@@ -1021,53 +983,3 @@ export default async function DashboardPage() {
   );
 }
 
-// ──────────────────────────────────────────────────────────────
-// EarningsChart — inline SVG, no deps
-// ──────────────────────────────────────────────────────────────
-function EarningsChart({ data }: { data: number[] }) {
-  const w = 800;
-  const h = 180;
-  const pad = 8;
-  const max = Math.max(...data, 1) * 1.1;
-  const range = max || 1;
-  const step = data.length > 1 ? (w - pad * 2) / (data.length - 1) : 0;
-  const points = data
-    .map((v, i) => `${pad + i * step},${h - pad - (v / range) * (h - pad * 2)}`)
-    .join(" ");
-  const areaPoints = `${pad},${h - pad} ${points} ${w - pad},${h - pad}`;
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height="180" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="earningsFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FF69B4" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="#FF69B4" stopOpacity="0" />
-        </linearGradient>
-        <linearGradient id="earningsStroke" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#00BFFF" />
-          <stop offset="100%" stopColor="#FF00FF" />
-        </linearGradient>
-      </defs>
-      {[0.25, 0.5, 0.75].map((p) => (
-        <line
-          key={p}
-          x1={pad}
-          x2={w - pad}
-          y1={h - pad - p * (h - pad * 2)}
-          y2={h - pad - p * (h - pad * 2)}
-          stroke="rgba(255,255,255,0.05)"
-          strokeDasharray="2 4"
-        />
-      ))}
-      <polygon points={areaPoints} fill="url(#earningsFill)" />
-      <polyline
-        points={points}
-        fill="none"
-        stroke="url(#earningsStroke)"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ filter: "drop-shadow(0 0 6px rgba(255,105,180,0.5))" }}
-      />
-    </svg>
-  );
-}
