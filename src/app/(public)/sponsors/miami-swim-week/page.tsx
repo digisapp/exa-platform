@@ -26,17 +26,22 @@ import {
   Ship,
   Waves,
   Sun,
-  Hotel,
   Utensils,
   Dumbbell,
   Palette,
-  Package,
   Sparkles,
   Target,
   ChevronDown,
+  PlayCircle,
 } from "lucide-react";
 import { Footer } from "@/components/layout/footer";
+import { HotelFloorPlan } from "@/components/shows/hotel-floor-plan";
 import { ModelGrid } from "./model-grid";
+import {
+  MSW_2026_SCHEDULE,
+  MSW_2026_RUNWAY_NOTE,
+  MSW_2026_TICKETING_NOTE,
+} from "@/lib/msw-schedule";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -52,64 +57,7 @@ export const metadata: Metadata = {
 
 const VENUE = "The Alexander Hotel, Miami Beach";
 
-const SCHEDULE = [
-  {
-    day: "Monday",
-    date: "May 25",
-    title: "Casting Call Day Party",
-    description: "11am–4pm · Pool, sun, and music as 600+ models cast for the week. Open to the public — ticketed entry + VIP bottle tables. Sponsor's dream crowd: models, guests, press, and creators all in one place.",
-    highlight: true,
-    badge: "Ticketed · 600+ Models",
-  },
-  {
-    day: "Tuesday",
-    date: "May 26",
-    title: "Opening Show",
-    description: "Doors 6pm · Show 7pm · The grand opening runway show of Miami Swim Week 2026",
-    highlight: true,
-    badge: "Opening Night",
-  },
-  {
-    day: "Wednesday",
-    date: "May 27",
-    title: "Day 2 Show",
-    description: "Doors 6pm · Show 7pm · Runway show featuring emerging and established swimwear designers",
-    highlight: false,
-    badge: null,
-  },
-  {
-    day: "Thursday",
-    date: "May 28",
-    title: "Sunset Beach Show",
-    description: "Doors 6pm · Show 7pm · Daytime Emerging Designers showcase, plus our iconic sand runway at sunset — the most shareable moment of the week",
-    highlight: true,
-    badge: "Beach Runway",
-  },
-  {
-    day: "Friday",
-    date: "May 29",
-    title: "Signature Runway",
-    description: "Doors 6pm · Show 7pm · Runway show plus VIP cocktail hour and brand activations",
-    highlight: false,
-    badge: null,
-  },
-  {
-    day: "Saturday",
-    date: "May 30",
-    title: "Signature Runway",
-    description: "Doors 6pm · Show 7pm · Runway show featuring designer collections and brand activations",
-    highlight: false,
-    badge: null,
-  },
-  {
-    day: "Sunday",
-    date: "May 31",
-    title: "Pool Vibes Closing Show",
-    description: "Doors 6pm · Show 7pm · Poolside closing runway show, DJ set, and after party — the ultimate send-off to Swim Week",
-    highlight: true,
-    badge: "Closing Party",
-  },
-];
+const SCHEDULE = MSW_2026_SCHEDULE;
 
 const CASTING_CALL_PACKAGES = [
   {
@@ -485,22 +433,6 @@ const PACKAGES = [
     ],
   },
   {
-    id: "community-sponsor",
-    name: "Supporting Brand Partner",
-    tagline: "Your logo on the Red Carpet Promo Wall + show tickets",
-    price: 500,
-    badge: null,
-    badgeGradient: "",
-    borderColor: "border-red-500/20",
-    highlight: false,
-    color: "from-red-500/10 to-rose-500/5",
-    icon: <Frame className="h-5 w-5 text-red-400" />,
-    features: [
-      "Your logo on the Red Carpet Promo Wall",
-      "2 GA tickets to the show",
-    ],
-  },
-  {
     id: "cocktail-hour",
     name: "Cocktail Hour Sponsor",
     tagline: "Own the pre-show cocktail reception",
@@ -728,10 +660,10 @@ export default async function SponsorMswPage() {
               Full Week Schedule
             </h3>
             <p className="text-xs text-white/60 mb-2 leading-relaxed">
-              Every evening show features <span className="text-amber-300 font-semibold">global designers</span> and <span className="text-amber-300 font-semibold">100+ models</span> on the runway.
+              {MSW_2026_RUNWAY_NOTE}
             </p>
             <p className="text-[11px] text-white/50 mb-4 leading-relaxed">
-              Ticketing: VIP Bottle Tables (seats 5, upsize to 10 · 1st row included) · 1st / 2nd / 3rd Row Seating · GA Standing
+              {MSW_2026_TICKETING_NOTE}
             </p>
             <div className="space-y-2">
               {SCHEDULE.map((event) => (
@@ -764,6 +696,48 @@ export default async function SponsorMswPage() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Past Year Videos — Social Proof */}
+        <div className="mb-20">
+          <Link
+            href="/tv"
+            className="group block relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-pink-500/10 via-violet-500/10 to-cyan-500/10 p-8 md:p-10 transition-all hover:border-pink-500/40 hover:shadow-[0_0_40px_rgba(236,72,153,0.25)]"
+          >
+            <div className="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-pink-500/15 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-cyan-500/15 blur-3xl" />
+
+            <div className="relative flex flex-col md:flex-row md:items-center gap-6 md:gap-8">
+              <div className="flex-shrink-0">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-2xl bg-pink-500/40 blur-2xl opacity-60" />
+                  <div className="relative flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-pink-500/30 to-violet-500/30 ring-1 ring-white/20 group-hover:scale-105 transition-transform">
+                    <PlayCircle className="h-10 w-10 text-white" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-pink-300 font-bold mb-2">
+                  Watch past years
+                </p>
+                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                  See what EXA Miami Swim Week looks like
+                </h3>
+                <p className="text-white/70 leading-relaxed mb-4 max-w-2xl">
+                  Full runway shows, backstage content, brand activations, and casting footage from past Miami Swim Weeks. The complete library — 4K, free to watch.
+                </p>
+                <div className="flex items-center gap-2 text-white/90 font-semibold group-hover:text-pink-300 transition-colors">
+                  <span>Watch at examodels.com/tv</span>
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* Venue Floor Plan — Where Your Activation Lives */}
+        <div className="mb-20">
+          <HotelFloorPlan />
         </div>
 
         {/* Confirmed Model Roster — Credibility Section */}
