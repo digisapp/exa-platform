@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CheckCircle, Phone } from "lucide-react";
 
 function getNext14Weekdays(): string[] {
@@ -86,42 +85,54 @@ function ScheduleCallContent() {
   if (state === "success") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center space-y-4">
-            <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
-            <h2 className="text-xl font-bold">Call Scheduled!</h2>
-            <p className="text-muted-foreground">
-              Thanks for letting us know your availability. We&apos;ll call you soon!
-            </p>
-          </CardContent>
-        </Card>
+        <div className="max-w-md w-full rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent p-8 text-center space-y-4 shadow-[0_0_28px_rgba(52,211,153,0.2)]">
+          <div className="relative inline-flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-emerald-500/40 blur-2xl" />
+            <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500/25 to-teal-500/25 ring-1 ring-emerald-500/40 flex items-center justify-center">
+              <CheckCircle className="h-7 w-7 text-emerald-300" />
+            </div>
+          </div>
+          <h2 className="text-xl font-bold text-white">
+            <span className="exa-gradient-text">Call Scheduled!</span>
+          </h2>
+          <p className="text-white/70">
+            Thanks for letting us know your availability. We&apos;ll call you soon.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="max-w-lg w-full">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
-            <Phone className="h-6 w-6 text-white" />
+      <div className="max-w-lg w-full rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 md:p-8">
+        <div className="text-center mb-6">
+          <div className="relative mx-auto mb-3 inline-flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-pink-500/40 blur-xl opacity-60" />
+            <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center shadow-[0_0_16px_rgba(236,72,153,0.45)]">
+              <Phone className="h-6 w-6 text-white" />
+            </div>
           </div>
-          <CardTitle className="text-2xl">Schedule a Call</CardTitle>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-1">
+            Consultation
+          </p>
+          <h1 className="text-2xl font-bold text-white">
+            <span className="exa-gradient-text">Schedule a Call</span>
+          </h1>
           {gigTitle && (
-            <p className="text-muted-foreground text-sm mt-1">
-              Re: {gigTitle}
+            <p className="text-white/60 text-sm mt-1">
+              Re: <span className="text-white font-medium">{gigTitle}</span>
             </p>
           )}
-          <p className="text-muted-foreground text-sm">
-            Pick a time that works for you and we&apos;ll give you a call!
+          <p className="text-white/60 text-sm mt-2">
+            Pick a time that works for you and we&apos;ll give you a call.
           </p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName" className="text-white/80">First Name</Label>
                 <Input
                   id="firstName"
                   value={firstName}
@@ -131,7 +142,7 @@ function ScheduleCallContent() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName" className="text-white/80">Last Name</Label>
                 <Input
                   id="lastName"
                   value={lastName}
@@ -144,7 +155,7 @@ function ScheduleCallContent() {
 
             {/* Instagram */}
             <div className="space-y-2">
-              <Label htmlFor="instagram">Instagram</Label>
+              <Label htmlFor="instagram" className="text-white/80">Instagram</Label>
               <Input
                 id="instagram"
                 value={instagram}
@@ -155,7 +166,7 @@ function ScheduleCallContent() {
 
             {/* Phone */}
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="phone" className="text-white/80">Phone Number</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -164,24 +175,24 @@ function ScheduleCallContent() {
                 placeholder="(555) 123-4567"
                 required
               />
-              <p className="text-xs text-muted-foreground">
-                We&apos;ll call you at this number
+              <p className="text-xs text-white/50">
+                We&apos;ll call you at this number.
               </p>
             </div>
 
             {/* Day Selection */}
             <div className="space-y-2">
-              <Label>Day</Label>
+              <Label className="text-white/80">Day</Label>
               <div className="grid grid-cols-2 gap-2">
                 {weekdays.map((day) => (
                   <button
                     key={day}
                     type="button"
                     onClick={() => setSelectedDay(day)}
-                    className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                    className={`px-3 py-2 text-sm rounded-lg border transition-all ${
                       selectedDay === day
-                        ? "bg-pink-500/10 border-pink-500 text-pink-500 font-medium"
-                        : "border-border hover:bg-muted text-muted-foreground"
+                        ? "bg-pink-500/15 border-pink-500/60 text-pink-200 font-semibold shadow-[0_0_12px_rgba(236,72,153,0.3)]"
+                        : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 text-white/70"
                     }`}
                   >
                     {day}
@@ -189,7 +200,7 @@ function ScheduleCallContent() {
                 ))}
               </div>
               {!selectedDay && (
-                <p className="text-xs text-amber-500">
+                <p className="text-xs text-amber-300">
                   Please select a day
                 </p>
               )}
@@ -197,12 +208,12 @@ function ScheduleCallContent() {
 
             {/* Time Selection */}
             <div className="space-y-2">
-              <Label htmlFor="time">Time (ET)</Label>
+              <Label htmlFor="time" className="text-white/80">Time (ET)</Label>
               <select
                 id="time"
                 value={selectedTime}
                 onChange={(e) => setSelectedTime(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="flex h-10 w-full rounded-lg border border-white/10 bg-white/5 text-white px-3 py-2 text-sm focus:border-pink-400/60 focus:outline-none focus:ring-2 focus:ring-pink-500/20"
                 required
               >
                 <option value="">Select a time</option>
@@ -215,7 +226,7 @@ function ScheduleCallContent() {
             {/* Submit */}
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+              className="w-full bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 hover:from-pink-400 hover:via-violet-400 hover:to-cyan-400 text-white font-bold rounded-full h-11 shadow-[0_0_20px_rgba(236,72,153,0.4)] hover:shadow-[0_0_28px_rgba(236,72,153,0.6)] border-0 active:scale-[0.98] transition-all"
               disabled={state === "submitting" || !selectedDay || !selectedTime || !phone || !firstName || !lastName}
             >
               {state === "submitting" ? (
@@ -228,8 +239,7 @@ function ScheduleCallContent() {
               )}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
     </div>
   );
 }

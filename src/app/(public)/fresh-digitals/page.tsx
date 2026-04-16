@@ -89,32 +89,43 @@ function MiamiDigitalsContent() {
   if (showSuccess) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="text-center max-w-md space-y-4">
-          <div className="inline-flex p-4 rounded-full bg-emerald-500/20 mb-2">
-            <CheckCircle className="h-12 w-12 text-emerald-400" />
+        <div className="max-w-md w-full rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent p-8 text-center space-y-4 shadow-[0_0_28px_rgba(52,211,153,0.2)]">
+          <div className="relative inline-flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-emerald-500/40 blur-2xl" />
+            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500/25 to-teal-500/25 ring-1 ring-emerald-500/40 flex items-center justify-center">
+              <CheckCircle className="h-8 w-8 text-emerald-300" />
+            </div>
           </div>
-          <h1 className="text-3xl font-bold">You&apos;re Booked!</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold text-white">
+            <span className="exa-gradient-text">You&apos;re Booked!</span>
+          </h1>
+          <p className="text-white/70">
             We&apos;ll send you the exact Miami Beach location and time details to your email before May 24th.
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-white/60">
             Questions? DM us on Instagram{" "}
             <a
               href="https://instagram.com/examodels"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-pink-400 hover:text-pink-300"
+              className="text-pink-300 hover:text-pink-200 transition-colors"
             >
               @examodels
             </a>
           </p>
           <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
-            <Button asChild variant="outline">
-              <Link href="/comp-card-creator">Create Your Comp Card</Link>
-            </Button>
-            <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500">
-              <Link href="/">Back to EXA</Link>
-            </Button>
+            <Link
+              href="/comp-card-creator"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 hover:border-pink-500/40 text-white text-sm font-semibold transition-all"
+            >
+              Create Your Comp Card
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-white text-sm font-bold shadow-[0_0_16px_rgba(236,72,153,0.4)] hover:shadow-[0_0_24px_rgba(236,72,153,0.6)] transition-all"
+            >
+              Back to EXA
+            </Link>
           </div>
         </div>
       </div>
@@ -137,7 +148,7 @@ function MiamiDigitalsContent() {
           </Link>
           <Link
             href="/comp-card-creator"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-sm text-white/60 hover:text-pink-300 transition-colors"
           >
             Free Comp Card Creator
           </Link>
@@ -161,15 +172,18 @@ function MiamiDigitalsContent() {
             </div>
 
             <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+                Swim Week Prep
+              </p>
               <h1 className="text-4xl md:text-5xl font-black tracking-tight">
-                EXA Digitals
+                <span className="exa-gradient-text">EXA Digitals</span>
               </h1>
-              <p className="text-2xl md:text-3xl font-bold text-pink-400 mt-1">
+              <p className="text-2xl md:text-3xl font-bold text-pink-300 mt-1">
                 Miami Beach
               </p>
             </div>
 
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            <p className="text-lg text-white/70 leading-relaxed">
               Get fresh digitals taken by an EXA photographer just in time for Miami Swim Week castings.
               Walk into every casting with a professional comp card in hand.
             </p>
@@ -177,29 +191,29 @@ function MiamiDigitalsContent() {
             {/* Event Details */}
             <div className="space-y-4">
               <div className="flex items-start gap-4">
-                <div className="p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/20">
-                  <Calendar className="h-5 w-5 text-pink-400" />
+                <div className="p-2.5 rounded-xl bg-pink-500/15 ring-1 ring-pink-500/30 shadow-[0_0_12px_rgba(236,72,153,0.2)]">
+                  <Calendar className="h-5 w-5 text-pink-300" />
                 </div>
                 <div>
-                  <p className="font-semibold">Sunday, May 24th</p>
-                  <p className="text-sm text-muted-foreground">Right before Miami Swim Week castings begin</p>
+                  <p className="font-semibold text-white">Sunday, May 24th</p>
+                  <p className="text-sm text-white/60">Right before Miami Swim Week castings begin</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="p-2.5 rounded-xl bg-violet-500/10 border border-violet-500/20">
-                  <MapPin className="h-5 w-5 text-violet-400" />
+                <div className="p-2.5 rounded-xl bg-violet-500/15 ring-1 ring-violet-500/30 shadow-[0_0_12px_rgba(167,139,250,0.2)]">
+                  <MapPin className="h-5 w-5 text-violet-300" />
                 </div>
                 <div>
-                  <p className="font-semibold">Miami Beach</p>
-                  <p className="text-sm text-muted-foreground">Exact location to be announced</p>
+                  <p className="font-semibold text-white">Miami Beach</p>
+                  <p className="text-sm text-white/60">Exact location to be announced</p>
                 </div>
               </div>
             </div>
 
             {/* What's Included */}
             <div className="space-y-3">
-              <h2 className="text-lg font-semibold">What&apos;s Included</h2>
+              <h2 className="text-lg font-semibold text-white">What&apos;s Included</h2>
               <div className="grid sm:grid-cols-2 gap-3">
                 {[
                   {
@@ -225,12 +239,12 @@ function MiamiDigitalsContent() {
                 ].map((item) => (
                   <div
                     key={item.title}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+                    className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-pink-500/25 transition-colors"
                   >
-                    <item.icon className="h-5 w-5 text-pink-400 mt-0.5 shrink-0" />
+                    <item.icon className="h-5 w-5 text-pink-300 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-medium">{item.title}</p>
-                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                      <p className="text-sm font-semibold text-white">{item.title}</p>
+                      <p className="text-xs text-white/60">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -240,11 +254,13 @@ function MiamiDigitalsContent() {
 
           {/* Right: Checkout Form */}
           <div className="lg:sticky lg:top-24">
-            <div className="rounded-2xl border border-white/[0.08] bg-black/40 p-6 md:p-8 space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 md:p-8 space-y-6 shadow-[0_0_24px_rgba(236,72,153,0.1)]">
               {/* Price */}
-              <div className="text-center pb-4 border-b border-white/[0.06]">
-                <p className="text-4xl font-black">$125</p>
-                <p className="text-sm text-muted-foreground mt-1">
+              <div className="text-center pb-4 border-b border-white/5">
+                <p className="text-4xl md:text-5xl font-black">
+                  <span className="exa-gradient-text">$125</span>
+                </p>
+                <p className="text-sm text-white/60 mt-1">
                   Digitals + 20 printed comp cards
                 </p>
               </div>
@@ -339,7 +355,7 @@ function MiamiDigitalsContent() {
                 onClick={handleCheckout}
                 disabled={loading || !name.trim() || !email.trim()}
                 size="lg"
-                className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold text-base h-12"
+                className="w-full bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 hover:from-pink-400 hover:via-violet-400 hover:to-cyan-400 text-white font-bold text-base h-12 rounded-full shadow-[0_0_20px_rgba(236,72,153,0.4)] hover:shadow-[0_0_28px_rgba(236,72,153,0.6)] border-0 active:scale-[0.98] transition-all"
               >
                 {loading ? (
                   <>
@@ -359,19 +375,19 @@ function MiamiDigitalsContent() {
                 )}
               </Button>
 
-              <p className="text-[11px] text-center text-muted-foreground/60">
+              <p className="text-[11px] text-center text-white/50">
                 Secure checkout powered by Stripe. Location details sent via email.
               </p>
 
               {/* Sponsored by Digis */}
-              <div className="flex items-center justify-center gap-2 pt-2 border-t border-white/[0.06]">
-                <span className="text-xs text-muted-foreground/60">Sponsored by</span>
+              <div className="flex items-center justify-center gap-2 pt-2 border-t border-white/5">
+                <span className="text-xs text-white/50">Sponsored by</span>
                 <Image
                   src="/digis-logo-white.png"
                   alt="Digis"
                   width={56}
                   height={20}
-                  className="h-5 w-auto opacity-60"
+                  className="h-5 w-auto opacity-70"
                 />
               </div>
             </div>
