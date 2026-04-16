@@ -1,7 +1,31 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+
+// Extract storage path from either a raw path or an expired signed URL.
+// Handles: "premium/modelId/timestamp.jpg" and
+// "https://.../object/sign/portfolio/premium/...?token=..." (or /public/).
+function extractStoragePath(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (!url.startsWith("http")) return url; // already a storage path
+  const match = url.match(/\/object\/(?:sign|public)\/[^/]+\/(.+?)(?:\?|$)/);
+  return match ? match[1] : null;
+}
+
+async function resignUrl(
+  rawUrl: string | null | undefined,
+  service: ReturnType<typeof createServiceRoleClient>
+): Promise<string | null> {
+  if (!rawUrl) return null;
+  const path = extractStoragePath(rawUrl);
+  if (!path) return rawUrl; // not a storage path we can re-sign; pass through
+  const { data } = await service.storage
+    .from("portfolio")
+    .createSignedUrl(path, 3600);
+  return data?.signedUrl ?? rawUrl;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -80,29 +104,43 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Re-sign media URLs so purchased content actually renders. Without this,
+    // rows stored as raw storage paths OR as signed URLs whose token has
+    // already expired (1hr TTL) come back broken in <Image>.
+    const service = createServiceRoleClient();
+    const items = filteredPurchases.filter((p) => p.content);
+
+    const signedPairs = await Promise.all(
+      items.map(async (p) => {
+        const [mediaUrl, previewUrl] = await Promise.all([
+          resignUrl(p.content.media_url, service),
+          resignUrl(p.content.preview_url, service),
+        ]);
+        return { mediaUrl, previewUrl };
+      })
+    );
+
     // Transform data for frontend
-    const content = filteredPurchases
-      .filter((p) => p.content) // Filter out any with missing content
-      .map((p) => ({
-        id: p.id,
-        purchasedAt: p.created_at,
-        coinsSpent: p.amount_paid,
-        content: {
-          id: p.content.id,
-          title: p.content.title,
-          description: p.content.description,
-          mediaUrl: p.content.media_url,
-          mediaType: p.content.media_type,
-          previewUrl: p.content.preview_url,
-        },
-        creator: p.content.model ? {
-          id: p.content.model.id,
-          username: p.content.model.username,
-          firstName: p.content.model.first_name,
-          lastName: p.content.model.last_name,
-          profilePhotoUrl: p.content.model.profile_photo_url,
-        } : null,
-      }));
+    const content = items.map((p, i) => ({
+      id: p.id,
+      purchasedAt: p.created_at,
+      coinsSpent: p.amount_paid,
+      content: {
+        id: p.content.id,
+        title: p.content.title,
+        description: p.content.description,
+        mediaUrl: signedPairs[i].mediaUrl,
+        mediaType: p.content.media_type,
+        previewUrl: signedPairs[i].previewUrl,
+      },
+      creator: p.content.model ? {
+        id: p.content.model.id,
+        username: p.content.model.username,
+        firstName: p.content.model.first_name,
+        lastName: p.content.model.last_name,
+        profilePhotoUrl: p.content.model.profile_photo_url,
+      } : null,
+    }));
 
     return NextResponse.json({
       content,
