@@ -193,26 +193,30 @@ export default async function HomePage() {
         {/* Navigation */}
         <nav className="container px-8 md:px-16 py-6">
           <div className="flex items-center justify-between">
-            <Link href="/">
+            <Link href="/" className="transition-opacity hover:opacity-90">
               <Image
                 src="/exa-logo-white.png"
                 alt="EXA"
                 width={100}
                 height={40}
                 className="h-10 w-auto"
+                priority
               />
             </Link>
             {user ? (
-              <Link href={currentActor?.type === "admin" ? "/admin" : "/dashboard"}>
-                <Button variant="outline" size="icon" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10 h-10 w-10">
-                  <Home className="h-5 w-5" />
-                </Button>
+              <Link
+                href={currentActor?.type === "admin" ? "/admin" : "/dashboard"}
+                aria-label="Go to dashboard"
+                className="relative flex items-center justify-center h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/40 text-white/60 hover:text-pink-300 shadow-[0_0_0_0_rgba(236,72,153,0)] hover:shadow-[0_0_16px_rgba(236,72,153,0.4)] transition-all"
+              >
+                <Home className="h-5 w-5" />
               </Link>
             ) : (
-              <Link href="/signin">
-                <Button variant="outline" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
-                  Sign In
-                </Button>
+              <Link
+                href="/signin"
+                className="px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/40 text-white/80 hover:text-white text-sm font-semibold transition-all shadow-[0_0_0_0_rgba(236,72,153,0)] hover:shadow-[0_0_16px_rgba(236,72,153,0.35)]"
+              >
+                Sign In
               </Link>
             )}
           </div>
@@ -319,9 +323,12 @@ export default async function HomePage() {
         </section>
 
         {/* Upcoming Shows Section */}
-        <section className="py-6">
+        <section className="py-8">
           <div className="container px-8 md:px-16 mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold mb-2 exa-gradient-text">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+              Calendar
+            </p>
+            <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text">
               Upcoming Shows
             </h2>
           </div>
@@ -329,8 +336,11 @@ export default async function HomePage() {
         </section>
 
         {/* Book Top Models Section */}
-        <section className="py-12">
+        <section className="py-8">
           <div className="container px-8 md:px-16 mb-8">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+              Directory
+            </p>
             <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text">
               Book Top Models
             </h2>
@@ -586,32 +596,132 @@ export default async function HomePage() {
         )}
 
         {/* Footer */}
-        <footer className="py-12 border-t border-[#FF69B4]/20">
-          <div className="container px-8 md:px-16">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-3">
-                <Image
-                  src="/exa-logo-white.png"
-                  alt="EXA"
-                  width={80}
-                  height={32}
-                  className="h-8 w-auto"
-                />
-                <span className="text-muted-foreground">One Platform. Models Worldwide.</span>
+        <footer className="relative mt-16 border-t border-violet-500/15 bg-gradient-to-b from-transparent to-[#0a0014]/60 backdrop-blur-sm">
+          {/* Decorative top-edge glow */}
+          <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+          <div className="container px-8 md:px-16 py-12">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
+              {/* Brand */}
+              <div className="col-span-2">
+                <Link href="/" className="inline-block mb-4">
+                  <Image
+                    src="/exa-logo-white.png"
+                    alt="EXA"
+                    width={100}
+                    height={40}
+                    className="h-10 w-auto"
+                  />
+                </Link>
+                <p className="text-sm text-white/60 max-w-xs leading-relaxed">
+                  One platform. Models worldwide.{" "}
+                  <span className="exa-gradient-text font-semibold">Bookings, bids, content, community.</span>
+                </p>
               </div>
-              <div className="flex items-center gap-6">
+
+              {/* Platform */}
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-3">
+                  Platform
+                </p>
+                <ul className="space-y-2 text-sm">
+                  <li>
+                    <Link href="/models" className="text-white/70 hover:text-pink-300 transition-colors">
+                      Browse Models
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/bids" className="text-white/70 hover:text-pink-300 transition-colors">
+                      Live Bids
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/boost" className="text-white/70 hover:text-pink-300 transition-colors">
+                      EXA Boost
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/tv" className="text-white/70 hover:text-pink-300 transition-colors">
+                      EXA TV
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Join */}
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-3">
+                  Join
+                </p>
+                <ul className="space-y-2 text-sm">
+                  <li>
+                    <Link href="#signup" className="text-white/70 hover:text-pink-300 transition-colors">
+                      Models
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="#signup" className="text-white/70 hover:text-amber-300 transition-colors">
+                      Fans
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="#signup" className="text-white/70 hover:text-cyan-300 transition-colors">
+                      Brands
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="#signup" className="text-white/70 hover:text-violet-300 transition-colors">
+                      Media & Press
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Company */}
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-3">
+                  Company
+                </p>
+                <ul className="space-y-2 text-sm">
+                  <li>
+                    <Link href="/shows" className="text-white/70 hover:text-pink-300 transition-colors">
+                      Shows
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/workshops" className="text-white/70 hover:text-pink-300 transition-colors">
+                      Workshops
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/for-models" className="text-white/70 hover:text-pink-300 transition-colors">
+                      For Models
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/signin" className="text-white/70 hover:text-pink-300 transition-colors">
+                      Sign In
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Bottom row */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-white/5">
+              <p className="text-xs text-white/40">
+                &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+              </p>
+              <div className="flex items-center gap-3">
                 <a
                   href="https://instagram.com/examodels"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-[#FF69B4] transition-colors"
+                  aria-label="Instagram"
+                  className="group flex items-center justify-center h-9 w-9 rounded-full bg-white/5 hover:bg-pink-500/15 border border-white/10 hover:border-pink-500/40 text-white/60 hover:text-pink-300 hover:shadow-[0_0_16px_rgba(236,72,153,0.4)] transition-all"
                 >
-                  <Instagram className="h-5 w-5" />
+                  <Instagram className="h-4 w-4" />
                 </a>
               </div>
-            </div>
-            <div className="text-center mt-8 text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
             </div>
           </div>
         </footer>
