@@ -640,17 +640,23 @@ export default async function SponsorMswPage() {
 
         {/* Overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
+          <span className="inline-flex items-center mb-4 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-black text-xs font-bold shadow-[0_0_16px_rgba(245,158,11,0.5)]">
+            FOR SPONSORS
+          </span>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-amber-300/90 font-bold mb-2 drop-shadow-lg">
+            Partnership 2026
+          </p>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
             Miami Swim Week 2026
           </h1>
-          <div className="flex flex-wrap gap-3 text-white/90">
-            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+          <div className="flex flex-wrap gap-2 text-white/90">
+            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
               <Calendar className="h-4 w-4 text-amber-400" />
-              <span className="font-medium text-sm">May 25–31, 2026</span>
+              <span className="font-semibold text-sm">May 25–31, 2026</span>
             </div>
-            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
               <MapPin className="h-4 w-4 text-cyan-400" />
-              <span className="font-medium text-sm">Miami Beach Hotel, Miami Beach</span>
+              <span className="font-semibold text-sm">Miami Beach Hotel, Miami Beach</span>
             </div>
           </div>
         </div>
@@ -662,60 +668,65 @@ export default async function SponsorMswPage() {
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 mb-16 items-start">
           {/* Left — Pitch + Stats */}
           <div>
-            <Badge className="mb-4 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
+            <span className="inline-flex items-center mb-4 px-4 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold shadow-[0_0_12px_rgba(245,158,11,0.2)]">
               Full Hotel Takeover · 7 Days · Global Exposure
-            </Badge>
+            </span>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+              The pitch
+            </p>
             <h2 className="text-3xl md:text-4xl font-bold mb-5">
-              Position Your Brand at the Center of Miami Swim Week
+              <span className="exa-gradient-text">Position Your Brand at the Center of Miami Swim Week</span>
             </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed mb-8">
+            <p className="text-white/70 text-lg leading-relaxed mb-8">
               600+ models and creators with audiences ranging from 5K to 5M. From a sunset beach runway to a 120ft yacht and a full hotel takeover, your brand is seamlessly integrated into every moment — captured, shared, and distributed across millions of viewers worldwide. <span className="text-white font-semibold">This level of access doesn&apos;t exist anywhere else.</span>
             </p>
 
             <div className="grid grid-cols-3 gap-3">
-              <div className="text-center p-4 rounded-2xl bg-muted/30 border border-white/5">
-                <p className="text-2xl md:text-3xl font-bold text-amber-400">600+</p>
-                <p className="text-xs text-muted-foreground mt-1">Models at Casting</p>
+              <div className="text-center p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-amber-500/30 transition-colors">
+                <p className="text-2xl md:text-3xl font-bold text-amber-300">600+</p>
+                <p className="text-xs text-white/60 mt-1">Models at Casting</p>
               </div>
-              <div className="text-center p-4 rounded-2xl bg-muted/30 border border-white/5">
-                <p className="text-2xl md:text-3xl font-bold text-pink-400">50M+</p>
-                <p className="text-xs text-muted-foreground mt-1">Combined Reach</p>
+              <div className="text-center p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-pink-500/30 transition-colors">
+                <p className="text-2xl md:text-3xl font-bold text-pink-300">50M+</p>
+                <p className="text-xs text-white/60 mt-1">Combined Reach</p>
               </div>
-              <div className="text-center p-4 rounded-2xl bg-muted/30 border border-white/5">
-                <p className="text-2xl md:text-3xl font-bold text-cyan-400">7 Days</p>
-                <p className="text-xs text-muted-foreground mt-1">May 25–31</p>
+              <div className="text-center p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-cyan-500/30 transition-colors">
+                <p className="text-2xl md:text-3xl font-bold text-cyan-300">7 Days</p>
+                <p className="text-xs text-white/60 mt-1">May 25–31</p>
               </div>
             </div>
           </div>
 
           {/* Right — Compact Schedule */}
-          <div className="rounded-2xl border border-white/10 bg-muted/20 p-6">
-            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-amber-400" />
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-white">
+              <div className="p-1.5 rounded-lg bg-amber-500/15 ring-1 ring-amber-500/30">
+                <Calendar className="h-4 w-4 text-amber-300" />
+              </div>
               Full Week Schedule
             </h3>
             <div className="space-y-2">
               {SCHEDULE.map((event) => (
                 <div
                   key={event.date}
-                  className={`flex items-center gap-3 p-3 rounded-xl ${
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
                     event.highlight
-                      ? "border border-amber-500/20 bg-amber-500/5"
-                      : "bg-white/[0.02]"
+                      ? "border border-amber-500/40 bg-amber-500/10 shadow-[0_0_14px_rgba(245,158,11,0.15)]"
+                      : "bg-white/[0.03] border border-white/5"
                   }`}
                 >
                   <div className="text-center flex-shrink-0 w-12">
-                    <p className="text-[10px] text-muted-foreground uppercase">{event.day.slice(0, 3)}</p>
-                    <p className={`text-base font-bold ${event.highlight ? "text-amber-400" : "text-white"}`}>
+                    <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{event.day.slice(0, 3)}</p>
+                    <p className={`text-base font-bold ${event.highlight ? "text-amber-300" : "text-white"}`}>
                       {event.date.split(" ")[1]}
                     </p>
                   </div>
                   <div className="h-8 w-px bg-white/10 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-sm">{event.title}</p>
+                      <p className="font-semibold text-sm text-white">{event.title}</p>
                       {event.badge && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_0_8px_rgba(245,158,11,0.4)]">
                           {event.badge}
                         </span>
                       )}
@@ -730,8 +741,11 @@ export default async function SponsorMswPage() {
         {/* Confirmed Model Roster — Credibility Section */}
         {eventModels.length > 0 && (
           <div className="mb-20">
+            <p className="text-center text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+              The lineup
+            </p>
             <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
-              Confirmed Models
+              <span className="exa-gradient-text">Confirmed Models</span>
             </h2>
 
             <ModelGrid models={eventModels} />
@@ -782,8 +796,10 @@ export default async function SponsorMswPage() {
               <Badge className={`mb-4 ${section.badgeColor} px-4 py-1`}>
                 {section.subtitle}
               </Badge>
-              <h2 className="text-3xl font-bold mb-3">{section.title}</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
+              <h2 className="text-3xl font-bold mb-3">
+                <span className="exa-gradient-text">{section.title}</span>
+              </h2>
+              <p className="text-white/65 max-w-2xl mx-auto">
                 {section.description}
               </p>
             </div>
@@ -792,22 +808,22 @@ export default async function SponsorMswPage() {
               {section.packages.map((pkg) => (
                 <details
                   key={pkg.id}
-                  className={`group rounded-2xl border ${pkg.borderColor} overflow-hidden transition-all [&[open]]:shadow-lg`}
+                  className={`group rounded-2xl border ${pkg.borderColor} bg-white/[0.03] backdrop-blur-sm overflow-hidden transition-all [&[open]]:shadow-[0_0_20px_rgba(236,72,153,0.15)] hover:border-pink-500/40`}
                 >
-                  <summary className="flex items-center gap-4 p-5 md:p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden select-none hover:bg-white/[0.02] transition-colors">
+                  <summary className="flex items-center gap-4 p-5 md:p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden select-none hover:bg-white/[0.04] transition-colors">
                     <div className="flex-shrink-0">{pkg.icon}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 flex-wrap">
-                        <h3 className="font-bold text-base md:text-lg">{pkg.name}</h3>
+                        <h3 className="font-bold text-base md:text-lg text-white">{pkg.name}</h3>
                         {pkg.badge && (
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r ${pkg.badgeGradient} text-white`}>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r ${pkg.badgeGradient} text-white shadow-[0_0_10px_rgba(245,158,11,0.35)]`}>
                             {pkg.badge}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground mt-0.5 truncate">{pkg.tagline}</p>
+                      <p className="text-sm text-white/60 mt-0.5 truncate">{pkg.tagline}</p>
                     </div>
-                    <ChevronDown className="h-5 w-5 text-muted-foreground flex-shrink-0 transition-transform duration-200 group-open:rotate-180" />
+                    <ChevronDown className="h-5 w-5 text-white/40 flex-shrink-0 transition-transform duration-200 group-open:rotate-180 group-hover:text-pink-300" />
                   </summary>
 
                   <div className="px-5 md:px-6 pb-6 pt-2 border-t border-white/5">
@@ -816,10 +832,10 @@ export default async function SponsorMswPage() {
                     <div className="space-y-3 mb-6 relative">
                       {pkg.features.map((feature) => (
                         <div key={feature} className="flex items-start gap-3 text-sm">
-                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${section.checkColor} flex items-center justify-center mt-0.5`}>
+                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${section.checkColor} ring-1 ring-white/10 flex items-center justify-center mt-0.5`}>
                             <Check className={`h-3 w-3 ${section.checkIcon}`} />
                           </div>
-                          <span className="text-muted-foreground leading-snug">{feature}</span>
+                          <span className="text-white/75 leading-snug">{feature}</span>
                         </div>
                       ))}
                     </div>
@@ -880,34 +896,43 @@ export default async function SponsorMswPage() {
 
 
         {/* Bottom CTA */}
-        <div className="text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-pink-500/10 border border-amber-500/20">
-          <h2 className="text-2xl md:text-3xl font-bold mb-3">Secure Your Sponsorship</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-xl mx-auto mb-8">
-            <div className="p-3 rounded-xl bg-black/20 border border-white/5">
-              <p className="text-lg font-bold text-amber-400">600+</p>
-              <p className="text-xs text-muted-foreground">Creators</p>
+        <div className="relative overflow-hidden text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-amber-500/12 via-orange-500/12 to-pink-500/12 border border-amber-500/40 shadow-[0_0_32px_rgba(245,158,11,0.15)]">
+          <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-amber-500/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-pink-500/25 blur-3xl" />
+          <div className="relative">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/60 font-semibold mb-2">
+              Final step
+            </p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-5">
+              <span className="exa-gradient-text">Secure Your Sponsorship</span>
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-xl mx-auto mb-8">
+              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
+                <p className="text-lg font-bold text-amber-300">600+</p>
+                <p className="text-xs text-white/60">Creators</p>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
+                <p className="text-lg font-bold text-pink-300">7 Days</p>
+                <p className="text-xs text-white/60">Of Content</p>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
+                <p className="text-lg font-bold text-violet-300">6</p>
+                <p className="text-xs text-white/60">Runway Shows</p>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
+                <p className="text-lg font-bold text-cyan-300">$500</p>
+                <p className="text-xs text-white/60">Starting At</p>
+              </div>
             </div>
-            <div className="p-3 rounded-xl bg-black/20 border border-white/5">
-              <p className="text-lg font-bold text-pink-400">7 Days</p>
-              <p className="text-xs text-muted-foreground">Of Content</p>
-            </div>
-            <div className="p-3 rounded-xl bg-black/20 border border-white/5">
-              <p className="text-lg font-bold text-violet-400">6</p>
-              <p className="text-xs text-muted-foreground">Runway Shows</p>
-            </div>
-            <div className="p-3 rounded-xl bg-black/20 border border-white/5">
-              <p className="text-lg font-bold text-cyan-400">$500</p>
-              <p className="text-xs text-muted-foreground">Starting At</p>
-            </div>
+            <a
+              href="mailto:nathan@examodels.com?subject=Miami%20Swim%20Week%202026%20—%20Reserve%20My%20Spot&body=Hi%20Nathan%2C%0A%0AI%20want%20to%20secure%20a%20sponsorship%20for%20Miami%20Swim%20Week%202026.%0A%0ABrand%3A%20%0AWebsite%3A%20%0APackage(s)%20of%20interest%3A%20%0ABudget%20range%3A%20%0A%0ALooking%20forward%20to%20connecting."
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-400 hover:via-orange-400 hover:to-pink-400 text-white font-bold px-8 py-4 rounded-full transition-all shadow-[0_0_24px_rgba(245,158,11,0.5)] hover:shadow-[0_0_32px_rgba(245,158,11,0.7)] active:scale-[0.98]"
+            >
+              <Mail className="h-5 w-5" />
+              Reserve Your Spot
+              <ArrowRight className="h-4 w-4" />
+            </a>
           </div>
-          <a
-            href="mailto:nathan@examodels.com?subject=Miami%20Swim%20Week%202026%20—%20Reserve%20My%20Spot&body=Hi%20Nathan%2C%0A%0AI%20want%20to%20secure%20a%20sponsorship%20for%20Miami%20Swim%20Week%202026.%0A%0ABrand%3A%20%0AWebsite%3A%20%0APackage(s)%20of%20interest%3A%20%0ABudget%20range%3A%20%0A%0ALooking%20forward%20to%20connecting."
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-8 py-4 rounded-xl transition-all hover:shadow-lg hover:shadow-amber-500/25 hover:scale-[1.02]"
-          >
-            <Mail className="h-5 w-5" />
-            Reserve Your Spot
-            <ArrowRight className="h-4 w-4" />
-          </a>
         </div>
       </main>
       <Footer />
