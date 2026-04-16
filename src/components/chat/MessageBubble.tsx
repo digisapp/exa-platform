@@ -250,29 +250,29 @@ export const MessageBubble = memo(function MessageBubble({
 
         <div
           className={cn(
-            "rounded-2xl px-4 py-3",
+            "rounded-2xl px-4 py-3 transition-all",
             isOwn
-              ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white"
-              : "bg-muted"
+              ? "bg-gradient-to-br from-pink-500 to-violet-500 text-white shadow-[0_0_20px_rgba(236,72,153,0.35)]"
+              : "bg-white/[0.05] border border-white/10 backdrop-blur-sm text-white"
           )}
         >
           {/* Reply snippet */}
           {repliedMessage && (
             <div className={cn(
-              "mb-2 px-3 py-1.5 rounded-lg border-l-2 text-xs",
+              "mb-2 px-3 py-1.5 rounded-lg border-l-[3px] text-xs",
               isOwn
-                ? "bg-white/10 border-white/40"
-                : "bg-background/60 border-pink-500/40"
+                ? "bg-white/15 border-white/60"
+                : "bg-pink-500/10 border-pink-500"
             )}>
               <p className={cn(
-                "font-medium mb-0.5",
-                isOwn ? "text-white/80" : "text-pink-500"
+                "font-semibold mb-0.5",
+                isOwn ? "text-white" : "text-pink-300"
               )}>
                 {repliedMessageSenderName || "User"}
               </p>
               <p className={cn(
                 "truncate",
-                isOwn ? "text-white/60" : "text-muted-foreground"
+                isOwn ? "text-white/75" : "text-white/60"
               )}>
                 {repliedMessage.content
                   || (repliedMessage.media_type?.startsWith("image") ? "Photo" : "Media")}
@@ -298,26 +298,32 @@ export const MessageBubble = memo(function MessageBubble({
             <div className={cn("mt-2", !message.content && "-mt-0")}>
               {isMediaLocked ? (
                 /* Locked PPV media overlay -- uses gradient placeholder, never the real URL */
-                <div className="relative rounded-lg overflow-hidden">
+                <div className="relative rounded-xl overflow-hidden ring-1 ring-pink-500/30 shadow-[0_0_24px_rgba(236,72,153,0.25)]">
                   <div className={cn(
-                    "w-full h-48 rounded-lg",
+                    "w-full h-52 rounded-xl",
                     message.media_type?.startsWith("image/")
-                      ? "bg-gradient-to-br from-pink-900/40 via-gray-800 to-violet-900/40"
-                      : "bg-gradient-to-br from-gray-800 to-gray-900"
+                      ? "bg-gradient-to-br from-pink-900/70 via-violet-900/40 to-cyan-900/50"
+                      : "bg-gradient-to-br from-violet-900/60 via-pink-900/40 to-violet-950"
                   )} />
+                  {/* Decorative blur orbs */}
+                  <div className="pointer-events-none absolute -top-12 -left-12 w-32 h-32 rounded-full bg-pink-500/40 blur-3xl" />
+                  <div className="pointer-events-none absolute -bottom-12 -right-12 w-32 h-32 rounded-full bg-violet-500/40 blur-3xl" />
                   {/* Overlay */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px] rounded-lg">
-                    <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-3">
-                      <Lock className="h-7 w-7 text-white" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-md rounded-xl">
+                    <div className="relative mb-3">
+                      <div className="absolute inset-0 rounded-full bg-pink-500/40 blur-xl" />
+                      <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-pink-500/30 to-violet-500/30 ring-1 ring-pink-500/40 flex items-center justify-center">
+                        <Lock className="h-6 w-6 text-pink-200" />
+                      </div>
                     </div>
-                    <p className="text-white font-medium mb-1">
+                    <p className="text-white font-semibold text-base mb-0.5">
                       {message.media_type?.startsWith("video/") ? "Exclusive Video" : "Exclusive Photo"}
                     </p>
-                    <p className="text-white/60 text-sm mb-4">Tap to unlock</p>
+                    <p className="text-white/60 text-xs mb-4 uppercase tracking-wider">Tap to unlock</p>
                     <Button
                       onClick={handleUnlock}
                       disabled={isUnlocking}
-                      className="h-11 px-6 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white gap-2 shadow-lg shadow-pink-500/30 active:scale-95 transition-transform"
+                      className="h-11 px-6 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-white gap-2 shadow-[0_0_24px_rgba(236,72,153,0.5)] hover:shadow-[0_0_32px_rgba(236,72,153,0.7)] active:scale-[0.98] transition-all border-0"
                     >
                       {isUnlocking ? (
                         <Spinner className="h-5 w-5 animate-spin" />

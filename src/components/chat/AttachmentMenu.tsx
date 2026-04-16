@@ -99,8 +99,8 @@ export function AttachmentMenu({
             size="icon"
             disabled={uploading || disabled}
             className={cn(
-              "shrink-0 h-12 w-12 rounded-2xl text-muted-foreground hover:text-primary hover:bg-muted transition-all",
-              open && "rotate-45 bg-muted text-primary"
+              "shrink-0 h-12 w-12 rounded-2xl text-white/60 hover:text-pink-300 hover:bg-pink-500/10 transition-all border border-white/10 hover:border-pink-500/30",
+              open && "rotate-45 bg-pink-500/15 text-pink-300 border-pink-500/40 shadow-[0_0_16px_rgba(236,72,153,0.3)]"
             )}
           >
             {uploading ? (
@@ -113,53 +113,53 @@ export function AttachmentMenu({
         <PopoverContent
           side="top"
           align="start"
-          className="w-auto p-3 rounded-2xl"
+          className="w-auto p-3 rounded-2xl bg-[#120a24]/95 backdrop-blur-xl border border-violet-500/30 shadow-2xl shadow-violet-500/15"
           sideOffset={8}
         >
           <div className="flex gap-2">
             {/* Photo */}
             <button
               onClick={handlePhotoClick}
-              className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-colors hover:bg-muted active:scale-95 min-w-[72px]"
+              className="group flex flex-col items-center gap-2 p-3 rounded-xl transition-all hover:bg-white/5 active:scale-95 min-w-[72px]"
             >
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-pink-500/10">
-                <Camera className="h-6 w-6 text-pink-500" />
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-pink-500/20 to-pink-500/10 ring-1 ring-pink-500/30 group-hover:ring-pink-500/60 group-hover:shadow-[0_0_16px_rgba(236,72,153,0.4)] transition-all">
+                <Camera className="h-6 w-6 text-pink-300" />
               </div>
-              <span className="text-xs font-semibold text-muted-foreground">Photo</span>
+              <span className="text-xs font-semibold text-white/70 group-hover:text-white">Photo</span>
             </button>
 
             {/* Video */}
             <button
               onClick={handleVideoClick}
-              className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-colors hover:bg-muted active:scale-95 min-w-[72px]"
+              className="group flex flex-col items-center gap-2 p-3 rounded-xl transition-all hover:bg-white/5 active:scale-95 min-w-[72px]"
             >
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-500/10">
-                <Video className="h-6 w-6 text-blue-500" />
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-cyan-500/20 to-blue-500/10 ring-1 ring-cyan-500/30 group-hover:ring-cyan-500/60 group-hover:shadow-[0_0_16px_rgba(34,211,238,0.4)] transition-all">
+                <Video className="h-6 w-6 text-cyan-300" />
               </div>
-              <span className="text-xs font-semibold text-muted-foreground">Video</span>
+              <span className="text-xs font-semibold text-white/70 group-hover:text-white">Video</span>
             </button>
 
             {/* Voice */}
             <button
               onClick={handleVoiceClick}
-              className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-colors hover:bg-muted active:scale-95 min-w-[72px]"
+              className="group flex flex-col items-center gap-2 p-3 rounded-xl transition-all hover:bg-white/5 active:scale-95 min-w-[72px]"
             >
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-amber-500/10">
-                <Mic className="h-6 w-6 text-amber-500" />
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-amber-500/20 to-orange-500/10 ring-1 ring-amber-500/30 group-hover:ring-amber-500/60 group-hover:shadow-[0_0_16px_rgba(245,158,11,0.4)] transition-all">
+                <Mic className="h-6 w-6 text-amber-300" />
               </div>
-              <span className="text-xs font-semibold text-muted-foreground">Voice</span>
+              <span className="text-xs font-semibold text-white/70 group-hover:text-white">Voice</span>
             </button>
 
             {/* Library - only for models */}
             {isModel && (
               <button
                 onClick={handleLibraryClick}
-                className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-colors hover:bg-muted active:scale-95 min-w-[72px]"
+                className="group flex flex-col items-center gap-2 p-3 rounded-xl transition-all hover:bg-white/5 active:scale-95 min-w-[72px]"
               >
-                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-violet-500/10">
-                  <FolderOpen className="h-6 w-6 text-violet-500" />
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-violet-500/20 to-purple-500/10 ring-1 ring-violet-500/30 group-hover:ring-violet-500/60 group-hover:shadow-[0_0_16px_rgba(167,139,250,0.4)] transition-all">
+                  <FolderOpen className="h-6 w-6 text-violet-300" />
                 </div>
-                <span className="text-xs font-semibold text-muted-foreground">Library</span>
+                <span className="text-xs font-semibold text-white/70 group-hover:text-white">Library</span>
               </button>
             )}
           </div>

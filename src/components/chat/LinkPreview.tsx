@@ -69,8 +69,10 @@ export const LinkPreview = memo(function LinkPreview({ url, isOwn }: LinkPreview
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "block mt-2 rounded-lg overflow-hidden border transition-opacity hover:opacity-90",
-        isOwn ? "border-white/20 bg-white/10" : "border-border bg-background/60"
+        "block mt-2 rounded-xl overflow-hidden border transition-all hover:scale-[1.01]",
+        isOwn
+          ? "border-white/30 bg-white/15 hover:border-white/50 hover:shadow-[0_0_16px_rgba(255,255,255,0.15)]"
+          : "border-cyan-500/30 bg-cyan-500/5 hover:border-cyan-500/60 hover:shadow-[0_0_16px_rgba(34,211,238,0.25)]"
       )}
     >
       {data.image && !imgError && (
@@ -86,16 +88,16 @@ export const LinkPreview = memo(function LinkPreview({ url, isOwn }: LinkPreview
       )}
       <div className="p-2.5">
         <div className={cn(
-          "flex items-center gap-1 text-[10px] mb-0.5",
-          isOwn ? "text-white/50" : "text-muted-foreground"
+          "flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold mb-0.5",
+          isOwn ? "text-white/70" : "text-cyan-300"
         )}>
           <ExternalLink className="h-2.5 w-2.5" />
           {data.siteName}
         </div>
         {data.title && (
           <p className={cn(
-            "text-xs font-medium line-clamp-2",
-            isOwn ? "text-white" : "text-foreground"
+            "text-xs font-semibold line-clamp-2",
+            isOwn ? "text-white" : "text-white"
           )}>
             {data.title}
           </p>
@@ -103,7 +105,7 @@ export const LinkPreview = memo(function LinkPreview({ url, isOwn }: LinkPreview
         {data.description && (
           <p className={cn(
             "text-[11px] line-clamp-2 mt-0.5",
-            isOwn ? "text-white/60" : "text-muted-foreground"
+            isOwn ? "text-white/70" : "text-white/60"
           )}>
             {data.description}
           </p>

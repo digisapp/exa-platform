@@ -381,24 +381,26 @@ export function MessageInput({
   }
 
   return (
-    <div className="border-t bg-background p-4">
+    <div className="border-t border-white/10 bg-white/[0.03] backdrop-blur-sm p-4">
       {/* Coin cost indicator - only show for fans */}
       {coinCost > 0 && (
         <div
           className={cn(
-            "flex items-center gap-2 text-sm mb-2 px-2 py-1.5 rounded-lg",
-            hasEnoughCoins ? "text-muted-foreground bg-muted/30" : "text-destructive bg-destructive/10"
+            "flex items-center gap-2 text-sm mb-2 px-3 py-2 rounded-xl border",
+            hasEnoughCoins
+              ? "text-white/70 bg-amber-500/10 border-amber-500/25"
+              : "text-rose-300 bg-rose-500/10 border-rose-500/30"
           )}
         >
-          <Coins className="h-4 w-4 text-yellow-500" />
+          <Coins className="h-4 w-4 text-amber-400" />
           <span>
             {hasEnoughCoins
               ? `${coinCost} coins per message`
               : `Not enough coins — need ${coinCost}, you have ${coinBalance}`}
           </span>
           {!hasEnoughCoins && (
-            <Link href="/coins" className="ml-auto text-xs font-medium text-pink-500 hover:underline whitespace-nowrap">
-              Get coins
+            <Link href="/coins" className="ml-auto text-xs font-semibold text-pink-300 hover:text-pink-200 whitespace-nowrap">
+              Get coins →
             </Link>
           )}
         </div>
@@ -406,18 +408,18 @@ export function MessageInput({
 
       {/* Reply-to bar */}
       {replyingTo && (
-        <div className="flex items-center gap-2 mb-2 px-3 py-2.5 rounded-xl bg-muted/50 border-l-3 border-pink-500">
-          <Reply className="h-4 w-4 text-pink-500 flex-shrink-0" />
+        <div className="flex items-center gap-2 mb-2 px-3 py-2.5 rounded-xl bg-pink-500/10 border-l-[3px] border-pink-500 shadow-[0_0_12px_rgba(236,72,153,0.15)]">
+          <Reply className="h-4 w-4 text-pink-300 flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-pink-500">Replying</p>
-            <p className="text-sm text-muted-foreground truncate">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-pink-300">Replying</p>
+            <p className="text-sm text-white/70 truncate">
               {replyingTo.content || (replyingTo.media_url ? "Photo/Video" : "Message")}
             </p>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 flex-shrink-0 rounded-full hover:bg-destructive/10 hover:text-destructive"
+            className="h-8 w-8 flex-shrink-0 rounded-full text-white/60 hover:bg-rose-500/15 hover:text-rose-300"
             onClick={onCancelReply}
           >
             <X className="h-4 w-4" />
@@ -506,10 +508,10 @@ export function MessageInput({
               }
             }}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
               showPriceInput
-                ? "bg-pink-500/20 text-pink-400 border border-pink-500/30"
-                : "bg-muted text-muted-foreground hover:bg-muted/80 border border-transparent"
+                ? "bg-pink-500/20 text-pink-200 border border-pink-500/40 shadow-[0_0_12px_rgba(236,72,153,0.3)]"
+                : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80 border border-white/10"
             )}
           >
             <Lock className="h-3 w-3" />
@@ -517,7 +519,7 @@ export function MessageInput({
           </button>
           {showPriceInput && (
             <div className="flex items-center gap-1.5">
-              <Coins className="h-3.5 w-3.5 text-yellow-500" />
+              <Coins className="h-3.5 w-3.5 text-amber-400" />
               <input
                 type="number"
                 min={10}
@@ -527,10 +529,10 @@ export function MessageInput({
                   const val = parseInt(e.target.value);
                   setMediaPrice(isNaN(val) ? null : Math.max(10, Math.min(10000, val)));
                 }}
-                className="w-20 h-7 px-2 text-xs rounded-md border bg-background text-foreground"
+                className="w-20 h-7 px-2 text-xs rounded-lg border border-pink-500/30 bg-white/5 text-white focus:border-pink-400/60 focus:outline-none focus:ring-2 focus:ring-pink-500/20"
                 placeholder="10"
               />
-              <span className="text-xs text-muted-foreground">coins</span>
+              <span className="text-xs text-white/50">coins</span>
             </div>
           )}
         </div>
@@ -579,7 +581,7 @@ export function MessageInput({
           placeholder={placeholder}
           disabled={disabled || sending || uploading}
           maxLength={5000}
-          className="min-h-[48px] max-h-32 resize-none text-[15px] rounded-2xl"
+          className="min-h-[48px] max-h-32 resize-none text-[15px] rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:border-pink-400/60 focus-visible:ring-pink-500/20 focus-visible:shadow-[0_0_16px_rgba(236,72,153,0.25)]"
           rows={1}
         />
 
@@ -588,7 +590,7 @@ export function MessageInput({
           onClick={handleSend}
           disabled={!canSend || !hasEnoughCoins}
           className={cn(
-            "shrink-0 h-12 bg-gradient-to-r from-pink-500 to-violet-500 gap-1.5 rounded-2xl shadow-lg shadow-pink-500/20 active:scale-95 transition-transform",
+            "shrink-0 h-12 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 gap-1.5 rounded-2xl shadow-[0_0_24px_rgba(236,72,153,0.45)] hover:shadow-[0_0_32px_rgba(236,72,153,0.65)] active:scale-[0.98] transition-all border-0 disabled:opacity-40 disabled:shadow-none",
             coinCost > 0 ? "px-4" : "w-12"
           )}
         >
@@ -598,7 +600,7 @@ export function MessageInput({
             <>
               <Send className="h-5 w-5" />
               {coinCost > 0 && (
-                <span className="flex items-center gap-0.5 text-sm font-medium">
+                <span className="flex items-center gap-0.5 text-sm font-semibold">
                   {coinCost}
                   <Coins className="h-3.5 w-3.5" />
                 </span>
