@@ -577,7 +577,7 @@ export default async function ModelProfilePage({ params }: Props) {
                         className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-sm font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.45)] border border-amber-200/70 hover:scale-105 transition-transform"
                       >
                         <span>💧</span>
-                        <span>{eb.badges.events.name}</span>
+                        <span>{eb.badges.events.name.replace(/\s+\d{4}$/, '')}</span>
                       </Link>
                     ))}
                   </div>
@@ -700,14 +700,14 @@ export default async function ModelProfilePage({ params }: Props) {
                         {eventBadges.map((eb: any, idx: number) => (
                           <div key={idx} className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border border-amber-500/50">
                             <span>{eb.badges.events.badge_image_url ? '' : '💧'}</span>
-                            <span>{eb.badges.events.name}</span>
+                            <span>{eb.badges.events.name.replace(/\s+\d{4}$/, '')}</span>
                           </div>
                         ))}
                       </div>
                       {/* Hover tooltip - above the badge */}
                       <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                         <div className="bg-black/90 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
-                          {eventBadges.map((eb: any) => eb.badges.events.name).join(', ')} {eventBadges[0].badges.events.year} Model
+                          {eventBadges.map((eb: any) => eb.badges.events.name.replace(/\s+\d{4}$/, '')).join(', ')} {eventBadges[0].badges.events.year} Model
                         </div>
                       </div>
                     </Link>
