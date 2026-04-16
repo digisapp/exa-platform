@@ -397,7 +397,15 @@ export default async function ModelProfilePage({ params }: Props) {
 
       <div className="relative z-10 container max-w-lg md:max-w-3xl mx-auto py-6 px-4">
         {/* Main Profile Card */}
-        <div className={`profile-card rounded-3xl relative ${useHeroLayout ? "overflow-hidden" : "p-6 text-center"}`}>
+        <div
+          className={`profile-card rounded-3xl relative ${useHeroLayout ? "overflow-hidden" : "p-6 text-center"}`}
+          // Hero variant overrides the translucent gradient body with a solid
+          // dark fill matching the dock's bottom color, so the photo melts into
+          // the card body with zero color discontinuity. backdropFilter:none
+          // disables the blur that would otherwise let FloatingOrbs show through
+          // and create a brightness mismatch against the opaque dock.
+          style={useHeroLayout ? { background: "#190a2d", backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+        >
           {/* Header Row — only for circle layout. Hero variant moves wordmark/share into the hero overlay. */}
           {!useHeroLayout && (
           <div className="relative flex items-center justify-center mb-6 min-h-8">
@@ -728,12 +736,9 @@ export default async function ModelProfilePage({ params }: Props) {
 
           {/* After-hero content section. Hero variant gets its own padding here
               because the parent profile-card was rendered padless to let the
-              photo bleed edge-to-edge. The negative-margin pseudo-bridge above
-              fades the photo's dark dock into the card body color so there's
-              no visible seam between the photo and the content. */}
-          {useHeroLayout && (
-            <div className="relative h-16 -mt-16 pointer-events-none bg-gradient-to-b from-[#190a2d] to-transparent z-0" aria-hidden />
-          )}
+              photo bleed edge-to-edge. The card body is solid #190a2d (matched
+              to the dock's bottom color) so the photo flows seamlessly into
+              the content area — one continuous dark frame, no bridge needed. */}
           <div className={useHeroLayout ? "p-6 pt-5 text-center relative" : "contents"}>
 
           {/* Bio - under name (or under hero) */}
