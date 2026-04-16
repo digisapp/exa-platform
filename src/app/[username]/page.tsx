@@ -312,6 +312,13 @@ export default async function ModelProfilePage({ params }: Props) {
   // Display name - show first_name + last_name, or fallback to username
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
 
+  // PORTRAIT HERO EXPERIMENT — gated by username so we can A/B by hand
+  // To enable for more models: add their username (lowercase) to this array.
+  // To revert entirely: empty the array (one-line change).
+  const PORTRAIT_HERO_USERNAMES = ["miriam"];
+  const useHeroLayout = PORTRAIT_HERO_USERNAMES.includes(model.username.toLowerCase());
+  const isOnline = !!model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000;
+
   // Social media links (with follower counts for brand discovery)
   const socialLinks = [
     { platform: "instagram", username: model.instagram_name, followers: model.instagram_followers as number | null, url: model.instagram_name ? `https://www.instagram.com/${model.instagram_name.replace(/^@/, '')}` : (model.instagram_url?.includes("instagram.com") ? model.instagram_url : null) },
@@ -445,95 +452,174 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Profile Image */}
-          <div className="flex justify-center mb-4">
-            <div className="relative group">
-              {/* Event badge wrapper - makes profile pic clickable if has event badge */}
-              {eventBadges && eventBadges.length > 0 ? (
-                <Link
-                  href={`/shows/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
-                  className="block relative"
-                  title={`Confirmed ${eventBadges[0].badges.events.name} Model`}
-                >
-                  <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ring-[4px] ring-amber-400 ${isOwner ? 'profile-pic-breathing' : ''}`}>
-                    {profilePhotoUrl ? (
-                      <Image
-                        src={profilePhotoUrl}
-                        alt={displayName}
-                        width={224}
-                        height={224}
-                        className="w-full h-full object-cover"
-                        priority
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
-                        <span className="text-4xl font-bold text-white/60">
-                          {displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
-                        </span>
-                      </div>
-                    )}
+          {useHeroLayout ? (
+            /* ============================================
+               PORTRAIT HERO (experimental, gated by username)
+               Square photo with bottom glass dock containing name + location.
+               Online + event badges float as glass chips on the photo.
+               ============================================ */
+            <div className="relative mb-5 rounded-2xl overflow-hidden ring-1 ring-pink-500/25 shadow-[0_0_40px_rgba(236,72,153,0.25),0_0_80px_rgba(139,92,246,0.15)]">
+              {/* Square portrait — preserves the entire photo, no cropping */}
+              <div className="relative aspect-square w-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69]">
+                {profilePhotoUrl ? (
+                  <Image
+                    src={profilePhotoUrl}
+                    alt={displayName}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 768px"
+                    priority
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-7xl font-bold text-white/40">
+                      {displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                    </span>
                   </div>
-                  {/* Event badges on the ring - show all */}
-                  <div className="absolute -top-2 right-0 flex flex-col gap-1 items-end">
-                    {eventBadges.map((eb: any, idx: number) => (
-                      <div key={idx} className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border border-amber-500/50">
-                        <span>{eb.badges.events.badge_image_url ? '' : '💧'}</span>
-                        <span>{eb.badges.events.short_name}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Hover tooltip - above the badge */}
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                    <div className="bg-black/90 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
-                      {eventBadges.map((eb: any) => eb.badges.events.short_name).join(', ')} {eventBadges[0].badges.events.year} Model
+                )}
+
+                {/* Online chip — top left */}
+                {isOnline && (
+                  <div className="absolute top-4 left-4 z-10">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/50 shadow-[0_0_18px_rgba(52,211,153,0.45)]">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                      </span>
+                      <span className="text-emerald-300 text-xs font-semibold tracking-wide">Online</span>
                     </div>
                   </div>
-                </Link>
-              ) : (
-                <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
-                  {profilePhotoUrl ? (
-                    <Image
-                      src={profilePhotoUrl}
-                      alt={displayName}
-                      width={224}
-                      height={224}
-                      className="w-full h-full object-cover"
-                      priority
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
-                      <span className="text-4xl font-bold text-white/60">
-                        {displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                )}
+
+                {/* Event badges — top right */}
+                {eventBadges && eventBadges.length > 0 && (
+                  <div className="absolute top-4 right-4 z-10 flex flex-col gap-1.5 items-end">
+                    {eventBadges.map((eb: any, idx: number) => (
+                      <Link
+                        key={idx}
+                        href={`/shows/${eb.badges.events.slug}?ref=${model.affiliate_code}`}
+                        title={`Confirmed ${eb.badges.events.name} Model`}
+                        className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-[0_4px_12px_rgba(0,0,0,0.4)] border border-amber-200/60 hover:scale-105 transition-transform"
+                      >
+                        <span>💧</span>
+                        <span>{eb.badges.events.short_name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                {/* Glass dock — bottom of hero, contains name + location */}
+                <div className="absolute inset-x-0 bottom-0 pt-16 pb-5 px-5 bg-gradient-to-t from-black/90 via-black/55 to-transparent">
+                  {/* Synthwave edge accent — gradient line above the name */}
+                  <div className="absolute top-14 left-5 right-5 h-px bg-gradient-to-r from-transparent via-pink-400/70 to-transparent" />
+
+                  <h1 className="text-left text-4xl md:text-5xl font-bold text-white tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)] leading-[1.05]">
+                    {displayName}
+                  </h1>
+
+                  {model.show_location && (model.city || model.state) && (
+                    <div className="flex items-center gap-1.5 mt-2 text-white/85">
+                      <MapPin className="h-3.5 w-3.5 text-pink-300 drop-shadow-[0_0_6px_rgba(236,72,153,0.6)]" />
+                      <span className="text-sm font-medium drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
+                        {model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}
                       </span>
                     </div>
                   )}
                 </div>
-              )}
               </div>
-          </div>
-
-          {/* Name */}
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
-            {displayName}
-          </h1>
-
-          {/* Status Pill - online if active within last 5 minutes */}
-          {model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000 && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/50 shadow-[0_0_16px_rgba(52,211,153,0.35)] mb-3">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-              </span>
-              <span className="text-emerald-300 text-sm font-semibold">Online now</span>
             </div>
+          ) : (
+            <>
+              {/* Profile Image (default circle layout) */}
+              <div className="flex justify-center mb-4">
+                <div className="relative group">
+                  {/* Event badge wrapper - makes profile pic clickable if has event badge */}
+                  {eventBadges && eventBadges.length > 0 ? (
+                    <Link
+                      href={`/shows/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
+                      className="block relative"
+                      title={`Confirmed ${eventBadges[0].badges.events.name} Model`}
+                    >
+                      <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ring-[4px] ring-amber-400 ${isOwner ? 'profile-pic-breathing' : ''}`}>
+                        {profilePhotoUrl ? (
+                          <Image
+                            src={profilePhotoUrl}
+                            alt={displayName}
+                            width={224}
+                            height={224}
+                            className="w-full h-full object-cover"
+                            priority
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
+                            <span className="text-4xl font-bold text-white/60">
+                              {displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Event badges on the ring - show all */}
+                      <div className="absolute -top-2 right-0 flex flex-col gap-1 items-end">
+                        {eventBadges.map((eb: any, idx: number) => (
+                          <div key={idx} className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border border-amber-500/50">
+                            <span>{eb.badges.events.badge_image_url ? '' : '💧'}</span>
+                            <span>{eb.badges.events.short_name}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Hover tooltip - above the badge */}
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                        <div className="bg-black/90 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
+                          {eventBadges.map((eb: any) => eb.badges.events.short_name).join(', ')} {eventBadges[0].badges.events.year} Model
+                        </div>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
+                      {profilePhotoUrl ? (
+                        <Image
+                          src={profilePhotoUrl}
+                          alt={displayName}
+                          width={224}
+                          height={224}
+                          className="w-full h-full object-cover"
+                          priority
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
+                          <span className="text-4xl font-bold text-white/60">
+                            {displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  </div>
+              </div>
+
+              {/* Name */}
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
+                {displayName}
+              </h1>
+
+              {/* Status Pill - online if active within last 5 minutes */}
+              {isOnline && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/50 shadow-[0_0_16px_rgba(52,211,153,0.35)] mb-3">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  </span>
+                  <span className="text-emerald-300 text-sm font-semibold">Online now</span>
+                </div>
+              )}
+            </>
           )}
 
-
-          {/* Bio - under name */}
+          {/* Bio - under name (or under hero) */}
           {model.bio && <BioExpand bio={model.bio} />}
 
-          {/* Location */}
-          {model.show_location && (model.city || model.state) && (
+          {/* Location — only shown for circle layout (hero layout has it in the dock) */}
+          {!useHeroLayout && model.show_location && (model.city || model.state) && (
             <div className="flex items-center justify-center gap-1 text-sm text-white/60 mb-4">
               <MapPin className="h-3.5 w-3.5" />
               <span>{model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}</span>
