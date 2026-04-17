@@ -26,6 +26,7 @@ import {
   Mail,
   ListOrdered,
   Ticket,
+  Image as ImageIcon,
 } from "lucide-react";
 
 type Color =
@@ -111,6 +112,7 @@ export default async function AdminPage() {
     { href: "/admin/usernames", label: "Usernames", icon: AtSign, color: "purple" },
     { href: "/admin/gigs", label: "Manage Gigs", icon: Sparkles, color: "violet" },
     { href: "/admin/shows", label: "Show Lineups", icon: ListOrdered, color: "pink", featured: true },
+    { href: "/admin/flyers", label: "Model Flyers", icon: ImageIcon, color: "rose", featured: true },
     { href: "/admin/events", label: "Events & Tickets", icon: Ticket, color: "pink", featured: true },
     {
       href: "/admin/brands",
