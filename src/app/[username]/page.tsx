@@ -651,7 +651,10 @@ export default async function ModelProfilePage({ params }: Props) {
                     </div>
                   )}
 
-                  {/* Action buttons (chat input + video/voice/tip grid) */}
+                  {/* Action buttons (chat input + video/voice/tip grid)
+                      Negative bottom margin cancels the component's built-in mb-6
+                      so the dock sits flush against the content area below. */}
+                  <div className="-mb-6">
                   <ProfileActionButtons
                     isLoggedIn={!!user}
                     isOwner={isOwner}
@@ -667,6 +670,7 @@ export default async function ModelProfilePage({ params }: Props) {
                     allowVoiceCall={model.allow_voice_call ?? true}
                     allowTips={model.allow_tips ?? true}
                   />
+                  </div>
                 </div>
               </div>
           ) : (
