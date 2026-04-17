@@ -492,7 +492,7 @@ export default function CompCardPage() {
             new Promise<void>((_, reject) => setTimeout(() => reject(new Error("Font load timeout")), 8000)),
           ]);
         }
-        fCtx.font = "90px 'GlacialIndifference', sans-serif";
+        fCtx.font = "124px 'GlacialIndifference', sans-serif";
         fCtx.fillStyle = logoColor;
         fCtx.textAlign = "center";
         fCtx.textBaseline = "top";
@@ -646,7 +646,7 @@ export default function CompCardPage() {
           new Promise<void>((_, reject) => setTimeout(() => reject(new Error("Font load timeout")), 8000)),
         ]);
       }
-      bCtx.font = "52px 'GlacialIndifference', sans-serif";
+      bCtx.font = "76px 'GlacialIndifference', sans-serif";
       bCtx.fillStyle = "#000000";
       bCtx.textAlign = "center";
       bCtx.textBaseline = "middle";
@@ -1045,7 +1045,7 @@ export default function CompCardPage() {
                         {logoColor && (
                           <div className="absolute top-0 left-0 right-0 flex justify-center pt-6 z-10 pointer-events-none">
                             <span
-                              className={`${glacialIndifference.className} text-4xl md:text-5xl leading-none tracking-[0.01em] lowercase`}
+                              className={`${glacialIndifference.className} text-5xl md:text-7xl leading-none tracking-[0.01em] lowercase`}
                               style={{ color: logoColor }}
                             >
                               exa models
@@ -1172,7 +1172,7 @@ export default function CompCardPage() {
                       </div>
                       {/* Center: EXA logo text */}
                       <div className="shrink-0 px-1">
-                        <span className={`${glacialIndifference.className} text-sm leading-none tracking-[0.01em] lowercase text-black`}>
+                        <span className={`${glacialIndifference.className} text-xl leading-none tracking-[0.01em] lowercase text-black`}>
                           exa models
                         </span>
                       </div>
