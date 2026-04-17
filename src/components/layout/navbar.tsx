@@ -425,12 +425,6 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                   {actorType === "fan" && (
                     <>
                       <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
-                        <Link href="/bids" className="w-full">
-                          <Gavel className="mr-2 h-4 w-4 text-violet-400" />
-                          {t.nav.bids}
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
                         <Link href="/my-content" className="w-full">
                           <FolderHeart className="mr-2 h-4 w-4 text-pink-400" />
                           {t.nav.myContent}
@@ -440,6 +434,26 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                       <DropdownMenuSeparator className="bg-white/10 my-1.5" />
 
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
+                        <Link
+                          href="/bids"
+                          className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-violet-500/15 to-cyan-500/10 border border-violet-500/25 hover:from-violet-500/25 hover:to-cyan-500/15 hover:border-violet-500/50 transition-all"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center shrink-0">
+                            <Gavel className="h-4 w-4 text-violet-300" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-white">
+                              {t.nav.bids}
+                            </p>
+                            <p className="text-[11px] text-violet-300">
+                              Live auctions
+                            </p>
+                          </div>
+                          <ArrowUpRight className="h-4 w-4 text-violet-400 shrink-0" />
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem asChild className="p-0 focus:bg-transparent mt-1">
                         <Link
                           href="/boost"
                           className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-orange-500/15 to-pink-500/10 border border-orange-500/25 hover:from-orange-500/25 hover:to-pink-500/15 hover:border-orange-500/50 transition-all"
