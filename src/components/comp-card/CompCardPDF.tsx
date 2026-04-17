@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   frontLogoText: {
     fontFamily: "GlacialIndifference",
     fontSize: 45,
-    letterSpacing: 0.5,
+    letterSpacing: -0.5,
     textAlign: "center",
     textTransform: "lowercase",
   },
@@ -198,8 +198,8 @@ const styles = StyleSheet.create({
   },
   footerBackLogoText: {
     fontFamily: "GlacialIndifference",
-    fontSize: 32,
-    letterSpacing: 0.5,
+    fontSize: 38,
+    letterSpacing: -0.5,
     color: "#000000",
     textTransform: "lowercase",
     textAlign: "center",

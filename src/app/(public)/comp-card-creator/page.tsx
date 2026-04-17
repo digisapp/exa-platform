@@ -443,7 +443,7 @@ export default function FreeCompCardPage() {
         fCtx.fillStyle = logoColor;
         fCtx.textAlign = "center";
         fCtx.textBaseline = "top";
-        fCtx.letterSpacing = "1px";
+        fCtx.letterSpacing = "-1px";
         fCtx.fillText("exa models", FW / 2, 80);
       }
 
@@ -890,7 +890,7 @@ export default function FreeCompCardPage() {
                         {logoColor && (
                           <div className="absolute top-0 left-0 right-0 flex justify-center pt-6 z-10 pointer-events-none">
                             <span
-                              className={`${glacialIndifference.className} text-4xl md:text-6xl leading-none tracking-[0.01em] lowercase`}
+                              className={`${glacialIndifference.className} text-4xl md:text-6xl leading-none tracking-[-0.02em] lowercase`}
                               style={{ color: logoColor }}
                             >
                               exa models
