@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   },
   frontLogoText: {
     fontFamily: "GlacialIndifference",
-    fontSize: 56,
+    fontSize: 45,
     letterSpacing: 0.5,
     textAlign: "center",
     textTransform: "lowercase",
