@@ -424,15 +424,6 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                   {/* Fan-specific items */}
                   {actorType === "fan" && (
                     <>
-                      <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
-                        <Link href="/my-content" className="w-full">
-                          <FolderHeart className="mr-2 h-4 w-4 text-pink-400" />
-                          {t.nav.myContent}
-                        </Link>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuSeparator className="bg-white/10 my-1.5" />
-
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
                         <Link
                           href="/bids"
@@ -470,6 +461,15 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                             </p>
                           </div>
                           <ArrowUpRight className="h-4 w-4 text-orange-400 shrink-0" />
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator className="bg-white/10 my-1.5" />
+
+                      <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
+                        <Link href="/my-content" className="w-full">
+                          <FolderHeart className="mr-2 h-4 w-4 text-pink-400" />
+                          {t.nav.myContent}
                         </Link>
                       </DropdownMenuItem>
                     </>
