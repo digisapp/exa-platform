@@ -12,8 +12,9 @@
  * stays sharp at small sizes regardless of source resolution.
  *
  * Priority chain:
- *   1. profile_photo_url if it's >= 800px wide (sharp at hero size)
- *   2. Highest-resolution portrait-orientation portfolio photo (>= 1500px long edge)
+ *   1. Highest-resolution portrait-orientation portfolio photo (>= 1500px long edge)
+ *      — always looks best in the 4:5 hero container
+ *   2. profile_photo_url if it's >= 800px wide (sharp at hero size)
  *   3. Most recent portfolio photo if no dimensions are stored yet (legacy fallback)
  *   4. profile_photo_url as a last resort (will look slightly soft)
  *   5. null — caller should fall back to the circle layout
@@ -51,21 +52,9 @@ export interface HeroPortraitResult {
 }
 
 export function getHeroPortrait(input: HeroSourceInput): HeroPortraitResult | null {
-  // 1. Profile pic is high-res enough — preferred
-  if (
-    input.profilePhotoUrl &&
-    input.profilePhotoWidth &&
-    input.profilePhotoWidth >= MIN_PROFILE_HERO_WIDTH
-  ) {
-    return {
-      url: input.profilePhotoUrl,
-      source: "profile",
-      width: input.profilePhotoWidth,
-      height: input.profilePhotoHeight ?? null,
-    };
-  }
-
-  // 2. High-res portrait portfolio photo
+  // 1. High-res portrait portfolio photo — best fit for the 4:5 hero container.
+  //    A portrait portfolio photo always looks better than a square profile pic
+  //    in a tall hero layout, so check this first.
   const eligible = input.portfolioPhotos.filter(
     (p) =>
       p.width !== null &&
@@ -82,6 +71,20 @@ export function getHeroPortrait(input: HeroSourceInput): HeroPortraitResult | nu
       source: "portfolio-high-res",
       width: best.width,
       height: best.height,
+    };
+  }
+
+  // 2. Profile pic is high-res enough
+  if (
+    input.profilePhotoUrl &&
+    input.profilePhotoWidth &&
+    input.profilePhotoWidth >= MIN_PROFILE_HERO_WIDTH
+  ) {
+    return {
+      url: input.profilePhotoUrl,
+      source: "profile",
+      width: input.profilePhotoWidth,
+      height: input.profilePhotoHeight ?? null,
     };
   }
 
