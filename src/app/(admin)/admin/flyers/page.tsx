@@ -15,6 +15,7 @@ import {
   Archive,
   Palette,
   X,
+  Eye,
 } from "lucide-react";
 import { FlyerDesigner } from "@/components/admin/flyer-designer";
 import {
@@ -227,20 +228,28 @@ export default function AdminFlyersPage() {
   }, [debouncedSettings, sampleModel, eventDisplayValues]);
 
   // Generate flyers
-  async function handleGenerate(force = false) {
+  async function handleGenerate(force = false, testOne = false) {
     if (!selectedEventId) return;
     setGenerating(true);
     setProgress(null);
 
     try {
+      const payload: any = {
+        event_id: selectedEventId,
+        design: designSettings,
+        force,
+      };
+
+      // For test mode, only generate for the sample model
+      if (testOne && sampleModel) {
+        payload.model_ids = [sampleModel.id];
+        payload.force = true; // always regenerate the test model
+      }
+
       const res = await fetch("/api/admin/flyers/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event_id: selectedEventId,
-          design: designSettings,
-          force,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -408,7 +417,26 @@ export default function AdminFlyersPage() {
           {showDesigner ? "Hide Designer" : "Design"}
         </button>
 
-        {/* Generate button */}
+        {/* Test 1 Model button */}
+        <button
+          onClick={() => handleGenerate(false, true)}
+          disabled={generating || !selectedEventId}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-pink-500/30 text-pink-400 text-sm font-semibold hover:bg-pink-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        >
+          {generating ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Testing...
+            </>
+          ) : (
+            <>
+              <Eye className="w-4 h-4" />
+              Test 1 Model
+            </>
+          )}
+        </button>
+
+        {/* Generate all button */}
         <button
           onClick={() => handleGenerate()}
           disabled={generating || !selectedEventId}
@@ -422,7 +450,7 @@ export default function AdminFlyersPage() {
           ) : (
             <>
               <Sparkles className="w-4 h-4" />
-              Generate Flyers
+              Generate All Flyers
             </>
           )}
         </button>

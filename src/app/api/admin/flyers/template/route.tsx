@@ -273,7 +273,7 @@ export async function GET(request: NextRequest) {
                   color: "white",
                 }}
               >
-                EXA
+                exa
               </div>
             )}
           </div>
@@ -344,7 +344,7 @@ export async function GET(request: NextRequest) {
               display: "flex",
             }}
           >
-            Exa {tagline}
+            exa {tagline}
           </div>
 
           <div
