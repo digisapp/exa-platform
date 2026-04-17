@@ -528,26 +528,8 @@ export default async function DashboardPage() {
 
   inboxItems.sort((a, b) => b.sortKey - a.sortKey);
 
-  const displayName = model.first_name || model.username || "there";
-
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* ──────────────────────────────────────────────────────
-          TOP BAR — greeting + quick action
-         ────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg md:text-xl font-semibold tracking-tight">
-          <span className="exa-gradient-text">{displayName}</span>
-        </h1>
-        <Link
-          href="/bids/new"
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-400 hover:to-cyan-400 text-xs md:text-sm font-semibold text-white shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          New Bid
-        </Link>
-      </div>
-
       {/* ──────────────────────────────────────────────────────
           KPI RAIL
          ────────────────────────────────────────────────────── */}
