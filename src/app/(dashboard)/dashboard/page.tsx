@@ -32,12 +32,10 @@ import {
   Sparkles,
   Zap,
   Users,
-  Video,
   Heart,
   Clock,
-  CircleDollarSign,
 } from "lucide-react";
-import { formatCoins, coinsToUsd, formatUsd, MIN_WITHDRAWAL_COINS } from "@/lib/coin-config";
+import { formatCoins, coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
@@ -535,93 +533,20 @@ export default async function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* ──────────────────────────────────────────────────────
-          HERO — identity + today's focus + quick actions
+          TOP BAR — greeting + quick action
          ────────────────────────────────────────────────────── */}
-      <section
-        className="relative overflow-hidden rounded-3xl border border-white/10 p-5 md:p-7"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(255,105,180,0.15) 0%, rgba(139,92,246,0.10) 50%, rgba(0,191,255,0.15) 100%)",
-        }}
-      >
-        <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-pink-500/30 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-cyan-500/30 blur-3xl" />
-
-        <div className="relative flex flex-col md:flex-row md:items-center gap-5">
-          <div className="flex items-center gap-4">
-            <div className="relative shrink-0">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-pink-500 via-violet-500 to-cyan-500 blur-md opacity-70" />
-              {model.profile_photo_url ? (
-                <Image
-                  src={model.profile_photo_url}
-                  alt={displayName}
-                  width={80}
-                  height={80}
-                  className="relative w-16 h-16 md:w-20 md:h-20 rounded-full object-cover ring-2 ring-white/30"
-                />
-              ) : (
-                <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-pink-500/40 to-cyan-500/40 ring-2 ring-white/30 flex items-center justify-center text-2xl font-bold">
-                  {(displayName || "M").charAt(0).toUpperCase()}
-                </div>
-              )}
-              <span className="absolute bottom-0 right-0 w-4 h-4 md:w-5 md:h-5 rounded-full bg-emerald-400 ring-2 ring-background shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Welcome back</p>
-              <h1 className="text-2xl md:text-4xl font-bold tracking-tight">
-                <span className="exa-gradient-text">{displayName}</span>
-              </h1>
-              <p className="text-xs md:text-sm text-white/70 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                {pendingOffers.length > 0 && (
-                  <span className="text-rose-300 font-medium">
-                    {pendingOffers.length} {pendingOffers.length === 1 ? "offer" : "offers"}
-                  </span>
-                )}
-                {pendingOffers.length > 0 && ((pendingBookings?.length || 0) > 0 || (model.coin_balance || 0) > 0) && <span className="text-white/30">·</span>}
-                {(pendingBookings?.length || 0) > 0 && (
-                  <span className="text-amber-300 font-medium">
-                    {pendingBookings?.length} {pendingBookings?.length === 1 ? "booking" : "bookings"}
-                  </span>
-                )}
-                {(pendingBookings?.length || 0) > 0 && (model.coin_balance || 0) >= MIN_WITHDRAWAL_COINS && <span className="text-white/30">·</span>}
-                {(model.coin_balance || 0) >= MIN_WITHDRAWAL_COINS && (
-                  <span className="text-emerald-300 font-medium">
-                    {formatUsd(coinsToUsd(model.coin_balance || 0))} ready to withdraw
-                  </span>
-                )}
-                {pendingOffers.length === 0 && (pendingBookings?.length || 0) === 0 && (model.coin_balance || 0) < MIN_WITHDRAWAL_COINS && (
-                  <span className="text-white/50">Ready to earn — let&apos;s get started</span>
-                )}
-              </p>
-            </div>
-          </div>
-
-          {/* Quick actions */}
-          <div className="md:ml-auto grid grid-cols-3 gap-2 md:gap-3 md:flex md:items-center">
-            <Link
-              href="/wallet"
-              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs md:text-sm font-semibold text-white transition-all"
-            >
-              <CircleDollarSign className="h-4 w-4" />
-              <span className="hidden sm:inline">Withdraw</span>
-            </Link>
-            <Link
-              href="/live"
-              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400 text-xs md:text-sm font-semibold text-white shadow-[0_0_20px_rgba(244,63,94,0.4)] transition-all"
-            >
-              <Video className="h-4 w-4" />
-              <span className="hidden sm:inline">Go Live</span>
-            </Link>
-            <Link
-              href="/bids/new"
-              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-400 hover:to-cyan-400 text-xs md:text-sm font-semibold text-white shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">New Bid</span>
-            </Link>
-          </div>
-        </div>
-      </section>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg md:text-xl font-semibold tracking-tight">
+          <span className="exa-gradient-text">{displayName}</span>
+        </h1>
+        <Link
+          href="/bids/new"
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-400 hover:to-cyan-400 text-xs md:text-sm font-semibold text-white shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all"
+        >
+          <Plus className="h-4 w-4" />
+          New Bid
+        </Link>
+      </div>
 
       {/* ──────────────────────────────────────────────────────
           KPI RAIL

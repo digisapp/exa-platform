@@ -89,8 +89,6 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
   const translatedModelLinks = [
     { href: "/dashboard", label: t.nav.home, icon: Home },
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
-    { href: "/bookings", label: t.nav.bookings, icon: Calendar },
-    { href: "/bids/manage", label: t.nav.bids, icon: Gavel },
     { href: "/content", label: t.nav.content, icon: Images },
   ];
   const translatedFanLinks = [
@@ -378,6 +376,22 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                             </p>
                           </div>
                           <ArrowUpRight className="h-4 w-4 text-orange-400 shrink-0" />
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator className="bg-white/10 my-1.5" />
+
+                      {/* Revenue-critical links */}
+                      <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
+                        <Link href="/bookings" className="w-full">
+                          <Calendar className="mr-2 h-4 w-4 text-pink-400" />
+                          {t.nav.bookings}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
+                        <Link href="/bids/manage" className="w-full">
+                          <Gavel className="mr-2 h-4 w-4 text-violet-400" />
+                          {t.nav.bids}
                         </Link>
                       </DropdownMenuItem>
 
