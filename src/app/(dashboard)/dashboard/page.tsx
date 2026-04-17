@@ -695,8 +695,106 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Right rail: Recent Activity + Top Tippers */}
-        <aside className="space-y-4">
+        {/* Right rail: Gigs for you */}
+        <aside>
+          <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
+            <GigsFeed
+              gigs={gigs || []}
+              modelApplications={modelApplications || []}
+              isApproved={model.is_approved}
+            />
+          </div>
+        </aside>
+      </section>
+
+      {/* ──────────────────────────────────────────────────────
+          EXA Live Wall (kept as standalone section)
+         ────────────────────────────────────────────────────── */}
+      <LiveWallServer actorId={actor.id} actorType={actor.type} />
+
+      {/* ──────────────────────────────────────────────────────
+          BIDS + GIGS — side by side
+         ────────────────────────────────────────────────────── */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Bids */}
+        <div className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-transparent overflow-hidden">
+          <header className="flex items-center justify-between p-5 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <Gavel className="h-5 w-5 text-violet-400" />
+              <h2 className="text-base font-semibold">Your EXA Bids</h2>
+              {(modelAuctions?.length || 0) > 0 && (
+                <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                  {modelAuctions?.length}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/bids/manage" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+                Manage <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </header>
+          <div className="p-3">
+            {(modelAuctions?.length || 0) > 0 ? (
+              <div className="space-y-2">
+                {modelAuctions?.map((auction: any) => (
+                  <Link
+                    key={auction.id}
+                    href={auction.status === "draft" ? `/bids/${auction.id}/edit` : `/bids/${auction.id}`}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] hover:border-violet-500/40 transition-all"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500/30 to-pink-500/30 flex items-center justify-center shrink-0">
+                      <Gavel className="h-5 w-5 text-violet-300" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{auction.title}</p>
+                      <p className="text-xs text-white/50">
+                        {auction.bid_count || 0} bids
+                        {auction.status === "active" && auction.ends_at && (
+                          <> · ends {new Date(auction.ends_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</>
+                        )}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold text-amber-400">
+                        {(auction.current_bid || auction.starting_price || 0).toLocaleString()}c
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className={
+                          auction.status === "active"
+                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 text-[10px] px-1.5 py-0"
+                            : "bg-amber-500/10 text-amber-300 border-amber-500/30 text-[10px] px-1.5 py-0"
+                        }
+                      >
+                        {auction.status === "active" ? "Live" : "Draft"}
+                      </Badge>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="p-4 rounded-full bg-violet-500/10 inline-block mb-3">
+                  <Gavel className="h-7 w-7 text-violet-400" />
+                </div>
+                <p className="text-sm text-white/70">No EXA Bids yet</p>
+                <p className="text-xs text-white/40 mt-1 max-w-xs mx-auto">
+                  Let fans and brands compete in real-time bids for your exclusive content & experiences.
+                </p>
+                <Button asChild size="sm" className="mt-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
+                  <Link href="/bids/new">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Create EXA Bid
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Live Pulse + Top Tippers */}
+        <div className="space-y-4">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm">
             <header className="flex items-center justify-between p-4 border-b border-white/5">
               <div className="flex items-center gap-2">
@@ -803,102 +901,6 @@ export default async function DashboardPage() {
               </div>
             </div>
           )}
-        </aside>
-      </section>
-
-      {/* ──────────────────────────────────────────────────────
-          EXA Live Wall (kept as standalone section)
-         ────────────────────────────────────────────────────── */}
-      <LiveWallServer actorId={actor.id} actorType={actor.type} />
-
-      {/* ──────────────────────────────────────────────────────
-          BIDS + GIGS — side by side
-         ────────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Bids */}
-        <div className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-transparent overflow-hidden">
-          <header className="flex items-center justify-between p-5 border-b border-white/5">
-            <div className="flex items-center gap-2">
-              <Gavel className="h-5 w-5 text-violet-400" />
-              <h2 className="text-base font-semibold">Your EXA Bids</h2>
-              {(modelAuctions?.length || 0) > 0 && (
-                <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                  {modelAuctions?.length}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Link href="/bids/manage" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
-                Manage <ArrowUpRight className="h-3 w-3" />
-              </Link>
-            </div>
-          </header>
-          <div className="p-3">
-            {(modelAuctions?.length || 0) > 0 ? (
-              <div className="space-y-2">
-                {modelAuctions?.map((auction: any) => (
-                  <Link
-                    key={auction.id}
-                    href={auction.status === "draft" ? `/bids/${auction.id}/edit` : `/bids/${auction.id}`}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] hover:border-violet-500/40 transition-all"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500/30 to-pink-500/30 flex items-center justify-center shrink-0">
-                      <Gavel className="h-5 w-5 text-violet-300" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{auction.title}</p>
-                      <p className="text-xs text-white/50">
-                        {auction.bid_count || 0} bids
-                        {auction.status === "active" && auction.ends_at && (
-                          <> · ends {new Date(auction.ends_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</>
-                        )}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-amber-400">
-                        {(auction.current_bid || auction.starting_price || 0).toLocaleString()}c
-                      </p>
-                      <Badge
-                        variant="outline"
-                        className={
-                          auction.status === "active"
-                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 text-[10px] px-1.5 py-0"
-                            : "bg-amber-500/10 text-amber-300 border-amber-500/30 text-[10px] px-1.5 py-0"
-                        }
-                      >
-                        {auction.status === "active" ? "Live" : "Draft"}
-                      </Badge>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="p-4 rounded-full bg-violet-500/10 inline-block mb-3">
-                  <Gavel className="h-7 w-7 text-violet-400" />
-                </div>
-                <p className="text-sm text-white/70">No EXA Bids yet</p>
-                <p className="text-xs text-white/40 mt-1 max-w-xs mx-auto">
-                  Let fans and brands compete in real-time bids for your exclusive content & experiences.
-                </p>
-                <Button asChild size="sm" className="mt-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
-                  <Link href="/bids/new">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Create EXA Bid
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Gigs (use existing GigsFeed component, themed wrapper) */}
-        <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
-          <GigsFeed
-            gigs={gigs || []}
-            modelApplications={modelApplications || []}
-            isApproved={model.is_approved}
-          />
         </div>
       </section>
 

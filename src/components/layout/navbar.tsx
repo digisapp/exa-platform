@@ -33,8 +33,6 @@ import {
   Calendar,
   ArrowUpRight,
   CircleDollarSign,
-  Share2,
-  Eye,
   Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -343,19 +341,19 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                     <>
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
                         <Link
-                          href="/wallet"
-                          className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-emerald-500/15 to-emerald-500/5 border border-emerald-500/25 hover:from-emerald-500/25 hover:to-emerald-500/10 hover:border-emerald-500/50 transition-all"
+                          href="/comp-card"
+                          className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-pink-500/15 to-violet-500/10 border border-pink-500/25 hover:from-pink-500/25 hover:to-violet-500/15 hover:border-pink-500/50 transition-all"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
-                            <CircleDollarSign className="h-4 w-4 text-emerald-300" />
+                          <div className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center shrink-0">
+                            <Camera className="h-4 w-4 text-pink-300" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white">{t.nav.withdraw}</p>
-                            <p className="text-[11px] text-emerald-300">
-                              {formatUsd(usdValue)} {t.nav.ready}
+                            <p className="text-sm font-semibold text-white">{t.nav.compCard}</p>
+                            <p className="text-[11px] text-pink-300">
+                              Your digital portfolio
                             </p>
                           </div>
-                          <ArrowUpRight className="h-4 w-4 text-emerald-400 shrink-0" />
+                          <ArrowUpRight className="h-4 w-4 text-pink-400 shrink-0" />
                         </Link>
                       </DropdownMenuItem>
 
@@ -404,31 +402,6 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                           {t.nav.analytics}
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
-                        <Link href="/comp-card" className="w-full">
-                          <Camera className="mr-2 h-4 w-4 text-pink-400" />
-                          {t.nav.compCard}
-                        </Link>
-                      </DropdownMenuItem>
-                      {user.username && (
-                        <>
-                          <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
-                            <Link href={`/${user.username}`} className="w-full">
-                              <Eye className="mr-2 h-4 w-4 text-violet-400" />
-                              {t.nav.viewAsFan}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
-                            <Link
-                              href={`/${user.username}?share=1`}
-                              className="w-full"
-                            >
-                              <Share2 className="mr-2 h-4 w-4 text-cyan-400" />
-                              {t.nav.shareProfile}
-                            </Link>
-                          </DropdownMenuItem>
-                        </>
-                      )}
                     </>
                   )}
 
