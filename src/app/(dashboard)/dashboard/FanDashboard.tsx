@@ -7,16 +7,12 @@ import {
   Users,
   Heart,
   Coins,
-  Lock,
-  Gavel,
   Sparkles,
-  Search,
   Plus,
 } from "lucide-react";
 import { ModelCard } from "@/components/models/model-card";
 import { ForYouFeed, type FeedItem } from "./ForYouFeed";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
-import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 
 // Re-sign a storage path or expired signed URL to get a fresh 1-hour signed URL
 function extractStoragePath(url: string): string | null {
@@ -85,7 +81,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .not("profile_photo_url", "ilike", "%instagram%")
       .limit(100),
     (supabase.from("fans") as any)
-      .select("coin_balance, display_name")
+      .select("coin_balance")
       .eq("id", actorId)
       .single(),
     // All currently live auctions with model info
@@ -274,136 +270,9 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   // Append discover content at the end
   sortedFeed.push(...discoverItems);
 
-  const displayName = fanData?.display_name || "there";
-  const unlockedCount = (myUnlocks || []).length;
-  const activeBidsCount = (myBids || []).filter(
-    (b: any) => b.status === "winning" || b.status === "active"
-  ).length;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* ──────────────────────────────────────────────
-          HERO — fan identity + quick actions
-         ────────────────────────────────────────────── */}
-      <section
-        className="relative overflow-hidden rounded-3xl border border-white/10 p-5 md:p-7"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(255,105,180,0.08) 50%, rgba(139,92,246,0.12) 100%)",
-        }}
-      >
-        <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-amber-500/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-pink-500/25 blur-3xl" />
-
-        <div className="relative flex flex-col md:flex-row md:items-center gap-5">
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Welcome back</p>
-            <h1 className="text-2xl md:text-4xl font-bold tracking-tight">
-              <span className="exa-gradient-text">{displayName}</span>
-            </h1>
-            <p className="text-xs md:text-sm text-white/70 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-              <span className="text-amber-300 font-semibold">
-                {coinBalance.toLocaleString()} coins
-              </span>
-              <span className="text-white/30">·</span>
-              <span className="text-white/60">
-                {formatUsd(coinsToUsd(coinBalance))} to spend
-              </span>
-            </p>
-          </div>
-          <div className="grid grid-cols-3 gap-2 md:gap-3 md:flex md:items-center">
-            <Link
-              href="/coins"
-              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-xs md:text-sm font-semibold text-black shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all"
-            >
-              <Coins className="h-4 w-4" />
-              <span className="hidden sm:inline">Get Coins</span>
-            </Link>
-            <Link
-              href="/models"
-              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-xs md:text-sm font-semibold text-white shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all"
-            >
-              <Search className="h-4 w-4" />
-              <span className="hidden sm:inline">Browse</span>
-            </Link>
-            <Link
-              href="/bids"
-              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs md:text-sm font-semibold text-white transition-all"
-            >
-              <Gavel className="h-4 w-4" />
-              <span className="hidden sm:inline">Live Bids</span>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ──────────────────────────────────────────────
-          KPI RAIL
-         ────────────────────────────────────────────── */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Link href="/coins" className="group relative overflow-hidden rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/10 to-amber-500/5 p-4 transition-all hover:border-amber-500/50 hover:bg-amber-500/10">
-          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-amber-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Coins className="h-3.5 w-3.5 text-amber-400" />
-              <span className="font-medium uppercase tracking-wider">Balance</span>
-            </div>
-            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">
-              {coinBalance.toLocaleString()}
-            </p>
-            <p className="text-xs text-white/50 mt-0.5">{formatUsd(coinsToUsd(coinBalance))}</p>
-          </div>
-        </Link>
-
-        <Link href="/favorites" className="group relative overflow-hidden rounded-2xl border border-pink-500/25 bg-gradient-to-br from-pink-500/10 to-pink-500/5 p-4 transition-all hover:border-pink-500/50 hover:bg-pink-500/10">
-          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-pink-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Heart className="h-3.5 w-3.5 text-pink-400 fill-pink-400/50" />
-              <span className="font-medium uppercase tracking-wider">Following</span>
-            </div>
-            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">
-              {favoriteModels.length}
-            </p>
-            <p className="text-xs text-white/50 mt-0.5">
-              {favoriteModels.length === 1 ? "creator" : "creators"}
-            </p>
-          </div>
-        </Link>
-
-        <Link href="/my-content" className="group relative overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-4 transition-all hover:border-violet-500/50 hover:bg-violet-500/10">
-          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-violet-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Lock className="h-3.5 w-3.5 text-violet-400" />
-              <span className="font-medium uppercase tracking-wider">Unlocked</span>
-            </div>
-            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">
-              {unlockedCount}
-            </p>
-            <p className="text-xs text-white/50 mt-0.5">
-              {unlockedCount === 1 ? "PPV item" : "PPV items"}
-            </p>
-          </div>
-        </Link>
-
-        <Link href="/bids" className="group relative overflow-hidden rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 p-4 transition-all hover:border-cyan-500/50 hover:bg-cyan-500/10">
-          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-cyan-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Gavel className="h-3.5 w-3.5 text-cyan-400" />
-              <span className="font-medium uppercase tracking-wider">Active Bids</span>
-            </div>
-            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">
-              {activeBidsCount}
-            </p>
-            <p className="text-xs text-white/50 mt-0.5">
-              {activeBidsCount === 1 ? "auction" : "auctions"}
-            </p>
-          </div>
-        </Link>
-      </section>
-
       {/* ──────────────────────────────────────────────
           Low Coin CTA
          ────────────────────────────────────────────── */}
