@@ -3,8 +3,13 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
+import localFont from "next/font/local";
 
 const poppinsBlack = Poppins({ weight: "900", subsets: ["latin"], display: "swap" });
+const glacialIndifference = localFont({
+  src: "../../../../public/fonts/GlacialIndifference-Regular.woff2",
+  display: "swap",
+});
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,7 +32,6 @@ import {
   cropToPosition,
   fileToBase64,
   isAcceptedImage,
-  toBase64,
 } from "@/lib/comp-card-utils";
 import PrintOrderDialog from "@/components/comp-card/PrintOrderDialog";
 import { MiamiDigitalsBanner } from "@/components/comp-card/MiamiDigitalsBanner";
@@ -94,7 +98,7 @@ export default function FreeCompCardPage() {
   // Print order state
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
 
-  const logoSrc = logoVariant === "black" ? "/exa-models-logo-black.png" : logoVariant === "white" ? "/exa-models-logo-white.png" : null;
+  const logoColor = logoVariant === "black" ? "#000000" : logoVariant === "white" ? "#ffffff" : null;
   const nameColor = logoVariant === "black" ? "#000000" : "#ffffff";
 
   // Preview font size: fills the card, scales with name length + user slider
@@ -299,7 +303,6 @@ export default function FreeCompCardPage() {
     const { default: CompCardPDF } = await import(
       "@/components/comp-card/CompCardPDF"
     );
-    const frontLogoBase64 = logoSrc ? await toBase64(logoSrc) : undefined;
     const contactInfo = {
       email: contactEmail || undefined,
       phone: phoneNumber || undefined,
@@ -307,7 +310,7 @@ export default function FreeCompCardPage() {
       website: website || undefined,
     };
     const blob = await pdf(
-      CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, nameColor, nameFontScale, contactInfo })
+      CompCardPDF({ model, photos: photoBase64, logoColor, nameColor, nameFontScale, contactInfo })
     ).toBlob();
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -342,7 +345,6 @@ export default function FreeCompCardPage() {
         "@/components/comp-card/CompCardPDF"
       );
 
-      const frontLogoBase64 = logoSrc ? await toBase64(logoSrc) : undefined;
       const contactInfo = {
         email: contactEmail || undefined,
         phone: phoneNumber || undefined,
@@ -351,7 +353,7 @@ export default function FreeCompCardPage() {
       };
 
       const blob = await pdf(
-        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, nameColor, nameFontScale, contactInfo })
+        CompCardPDF({ model, photos: photoBase64, logoColor, nameColor, nameFontScale, contactInfo })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -428,12 +430,21 @@ export default function FreeCompCardPage() {
         fCtx.drawImage(heroImg, drawX, drawY, drawW, drawH);
       }
 
-      // Logo at top center
-      if (logoSrc) {
-        const frontLogoImg = await loadImg(logoSrc);
-        const logoW = 510;
-        const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
-        fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 80, logoW, logoH);
+      // Logo text at top center
+      if (logoColor) {
+        if (!document.fonts.check("1em GlacialIndifference")) {
+          const giFont = new FontFace("GlacialIndifference", `url(${window.location.origin}/fonts/GlacialIndifference-Regular.woff2)`);
+          await Promise.race([
+            giFont.load().then((f) => document.fonts.add(f)),
+            new Promise<void>((_, reject) => setTimeout(() => reject(new Error("Font load timeout")), 8000)),
+          ]);
+        }
+        fCtx.font = "62px 'GlacialIndifference', sans-serif";
+        fCtx.fillStyle = logoColor;
+        fCtx.textAlign = "center";
+        fCtx.textBaseline = "top";
+        fCtx.letterSpacing = "1px";
+        fCtx.fillText("exa models", FW / 2, 80);
       }
 
       // First name at bottom
@@ -875,16 +886,15 @@ export default function FreeCompCardPage() {
                           }}
                           draggable={false}
                         />
-                        {/* Logo at top center */}
-                        {logoSrc && (
+                        {/* Logo text at top center */}
+                        {logoColor && (
                           <div className="absolute top-0 left-0 right-0 flex justify-center pt-6 z-10 pointer-events-none">
-                            <Image
-                              src={logoSrc}
-                              alt="EXA Models"
-                              width={130}
-                              height={42}
-                              className="h-9 w-auto"
-                            />
+                            <span
+                              className={`${glacialIndifference.className} text-2xl md:text-3xl leading-none tracking-[0.01em] lowercase`}
+                              style={{ color: logoColor }}
+                            >
+                              exa models
+                            </span>
                           </div>
                         )}
                         {/* Reposition hint */}

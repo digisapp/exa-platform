@@ -1147,7 +1147,7 @@ export default function ProfilePage() {
               {locale === "es" ? "Administra tu perfil y configuración de cuenta" : "Manage your profile and account settings"}
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
             <div className="px-3 py-1.5 rounded-full bg-pink-500/15 border border-pink-500/40 shadow-[0_0_12px_rgba(236,72,153,0.2)]">
               <span className="text-xs font-semibold text-pink-300">Model Account</span>
             </div>
@@ -1156,46 +1156,34 @@ export default function ProfilePage() {
               <span className="text-xs font-semibold text-white">{pageViews}</span>
               <span className="text-[10px] text-white/50">views</span>
             </div>
+            {/* Language Toggle */}
+            <div className="flex items-center gap-1 rounded-full bg-white/10 p-0.5">
+              <button
+                onClick={() => setLocale("en")}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                  locale === "en"
+                    ? "bg-white/20 shadow-sm text-white"
+                    : "text-white/50 hover:text-white/80"
+                )}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => setLocale("es")}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                  locale === "es"
+                    ? "bg-white/20 shadow-sm text-white"
+                    : "text-white/50 hover:text-white/80"
+                )}
+              >
+                ES
+              </button>
+            </div>
           </div>
         </div>
       </section>
-
-      {/* Language Toggle */}
-      <Card>
-        <CardContent className="flex items-center justify-between py-4">
-          <div className="flex items-center gap-3">
-            <Globe className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <p className="text-sm font-medium">{t.settings.language}</p>
-              <p className="text-xs text-muted-foreground">{t.settings.languageDesc}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 rounded-full bg-muted p-1">
-            <button
-              onClick={() => setLocale("en")}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-                locale === "en"
-                  ? "bg-white dark:bg-zinc-800 shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              English
-            </button>
-            <button
-              onClick={() => setLocale("es")}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-                locale === "es"
-                  ? "bg-white dark:bg-zinc-800 shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Español
-            </button>
-          </div>
-        </CardContent>
-      </Card>
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="bg-white/[0.03] border border-white/10 rounded-2xl p-1 h-auto flex-wrap gap-1">

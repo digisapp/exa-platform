@@ -598,9 +598,9 @@ export default async function DashboardPage() {
       {/* ──────────────────────────────────────────────────────
           MAIN GRID — Priority Inbox (2/3) + Right rail (1/3)
          ────────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Priority Inbox */}
-        <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
           <header className="flex items-center justify-between p-5 border-b border-white/5">
             <div className="flex items-center gap-2">
               <Flame className="h-5 w-5 text-rose-400" />

@@ -17,6 +17,7 @@ const ORIGIN = typeof window !== "undefined" ? window.location.origin : "https:/
 Font.register({ family: "PoppinsBlack",    src: `${ORIGIN}/fonts/Poppins-Black.ttf` });
 Font.register({ family: "PoppinsSemiBold", src: `${ORIGIN}/fonts/Poppins-SemiBold.ttf` });
 Font.register({ family: "PoppinsRegular",  src: `${ORIGIN}/fonts/Poppins-Regular.ttf` });
+Font.register({ family: "GlacialIndifference", src: `${ORIGIN}/fonts/GlacialIndifference-Regular.ttf` });
 
 // Disable hyphenation so names never get split with a dash across lines
 Font.registerHyphenationCallback((word) => [word]);
@@ -41,8 +42,7 @@ interface CompCardModel {
 interface CompCardPDFProps {
   model: CompCardModel;
   photos: string[]; // base64 data URLs
-  frontLogoUrl?: string; // base64 data URL
-  backLogoUrl?: string; // base64 data URL for back page center footer
+  logoColor?: string | null; // "#ffffff", "#000000", or null (hidden)
   nameColor?: string; // "#ffffff" (default) or "#000000"
   nameFontScale?: number; // 0.5–1.5, default 1.0
   qrCodeUrl?: string; // base64 data URL of QR code
@@ -85,10 +85,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 30,
   },
-  frontLogo: {
-    width: 185,
-    height: 60,
-    objectFit: "contain",
+  frontLogoText: {
+    fontFamily: "GlacialIndifference",
+    fontSize: 28,
+    letterSpacing: 0.5,
+    textAlign: "center",
+    textTransform: "lowercase",
   },
   frontNameContainer: {
     alignItems: "center",
@@ -194,10 +196,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 8,
   },
-  footerBackLogo: {
-    width: 120,
-    height: 39,
-    objectFit: "contain" as const,
+  footerBackLogoText: {
+    fontFamily: "GlacialIndifference",
+    fontSize: 16,
+    letterSpacing: 0.5,
+    color: "#000000",
+    textTransform: "lowercase",
+    textAlign: "center",
   },
   footerText: {
     fontSize: 8,
@@ -241,7 +246,7 @@ function getNameLetterSpacing(name: string): number {
   return 1;
 }
 
-export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, nameColor = "#ffffff", nameFontScale = 1.0, qrCodeUrl, contactInfo }: CompCardPDFProps) {
+export default function CompCardPDF({ model, photos, logoColor, nameColor = "#ffffff", nameFontScale = 1.0, qrCodeUrl, contactInfo }: CompCardPDFProps) {
   const firstName = model.first_name || "";
   const lastName = model.last_name || "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Model";
@@ -278,9 +283,9 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
         </View>
         {/* Content overlay layer */}
         <View style={styles.frontOverlay}>
-          {frontLogoUrl ? (
+          {logoColor ? (
             <View style={styles.frontLogoContainer}>
-              <Image src={frontLogoUrl} style={styles.frontLogo} />
+              <Text style={{ ...styles.frontLogoText, color: logoColor }}>exa models</Text>
             </View>
           ) : (
             <View />
@@ -352,12 +357,10 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
                 <Text style={styles.footerText}>{footerEmail}</Text>
               )}
             </View>
-            {/* Center: EXA Models logo */}
-            {backLogoUrl && (
-              <View style={styles.footerCenter}>
-                <Image src={backLogoUrl} style={styles.footerBackLogo} />
-              </View>
-            )}
+            {/* Center: EXA Models text logo */}
+            <View style={styles.footerCenter}>
+              <Text style={styles.footerBackLogoText}>exa models</Text>
+            </View>
             {/* Right: QR code */}
             {qrCodeUrl && (
               <Image src={qrCodeUrl} style={styles.footerQr} />

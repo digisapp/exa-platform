@@ -2,8 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import { Poppins } from "next/font/google";
+import localFont from "next/font/local";
 
 const poppinsBlack = Poppins({ weight: "900", subsets: ["latin"], display: "swap" });
+const glacialIndifference = localFont({
+  src: "../../../../public/fonts/GlacialIndifference-Regular.woff2",
+  display: "swap",
+});
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,7 +33,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   cropToPosition,
-  toBase64,
   photoToBase64,
   fileToBase64,
   isAcceptedImage,
@@ -290,7 +294,7 @@ export default function CompCardPage() {
     setSelectedIds((prev) => prev.filter((p) => p !== id));
   };
 
-  const logoSrc = logoVariant === "black" ? "/exa-models-logo-black.png" : logoVariant === "white" ? "/exa-models-logo-white.png" : null;
+  const logoColor = logoVariant === "black" ? "#000000" : logoVariant === "white" ? "#ffffff" : null;
   const nameColor = logoVariant === "black" ? "#000000" : "#ffffff";
   const previewNameFontPx = model?.first_name
     ? Math.round(Math.min(68, Math.round(360 / Math.max(model.first_name.length, 1) / 0.62)) * nameFontScale)
@@ -302,6 +306,7 @@ export default function CompCardPage() {
       return;
     }
 
+    fetch("/api/comp-card-creator/track-export", { method: "POST" }).catch(() => {});
     setExporting(true);
     try {
       // Convert selected photos to base64
@@ -327,14 +332,10 @@ export default function CompCardPage() {
         if (b64) photoBase64.push(b64);
       }
 
-      // Load logos + generate QR code
+      // Generate QR code
       const QRCode = (await import("qrcode")).default;
       const profileUrl = `https://www.examodels.com/${model.username || ""}`;
-      const [frontLogoBase64, backLogoBase64, qrCodeBase64] = await Promise.all([
-        logoSrc ? toBase64(logoSrc) : Promise.resolve(undefined),
-        toBase64("/exa-models-logo-black.png"),
-        QRCode.toDataURL(profileUrl, { width: 200, margin: 1 }),
-      ]);
+      const qrCodeBase64 = await QRCode.toDataURL(profileUrl, { width: 200, margin: 1 });
 
       // Dynamic import to avoid SSR issues
       const { pdf } = await import("@react-pdf/renderer");
@@ -343,7 +344,7 @@ export default function CompCardPage() {
       );
 
       const blob = await pdf(
-        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, backLogoUrl: backLogoBase64, nameColor, nameFontScale, qrCodeUrl: qrCodeBase64 })
+        CompCardPDF({ model, photos: photoBase64, logoColor, nameColor, nameFontScale, qrCodeUrl: qrCodeBase64 })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -384,15 +385,11 @@ export default function CompCardPage() {
     }
     const QRCode = (await import("qrcode")).default;
     const profileUrl = `https://www.examodels.com/${model.username || ""}`;
-    const [frontLogoBase64, backLogoBase64, qrCodeBase64] = await Promise.all([
-      logoSrc ? toBase64(logoSrc) : Promise.resolve(undefined),
-      toBase64("/exa-models-logo-black.png"),
-      QRCode.toDataURL(profileUrl, { width: 200, margin: 1 }),
-    ]);
+    const qrCodeBase64 = await QRCode.toDataURL(profileUrl, { width: 200, margin: 1 });
     const { pdf } = await import("@react-pdf/renderer");
     const { default: CompCardPDF } = await import("@/components/comp-card/CompCardPDF");
     const blob = await pdf(
-      CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, backLogoUrl: backLogoBase64, qrCodeUrl: qrCodeBase64 })
+      CompCardPDF({ model, photos: photoBase64, logoColor, nameColor, nameFontScale, qrCodeUrl: qrCodeBase64 })
     ).toBlob();
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -408,6 +405,7 @@ export default function CompCardPage() {
       return;
     }
 
+    fetch("/api/comp-card-creator/track-export", { method: "POST" }).catch(() => {});
     setExportingJpeg(true);
     try {
       // Shared helpers
@@ -485,12 +483,21 @@ export default function CompCardPage() {
         fCtx.drawImage(heroImg, drawX, drawY, drawW, drawH);
       }
 
-      // Logo at top center
-      if (logoSrc) {
-        const frontLogoImg = await loadImg(logoSrc);
-        const logoW = 510;
-        const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
-        fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 80, logoW, logoH);
+      // Logo text at top center
+      if (logoColor) {
+        if (!document.fonts.check("1em GlacialIndifference")) {
+          const giFont = new FontFace("GlacialIndifference", `url(${window.location.origin}/fonts/GlacialIndifference-Regular.woff2)`);
+          await Promise.race([
+            giFont.load().then((f) => document.fonts.add(f)),
+            new Promise<void>((_, reject) => setTimeout(() => reject(new Error("Font load timeout")), 8000)),
+          ]);
+        }
+        fCtx.font = "62px 'GlacialIndifference', sans-serif";
+        fCtx.fillStyle = logoColor;
+        fCtx.textAlign = "center";
+        fCtx.textBaseline = "top";
+        fCtx.letterSpacing = "1px";
+        fCtx.fillText("exa models", FW / 2, 80);
       }
 
       // First name at bottom
@@ -631,11 +638,20 @@ export default function CompCardPage() {
       }
       bCtx.fillText("team@examodels.com", PAD, fTextY);
 
-      // Center: EXA Models logo
-      const backLogoImg = await loadImg("/exa-models-logo-black.png");
-      const backLogoW = 300;
-      const backLogoH = Math.round(backLogoW * (backLogoImg.naturalHeight / backLogoImg.naturalWidth));
-      bCtx.drawImage(backLogoImg, (BW - backLogoW) / 2, footerY + (150 - backLogoH) / 2, backLogoW, backLogoH);
+      // Center: EXA Models text logo
+      if (!document.fonts.check("1em GlacialIndifference")) {
+        const giFont = new FontFace("GlacialIndifference", `url(${window.location.origin}/fonts/GlacialIndifference-Regular.woff2)`);
+        await Promise.race([
+          giFont.load().then((f) => document.fonts.add(f)),
+          new Promise<void>((_, reject) => setTimeout(() => reject(new Error("Font load timeout")), 8000)),
+        ]);
+      }
+      bCtx.font = "38px 'GlacialIndifference', sans-serif";
+      bCtx.fillStyle = "#000000";
+      bCtx.textAlign = "center";
+      bCtx.textBaseline = "middle";
+      bCtx.letterSpacing = "1px";
+      bCtx.fillText("exa models", BW / 2, footerY + 75);
 
       // Right: QR code
       const QRCode = (await import("qrcode")).default;
@@ -1025,16 +1041,15 @@ export default function CompCardPage() {
                           <Move className="h-3 w-3 text-white/80" />
                           <span className="text-[10px] text-white/80">Drag to reposition</span>
                         </div>
-                        {/* Logo at top center */}
-                        {logoSrc && (
+                        {/* Logo text at top center */}
+                        {logoColor && (
                           <div className="absolute top-0 left-0 right-0 flex justify-center pt-6 z-10 pointer-events-none">
-                            <Image
-                              src={logoSrc}
-                              alt="EXA Models"
-                              width={130}
-                              height={42}
-                              className="h-9 w-auto"
-                            />
+                            <span
+                              className={`${glacialIndifference.className} text-2xl md:text-3xl leading-none tracking-[0.01em] lowercase`}
+                              style={{ color: logoColor }}
+                            >
+                              exa models
+                            </span>
                           </div>
                         )}
                         {/* Name at bottom */}
@@ -1155,9 +1170,11 @@ export default function CompCardPage() {
                         )}
                         <p className="text-[7px] text-black truncate">team@examodels.com</p>
                       </div>
-                      {/* Center: EXA logo */}
+                      {/* Center: EXA logo text */}
                       <div className="shrink-0 px-1">
-                        <Image src="/exa-models-logo-black.png" alt="EXA Models" width={80} height={16} className="h-4 w-auto" />
+                        <span className={`${glacialIndifference.className} text-[11px] leading-none tracking-[0.01em] lowercase text-black`}>
+                          exa models
+                        </span>
                       </div>
                       {/* Right: QR */}
                       {qrCodePreview ? (
