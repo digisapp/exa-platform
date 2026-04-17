@@ -761,7 +761,7 @@ export default async function ModelProfilePage({ params }: Props) {
               photo bleed edge-to-edge. The card body is solid #190a2d (matched
               to the dock's bottom color) so the photo flows seamlessly into
               the content area — one continuous dark frame, no bridge needed. */}
-          <div className={useHeroLayout ? "p-6 pt-5 text-center relative" : "contents"}>
+          <div className={useHeroLayout ? `px-6 text-center relative ${model.bio || (model.affiliate_links && model.affiliate_links.length > 0) ? "pt-5 pb-1" : "pt-1"}` : "contents"}>
 
           {/* Bio - under name (or under hero) */}
           {model.bio && <BioExpand bio={model.bio} />}
