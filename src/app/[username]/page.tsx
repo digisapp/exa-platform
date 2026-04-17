@@ -575,10 +575,13 @@ export default async function ModelProfilePage({ params }: Props) {
                         key={idx}
                         href={`/shows/${eb.badges.events.slug}?ref=${model.affiliate_code}`}
                         title={`Confirmed ${eb.badges.events.name} Model`}
-                        className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-sm font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.45)] border border-amber-200/70 hover:scale-105 transition-transform"
+                        className="group/badge relative overflow-hidden bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-amber-950 text-sm font-extrabold px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-[0_2px_12px_rgba(255,200,50,0.35),0_4px_16px_rgba(0,0,0,0.4)] border border-amber-200/80 hover:shadow-[0_2px_20px_rgba(255,200,50,0.5),0_4px_20px_rgba(0,0,0,0.4)] hover:scale-105 transition-all duration-300"
                       >
-                        <span>💧</span>
-                        <span>{eb.badges.events.name.replace(/\s+\d{4}$/, '')}</span>
+                        {/* Shine sweep */}
+                        <span className="absolute inset-0 -translate-x-full group-hover/badge:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+                        <span className="text-base">🌊</span>
+                        <span className="tracking-wide uppercase text-[11px]">{eb.badges.events.name.replace(/\s+\d{4}$/, '')}</span>
+                        <span className="text-amber-700/60 text-[10px]">✦</span>
                       </Link>
                     ))}
                   </div>
@@ -699,8 +702,8 @@ export default async function ModelProfilePage({ params }: Props) {
                       {/* Event badges on the ring - show all */}
                       <div className="absolute -top-2 right-0 flex flex-col gap-1 items-end">
                         {eventBadges.map((eb: any, idx: number) => (
-                          <div key={idx} className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border border-amber-500/50">
-                            <span>{eb.badges.events.badge_image_url ? '' : '💧'}</span>
+                          <div key={idx} className="relative overflow-hidden bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-amber-950 text-[10px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-[0_2px_10px_rgba(255,200,50,0.3),0_3px_12px_rgba(0,0,0,0.35)] border border-amber-200/80 tracking-wide uppercase">
+                            <span className="text-xs">🌊</span>
                             <span>{eb.badges.events.name.replace(/\s+\d{4}$/, '')}</span>
                           </div>
                         ))}
