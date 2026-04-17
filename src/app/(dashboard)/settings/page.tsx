@@ -1148,9 +1148,6 @@ export default function ProfilePage() {
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-            <div className="px-3 py-1.5 rounded-full bg-pink-500/15 border border-pink-500/40 shadow-[0_0_12px_rgba(236,72,153,0.2)]">
-              <span className="text-xs font-semibold text-pink-300">Model Account</span>
-            </div>
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30">
               <BarChart3 className="h-3.5 w-3.5 text-cyan-300" />
               <span className="text-xs font-semibold text-white">{pageViews}</span>
@@ -1161,24 +1158,24 @@ export default function ProfilePage() {
               <button
                 onClick={() => setLocale("en")}
                 className={cn(
-                  "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                  "px-3 py-1 rounded-full text-xs font-medium transition-all",
                   locale === "en"
                     ? "bg-white/20 shadow-sm text-white"
                     : "text-white/50 hover:text-white/80"
                 )}
               >
-                EN
+                English
               </button>
               <button
                 onClick={() => setLocale("es")}
                 className={cn(
-                  "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                  "px-3 py-1 rounded-full text-xs font-medium transition-all",
                   locale === "es"
                     ? "bg-white/20 shadow-sm text-white"
                     : "text-white/50 hover:text-white/80"
                 )}
               >
-                ES
+                Spanish
               </button>
             </div>
           </div>

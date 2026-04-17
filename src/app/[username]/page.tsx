@@ -211,7 +211,7 @@ export default async function ModelProfilePage({ params }: Props) {
   ] = await Promise.all([
     (supabase as any)
       .from("content_items")
-      .select("id, media_url, media_type, title, created_at, width, height")
+      .select("id, media_url, media_type, title, created_at, width, height, is_primary")
       .eq("model_id", model.id)
       .eq("status", "portfolio")
       .eq("media_type", "image")
@@ -248,6 +248,7 @@ export default async function ModelProfilePage({ params }: Props) {
     asset_type: "portfolio",
     title: p.title,
     created_at: p.created_at,
+    is_primary: !!p.is_primary,
   }));
 
   // Fall back to first portfolio photo if no profile picture is set
@@ -329,7 +330,7 @@ export default async function ModelProfilePage({ params }: Props) {
       width: p.width ?? null,
       height: p.height ?? null,
       createdAt: p.created_at,
-      isPrimary: false, // TODO: add is_primary column to content_items via migration
+      isPrimary: !!p.is_primary,
     })),
   });
 

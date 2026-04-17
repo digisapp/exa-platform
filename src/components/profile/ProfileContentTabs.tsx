@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { Camera, Video, Lock, X, Play, ImageOff, ChevronLeft, ChevronRight } from "lucide-react";
+import { Camera, Video, Lock, X, Play, ImageOff, ChevronLeft, ChevronRight, Star, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
 
 interface MediaAsset {
@@ -12,6 +13,7 @@ interface MediaAsset {
   url?: string;
   asset_type: string;
   title?: string | null;
+  is_primary?: boolean;
 }
 
 // Component for handling broken images with Next.js Image optimization
@@ -149,6 +151,11 @@ export function ProfileContentTabs({
   const [photosShown, setPhotosShown] = useState(INITIAL_PHOTOS);
   const [videosShown, setVideosShown] = useState(INITIAL_VIDEOS);
   const [videoDurations, setVideoDurations] = useState<Record<string, number>>({});
+  const [settingPrimary, setSettingPrimary] = useState<string | null>(null);
+  const [localPhotos, setLocalPhotos] = useState(photos);
+
+  // Keep localPhotos in sync if photos prop changes (e.g. revalidation)
+  useEffect(() => { setLocalPhotos(photos); }, [photos]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const touchStart = useRef({ x: 0, y: 0 });
@@ -304,7 +311,27 @@ export function ProfileContentTabs({
     setSwipeOffset({ x: 0, y: 0 });
   };
 
-  const hasPhotos = photos && photos.length > 0;
+  const handleSetPrimary = async (photoId: string) => {
+    setSettingPrimary(photoId);
+    try {
+      const res = await fetch("/api/portfolio/set-primary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentItemId: photoId }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setLocalPhotos((prev) =>
+        prev.map((p) => ({ ...p, is_primary: p.id === photoId }))
+      );
+      toast.success("Primary photo updated — it will be your profile hero image");
+    } catch {
+      toast.error("Failed to set primary photo");
+    } finally {
+      setSettingPrimary(null);
+    }
+  };
+
+  const hasPhotos = localPhotos && localPhotos.length > 0;
   const hasVideos = videos && videos.length > 0;
 
   return (
@@ -370,9 +397,9 @@ export function ProfileContentTabs({
           {hasPhotos ? (
             <>
               <div className="grid grid-cols-3 auto-rows-[minmax(0,1fr)] gap-2" style={{ gridAutoFlow: "dense" }}>
-                {photos.slice(0, photosShown).map((photo, index) => {
+                {localPhotos.slice(0, photosShown).map((photo, index) => {
                   // Every 7th photo (0, 7, 14...) is featured - spans 2 cols + 2 rows
-                  const isFeatured = index % 7 === 0 && photos.length > 3;
+                  const isFeatured = index % 7 === 0 && localPhotos.length > 3;
                   return (
                     <div
                       key={photo.id}
@@ -392,8 +419,30 @@ export function ProfileContentTabs({
                         sizes={isFeatured ? "(max-width: 640px) 66vw, 40vw" : "(max-width: 640px) 33vw, 20vw"}
                         priority={index < 3}
                       />
+                      {/* Primary badge */}
+                      {photo.is_primary && (
+                        <div className="absolute top-2 left-2 z-10 px-2 py-0.5 bg-yellow-500/90 text-yellow-950 text-[10px] font-bold rounded-full flex items-center gap-1 backdrop-blur-sm">
+                          <Star className="h-2.5 w-2.5 fill-current" />
+                          Hero
+                        </div>
+                      )}
                       {/* Gradient overlay on hover */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      {/* Set as primary button (owner only) */}
+                      {isOwner && !photo.is_primary && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleSetPrimary(photo.id); }}
+                          disabled={settingPrimary === photo.id}
+                          className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                          title="Set as profile hero image"
+                        >
+                          {settingPrimary === photo.id ? (
+                            <Loader2 className="h-3.5 w-3.5 text-white animate-spin" />
+                          ) : (
+                            <Star className="h-3.5 w-3.5 text-white/80 hover:text-yellow-400" />
+                          )}
+                        </button>
+                      )}
                       {/* Title overlay on hover */}
                       {photo.title && (
                         <div className="absolute bottom-0 left-0 right-0 p-2.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
@@ -406,12 +455,12 @@ export function ProfileContentTabs({
                   );
                 })}
               </div>
-              {photos.length > photosShown && (
+              {localPhotos.length > photosShown && (
                 <button
                   onClick={() => setPhotosShown(prev => prev + LOAD_MORE_PHOTOS)}
                   className="w-full mt-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-sm font-medium transition-all active:scale-[0.98]"
                 >
-                  Load more photos ({photos.length - photosShown} remaining)
+                  Load more photos ({localPhotos.length - photosShown} remaining)
                 </button>
               )}
             </>
