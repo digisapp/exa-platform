@@ -12,12 +12,14 @@
  * stays sharp at small sizes regardless of source resolution.
  *
  * Priority chain:
- *   1. Highest-resolution portrait-orientation portfolio photo (>= 1500px long edge)
+ *   1. Model's "Primary" portfolio photo if it meets min resolution
+ *      — explicit model choice always wins
+ *   2. Highest-resolution portrait-orientation portfolio photo (>= 1500px long edge)
  *      — always looks best in the 4:5 hero container
- *   2. profile_photo_url if it's >= 800px wide (sharp at hero size)
- *   3. Most recent portfolio photo if no dimensions are stored yet (legacy fallback)
- *   4. profile_photo_url as a last resort (will look slightly soft)
- *   5. null — caller should fall back to the circle layout
+ *   3. profile_photo_url if it's >= 800px wide (sharp at hero size)
+ *   4. Most recent portfolio photo if no dimensions are stored yet (legacy fallback)
+ *   5. profile_photo_url as a last resort (will look slightly soft)
+ *   6. null — caller should fall back to the circle layout
  */
 
 export interface HeroSourceCandidate {
@@ -26,6 +28,8 @@ export interface HeroSourceCandidate {
   height: number | null;
   /** Most recent first when a sort order matters for the legacy fallback */
   createdAt?: string | Date | null;
+  /** Model starred this photo as their Primary in the portfolio gallery */
+  isPrimary?: boolean;
 }
 
 export interface HeroSourceInput {
@@ -52,7 +56,24 @@ export interface HeroPortraitResult {
 }
 
 export function getHeroPortrait(input: HeroSourceInput): HeroPortraitResult | null {
-  // 1. High-res portrait portfolio photo — best fit for the 4:5 hero container.
+  // 1. Model's explicit "Primary" choice — if it meets the minimum resolution,
+  //    always respect the model's pick regardless of orientation or pixel count.
+  const primary = input.portfolioPhotos.find((p) => p.isPrimary);
+  if (
+    primary &&
+    primary.width !== null &&
+    primary.height !== null &&
+    Math.max(primary.width!, primary.height!) >= MIN_PORTFOLIO_HERO_LONG_EDGE
+  ) {
+    return {
+      url: primary.url,
+      source: "portfolio-high-res",
+      width: primary.width,
+      height: primary.height,
+    };
+  }
+
+  // 2. High-res portrait portfolio photo — best fit for the 4:5 hero container.
   //    A portrait portfolio photo always looks better than a square profile pic
   //    in a tall hero layout, so check this first.
   const eligible = input.portfolioPhotos.filter(
@@ -74,7 +95,7 @@ export function getHeroPortrait(input: HeroSourceInput): HeroPortraitResult | nu
     };
   }
 
-  // 2. Profile pic is high-res enough
+  // 3. Profile pic is high-res enough
   if (
     input.profilePhotoUrl &&
     input.profilePhotoWidth &&
@@ -88,7 +109,7 @@ export function getHeroPortrait(input: HeroSourceInput): HeroPortraitResult | nu
     };
   }
 
-  // 3. Legacy fallback: portfolio photos exist but dimensions haven't been
+  // 4. Legacy fallback: portfolio photos exist but dimensions haven't been
   //    backfilled yet. Use the most recent portfolio photo. Risk: it might be
   //    landscape or low-res, but it's almost always better than a stretched
   //    profile pic. Once the backfill runs, this branch stops being hit.
@@ -104,7 +125,7 @@ export function getHeroPortrait(input: HeroSourceInput): HeroPortraitResult | nu
     };
   }
 
-  // 4. Profile pic anyway — even if low-res, better than nothing
+  // 5. Profile pic anyway — even if low-res, better than nothing
   if (input.profilePhotoUrl) {
     return {
       url: input.profilePhotoUrl,
@@ -114,6 +135,6 @@ export function getHeroPortrait(input: HeroSourceInput): HeroPortraitResult | nu
     };
   }
 
-  // 5. No photo available
+  // 6. No photo available
   return null;
 }
