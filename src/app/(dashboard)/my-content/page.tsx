@@ -114,13 +114,6 @@ export default function MyContentPage() {
     }
   };
 
-  const stats = {
-    total: myContent.length,
-    photos: myContent.filter((i) => i.content.mediaType === "image").length,
-    videos: myContent.filter((i) => i.content.mediaType === "video").length,
-    totalSpent: myContent.reduce((acc, i) => acc + i.coinsSpent, 0),
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -142,29 +135,6 @@ export default function MyContentPage() {
         <p className="text-muted-foreground">
           All your purchased content in one place
         </p>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="p-4 rounded-xl bg-card border">
-          <p className="text-sm text-muted-foreground mb-1">Total Items</p>
-          <p className="text-2xl font-bold">{stats.total}</p>
-        </div>
-        <div className="p-4 rounded-xl bg-card border">
-          <p className="text-sm text-muted-foreground mb-1">Photos</p>
-          <p className="text-2xl font-bold">{stats.photos}</p>
-        </div>
-        <div className="p-4 rounded-xl bg-card border">
-          <p className="text-sm text-muted-foreground mb-1">Videos</p>
-          <p className="text-2xl font-bold">{stats.videos}</p>
-        </div>
-        <div className="p-4 rounded-xl bg-card border">
-          <p className="text-sm text-muted-foreground mb-1">Coins Spent</p>
-          <p className="text-2xl font-bold flex items-center gap-1">
-            <Coins className="h-5 w-5 text-amber-500" />
-            {stats.totalSpent}
-          </p>
-        </div>
       </div>
 
       {/* Filters */}
