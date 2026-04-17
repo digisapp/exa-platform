@@ -290,6 +290,11 @@ export function HotelFloorPlan() {
               <stop offset="0%" stopColor="rgba(255,50,130,1)" />
               <stop offset="100%" stopColor="rgba(0,210,255,1)" />
             </linearGradient>
+            <linearGradient id="runwayTextGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+              <stop offset="40%" stopColor="rgba(220,180,255,0.9)" />
+              <stop offset="100%" stopColor="rgba(255,255,255,0.95)" />
+            </linearGradient>
             <linearGradient id="oceanGrad" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="rgba(0,180,255,0.35)" />
               <stop offset="100%" stopColor="rgba(0,120,200,0.55)" />
@@ -539,7 +544,7 @@ export function HotelFloorPlan() {
             ))}
             {/* Center line */}
             <line x1={95.0} y1={16.5} x2={95.0} y2={48} stroke="rgba(200,200,200,0.3)" strokeWidth={0.1} strokeDasharray="1 0.8" />
-            <text x={95.0} y={33} textAnchor="middle" fill="rgba(255,50,130,0.85)" fontSize={0.85} fontWeight="900" letterSpacing={0.3} transform="rotate(90, 95.0, 33)" filter="url(#neonGlow)">EXA Swim Shows Runway</text>
+            <text x={95.0} y={33} textAnchor="middle" fill="url(#runwayTextGrad)" fontSize={0.95} fontWeight="900" letterSpacing={0.4} fontStyle="italic" transform="rotate(90, 95.0, 33)" filter="url(#neonGlow)">EXA Swim Shows Runway</text>
           </g>
 
           {/* === MEDIA PIT === */}
@@ -593,23 +598,47 @@ export function HotelFloorPlan() {
 
           {/* === BEACH ENTRANCE — centered on boardwalk line (x=103.5) === */}
           <g style={{ pointerEvents: "none" }}>
-            {/* Palm tree left of door */}
-            <text x={101.5} y={29} textAnchor="middle" dominantBaseline="central" fontSize={2}>🌴</text>
-            {/* Door frame — centered on x=103.5 */}
-            <rect x={102.3} y={26.5} width={2.4} height={5} rx={0.3}
-              fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} />
+            {/* Warm ground pad beneath entrance */}
+            <rect x={100.5} y={25} width={6} height={8} rx={0.6}
+              fill="rgba(210,170,130,0.12)" />
+            {/* Outer archway frame */}
+            <rect x={101.8} y={25.5} width={3.4} height={7} rx={0.5}
+              fill="rgba(210,170,130,0.25)" stroke="rgba(230,190,150,0.6)" strokeWidth={0.15} />
+            {/* Inner arch top — decorative header bar */}
+            <rect x={102} y={25.7} width={3} height={1.2} rx={0.3}
+              fill="rgba(230,200,160,0.35)" stroke="rgba(245,220,180,0.5)" strokeWidth={0.08} />
+            {/* "BEACH ENTRANCE" header text inside arch top */}
+            <text x={103.5} y={26.35} textAnchor="middle" dominantBaseline="central"
+              fill="rgba(90,60,30,0.85)" fontSize={0.42} fontWeight="900" letterSpacing={0.08}>BEACH ENTRANCE</text>
             {/* Left door panel */}
-            <rect x={102.5} y={26.8} width={0.9} height={4.4} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.06} />
+            <rect x={102.15} y={27.1} width={1.2} height={5.1} rx={0.15}
+              fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.4)" strokeWidth={0.08} />
+            {/* Left door window */}
+            <rect x={102.35} y={27.5} width={0.8} height={1.8} rx={0.12}
+              fill="rgba(180,220,255,0.15)" stroke="rgba(255,255,255,0.25)" strokeWidth={0.05} />
+            {/* Left door crossbar */}
+            <line x1={102.15} y1={29.8} x2={103.35} y2={29.8} stroke="rgba(255,255,255,0.2)" strokeWidth={0.05} />
             {/* Right door panel */}
-            <rect x={103.6} y={26.8} width={0.9} height={4.4} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.06} />
-            {/* Door handles */}
-            <circle cx={103.3} cy={29} r={0.15} fill="rgba(255,200,50,0.9)" />
-            <circle cx={103.7} cy={29} r={0.15} fill="rgba(255,200,50,0.9)" />
-            {/* Palm tree right of door */}
-            <text x={105.5} y={29} textAnchor="middle" dominantBaseline="central" fontSize={2}>🌴</text>
-            {/* Vertical label: BEACH ENTRANCE — centered on the boardwalk line */}
-            <text x={103.5} y={29} textAnchor="middle" fill="rgba(255,255,255,0.95)" fontSize={0.75} fontWeight="900" letterSpacing={0.15}
-              transform="rotate(90, 103.5, 29)">BEACH ENTRANCE</text>
+            <rect x={103.65} y={27.1} width={1.2} height={5.1} rx={0.15}
+              fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.4)" strokeWidth={0.08} />
+            {/* Right door window */}
+            <rect x={103.85} y={27.5} width={0.8} height={1.8} rx={0.12}
+              fill="rgba(180,220,255,0.15)" stroke="rgba(255,255,255,0.25)" strokeWidth={0.05} />
+            {/* Right door crossbar */}
+            <line x1={103.65} y1={29.8} x2={104.85} y2={29.8} stroke="rgba(255,255,255,0.2)" strokeWidth={0.05} />
+            {/* Door handles — brass knobs */}
+            <circle cx={103.2} cy={29.5} r={0.18} fill="rgba(255,210,80,0.9)" stroke="rgba(200,160,40,0.7)" strokeWidth={0.05} />
+            <circle cx={103.8} cy={29.5} r={0.18} fill="rgba(255,210,80,0.9)" stroke="rgba(200,160,40,0.7)" strokeWidth={0.05} />
+            {/* Threshold step */}
+            <rect x={102} y={32} width={3} height={0.4} rx={0.1}
+              fill="rgba(200,170,130,0.3)" stroke="rgba(220,190,150,0.4)" strokeWidth={0.06} />
+            {/* Palm tree left */}
+            <text x={101} y={29} textAnchor="middle" dominantBaseline="central" fontSize={2.2}>🌴</text>
+            {/* Palm tree right */}
+            <text x={106} y={29} textAnchor="middle" dominantBaseline="central" fontSize={2.2}>🌴</text>
+            {/* Vertical label on boardwalk next to entrance */}
+            <text x={105} y={29} textAnchor="middle" fill="rgba(160,120,80,0.7)" fontSize={0.6} fontWeight="800" letterSpacing={0.12}
+              transform="rotate(90, 105, 29)">Miami Beach Boardwalk</text>
           </g>
 
           {/* === COMPASS ROSE === */}
