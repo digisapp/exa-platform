@@ -39,8 +39,6 @@ import { HotelFloorPlan } from "@/components/shows/hotel-floor-plan";
 import { ModelGrid } from "./model-grid";
 import {
   MSW_2026_SCHEDULE,
-  MSW_2026_RUNWAY_NOTE,
-  MSW_2026_TICKETING_NOTE,
 } from "@/lib/msw-schedule";
 import type { Metadata } from "next";
 
@@ -653,44 +651,31 @@ export default async function SponsorMswPage() {
 
           {/* Right — Compact Schedule */}
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6">
-            <h3 className="font-bold text-lg mb-2 flex items-center gap-2 text-white">
-              <div className="p-1.5 rounded-lg bg-amber-500/15 ring-1 ring-amber-500/30">
-                <Calendar className="h-4 w-4 text-amber-300" />
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-white">
+              <div className="p-1.5 rounded-lg bg-pink-500/15 ring-1 ring-pink-500/30">
+                <Calendar className="h-4 w-4 text-pink-300" />
               </div>
-              Full Week Schedule
+              EXA Shows Schedule
             </h3>
-            <p className="text-xs text-white/60 mb-2 leading-relaxed">
-              {MSW_2026_RUNWAY_NOTE}
-            </p>
-            <p className="text-[11px] text-white/50 mb-4 leading-relaxed">
-              {MSW_2026_TICKETING_NOTE}
-            </p>
             <div className="space-y-2">
               {SCHEDULE.map((event) => (
                 <div
-                  key={event.date}
+                  key={event.id}
                   className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
                     event.highlight
-                      ? "border border-amber-500/40 bg-amber-500/10 shadow-[0_0_14px_rgba(245,158,11,0.15)]"
+                      ? "border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-violet-500/5 to-transparent shadow-[0_0_14px_rgba(236,72,153,0.12)]"
                       : "bg-white/[0.03] border border-white/5"
                   }`}
                 >
                   <div className="text-center flex-shrink-0 w-12">
                     <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{event.day.slice(0, 3)}</p>
-                    <p className={`text-base font-bold ${event.highlight ? "text-amber-300" : "text-white"}`}>
+                    <p className={`text-base font-bold ${event.highlight ? "text-pink-300" : "text-white"}`}>
                       {event.date.split(" ")[1]}
                     </p>
                   </div>
                   <div className="h-8 w-px bg-white/10 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-sm text-white">{event.title}</p>
-                      {event.badge && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_0_8px_rgba(245,158,11,0.4)]">
-                          {event.badge}
-                        </span>
-                      )}
-                    </div>
+                    <p className="font-semibold text-sm text-white">{event.title}</p>
                   </div>
                 </div>
               ))}

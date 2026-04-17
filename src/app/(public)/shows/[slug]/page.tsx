@@ -24,11 +24,7 @@ import { format } from "date-fns";
 import type { Metadata } from "next";
 import { TicketCheckout } from "./ticket-checkout";
 import { HotelFloorPlan } from "@/components/shows/hotel-floor-plan";
-import {
-  MSW_2026_SCHEDULE,
-  MSW_2026_RUNWAY_NOTE,
-  MSW_2026_TICKETING_NOTE,
-} from "@/lib/msw-schedule";
+import { MSW_2026_SCHEDULE } from "@/lib/msw-schedule";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -398,7 +394,7 @@ export default async function EventPage({ params, searchParams }: Props) {
               </p>
 
               {/* Ticket Button with Popup */}
-              <div className="mb-6">
+              <div className="mb-6" id="tickets">
                 {hasInternalTickets ? (
                   <TicketCheckout
                     tiers={ticketTiers}
@@ -506,68 +502,53 @@ export default async function EventPage({ params, searchParams }: Props) {
             </div>
           </div>
 
-          {/* Full Week Schedule (MSW-only) */}
+          {/* Venue Map */}
           {event.slug === "miami-swim-week-2026" && (
             <div className="lg:col-span-2 order-3">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 md:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 rounded-xl bg-amber-500/15 ring-1 ring-amber-500/30">
-                    <Calendar className="h-5 w-5 text-amber-300" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold">Full Week</p>
-                    <h2 className="text-xl md:text-2xl font-bold text-white">
-                      <span className="exa-gradient-text">7 Days · 7 Shows</span>
-                    </h2>
-                  </div>
-                </div>
+              <HotelFloorPlan />
+            </div>
+          )}
 
-                <p className="text-sm text-white/70 mb-1.5 leading-relaxed">
-                  {MSW_2026_RUNWAY_NOTE}
-                </p>
-                <p className="text-xs text-white/50 mb-5 leading-relaxed">
-                  {MSW_2026_TICKETING_NOTE}
-                </p>
+          {/* Full Week Schedule (MSW-only) */}
+          {event.slug === "miami-swim-week-2026" && (
+            <div className="lg:col-span-2 order-4" id="schedule">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="p-2 rounded-xl bg-pink-500/15 ring-1 ring-pink-500/30">
+                    <Calendar className="h-5 w-5 text-pink-300" />
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-bold text-white">
+                    <span className="exa-gradient-text">EXA Shows Schedule</span>
+                  </h2>
+                </div>
 
                 <div className="space-y-2">
                   {MSW_2026_SCHEDULE.map((s) => (
-                    <div
-                      key={s.date}
-                      className={`flex items-start gap-4 p-3.5 rounded-xl transition-colors ${
+                    <a
+                      key={s.id}
+                      href="#tickets"
+                      className={`flex items-start gap-4 p-3.5 rounded-xl transition-all cursor-pointer group ${
                         s.highlight
-                          ? "border border-amber-500/40 bg-amber-500/10 shadow-[0_0_14px_rgba(245,158,11,0.15)]"
-                          : "bg-white/[0.03] border border-white/5"
+                          ? "border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-violet-500/5 to-transparent shadow-[0_0_14px_rgba(236,72,153,0.12)] hover:border-pink-400/50 hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
+                          : "bg-white/[0.03] border border-white/5 hover:border-violet-500/30 hover:bg-violet-500/5"
                       }`}
                     >
                       <div className="text-center flex-shrink-0 w-14">
                         <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{s.dayShort}</p>
-                        <p className={`text-xl font-bold leading-none ${s.highlight ? "text-amber-300" : "text-white"}`}>
+                        <p className={`text-xl font-bold leading-none ${s.highlight ? "text-pink-300" : "text-white"}`}>
                           {s.dateNum}
                         </p>
                       </div>
                       <div className="h-10 w-px bg-white/10 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                          <p className="font-semibold text-sm text-white">{s.title}</p>
-                          {s.badge && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_0_8px_rgba(245,158,11,0.4)]">
-                              {s.badge}
-                            </span>
-                          )}
-                        </div>
+                        <p className="font-semibold text-sm text-white group-hover:text-pink-200 transition-colors mb-0.5">{s.title}</p>
                         <p className="text-xs text-white/55 leading-relaxed">{s.description}</p>
                       </div>
-                    </div>
+                      <Ticket className="h-4 w-4 text-white/20 group-hover:text-pink-300 flex-shrink-0 mt-1 transition-colors" />
+                    </a>
                   ))}
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Venue Map */}
-          {event.slug === "miami-swim-week-2026" && (
-            <div className="lg:col-span-2 order-4">
-              <HotelFloorPlan />
             </div>
           )}
 

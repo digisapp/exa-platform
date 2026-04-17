@@ -9,6 +9,7 @@
  */
 
 export interface MSWScheduleEntry {
+  id: string;         // unique key for React rendering
   day: string;        // "Monday"
   dayShort: string;   // "Mon"
   date: string;       // "May 25"
@@ -21,17 +22,19 @@ export interface MSWScheduleEntry {
 
 export const MSW_2026_SCHEDULE: MSWScheduleEntry[] = [
   {
+    id: "mon-25-casting",
     day: "Monday",
     dayShort: "Mon",
     date: "May 25",
     dateNum: "25",
     title: "Casting Call Day Party",
     description:
-      "11am–4pm · Pool, sun, and music as 600+ models cast for the week. Open to the public — ticketed entry + VIP bottle tables.",
+      "11am–4pm · Pool, sun, and music as 600+ models cast for the EXA Shows.",
     highlight: true,
-    badge: "Ticketed · 600+ Models",
+    badge: null,
   },
   {
+    id: "tue-26-opening",
     day: "Tuesday",
     dayShort: "Tue",
     date: "May 26",
@@ -40,46 +43,38 @@ export const MSW_2026_SCHEDULE: MSWScheduleEntry[] = [
     description:
       "Doors 6pm · Show 7pm · The grand opening runway show of Miami Swim Week 2026.",
     highlight: true,
-    badge: "Opening Night",
+    badge: null,
   },
   {
+    id: "wed-27-day2",
     day: "Wednesday",
     dayShort: "Wed",
     date: "May 27",
     dateNum: "27",
-    title: "Day 2 Show",
+    title: "Signature Runway",
     description:
       "Doors 6pm · Show 7pm · Runway show featuring emerging and established swimwear designers.",
     highlight: false,
     badge: null,
   },
   {
+    id: "thu-28-signature",
     day: "Thursday",
     dayShort: "Thu",
     date: "May 28",
     dateNum: "28",
-    title: "Sunset Beach Show",
-    description:
-      "Doors 6pm · Show 7pm · Daytime Emerging Designers showcase, plus our iconic sand runway at sunset.",
-    highlight: true,
-    badge: "Beach Runway",
-  },
-  {
-    day: "Friday",
-    dayShort: "Fri",
-    date: "May 29",
-    dateNum: "29",
     title: "Signature Runway",
     description:
-      "Doors 6pm · Show 7pm · Runway show plus VIP cocktail hour and brand activations.",
+      "Doors 6pm · Show 7pm · Runway show featuring global designers and brand activations.",
     highlight: false,
     badge: null,
   },
   {
-    day: "Saturday",
-    dayShort: "Sat",
-    date: "May 30",
-    dateNum: "30",
+    id: "fri-29-signature",
+    day: "Friday",
+    dayShort: "Fri",
+    date: "May 29",
+    dateNum: "29",
     title: "Signature Runway",
     description:
       "Doors 6pm · Show 7pm · Runway show featuring designer collections and brand activations.",
@@ -87,28 +82,40 @@ export const MSW_2026_SCHEDULE: MSWScheduleEntry[] = [
     badge: null,
   },
   {
+    id: "sat-30-afternoon",
+    day: "Saturday",
+    dayShort: "Sat",
+    date: "May 30",
+    dateNum: "30",
+    title: "Afternoon Show",
+    description:
+      "Show 2pm · Daytime runway showcase featuring emerging and established designers.",
+    highlight: true,
+    badge: null,
+  },
+  {
+    id: "sat-30-night",
+    day: "Saturday",
+    dayShort: "Sat",
+    date: "May 30",
+    dateNum: "30",
+    title: "Night Show",
+    description:
+      "Doors 8pm · Show 9pm · Evening runway show with designer collections and brand activations.",
+    highlight: true,
+    badge: null,
+  },
+  {
+    id: "sun-31-closing",
     day: "Sunday",
     dayShort: "Sun",
     date: "May 31",
     dateNum: "31",
-    title: "Pool Vibes Closing Show",
+    title: "Closing Show",
     description:
-      "Doors 6pm · Show 7pm · Poolside closing runway show, DJ set, and after party — the ultimate send-off to Swim Week.",
+      "Doors 6pm · Show 7pm · Evening runway show and closing party — the ultimate send-off to Swim Week.",
     highlight: true,
-    badge: "Closing Party",
+    badge: null,
   },
 ];
 
-/**
- * One-line descriptor used above the schedule in multiple places.
- * Keep this phrasing in sync with the rest of the MSW messaging.
- */
-export const MSW_2026_RUNWAY_NOTE =
-  "Every evening show features global designers and 100+ models on the runway.";
-
-/**
- * Ticket tier summary used wherever the schedule is shown so fans and
- * sponsors see the same structure at a glance.
- */
-export const MSW_2026_TICKETING_NOTE =
-  "Ticketing: VIP Bottle Tables (seats 5, upsize to 10 · 1st row included) · 1st / 2nd / 3rd Row Seating · GA Standing";

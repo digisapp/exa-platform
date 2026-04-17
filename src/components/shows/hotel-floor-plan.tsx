@@ -330,10 +330,6 @@ export function HotelFloorPlan() {
               <rect x="0.65" y="0" width="0.2" height="2" rx="0.1" fill="rgba(255,255,255,0.15)" />
             </pattern>
 
-            {/* Arrow marker for guest flow */}
-            <marker id="arrowHead" markerWidth="4" markerHeight="3" refX="4" refY="1.5" orient="auto">
-              <polygon points="0 0, 4 1.5, 0 3" fill="rgba(255,200,50,0.5)" />
-            </marker>
           </defs>
 
           {/* Background */}
@@ -596,17 +592,17 @@ export function HotelFloorPlan() {
             );
           })}
 
-          {/* === BEACH ENTRANCE — palm trees + text on boardwalk line === */}
+          {/* === BEACH ENTRANCE — palm + star before "Beach", star + palm after "Entrance" === */}
           <g style={{ pointerEvents: "none" }}>
-            {/* Star + Palm tree left */}
-            <text x={101.2} y={27} textAnchor="middle" dominantBaseline="central" fontSize={1}>✨</text>
-            <text x={101.5} y={29} textAnchor="middle" dominantBaseline="central" fontSize={2.5}>🌴</text>
-            {/* "Beach Entrance" vertical text between palm trees */}
-            <text x={103.5} y={29} textAnchor="middle" fill="rgba(255,255,255,0.95)" fontSize={0.75} fontWeight="900" letterSpacing={0.15}
+            {/* Palm + Star before "Beach" */}
+            <text x={100.8} y={29} textAnchor="middle" dominantBaseline="central" fontSize={3}>🌴</text>
+            <text x={101.2} y={26.5} textAnchor="middle" dominantBaseline="central" fontSize={1.4}>⭐</text>
+            {/* "Beach Entrance" vertical text between emojis */}
+            <text x={103.5} y={29} textAnchor="middle" fill="rgba(255,255,255,0.95)" fontSize={0.85} fontWeight="900" letterSpacing={0.18}
               transform="rotate(90, 103.5, 29)">Beach Entrance</text>
-            {/* Palm tree right + Star */}
-            <text x={105.5} y={29} textAnchor="middle" dominantBaseline="central" fontSize={2.5}>🌴</text>
-            <text x={105.8} y={27} textAnchor="middle" dominantBaseline="central" fontSize={1}>✨</text>
+            {/* Star + Palm after "Entrance" */}
+            <text x={105.8} y={26.5} textAnchor="middle" dominantBaseline="central" fontSize={1.4}>⭐</text>
+            <text x={106.2} y={29} textAnchor="middle" dominantBaseline="central" fontSize={3}>🌴</text>
           </g>
 
           {/* === COMPASS ROSE === */}
@@ -618,19 +614,6 @@ export function HotelFloorPlan() {
             <text x={1.2} y={0} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.4}>E</text>
           </g>
 
-          {/* === GUEST FLOW ARROWS === */}
-          <g style={{ pointerEvents: "none" }}>
-            {/* Valet → Entrance */}
-            <path d="M 8 13 L 11 13" fill="none" stroke="rgba(255,200,50,0.3)" strokeWidth={0.15} markerEnd="url(#arrowHead)" />
-            {/* Entrance → Building */}
-            <path d="M 16 22 L 22 22" fill="none" stroke="rgba(168,85,247,0.3)" strokeWidth={0.15} strokeDasharray="0.8 0.5" markerEnd="url(#arrowHead)" />
-            {/* HQ → Shows area (routed along bottom to avoid crossing pools) */}
-            <path d="M 38 50 L 87 50" fill="none" stroke="rgba(255,50,130,0.2)" strokeWidth={0.12} strokeDasharray="1 0.8" markerEnd="url(#arrowHead)" />
-            {/* Wellness → Pools */}
-            <path d="M 69 34 L 70 34" fill="none" stroke="rgba(0,220,100,0.25)" strokeWidth={0.12} strokeDasharray="0.8 0.5" markerEnd="url(#arrowHead)" />
-            {/* Pools → Bar */}
-            <path d="M 76 25 L 76 26" fill="none" stroke="rgba(255,100,0,0.3)" strokeWidth={0.12} markerEnd="url(#arrowHead)" />
-          </g>
         </svg>
 
         {/* Detail panel */}
