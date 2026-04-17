@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     fontFamily: "PoppinsSemiBold",
     color: "#111111",
     textTransform: "uppercase",
-    letterSpacing: 2,
+    letterSpacing: 1,
     textAlign: "center",
     marginBottom: 1,
   },

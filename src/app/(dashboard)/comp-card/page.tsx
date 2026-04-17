@@ -544,7 +544,7 @@ export default function CompCardPage() {
       bCtx.fillStyle = "#111111";
       bCtx.textAlign = "center";
       bCtx.textBaseline = "top";
-      bCtx.letterSpacing = "5px";
+      bCtx.letterSpacing = "2px";
       bCtx.fillText(fullNameStr.toUpperCase(), BW / 2, curY);
       curY += 48;
 
@@ -1106,7 +1106,7 @@ export default function CompCardPage() {
                     {/* Top section: Logo + Name + Measurements + Photos */}
                     <div>
                       {/* Model Name */}
-                      <p className="text-lg font-bold text-black uppercase tracking-[0.15em] text-center mb-2">
+                      <p className="text-lg font-bold text-black uppercase tracking-[0.05em] text-center mb-2">
                         {fullName}
                       </p>
 
@@ -1172,7 +1172,7 @@ export default function CompCardPage() {
                       </div>
                       {/* Center: EXA logo text */}
                       <div className="shrink-0 px-1">
-                        <span className={`${glacialIndifference.className} text-2xl leading-none tracking-[-0.02em] lowercase text-black`}>
+                        <span className={`${glacialIndifference.className} text-sm leading-none tracking-[-0.02em] lowercase text-black`}>
                           exa models
                         </span>
                       </div>
