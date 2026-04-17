@@ -137,6 +137,7 @@ export default async function AdminPage() {
     { href: "/admin/email", label: "Email", icon: Mail, color: "blue" },
     { href: "/admin/studio", label: "Studio", icon: Camera, color: "teal" },
     { href: "/admin/media-hub", label: "Media Hub", icon: FolderOpen, color: "amber" },
+    { href: "/admin/comp-card-leads", label: "Comp Cards", icon: Camera, color: "rose" },
     { href: "/admin/print-queue", label: "Print Queue", icon: Printer, color: "purple" },
     { href: "/admin/shop", label: "Shop", icon: ShoppingBag, color: "emerald" },
   ];
