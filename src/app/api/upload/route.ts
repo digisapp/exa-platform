@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
         .insert({
           model_id: modelId,
           media_url: publicUrl,
-          media_type: "photo",
+          media_type: "image",
           status: "portfolio",
           width: finalWidth,
           height: finalHeight,
@@ -277,7 +277,7 @@ export async function DELETE(request: NextRequest) {
       .select("*")
       .eq("id", mediaId)
       .or(`owner_id.eq.${actor.id}${modelId ? `,model_id.eq.${modelId}` : ""}`)
-      .single() as { data: { id: string; storage_path: string; source: string } | null };
+      .single() as { data: { id: string; storage_path: string; source: string; url: string; model_id: string | null } | null };
 
     if (!mediaAsset) {
       return NextResponse.json(
@@ -291,8 +291,17 @@ export async function DELETE(request: NextRequest) {
     const bucket = mediaAsset.source === "avatar" ? "avatars" : "portfolio";
     await deleteClient.storage.from(bucket).remove([mediaAsset.storage_path]);
 
-    // Delete record
+    // Delete record from media_assets
     await deleteClient.from("media_assets").delete().eq("id", mediaId);
+
+    // Also delete matching content_items record
+    if (mediaAsset.model_id && mediaAsset.url) {
+      await (deleteClient as any)
+        .from("content_items")
+        .delete()
+        .eq("model_id", mediaAsset.model_id)
+        .eq("media_url", mediaAsset.url);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

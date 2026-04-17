@@ -47,12 +47,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
 
-    // Call the unlock function
-    const { data: rpcData, error: unlockError } = await supabase.rpc(
-      "unlock_content",
+    // Call the unified unlock function (content_items system)
+    const { data: rpcData, error: unlockError } = await (supabase as any).rpc(
+      "unlock_content_item",
       {
         p_buyer_id: actor.id,
-        p_content_id: contentId,
+        p_item_id: contentId,
       }
     );
     const result = rpcData as Record<string, any>;
@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
 
     // Award points to content creator for sale (+5) - only if not already unlocked
     if (!result.already_unlocked) {
-      const { data: content } = await supabase
-        .from("premium_content")
+      const { data: content } = await (supabase as any)
+        .from("content_items")
         .select("id, model_id, title")
         .eq("id", contentId)
         .single();

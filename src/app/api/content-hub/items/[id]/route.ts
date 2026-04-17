@@ -104,10 +104,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Model profile not found" }, { status: 403 });
     }
 
-    // Verify ownership
+    // Verify ownership and get media_url for cleanup
     const { data: existing, error: fetchError } = await service
       .from("content_items")
-      .select("id, model_id")
+      .select("id, model_id, media_url")
       .eq("id", id)
       .single();
 
@@ -119,6 +119,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Delete from content_items
     const { error } = await service
       .from("content_items")
       .delete()
@@ -127,6 +128,25 @@ export async function DELETE(
     if (error) {
       logger.error("Content item delete error", error);
       return NextResponse.json({ error: "Failed to delete item" }, { status: 500 });
+    }
+
+    // Clean up matching media_assets record
+    if (existing.media_url) {
+      await service
+        .from("media_assets")
+        .delete()
+        .eq("model_id", modelId)
+        .or(`url.eq.${existing.media_url},photo_url.eq.${existing.media_url},storage_path.eq.${existing.media_url}`);
+    }
+
+    // Clean up storage file
+    if (existing.media_url) {
+      const storagePath = existing.media_url.startsWith("http")
+        ? existing.media_url.split("/portfolio/").pop()
+        : existing.media_url;
+      if (storagePath) {
+        await service.storage.from("portfolio").remove([storagePath]);
+      }
     }
 
     return NextResponse.json({ success: true });

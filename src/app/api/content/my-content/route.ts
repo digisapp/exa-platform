@@ -59,14 +59,14 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const typeFilter = searchParams.get("type"); // "image", "video", or null for all
 
-    // Fetch all purchased content with creator info
-    const query = supabase
-      .from("content_unlocks")
+    // Fetch all purchased content with creator info (unified content_items system)
+    const query = (supabase as any)
+      .from("content_purchases")
       .select(`
         id,
-        amount_paid,
+        coins_spent,
         created_at,
-        content:premium_content (
+        content:content_items (
           id,
           title,
           description,
@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq("buyer_id", actor.id)
+      .not("item_id", "is", null)
       .order("created_at", { ascending: false });
 
     const { data: purchases, error } = await query as { data: any[] | null; error: any };
@@ -124,7 +125,7 @@ export async function GET(request: NextRequest) {
     const content = items.map((p, i) => ({
       id: p.id,
       purchasedAt: p.created_at,
-      coinsSpent: p.amount_paid,
+      coinsSpent: p.coins_spent,
       content: {
         id: p.content.id,
         title: p.content.title,

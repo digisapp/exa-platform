@@ -66,12 +66,12 @@ export function LibraryPicker({
         .filter((c: any) => c.media_type === "video")
         .map((c: any) => ({ id: c.id, url: resolveMediaUrl(c.media_url), type: "video" as const })));
 
-      // Load PPV content
-      const { data: premiumContent } = await (supabase
-        .from("premium_content") as any)
-        .select("id, media_url, media_type, coin_price, thumbnail_url")
+      // Load PPV content from content_items (exclusive status)
+      const { data: premiumContent } = await (supabase as any)
+        .from("content_items")
+        .select("id, media_url, media_type, coin_price, preview_url")
         .eq("model_id", modelId)
-        .eq("is_active", true)
+        .eq("status", "exclusive")
         .gt("coin_price", 0)
         .order("created_at", { ascending: false });
 
@@ -81,7 +81,7 @@ export function LibraryPicker({
           media_url: string;
           media_type: string;
           coin_price: number;
-          thumbnail_url: string | null;
+          preview_url: string | null;
         }>;
 
         const ppvItems = content.map((p) => ({
@@ -89,7 +89,7 @@ export function LibraryPicker({
           url: p.media_url,
           type: (p.media_type === "video" ? "video" : "photo") as "photo" | "video",
           coinPrice: p.coin_price,
-          thumbnail: p.thumbnail_url,
+          thumbnail: p.preview_url,
         }));
         setPpvContent(ppvItems);
       }

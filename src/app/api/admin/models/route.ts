@@ -141,25 +141,25 @@ export async function GET(request: NextRequest) {
         conversationData,
         referralData,
       ] = await Promise.all([
-        // Image counts - batch query
+        // Image counts - batch query (content_items portfolio images)
         batchQuery(allModelIds, async (batch) =>
-          adminClient.from("media_assets").select("model_id").in("model_id", batch).eq("type", "photo")
+          (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "portfolio").eq("media_type", "image")
         ),
-        // Video counts - batch query
+        // Video counts - batch query (content_items portfolio videos)
         batchQuery(allModelIds, async (batch) =>
-          adminClient.from("media_assets").select("model_id").in("model_id", batch).eq("type", "video")
+          (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "portfolio").eq("media_type", "video")
         ),
-        // PPV counts - batch query
+        // PPV counts - batch query (content_items with exclusive status)
         batchQuery(allModelIds, async (batch) =>
-          adminClient.from("premium_content").select("model_id").in("model_id", batch)
+          (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "exclusive")
         ),
-        // Last premium content - batch query
+        // Last exclusive content - batch query
         batchQuery(allModelIds, async (batch) =>
-          adminClient.from("premium_content").select("model_id, created_at").in("model_id", batch)
+          (adminClient as any).from("content_items").select("model_id, created_at").in("model_id", batch).eq("status", "exclusive")
         ),
-        // Last media - batch query
+        // Last media - batch query (portfolio content)
         batchQuery(allModelIds, async (batch) =>
-          adminClient.from("media_assets").select("model_id, created_at").in("model_id", batch)
+          (adminClient as any).from("content_items").select("model_id, created_at").in("model_id", batch).eq("status", "portfolio")
         ),
         // Followers - batch query on actor_ids
         allActorIds.length > 0
@@ -357,21 +357,23 @@ export async function GET(request: NextRequest) {
       userIds.length > 0
         ? adminClient.from("actors").select("id, user_id").in("user_id", userIds)
         : { data: [] },
-      // Get premium content (PPV) counts
-      adminClient.from("premium_content").select("model_id").in("model_id", modelIds),
-      // Get image counts from media_assets (type = "photo" for images)
-      adminClient.from("media_assets").select("model_id").in("model_id", modelIds).eq("type", "photo"),
-      // Get video counts from media_assets
-      adminClient.from("media_assets").select("model_id").in("model_id", modelIds).eq("type", "video"),
-      // Get last premium content dates
-      adminClient.from("premium_content")
+      // Get PPV counts (content_items with exclusive status)
+      (adminClient as any).from("content_items").select("model_id").in("model_id", modelIds).eq("status", "exclusive"),
+      // Get image counts from content_items (portfolio images)
+      (adminClient as any).from("content_items").select("model_id").in("model_id", modelIds).eq("status", "portfolio").eq("media_type", "image"),
+      // Get video counts from content_items (portfolio videos)
+      (adminClient as any).from("content_items").select("model_id").in("model_id", modelIds).eq("status", "portfolio").eq("media_type", "video"),
+      // Get last exclusive content dates
+      (adminClient as any).from("content_items")
         .select("model_id, created_at")
         .in("model_id", modelIds)
+        .eq("status", "exclusive")
         .order("created_at", { ascending: false }),
-      // Get last media asset dates
-      adminClient.from("media_assets")
+      // Get last content item dates (portfolio)
+      (adminClient as any).from("content_items")
         .select("model_id, created_at")
         .in("model_id", modelIds)
+        .eq("status", "portfolio")
         .order("created_at", { ascending: false }),
     ]);
 

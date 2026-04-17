@@ -100,32 +100,35 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .select("auction_id, amount, status")
       .eq("bidder_id", actorId)
       .in("status", ["winning", "active", "outbid"]),
-    // Recent premium content (last 30 days) for feed
-    (supabase.from("premium_content") as any)
+    // Recent exclusive content (last 30 days) for feed
+    (supabase as any).from("content_items")
       .select(`
         id, title, description, media_type, preview_url, media_url,
         coin_price, unlock_count, created_at,
-        model:models!premium_content_model_id_fkey(id, username, first_name, last_name, profile_photo_url, is_verified)
+        model:models!content_items_model_id_fkey(id, username, first_name, last_name, profile_photo_url, is_verified)
       `)
-      .eq("is_active", true)
+      .eq("status", "exclusive")
+      .gt("coin_price", 0)
       .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
       .order("created_at", { ascending: false })
       .limit(50),
-    // Trending premium content (top unlocks, all time)
-    (supabase.from("premium_content") as any)
+    // Trending exclusive content (top unlocks, all time)
+    (supabase as any).from("content_items")
       .select(`
         id, title, description, media_type, preview_url, media_url,
         coin_price, unlock_count, created_at,
-        model:models!premium_content_model_id_fkey(id, username, first_name, last_name, profile_photo_url, is_verified)
+        model:models!content_items_model_id_fkey(id, username, first_name, last_name, profile_photo_url, is_verified)
       `)
-      .eq("is_active", true)
+      .eq("status", "exclusive")
+      .gt("coin_price", 0)
       .gt("unlock_count", 0)
       .order("unlock_count", { ascending: false })
       .limit(30),
     // Fan's already-unlocked content
-    (supabase.from("content_unlocks") as any)
-      .select("content_id")
-      .eq("buyer_id", actorId),
+    (supabase as any).from("content_purchases")
+      .select("item_id")
+      .eq("buyer_id", actorId)
+      .not("item_id", "is", null),
   ]);
 
   const coinBalance = fanData?.coin_balance ?? 0;
@@ -162,7 +165,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   const featuredModels = seededShuffle(allFeaturedModels || [], rotationPeriod).slice(0, 8);
 
   // Build the "For You" feed
-  const unlockedIds = new Set((myUnlocks || []).map((u: any) => u.content_id));
+  const unlockedIds = new Set((myUnlocks || []).map((u: any) => u.item_id));
   const followedModelIds = new Set(favoriteModels.map((m: any) => m.id));
   const seenContentIds = new Set<string>();
 

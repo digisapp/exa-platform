@@ -79,6 +79,9 @@ export async function GET(request: NextRequest) {
         // Delete premium content
         await adminClient.from("premium_content").delete().eq("model_id", model.id);
 
+        // Delete content items (unified content table)
+        await (adminClient as any).from("content_items").delete().eq("model_id", model.id);
+
         // Delete the auth user if they have one
         if (model.user_id) {
           await adminClient.auth.admin.deleteUser(model.user_id);

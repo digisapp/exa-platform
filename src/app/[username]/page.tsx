@@ -233,11 +233,11 @@ export default async function ModelProfilePage({ params }: Props) {
       .gt("ends_at", new Date().toISOString())
       .order("ends_at", { ascending: true })
       .limit(6) as Promise<{ data: any[] | null }>,
-    supabase
-      .from("premium_content")
+    (supabase as any)
+      .from("content_items")
       .select("*", { count: "exact", head: true })
       .eq("model_id", model.id)
-      .eq("is_active", true)
+      .eq("status", "exclusive")
       .gt("coin_price", 0) as unknown as Promise<{ count: number | null }>,
   ]);
 

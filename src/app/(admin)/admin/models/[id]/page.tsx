@@ -279,8 +279,8 @@ export default function AdminModelDetailPage() {
             .eq("actor_id", actor.id);
 
           // Last post
-          const { data: lastPremium } = await (supabase
-            .from("premium_content") as any)
+          const { data: lastPremium } = await (supabase as any)
+            .from("content_items")
             .select("created_at")
             .eq("model_id", modelId)
             .order("created_at", { ascending: false })

@@ -88,10 +88,46 @@ export async function POST(request: NextRequest) {
         break;
       }
       case "delete": {
+        // Fetch media_urls before deleting for storage cleanup
+        const { data: itemsToDelete } = await service
+          .from("content_items")
+          .select("id, media_url")
+          .in("id", ids);
+
+        // Delete from content_items
         ({ error } = await service
           .from("content_items")
           .delete()
           .in("id", ids));
+
+        // Clean up storage files and media_assets (non-blocking)
+        if (!error && itemsToDelete) {
+          const mediaUrls = itemsToDelete
+            .map((item: any) => item.media_url)
+            .filter(Boolean);
+
+          // Extract storage paths for deletion
+          const storagePaths = mediaUrls
+            .map((url: string) => {
+              if (!url.startsWith("http")) return url;
+              const match = url.match(/\/object\/(?:sign|public)\/[^/]+\/(.+?)(?:\?|$)/);
+              return match ? match[1] : null;
+            })
+            .filter(Boolean) as string[];
+
+          if (storagePaths.length > 0) {
+            await service.storage.from("portfolio").remove(storagePaths);
+          }
+
+          // Clean up matching media_assets records
+          for (const url of mediaUrls) {
+            await service
+              .from("media_assets")
+              .delete()
+              .eq("model_id", modelId)
+              .or(`url.eq.${url},photo_url.eq.${url},storage_path.eq.${url}`);
+          }
+        }
         break;
       }
       case "add_tag": {

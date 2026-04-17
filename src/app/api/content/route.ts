@@ -63,12 +63,12 @@ export async function GET(request: NextRequest) {
     // Use helper to get actor ID
     const actorId = user ? await getActorId(supabase, user.id) : null;
 
-    // Get premium content (only paid content with coin_price > 0)
+    // Get exclusive content from content_items (unified table)
     const { data: content, error } = await supabase
-      .from("premium_content")
+      .from("content_items")
       .select("id, title, description, media_type, preview_url, coin_price, unlock_count, created_at")
       .eq("model_id", modelId)
-      .eq("is_active", true)
+      .eq("status", "exclusive")
       .gt("coin_price", 0)
       .order("created_at", { ascending: false });
 
@@ -84,11 +84,13 @@ export async function GET(request: NextRequest) {
     let unlockedIds: string[] = [];
     if (actorId) {
       const { data: unlocks } = await supabase
-        .from("content_unlocks")
-        .select("content_id")
+        .from("content_purchases")
+        .select("item_id")
         .eq("buyer_id", actorId);
 
-      unlockedIds = unlocks?.map((u: { content_id: string }) => u.content_id) || [];
+      unlockedIds = (unlocks || [])
+        .map((u: { item_id: string | null }) => u.item_id)
+        .filter(Boolean) as string[];
     }
 
     // Check if the viewer is the model themselves
@@ -214,7 +216,7 @@ export async function POST(request: NextRequest) {
     const finalPreviewUrl = previewUrl || mediaUrl;
 
     const { data: content, error } = await supabase
-      .from("premium_content")
+      .from("content_items")
       .insert({
         model_id: modelId,
         title: title || null,
@@ -223,6 +225,7 @@ export async function POST(request: NextRequest) {
         media_type: mediaType,
         preview_url: finalPreviewUrl,
         coin_price: coinPrice,
+        status: "exclusive",
       })
       .select()
       .single();
@@ -282,12 +285,24 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Model not found" }, { status: 400 });
     }
 
-    // Verify ownership and delete
-    const { error } = await supabase
-      .from("premium_content")
-      .delete()
+    // Fetch item first to get media_url for storage cleanup
+    const service = createServiceRoleClient();
+    const { data: existing } = await (service as any)
+      .from("content_items")
+      .select("id, model_id, media_url")
       .eq("id", contentId)
-      .eq("model_id", modelId);
+      .eq("model_id", modelId)
+      .single();
+
+    if (!existing) {
+      return NextResponse.json({ error: "Content not found" }, { status: 404 });
+    }
+
+    // Delete from content_items
+    const { error } = await (service as any)
+      .from("content_items")
+      .delete()
+      .eq("id", contentId);
 
     if (error) {
       logger.error("Error deleting content", error);
@@ -295,6 +310,23 @@ export async function DELETE(request: NextRequest) {
         { error: "Failed to delete content" },
         { status: 500 }
       );
+    }
+
+    // Clean up matching media_assets record
+    if (existing.media_url) {
+      await (service as any)
+        .from("media_assets")
+        .delete()
+        .eq("model_id", modelId)
+        .or(`url.eq.${existing.media_url},photo_url.eq.${existing.media_url},storage_path.eq.${existing.media_url}`);
+    }
+
+    // Clean up storage file
+    if (existing.media_url) {
+      const storagePath = extractStoragePath(existing.media_url);
+      if (storagePath) {
+        await service.storage.from("portfolio").remove([storagePath]);
+      }
     }
 
     return NextResponse.json({ success: true });

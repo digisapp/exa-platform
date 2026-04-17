@@ -12,7 +12,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
  *
  * Usage:
  * - Actor-owned tables (messages, wallets, coin_transactions) → use actorId
- * - Model-owned tables (premium_content, portfolio) → use modelId
+ * - Model-owned tables (content_items, content_sets) → use modelId
  * - Auth-owned tables → use userId directly
  */
 

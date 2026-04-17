@@ -62,12 +62,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: `Model '${deleteUsername}' not found` }, { status: 404 });
     }
 
-    // Get content counts
+    // Get content counts from unified content_items table
     const [keepContent, deleteContent, keepMedia, deleteMedia] = await Promise.all([
-      adminClient.from("premium_content").select("id", { count: "exact", head: true }).eq("model_id", keepModel.id),
-      adminClient.from("premium_content").select("id", { count: "exact", head: true }).eq("model_id", deleteModel.id),
-      adminClient.from("media_assets").select("id", { count: "exact", head: true }).eq("model_id", keepModel.id),
-      adminClient.from("media_assets").select("id", { count: "exact", head: true }).eq("model_id", deleteModel.id),
+      (adminClient as any).from("content_items").select("id", { count: "exact", head: true }).eq("model_id", keepModel.id).eq("status", "exclusive"),
+      (adminClient as any).from("content_items").select("id", { count: "exact", head: true }).eq("model_id", deleteModel.id).eq("status", "exclusive"),
+      (adminClient as any).from("content_items").select("id", { count: "exact", head: true }).eq("model_id", keepModel.id).eq("status", "portfolio"),
+      (adminClient as any).from("content_items").select("id", { count: "exact", head: true }).eq("model_id", deleteModel.id).eq("status", "portfolio"),
     ]);
 
     // Get actor info for both
@@ -216,6 +216,17 @@ export async function POST(request: NextRequest) {
 
     if (contentData && contentData.length > 0) {
       actions.push(`Transferred ${contentData.length} premium content items`);
+    }
+
+    // Transfer content_items (unified content table)
+    const { data: contentItemsData } = await (adminClient as any)
+      .from("content_items")
+      .update({ model_id: keepModel.id })
+      .eq("model_id", deleteModel.id)
+      .select("id");
+
+    if (contentItemsData && contentItemsData.length > 0) {
+      actions.push(`Transferred ${contentItemsData.length} content items`);
     }
 
     // Step 3: Combine coin balances
