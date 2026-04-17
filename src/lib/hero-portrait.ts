@@ -12,7 +12,7 @@
  * stays sharp at small sizes regardless of source resolution.
  *
  * Priority chain:
- *   1. profile_photo_url if it's >= 1200px on the long edge (sharp at hero size)
+ *   1. profile_photo_url if it's >= 800px wide (sharp at hero size)
  *   2. Highest-resolution portrait-orientation portfolio photo (>= 1500px long edge)
  *   3. Most recent portfolio photo if no dimensions are stored yet (legacy fallback)
  *   4. profile_photo_url as a last resort (will look slightly soft)
@@ -35,8 +35,10 @@ export interface HeroSourceInput {
   portfolioPhotos: HeroSourceCandidate[];
 }
 
-/** Profile pic must be at least this wide to render sharply at hero size. */
-export const MIN_PROFILE_HERO_WIDTH = 1200;
+/** Profile pic must be at least this wide to render sharply at hero size.
+ *  800px is sharp at mobile (375px / 750px retina) and acceptable on desktop.
+ *  Portfolio photos use a higher bar (1500px) since they're the premium path. */
+export const MIN_PROFILE_HERO_WIDTH = 800;
 
 /** Portfolio fallback must be at least this big on the long edge. */
 export const MIN_PORTFOLIO_HERO_LONG_EDGE = 1500;

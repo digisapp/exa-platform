@@ -322,8 +322,8 @@ export default async function ModelProfilePage({ params }: Props) {
   // never see this value.
   const heroSource = getHeroPortrait({
     profilePhotoUrl: profilePhotoUrl,
-    profilePhotoWidth: null, // not yet stored on models table
-    profilePhotoHeight: null,
+    profilePhotoWidth: model.profile_photo_width ?? null,
+    profilePhotoHeight: model.profile_photo_height ?? null,
     portfolioPhotos: (rawPhotos || []).map((p: any) => ({
       url: resolveMediaUrl(p.media_url),
       width: p.width ?? null,
@@ -334,7 +334,7 @@ export default async function ModelProfilePage({ params }: Props) {
 
   // Graceful-degradation safeguard: only show the hero layout if the helper
   // returned a KNOWN-sharp source. We accept:
-  //   - "profile":            high-res profile pic (>=1200px)
+  //   - "profile":            high-res profile pic (>=800px)
   //   - "portfolio-high-res": backfilled portfolio photo, portrait, >=1500px
   // We REJECT:
   //   - "portfolio-legacy":   portfolio photo without dimensions yet (could be

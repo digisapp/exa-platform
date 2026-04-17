@@ -194,11 +194,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If avatar upload, update the model's profile_photo_url
+    // If avatar upload, update the model's profile_photo_url + dimensions
     if (uploadType === "avatar" && modelId) {
       await supabase
         .from("models")
-        .update({ profile_photo_url: publicUrl })
+        .update({
+          profile_photo_url: publicUrl,
+          profile_photo_width: finalWidth,
+          profile_photo_height: finalHeight,
+        })
         .eq("id", modelId);
     }
 
