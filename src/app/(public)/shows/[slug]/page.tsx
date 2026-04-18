@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Metadata } from "next";
-import { TicketCheckout } from "./ticket-checkout";
 import { HotelFloorPlan } from "@/components/shows/hotel-floor-plan";
 import { MSW_2026_SCHEDULE } from "@/lib/msw-schedule";
 
@@ -393,24 +392,19 @@ export default async function EventPage({ params, searchParams }: Props) {
                 The Premier Shows during Swim Week featuring 30+ Global Designers and 150+ World&apos;s Top Models!
               </p>
 
-              {/* Ticket Button with Popup */}
+              {/* Ticket Button */}
               <div className="mb-6" id="tickets">
                 {hasInternalTickets ? (
-                  <TicketCheckout
-                    tiers={ticketTiers}
-                    eventName={event.name}
-                    eventDate={dateDisplay}
-                    eventLocation={
-                      event.location_city && event.location_state
-                        ? `${event.location_city}, ${event.location_state}`
-                        : event.location_city || event.location_state || undefined
-                    }
-                    referringModelName={
-                      referringModel
-                        ? referringModel.first_name || referringModel.username
-                        : undefined
-                    }
-                  />
+                  <Button
+                    asChild
+                    size="lg"
+                    className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-lg py-6 rounded-xl shadow-lg shadow-pink-500/25"
+                  >
+                    <Link href={`/shows/${event.slug}/tickets${ref ? `?ref=${ref}` : ""}`}>
+                      <Ticket className="h-6 w-6 mr-2" />
+                      Get Tickets — From ${ticketTiers.length ? Math.min(...ticketTiers.map((t: any) => t.price_cents)) / 100 : 0}
+                    </Link>
+                  </Button>
                 ) : ticketUrl ? (
                   <Button
                     asChild
@@ -524,9 +518,9 @@ export default async function EventPage({ params, searchParams }: Props) {
 
                 <div className="space-y-2">
                   {MSW_2026_SCHEDULE.map((s) => (
-                    <a
+                    <Link
                       key={s.id}
-                      href="#tickets"
+                      href={`/shows/${event.slug}/tickets?day=may-${s.dateNum}${ref ? `&ref=${ref}` : ""}`}
                       className={`flex items-start gap-4 p-3.5 rounded-xl transition-all cursor-pointer group ${
                         s.highlight
                           ? "border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-violet-500/5 to-transparent shadow-[0_0_14px_rgba(236,72,153,0.12)] hover:border-pink-400/50 hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
@@ -545,7 +539,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                         <p className="text-xs text-white/55 leading-relaxed">{s.description}</p>
                       </div>
                       <Ticket className="h-4 w-4 text-white/20 group-hover:text-pink-300 flex-shrink-0 mt-1 transition-colors" />
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>
