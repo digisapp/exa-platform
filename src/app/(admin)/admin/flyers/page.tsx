@@ -237,7 +237,6 @@ export default function AdminFlyersPage() {
       params.set("photo", sampleModel.profile_photo_url);
     if (sampleModel?.instagram_username)
       params.set("ig", sampleModel.instagram_username);
-    params.set("event", eventDisplayValues.name);
     params.set(
       "venue",
       debouncedSettings.venueOverride || eventDisplayValues.venue

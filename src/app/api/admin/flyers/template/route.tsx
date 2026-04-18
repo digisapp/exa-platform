@@ -6,9 +6,9 @@ export const runtime = "edge";
 /**
  * GET /api/admin/flyers/template
  *
- * Full-bleed portrait flyer — model photo fills the entire canvas,
- * branding and event details overlay on top via gradient fades.
- * Magazine cover / comp card style.
+ * Full-bleed portrait flyer — model photo fills the entire canvas.
+ * Top: "exa Swim Shows" branding with gradient fade.
+ * Bottom: Model name, @instagram, venue, date, ticket CTA.
  */
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
   // ── Content params ──
   const modelName = sp.get("name") || "Model Name";
   const photoUrl = sp.get("photo") || "";
-  const eventName = sp.get("event") || "Miami Swim Week 2026";
   const eventDate = sp.get("date") || "July 2026";
   const venue = sp.get("venue") || "Miami Beach, FL";
   const tagline = sp.get("tagline") || "Swim Shows";
@@ -110,33 +109,33 @@ export async function GET(request: NextRequest) {
           </div>
         )}
 
-        {/* ── Top gradient overlay (for branding) ── */}
+        {/* ── Top gradient overlay — compact, just for branding ── */}
         <div
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             width: "100%",
-            height: "420px",
-            background: `linear-gradient(180deg, ${gc0}cc 0%, ${gc0}88 30%, ${gc1}44 60%, transparent 100%)`,
+            height: "320px",
+            background: `linear-gradient(180deg, ${gc0}bb 0%, ${gc0}66 40%, transparent 100%)`,
             display: "flex",
           }}
         />
 
-        {/* ── Bottom gradient overlay (for text readability) ── */}
+        {/* ── Bottom gradient overlay — for model info + event details ── */}
         <div
           style={{
             position: "absolute",
             bottom: 0,
             left: 0,
             width: "100%",
-            height: "580px",
-            background: `linear-gradient(0deg, ${gc4}ee 0%, ${gc3}cc 20%, ${gc2}88 45%, transparent 100%)`,
+            height: "520px",
+            background: `linear-gradient(0deg, ${gc4}ee 0%, ${gc3}bb 25%, ${gc2}66 50%, transparent 100%)`,
             display: "flex",
           }}
         />
 
-        {/* ── Side vignette (subtle darkening on edges) ── */}
+        {/* ── Side vignette ── */}
         <div
           style={{
             position: "absolute",
@@ -144,7 +143,7 @@ export async function GET(request: NextRequest) {
             left: 0,
             width: "100%",
             height: "100%",
-            background: "linear-gradient(90deg, rgba(0,0,0,0.15) 0%, transparent 15%, transparent 85%, rgba(0,0,0,0.15) 100%)",
+            background: "linear-gradient(90deg, rgba(0,0,0,0.12) 0%, transparent 12%, transparent 88%, rgba(0,0,0,0.12) 100%)",
             display: "flex",
           }}
         />
@@ -152,29 +151,25 @@ export async function GET(request: NextRequest) {
         {/* ── Colored glow accents ── */}
         {showGlows && (
           <>
-            <div style={{ position: "absolute", top: "-80px", left: "-80px", width: "400px", height: "400px", borderRadius: "50%", background: `radial-gradient(circle, ${gc0}55 0%, transparent 65%)`, display: "flex" }} />
-            <div style={{ position: "absolute", bottom: "-60px", right: "-60px", width: "350px", height: "350px", borderRadius: "50%", background: `radial-gradient(circle, ${gc4}44 0%, transparent 60%)`, display: "flex" }} />
-            <div style={{ position: "absolute", bottom: "300px", left: "-50px", width: "250px", height: "250px", borderRadius: "50%", background: `radial-gradient(circle, ${borderColor}22 0%, transparent 60%)`, display: "flex" }} />
+            <div style={{ position: "absolute", top: "-80px", left: "-80px", width: "350px", height: "350px", borderRadius: "50%", background: `radial-gradient(circle, ${gc0}44 0%, transparent 65%)`, display: "flex" }} />
+            <div style={{ position: "absolute", bottom: "-60px", right: "-60px", width: "300px", height: "300px", borderRadius: "50%", background: `radial-gradient(circle, ${gc4}33 0%, transparent 60%)`, display: "flex" }} />
           </>
         )}
 
-        {/* ── Scattered hearts ── */}
+        {/* ── Hearts ── */}
         {showHearts && (
           <>
-            <div style={{ position: "absolute", top: "100px", right: "60px", display: "flex", zIndex: 3 }}>
-              <div style={{ width: "38px", height: "38px", background: `${borderColor}cc`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 25px ${borderColor}55` }} />
+            <div style={{ position: "absolute", top: "90px", right: "55px", display: "flex", zIndex: 3 }}>
+              <div style={{ width: "34px", height: "34px", background: `${borderColor}bb`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 20px ${borderColor}44` }} />
             </div>
-            <div style={{ position: "absolute", top: "200px", right: "130px", display: "flex", zIndex: 3 }}>
-              <div style={{ width: "20px", height: "20px", background: "rgba(255,255,255,0.6)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
+            <div style={{ position: "absolute", top: "180px", right: "120px", display: "flex", zIndex: 3 }}>
+              <div style={{ width: "18px", height: "18px", background: "rgba(255,255,255,0.5)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
             </div>
-            <div style={{ position: "absolute", top: "300px", right: "40px", display: "flex", zIndex: 3 }}>
-              <div style={{ width: "28px", height: "28px", background: "rgba(120,200,255,0.7)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: "0 0 18px rgba(120,200,255,0.3)" }} />
+            <div style={{ position: "absolute", top: "250px", right: "35px", display: "flex", zIndex: 3 }}>
+              <div style={{ width: "24px", height: "24px", background: "rgba(120,200,255,0.6)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: "0 0 14px rgba(120,200,255,0.25)" }} />
             </div>
-            <div style={{ position: "absolute", top: "160px", left: "50px", display: "flex", zIndex: 3 }}>
-              <div style={{ width: "24px", height: "24px", background: `${borderColor}99`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
-            </div>
-            <div style={{ position: "absolute", bottom: "350px", right: "70px", display: "flex", zIndex: 3 }}>
-              <div style={{ width: "18px", height: "18px", background: `${borderColor}77`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
+            <div style={{ position: "absolute", top: "140px", left: "45px", display: "flex", zIndex: 3 }}>
+              <div style={{ width: "20px", height: "20px", background: `${borderColor}88`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
             </div>
           </>
         )}
@@ -182,24 +177,22 @@ export async function GET(request: NextRequest) {
         {/* ── Palm tree silhouettes ── */}
         {showPalms && (
           <>
-            <div style={{ position: "absolute", bottom: "0px", left: "-10px", opacity: 0.12, display: "flex", flexDirection: "column", alignItems: "center", width: "160px", height: "350px", zIndex: 3 }}>
-              <div style={{ position: "absolute", bottom: "0", width: "14px", height: "250px", background: "white", borderRadius: "7px", display: "flex" }} />
-              <div style={{ position: "absolute", top: "30px", left: "0px", width: "140px", height: "90px", borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "10px", left: "20px", width: "120px", height: "70px", borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "50px", left: "-10px", width: "100px", height: "60px", borderRadius: "50%", background: "white", display: "flex" }} />
+            <div style={{ position: "absolute", bottom: "0px", left: "-10px", opacity: 0.1, display: "flex", flexDirection: "column", alignItems: "center", width: "150px", height: "320px", zIndex: 3 }}>
+              <div style={{ position: "absolute", bottom: "0", width: "12px", height: "230px", background: "white", borderRadius: "6px", display: "flex" }} />
+              <div style={{ position: "absolute", top: "30px", left: "0px", width: "130px", height: "80px", borderRadius: "50%", background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: "10px", left: "15px", width: "110px", height: "65px", borderRadius: "50%", background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: "50px", left: "-10px", width: "90px", height: "55px", borderRadius: "50%", background: "white", display: "flex" }} />
             </div>
-            <div style={{ position: "absolute", bottom: "0px", right: "-10px", opacity: 0.12, display: "flex", flexDirection: "column", alignItems: "center", width: "160px", height: "350px", zIndex: 3 }}>
-              <div style={{ position: "absolute", bottom: "0", width: "14px", height: "250px", background: "white", borderRadius: "7px", display: "flex" }} />
-              <div style={{ position: "absolute", top: "30px", right: "0px", width: "140px", height: "90px", borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "10px", right: "20px", width: "120px", height: "70px", borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "50px", right: "-10px", width: "100px", height: "60px", borderRadius: "50%", background: "white", display: "flex" }} />
+            <div style={{ position: "absolute", bottom: "0px", right: "-10px", opacity: 0.1, display: "flex", flexDirection: "column", alignItems: "center", width: "150px", height: "320px", zIndex: 3 }}>
+              <div style={{ position: "absolute", bottom: "0", width: "12px", height: "230px", background: "white", borderRadius: "6px", display: "flex" }} />
+              <div style={{ position: "absolute", top: "30px", right: "0px", width: "130px", height: "80px", borderRadius: "50%", background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: "10px", right: "15px", width: "110px", height: "65px", borderRadius: "50%", background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: "50px", right: "-10px", width: "90px", height: "55px", borderRadius: "50%", background: "white", display: "flex" }} />
             </div>
           </>
         )}
 
-        {/* ═══════════════════════════════════════
-            TOP SECTION — Branding overlay
-        ═══════════════════════════════════════ */}
+        {/* ═══════ TOP — exa Swim Shows branding ═══════ */}
         <div
           style={{
             position: "absolute",
@@ -209,25 +202,22 @@ export async function GET(request: NextRequest) {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            paddingTop: "40px",
+            paddingTop: "35px",
             zIndex: 4,
           }}
         >
-          {/* exa logo */}
           <div
             style={{
-              fontSize: "56px",
+              fontSize: "50px",
               fontWeight: 900,
               color: "white",
               letterSpacing: "0.2em",
               display: "flex",
-              textShadow: "0 2px 20px rgba(0,0,0,0.4)",
+              textShadow: "0 2px 16px rgba(0,0,0,0.5)",
             }}
           >
             exa
           </div>
-
-          {/* Tagline */}
           <div
             style={{
               fontSize: `${taglineFontSize}px`,
@@ -236,42 +226,15 @@ export async function GET(request: NextRequest) {
               lineHeight: 1,
               fontStyle: "italic",
               display: "flex",
-              textShadow: "2px 4px 16px rgba(0,0,0,0.4)",
+              textShadow: "2px 4px 16px rgba(0,0,0,0.5)",
+              marginTop: "-4px",
             }}
           >
             {tagline}
           </div>
-
-          {/* Event name pill */}
-          <div
-            style={{
-              display: "flex",
-              marginTop: "8px",
-              padding: "4px 20px",
-              borderRadius: "20px",
-              background: "rgba(255,255,255,0.2)",
-              border: "1px solid rgba(255,255,255,0.3)",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "20px",
-                fontWeight: 600,
-                color: "white",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                display: "flex",
-                textShadow: "0 1px 8px rgba(0,0,0,0.3)",
-              }}
-            >
-              {eventName}
-            </div>
-          </div>
         </div>
 
-        {/* ═══════════════════════════════════════
-            BOTTOM SECTION — Model info + Event details
-        ═══════════════════════════════════════ */}
+        {/* ═══════ BOTTOM — Model info + Event details ═══════ */}
         <div
           style={{
             position: "absolute",
@@ -281,7 +244,7 @@ export async function GET(request: NextRequest) {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            paddingBottom: "35px",
+            paddingBottom: "32px",
             zIndex: 4,
           }}
         >
@@ -290,12 +253,12 @@ export async function GET(request: NextRequest) {
             style={{
               background: `linear-gradient(90deg, rgba(135,206,235,0.9), rgba(176,224,255,0.9))`,
               color: `${borderColor}`,
-              fontSize: "16px",
+              fontSize: "15px",
               fontWeight: 900,
               letterSpacing: "0.3em",
               textTransform: "uppercase",
-              padding: "4px 24px",
-              borderRadius: "16px",
+              padding: "4px 22px",
+              borderRadius: "14px",
               display: "flex",
             }}
           >
@@ -310,7 +273,7 @@ export async function GET(request: NextRequest) {
               color: "white",
               textTransform: "uppercase",
               letterSpacing: "0.06em",
-              textShadow: "2px 3px 12px rgba(0,0,0,0.5)",
+              textShadow: "2px 3px 12px rgba(0,0,0,0.6)",
               marginTop: "6px",
               textAlign: "center",
               display: "flex",
@@ -324,39 +287,39 @@ export async function GET(request: NextRequest) {
           {showIg && igHandle && (
             <div
               style={{
-                fontSize: "20px",
+                fontSize: "19px",
                 fontWeight: 400,
                 color: "rgba(255,255,255,0.85)",
                 marginTop: "2px",
                 display: "flex",
                 letterSpacing: "0.02em",
-                textShadow: "0 1px 8px rgba(0,0,0,0.4)",
+                textShadow: "0 1px 8px rgba(0,0,0,0.5)",
               }}
             >
               @{igHandle}
             </div>
           )}
 
-          {/* Divider line */}
+          {/* Divider */}
           <div
             style={{
-              width: "120px",
+              width: "100px",
               height: "2px",
-              background: `linear-gradient(90deg, transparent, ${borderColor}aa, transparent)`,
+              background: `linear-gradient(90deg, transparent, ${borderColor}99, transparent)`,
               marginTop: "14px",
-              marginBottom: "14px",
+              marginBottom: "12px",
               display: "flex",
             }}
           />
 
-          {/* exa Swim Shows */}
+          {/* exa Swim Shows — event title */}
           <div
             style={{
-              fontSize: "42px",
+              fontSize: "40px",
               fontWeight: 900,
               color: "white",
               fontStyle: "italic",
-              textShadow: "2px 4px 12px rgba(0,0,0,0.5)",
+              textShadow: "2px 4px 12px rgba(0,0,0,0.6)",
               display: "flex",
             }}
           >
@@ -371,8 +334,9 @@ export async function GET(request: NextRequest) {
               color: "white",
               textTransform: "uppercase",
               letterSpacing: "0.06em",
-              textShadow: "1px 2px 8px rgba(0,0,0,0.4)",
+              textShadow: "1px 2px 8px rgba(0,0,0,0.5)",
               display: "flex",
+              marginTop: "2px",
             }}
           >
             {venue}
@@ -388,7 +352,7 @@ export async function GET(request: NextRequest) {
               letterSpacing: "0.15em",
               marginTop: "4px",
               display: "flex",
-              textShadow: "0 1px 6px rgba(0,0,0,0.4)",
+              textShadow: "0 1px 6px rgba(0,0,0,0.5)",
             }}
           >
             {eventDate}
@@ -399,16 +363,16 @@ export async function GET(request: NextRequest) {
             style={{
               display: "flex",
               alignItems: "center",
-              marginTop: "12px",
-              padding: "8px 28px",
+              marginTop: "10px",
+              padding: "7px 26px",
               background: `linear-gradient(90deg, ${ticketColor1}, ${ticketColor2})`,
-              borderRadius: "20px",
-              boxShadow: `0 4px 20px ${ticketColor1}55`,
+              borderRadius: "18px",
+              boxShadow: `0 4px 16px ${ticketColor1}55`,
             }}
           >
             <div
               style={{
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: 600,
                 color: "white",
                 letterSpacing: "0.12em",
@@ -421,16 +385,16 @@ export async function GET(request: NextRequest) {
           </div>
         </div>
 
-        {/* ── Thin colored border frame ── */}
+        {/* ── Thin border frame ── */}
         <div
           style={{
             position: "absolute",
-            top: "12px",
-            left: "12px",
-            right: "12px",
-            bottom: "12px",
-            border: `2px solid ${borderColor}33`,
-            borderRadius: "8px",
+            top: "10px",
+            left: "10px",
+            right: "10px",
+            bottom: "10px",
+            border: `2px solid ${borderColor}22`,
+            borderRadius: "6px",
             display: "flex",
             zIndex: 5,
           }}

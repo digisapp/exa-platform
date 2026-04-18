@@ -126,7 +126,6 @@ export async function POST(request: NextRequest) {
   }
 
   // 7. Build event display values
-  const eventDisplayName = event.short_name || event.name;
   const venue = [event.location_city, event.location_state].filter(Boolean).join(", ");
 
   const monthNames = [
@@ -197,7 +196,6 @@ export async function POST(request: NextRequest) {
     const templateUrl = new URL("/api/admin/flyers/template", request.nextUrl.origin);
     templateUrl.searchParams.set("name", modelName);
     templateUrl.searchParams.set("photo", bestPhotoUrl);
-    templateUrl.searchParams.set("event", eventDisplayName);
     templateUrl.searchParams.set("date", design?.dateOverride || dateDisplay);
     templateUrl.searchParams.set("venue", design?.venueOverride || venue || "Miami Beach, FL");
 
