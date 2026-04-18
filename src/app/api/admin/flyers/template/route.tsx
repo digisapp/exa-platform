@@ -14,16 +14,16 @@ export const runtime = "edge";
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
 
-  // ── Content params ──
-  const modelName = sp.get("name") || "Model Name";
+  // ── Content params — no fallback defaults, empty = hidden ──
+  const modelName = sp.get("name") || "";
   const photoUrl = sp.get("photo") || "";
-  const eventDate = sp.get("date") || "July 2026";
-  const venue = sp.get("venue") || "Miami Beach, FL";
-  const logoText = sp.get("logoText") || "exa";
-  const tagline = sp.get("tagline") || "Swim Shows";
-  const badgeText = sp.get("badgeText") || "MODEL";
-  const eventTitle = sp.get("eventTitle") || "exa Swim Shows";
-  const ticketText = sp.get("ticketText") || "TICKETS + VIP — EXAMODELS.COM @EXA.MODELS";
+  const eventDate = sp.get("date") || "";
+  const venue = sp.get("venue") || "";
+  const logoText = sp.get("logoText") || "";
+  const tagline = sp.get("tagline") || "";
+  const badgeText = sp.get("badgeText") || "";
+  const eventTitle = sp.get("eventTitle") || "";
+  const ticketText = sp.get("ticketText") || "";
   const igHandle = sp.get("ig") || "";
 
   // ── Design params ──
@@ -220,47 +220,53 @@ export async function GET(request: NextRequest) {
           </>
         )}
 
-        {/* ═══════ TOP — exa Swim Shows branding ═══════ */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            paddingTop: "35px",
-            zIndex: 4,
-          }}
-        >
+        {/* ═══════ TOP — branding ═══════ */}
+        {(logoText || tagline) && (
           <div
             style={{
-              fontSize: "50px",
-              fontWeight: 900,
-              color: "white",
-              letterSpacing: "0.2em",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
               display: "flex",
-              textShadow: "0 2px 16px rgba(0,0,0,0.5)",
+              flexDirection: "column",
+              alignItems: "center",
+              paddingTop: "35px",
+              zIndex: 4,
             }}
           >
-            {logoText}
+            {logoText && (
+              <div
+                style={{
+                  fontSize: "50px",
+                  fontWeight: 900,
+                  color: "white",
+                  letterSpacing: "0.2em",
+                  display: "flex",
+                  textShadow: "0 2px 16px rgba(0,0,0,0.5)",
+                }}
+              >
+                {logoText}
+              </div>
+            )}
+            {tagline && (
+              <div
+                style={{
+                  fontSize: `${taglineFontSize}px`,
+                  fontWeight: 900,
+                  color: "white",
+                  lineHeight: 1,
+                  fontStyle: "italic",
+                  display: "flex",
+                  textShadow: "2px 4px 16px rgba(0,0,0,0.5)",
+                  marginTop: "-4px",
+                }}
+              >
+                {tagline}
+              </div>
+            )}
           </div>
-          <div
-            style={{
-              fontSize: `${taglineFontSize}px`,
-              fontWeight: 900,
-              color: "white",
-              lineHeight: 1,
-              fontStyle: "italic",
-              display: "flex",
-              textShadow: "2px 4px 16px rgba(0,0,0,0.5)",
-              marginTop: "-4px",
-            }}
-          >
-            {tagline}
-          </div>
-        </div>
+        )}
 
         {/* ═══════ BOTTOM — Model info + Event details ═══════ */}
         <div
@@ -276,42 +282,43 @@ export async function GET(request: NextRequest) {
             zIndex: 4,
           }}
         >
-          {/* MODEL pill */}
-          <div
-            style={{
-              background: `linear-gradient(90deg, rgba(135,206,235,0.9), rgba(176,224,255,0.9))`,
-              color: `${borderColor}`,
-              fontSize: "15px",
-              fontWeight: 900,
-              letterSpacing: "0.3em",
-              textTransform: "uppercase",
-              padding: "4px 22px",
-              borderRadius: "14px",
-              display: "flex",
-            }}
-          >
-            {badgeText}
-          </div>
+          {badgeText && (
+            <div
+              style={{
+                background: `linear-gradient(90deg, rgba(135,206,235,0.9), rgba(176,224,255,0.9))`,
+                color: `${borderColor}`,
+                fontSize: "15px",
+                fontWeight: 900,
+                letterSpacing: "0.3em",
+                textTransform: "uppercase",
+                padding: "4px 22px",
+                borderRadius: "14px",
+                display: "flex",
+              }}
+            >
+              {badgeText}
+            </div>
+          )}
 
-          {/* Model Name */}
-          <div
-            style={{
-              fontSize: `${nameFontSize}px`,
-              fontWeight: 900,
-              color: "white",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              textShadow: "2px 3px 12px rgba(0,0,0,0.6)",
-              marginTop: "6px",
-              textAlign: "center",
-              display: "flex",
-              maxWidth: "950px",
-            }}
-          >
-            {modelName}
-          </div>
+          {modelName && (
+            <div
+              style={{
+                fontSize: `${nameFontSize}px`,
+                fontWeight: 900,
+                color: "white",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                textShadow: "2px 3px 12px rgba(0,0,0,0.6)",
+                marginTop: "6px",
+                textAlign: "center",
+                display: "flex",
+                maxWidth: "950px",
+              }}
+            >
+              {modelName}
+            </div>
+          )}
 
-          {/* Instagram handle */}
           {showIg && igHandle && (
             <div
               style={{
@@ -328,89 +335,94 @@ export async function GET(request: NextRequest) {
             </div>
           )}
 
-          {/* Divider */}
-          <div
-            style={{
-              width: "100px",
-              height: "2px",
-              background: `linear-gradient(90deg, transparent, ${borderColor}99, transparent)`,
-              marginTop: "14px",
-              marginBottom: "12px",
-              display: "flex",
-            }}
-          />
-
-          {/* exa Swim Shows — event title */}
-          <div
-            style={{
-              fontSize: "40px",
-              fontWeight: 900,
-              color: "white",
-              fontStyle: "italic",
-              textShadow: "2px 4px 12px rgba(0,0,0,0.6)",
-              display: "flex",
-            }}
-          >
-            {eventTitle}
-          </div>
-
-          {/* Venue */}
-          <div
-            style={{
-              fontSize: `${venueFontSize}px`,
-              fontWeight: 900,
-              color: "white",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              textShadow: "1px 2px 8px rgba(0,0,0,0.5)",
-              display: "flex",
-              marginTop: "2px",
-            }}
-          >
-            {venue}
-          </div>
-
-          {/* Date */}
-          <div
-            style={{
-              fontSize: `${dateFontSize}px`,
-              fontWeight: 600,
-              color: "rgba(255,255,255,0.9)",
-              textTransform: "uppercase",
-              letterSpacing: "0.15em",
-              marginTop: "4px",
-              display: "flex",
-              textShadow: "0 1px 6px rgba(0,0,0,0.5)",
-            }}
-          >
-            {eventDate}
-          </div>
-
-          {/* Ticket banner */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              marginTop: "10px",
-              padding: "7px 26px",
-              background: `linear-gradient(90deg, ${ticketColor1}, ${ticketColor2})`,
-              borderRadius: "18px",
-              boxShadow: `0 4px 16px ${ticketColor1}55`,
-            }}
-          >
+          {(eventTitle || venue || eventDate || ticketText) && (
             <div
               style={{
-                fontSize: "12px",
-                fontWeight: 600,
+                width: "100px",
+                height: "2px",
+                background: `linear-gradient(90deg, transparent, ${borderColor}99, transparent)`,
+                marginTop: "14px",
+                marginBottom: "12px",
+                display: "flex",
+              }}
+            />
+          )}
+
+          {eventTitle && (
+            <div
+              style={{
+                fontSize: "40px",
+                fontWeight: 900,
                 color: "white",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
+                fontStyle: "italic",
+                textShadow: "2px 4px 12px rgba(0,0,0,0.6)",
                 display: "flex",
               }}
             >
-              {ticketText}
+              {eventTitle}
             </div>
-          </div>
+          )}
+
+          {venue && (
+            <div
+              style={{
+                fontSize: `${venueFontSize}px`,
+                fontWeight: 900,
+                color: "white",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                textShadow: "1px 2px 8px rgba(0,0,0,0.5)",
+                display: "flex",
+                marginTop: "2px",
+              }}
+            >
+              {venue}
+            </div>
+          )}
+
+          {eventDate && (
+            <div
+              style={{
+                fontSize: `${dateFontSize}px`,
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.9)",
+                textTransform: "uppercase",
+                letterSpacing: "0.15em",
+                marginTop: "4px",
+                display: "flex",
+                textShadow: "0 1px 6px rgba(0,0,0,0.5)",
+              }}
+            >
+              {eventDate}
+            </div>
+          )}
+
+          {ticketText && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                marginTop: "10px",
+                padding: "7px 26px",
+                background: `linear-gradient(90deg, ${ticketColor1}, ${ticketColor2})`,
+                borderRadius: "18px",
+                boxShadow: `0 4px 16px ${ticketColor1}55`,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  color: "white",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  display: "flex",
+                }}
+              >
+                {ticketText}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Custom overlay images ── */}

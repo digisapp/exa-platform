@@ -201,8 +201,11 @@ export async function POST(request: NextRequest) {
     const templateUrl = new URL("/api/admin/flyers/template", request.nextUrl.origin);
     templateUrl.searchParams.set("name", modelName);
     templateUrl.searchParams.set("photo", bestPhotoUrl);
-    templateUrl.searchParams.set("date", design?.dateOverride || dateDisplay);
-    templateUrl.searchParams.set("venue", design?.venueOverride || venue || "Miami Beach, FL");
+    // Only set venue/date if designer has values (empty = hidden on flyer)
+    const finalVenue = design ? design.venueOverride : venue;
+    const finalDate = design ? design.dateOverride : dateDisplay;
+    if (finalVenue) templateUrl.searchParams.set("venue", finalVenue);
+    if (finalDate) templateUrl.searchParams.set("date", finalDate);
 
     // Pass instagram handle
     if (model.instagram_username) {
