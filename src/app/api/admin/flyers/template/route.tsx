@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import type { FlyerOverlay } from "@/types/flyer-design";
 
 export const runtime = "edge";
 
@@ -42,6 +43,13 @@ export async function GET(request: NextRequest) {
 
   const ticketColor1 = sp.get("ticketColor1") || "#FF8C00";
   const ticketColor2 = sp.get("ticketColor2") || "#FF6347";
+
+  // ── Overlay images ──
+  let overlays: FlyerOverlay[] = [];
+  try {
+    const overlaysJson = sp.get("overlays");
+    if (overlaysJson) overlays = JSON.parse(overlaysJson);
+  } catch {}
 
   // ── Load fonts ──
   const fontRes = await fetch(new URL("/fonts/Poppins-Black.ttf", request.nextUrl.origin));
@@ -401,6 +409,27 @@ export async function GET(request: NextRequest) {
             </div>
           </div>
         </div>
+
+        {/* ── Custom overlay images ── */}
+        {overlays.map((overlay, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={i}
+            src={overlay.url}
+            alt=""
+            width={overlay.width}
+            height={overlay.height}
+            style={{
+              position: "absolute",
+              left: `${overlay.x}px`,
+              top: `${overlay.y}px`,
+              width: `${overlay.width}px`,
+              height: `${overlay.height}px`,
+              opacity: overlay.opacity,
+              objectFit: "contain",
+            }}
+          />
+        ))}
 
         {/* ── Thin border frame ── */}
         <div

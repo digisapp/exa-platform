@@ -7,8 +7,9 @@ import {
   DEFAULT_DESIGN,
   FLYER_PRESETS,
 } from "@/types/flyer-design";
-import { useState } from "react";
-import { RotateCcw } from "lucide-react";
+import { useState, useRef } from "react";
+import { RotateCcw, Upload, Trash2, Move } from "lucide-react";
+import type { FlyerOverlay } from "@/types/flyer-design";
 
 interface FlyerDesignerProps {
   settings: FlyerDesignSettings;
@@ -345,6 +346,168 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
             />
           </div>
         </div>
+      </Section>
+
+      {/* ── Custom Overlays ── */}
+      <Section title="Custom Overlays">
+        <p className="text-[10px] text-white/30 -mt-1">
+          Upload PNGs (hearts, palm trees, logos). Drag to position on preview.
+        </p>
+
+        {/* Upload button */}
+        <label className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-dashed border-white/20 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors text-xs text-white/60 hover:text-white/80">
+          <Upload className="w-3.5 h-3.5" />
+          Upload PNG
+          <input
+            type="file"
+            accept="image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+
+              const formData = new FormData();
+              formData.append("file", file);
+
+              try {
+                const res = await fetch("/api/admin/flyers/overlay", {
+                  method: "POST",
+                  body: formData,
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                  alert(data.error || "Upload failed");
+                  return;
+                }
+
+                // Get image dimensions
+                const img = new Image();
+                img.src = data.url;
+                await new Promise<void>((resolve) => {
+                  img.onload = () => resolve();
+                  img.onerror = () => resolve();
+                });
+
+                // Scale to fit ~200px wide in template coordinates
+                const scale = Math.min(200 / (img.naturalWidth || 200), 300 / (img.naturalHeight || 300));
+                const w = Math.round((img.naturalWidth || 200) * scale);
+                const h = Math.round((img.naturalHeight || 200) * scale);
+
+                const newOverlay: FlyerOverlay = {
+                  id: `overlay-${Date.now()}`,
+                  url: data.url,
+                  x: 440, // center-ish
+                  y: 400,
+                  width: w,
+                  height: h,
+                  opacity: 1,
+                };
+                update({ overlays: [...settings.overlays, newOverlay] });
+              } catch {
+                alert("Upload failed");
+              }
+              // Reset input
+              e.target.value = "";
+            }}
+          />
+        </label>
+
+        {/* Overlay list */}
+        {settings.overlays.length > 0 && (
+          <div className="space-y-2">
+            {settings.overlays.map((overlay) => (
+              <div
+                key={overlay.id}
+                className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10"
+              >
+                {/* Thumbnail */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={overlay.url}
+                  alt="overlay"
+                  className="w-10 h-10 object-contain rounded bg-black/20"
+                />
+
+                <div className="flex-1 min-w-0 space-y-1">
+                  {/* Size slider */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-white/40 shrink-0">Size</span>
+                    <input
+                      type="range"
+                      min={30}
+                      max={600}
+                      value={overlay.width}
+                      onChange={(e) => {
+                        const newW = Number(e.target.value);
+                        const ratio = overlay.height / overlay.width;
+                        const updated = settings.overlays.map((o) =>
+                          o.id === overlay.id
+                            ? { ...o, width: newW, height: Math.round(newW * ratio) }
+                            : o
+                        );
+                        update({ overlays: updated });
+                      }}
+                      className="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer
+                        [&::-webkit-slider-thumb]:appearance-none
+                        [&::-webkit-slider-thumb]:w-3
+                        [&::-webkit-slider-thumb]:h-3
+                        [&::-webkit-slider-thumb]:rounded-full
+                        [&::-webkit-slider-thumb]:bg-pink-500
+                        [&::-webkit-slider-thumb]:cursor-pointer"
+                    />
+                  </div>
+                  {/* Opacity slider */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-white/40 shrink-0">Opacity</span>
+                    <input
+                      type="range"
+                      min={10}
+                      max={100}
+                      value={Math.round(overlay.opacity * 100)}
+                      onChange={(e) => {
+                        const updated = settings.overlays.map((o) =>
+                          o.id === overlay.id
+                            ? { ...o, opacity: Number(e.target.value) / 100 }
+                            : o
+                        );
+                        update({ overlays: updated });
+                      }}
+                      className="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer
+                        [&::-webkit-slider-thumb]:appearance-none
+                        [&::-webkit-slider-thumb]:w-3
+                        [&::-webkit-slider-thumb]:h-3
+                        [&::-webkit-slider-thumb]:rounded-full
+                        [&::-webkit-slider-thumb]:bg-pink-500
+                        [&::-webkit-slider-thumb]:cursor-pointer"
+                    />
+                    <span className="text-[10px] text-white/40 w-6 text-right">{Math.round(overlay.opacity * 100)}%</span>
+                  </div>
+                </div>
+
+                {/* Delete */}
+                <button
+                  onClick={() => {
+                    update({
+                      overlays: settings.overlays.filter(
+                        (o) => o.id !== overlay.id
+                      ),
+                    });
+                  }}
+                  className="p-1 rounded hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-colors shrink-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {settings.overlays.length > 0 && (
+          <p className="text-[10px] text-white/25 flex items-center gap-1">
+            <Move className="w-3 h-3" />
+            Drag overlays on the preview to reposition
+          </p>
+        )}
       </Section>
 
       {/* ── Decorations ── */}

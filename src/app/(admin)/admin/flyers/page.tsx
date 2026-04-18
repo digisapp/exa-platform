@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import {
@@ -89,6 +89,7 @@ export default function AdminFlyersPage() {
   const [showDesigner, setShowDesigner] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [sampleModel, setSampleModel] = useState<ModelInfo | null>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
 
   // Auto-save design settings to localStorage
   useEffect(() => {
@@ -573,13 +574,16 @@ export default function AdminFlyersPage() {
             </div>
           </div>
 
-          {/* Live preview */}
+          {/* Live preview with draggable overlays */}
           <div className="flex-1 flex items-start justify-center">
             <div className="sticky top-4">
               <p className="text-xs text-white/40 mb-2 text-center">
-                Live Preview
+                Live Preview {designSettings.overlays.length > 0 && "— drag overlays to position"}
               </p>
-              <div className="relative w-[400px] xl:w-[480px] aspect-[4/5] rounded-xl overflow-hidden border border-white/10 bg-white/5">
+              <div
+                className="relative w-[400px] xl:w-[480px] aspect-[4/5] rounded-xl overflow-hidden border border-white/10 bg-white/5"
+                ref={previewContainerRef}
+              >
                 {previewLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
                     <Loader2 className="w-6 h-6 animate-spin text-white/50" />
@@ -593,6 +597,67 @@ export default function AdminFlyersPage() {
                   onLoad={() => setPreviewLoading(false)}
                   onError={() => setPreviewLoading(false)}
                 />
+
+                {/* Draggable overlay images */}
+                {designSettings.overlays.map((overlay) => {
+                  // Scale from template coords (1080x1350) to preview container
+                  const containerWidth = previewContainerRef.current?.offsetWidth || 480;
+                  const scale = containerWidth / 1080;
+
+                  return (
+                    <div
+                      key={overlay.id}
+                      style={{
+                        position: "absolute",
+                        left: `${overlay.x * scale}px`,
+                        top: `${overlay.y * scale}px`,
+                        width: `${overlay.width * scale}px`,
+                        height: `${overlay.height * scale}px`,
+                        opacity: overlay.opacity,
+                        cursor: "grab",
+                        zIndex: 20,
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        const container = previewContainerRef.current;
+                        if (!container) return;
+                        const containerWidth = container.offsetWidth;
+                        const scl = containerWidth / 1080;
+                        const startX = e.clientX;
+                        const startY = e.clientY;
+                        const origX = overlay.x;
+                        const origY = overlay.y;
+
+                        function onMove(ev: MouseEvent) {
+                          const dx = (ev.clientX - startX) / scl;
+                          const dy = (ev.clientY - startY) / scl;
+                          const newX = Math.max(0, Math.min(1080 - overlay.width, origX + dx));
+                          const newY = Math.max(0, Math.min(1350 - overlay.height, origY + dy));
+                          setDesignSettings((prev) => ({
+                            ...prev,
+                            overlays: prev.overlays.map((o) =>
+                              o.id === overlay.id ? { ...o, x: Math.round(newX), y: Math.round(newY) } : o
+                            ),
+                          }));
+                        }
+                        function onUp() {
+                          document.removeEventListener("mousemove", onMove);
+                          document.removeEventListener("mouseup", onUp);
+                        }
+                        document.addEventListener("mousemove", onMove);
+                        document.addEventListener("mouseup", onUp);
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={overlay.url}
+                        alt="overlay"
+                        draggable={false}
+                        className="w-full h-full object-contain pointer-events-none select-none"
+                      />
+                    </div>
+                  );
+                })}
               </div>
               <p className="text-[10px] text-white/30 mt-2 text-center">
                 1080 × 1350px &middot; Changes apply to all new flyers

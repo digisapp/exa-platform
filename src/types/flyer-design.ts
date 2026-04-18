@@ -1,3 +1,14 @@
+/** A draggable overlay image placed on the flyer */
+export interface FlyerOverlay {
+  id: string;
+  url: string;        // public URL to the PNG
+  x: number;          // 0–1080 (template coordinates)
+  y: number;          // 0–1350
+  width: number;      // rendered width in template px
+  height: number;     // rendered height in template px
+  opacity: number;    // 0–1
+}
+
 export interface FlyerDesignSettings {
   // Background gradient (5 stops: 0%, 25%, 50%, 75%, 100%)
   gradientColors: [string, string, string, string, string];
@@ -29,6 +40,9 @@ export interface FlyerDesignSettings {
   // Ticket banner gradient
   ticketBannerColor1: string;
   ticketBannerColor2: string;
+
+  // Custom overlay images
+  overlays: FlyerOverlay[];
 }
 
 export const DEFAULT_DESIGN: FlyerDesignSettings = {
@@ -48,6 +62,7 @@ export const DEFAULT_DESIGN: FlyerDesignSettings = {
   showInstagram: true,
   ticketBannerColor1: "#FF8C00",
   ticketBannerColor2: "#FF6347",
+  overlays: [],
 };
 
 export interface FlyerPreset {
@@ -123,5 +138,8 @@ export function designToParams(d: FlyerDesignSettings): Record<string, string> {
     showIg: d.showInstagram ? "1" : "0",
     ticketColor1: d.ticketBannerColor1,
     ticketColor2: d.ticketBannerColor2,
+    ...(d.overlays.length > 0
+      ? { overlays: JSON.stringify(d.overlays) }
+      : {}),
   };
 }
