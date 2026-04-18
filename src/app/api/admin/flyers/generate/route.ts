@@ -83,9 +83,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `No models with badge for ${event.name} (badge: ${eventBadge.id})` }, { status: 404 });
   }
 
-  // 4. Fetch model data (only core columns to avoid missing column errors)
+  // 4. Fetch model data (select * to avoid column name mismatches)
   const { data: models, error: modelsError } = await (admin.from("models") as any)
-    .select("id, first_name, last_name, username, profile_photo_url, instagram_handle")
+    .select("*")
     .in("id", targetModelIds);
 
   if (modelsError) {
@@ -195,9 +195,9 @@ export async function POST(request: NextRequest) {
     if (bestPhotoUrl) templateUrl.searchParams.set("photo", bestPhotoUrl);
     if (scale && scale > 1) templateUrl.searchParams.set("scale", String(scale));
 
-    if (model.instagram_handle) {
-      templateUrl.searchParams.set("ig", model.instagram_handle);
-    }
+    // Instagram handle — try all possible column names
+    const igHandle = model.instagram_handle || model.instagram_name || model.instagram_username || "";
+    if (igHandle) templateUrl.searchParams.set("ig", igHandle);
 
     // Forward all design params
     if (design) {
