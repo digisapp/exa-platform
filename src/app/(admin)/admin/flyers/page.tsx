@@ -21,6 +21,7 @@ import { FlyerDesigner } from "@/components/admin/flyer-designer";
 import {
   type FlyerDesignSettings,
   type FlyerOverlay,
+  type FlyerTextElement,
   DEFAULT_DESIGN,
   designToParams,
 } from "@/types/flyer-design";
@@ -181,38 +182,6 @@ export default function AdminFlyersPage() {
     loadFlyers();
   }, [loadFlyers]);
 
-  // Build event display values
-  const eventDisplayValues = useMemo(() => {
-    const event = events.find((e) => e.id === selectedEventId);
-    if (!event) return { name: "", venue: "", date: "" };
-
-    const venue = [event.location_city, event.location_state]
-      .filter(Boolean)
-      .join(", ");
-
-    const months = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December",
-    ];
-    let dateDisplay = "";
-    if (event.start_date) {
-      const start = new Date(event.start_date);
-      dateDisplay = `${months[start.getMonth()]} ${start.getFullYear()}`;
-      if (event.end_date) {
-        const end = new Date(event.end_date);
-        if (end.getMonth() !== start.getMonth()) {
-          dateDisplay = `${months[start.getMonth()]} – ${months[end.getMonth()]} ${end.getFullYear()}`;
-        }
-      }
-    }
-
-    return {
-      name: event.short_name || event.name,
-      venue: venue || "Miami Beach, FL",
-      date: dateDisplay || "July 2026",
-    };
-  }, [events, selectedEventId]);
-
   // Debounced preview URL
   const [debouncedSettings, setDebouncedSettings] =
     useState<FlyerDesignSettings>(designSettings);
@@ -225,12 +194,13 @@ export default function AdminFlyersPage() {
   // Set loading when preview URL is about to change
   useEffect(() => {
     setPreviewLoading(true);
-  }, [debouncedSettings, sampleModel, eventDisplayValues]);
+  }, [debouncedSettings, sampleModel]);
 
   const previewUrl = useMemo(() => {
     const params = new URLSearchParams(designToParams(debouncedSettings));
-    // Overlays are rendered as draggable elements on the preview, not baked in
+    // Text + overlays are rendered as draggable elements on the preview, not baked in
     params.delete("overlays");
+    params.delete("texts");
     const name = sampleModel
       ? [sampleModel.first_name, sampleModel.last_name]
           .filter(Boolean)
@@ -241,17 +211,9 @@ export default function AdminFlyersPage() {
       params.set("photo", sampleModel.profile_photo_url);
     if (sampleModel?.instagram_username)
       params.set("ig", sampleModel.instagram_username);
-    params.set(
-      "venue",
-      debouncedSettings.venueOverride || eventDisplayValues.venue
-    );
-    params.set(
-      "date",
-      debouncedSettings.dateOverride || eventDisplayValues.date
-    );
     params.set("_t", String(Date.now()));
     return `/api/admin/flyers/template?${params.toString()}`;
-  }, [debouncedSettings, sampleModel, eventDisplayValues]);
+  }, [debouncedSettings, sampleModel]);
 
   // Generate flyers
   async function handleGenerate(force = false, testOne = false) {
@@ -372,9 +334,10 @@ export default function AdminFlyersPage() {
     else setSelectedFlyers(new Set(flyers.map((f) => f.id)));
   }
 
-  // Unified drag handler for mouse and touch
+  // Unified drag handler for overlays and text elements
   function startDrag(
-    overlay: FlyerOverlay,
+    item: { id: string; x: number; y: number },
+    type: "overlay" | "text",
     startClientX: number,
     startClientY: number,
     mode: "mouse" | "touch"
@@ -382,41 +345,33 @@ export default function AdminFlyersPage() {
     const container = previewContainerRef.current;
     if (!container) return;
     const scl = container.offsetWidth / 1080;
-    const origX = overlay.x;
-    const origY = overlay.y;
+    const origX = item.x;
+    const origY = item.y;
 
     function updatePosition(clientX: number, clientY: number) {
       const dx = (clientX - startClientX) / scl;
       const dy = (clientY - startClientY) / scl;
-      const newX = Math.max(0, Math.min(1080 - overlay.width, origX + dx));
-      const newY = Math.max(0, Math.min(1350 - overlay.height, origY + dy));
+      const newX = Math.max(0, Math.min(1080, Math.round(origX + dx)));
+      const newY = Math.max(0, Math.min(1350, Math.round(origY + dy)));
       setDesignSettings((prev) => ({
         ...prev,
-        overlays: prev.overlays.map((o) =>
-          o.id === overlay.id ? { ...o, x: Math.round(newX), y: Math.round(newY) } : o
+        ...(type === "overlay"
+          ? { overlays: prev.overlays.map((o) => o.id === item.id ? { ...o, x: newX, y: newY } : o) }
+          : { textElements: prev.textElements.map((t) => t.id === item.id ? { ...t, x: newX, y: newY } : t) }
         ),
       }));
     }
 
     if (mode === "mouse") {
-      function onMouseMove(ev: MouseEvent) { updatePosition(ev.clientX, ev.clientY); }
-      function onMouseUp() {
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-      }
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
+      const onMove = (ev: MouseEvent) => updatePosition(ev.clientX, ev.clientY);
+      const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
     } else {
-      function onTouchMove(ev: TouchEvent) {
-        ev.preventDefault();
-        updatePosition(ev.touches[0].clientX, ev.touches[0].clientY);
-      }
-      function onTouchEnd() {
-        document.removeEventListener("touchmove", onTouchMove);
-        document.removeEventListener("touchend", onTouchEnd);
-      }
-      document.addEventListener("touchmove", onTouchMove, { passive: false });
-      document.addEventListener("touchend", onTouchEnd);
+      const onMove = (ev: TouchEvent) => { ev.preventDefault(); updatePosition(ev.touches[0].clientX, ev.touches[0].clientY); };
+      const onUp = () => { document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onUp); };
+      document.addEventListener("touchmove", onMove, { passive: false });
+      document.addEventListener("touchend", onUp);
     }
   }
 
@@ -629,7 +584,9 @@ export default function AdminFlyersPage() {
           <div className="flex-1 flex items-start justify-center">
             <div className="sticky top-4">
               <p className="text-xs text-white/40 mb-2 text-center">
-                Live Preview {designSettings.overlays.length > 0 && "— drag overlays to position"}
+                Live Preview
+                {(designSettings.overlays.length > 0 || designSettings.textElements.length > 0) &&
+                  " — drag elements to position"}
               </p>
               <div
                 className="relative w-[400px] xl:w-[480px] aspect-[4/5] rounded-xl overflow-hidden border border-white/10 bg-white/5"
@@ -649,48 +606,65 @@ export default function AdminFlyersPage() {
                   onError={() => setPreviewLoading(false)}
                 />
 
-                {/* Draggable overlay images */}
-                {designSettings.overlays.map((overlay) => {
-                  // Scale from template coords (1080x1350) to preview container
-                  const containerWidth = previewContainerRef.current?.offsetWidth || 480;
-                  const scale = containerWidth / 1080;
+                {/* Draggable text elements */}
+                {designSettings.textElements.map((el) => {
+                  const cw = previewContainerRef.current?.offsetWidth || 480;
+                  const s = cw / 1080;
+                  return (
+                    <div
+                      key={el.id}
+                      style={{
+                        position: "absolute",
+                        left: `${el.x * s}px`,
+                        top: `${el.y * s}px`,
+                        fontSize: `${el.fontSize * s}px`,
+                        fontWeight: el.fontWeight,
+                        color: el.color,
+                        fontStyle: el.italic ? "italic" : "normal",
+                        textTransform: el.uppercase ? "uppercase" : "none",
+                        cursor: "grab",
+                        zIndex: 21,
+                        whiteSpace: "nowrap",
+                        textShadow: "1px 2px 6px rgba(0,0,0,0.5)",
+                        userSelect: "none",
+                      }}
+                      onMouseDown={(e) => { e.preventDefault(); startDrag(el, "text", e.clientX, e.clientY, "mouse"); }}
+                      onTouchStart={(e) => { e.preventDefault(); startDrag(el, "text", e.touches[0].clientX, e.touches[0].clientY, "touch"); }}
+                    >
+                      {el.text || "..."}
+                    </div>
+                  );
+                })}
 
+                {/* Draggable image overlays */}
+                {designSettings.overlays.map((overlay) => {
+                  const cw = previewContainerRef.current?.offsetWidth || 480;
+                  const s = cw / 1080;
                   return (
                     <div
                       key={overlay.id}
                       style={{
                         position: "absolute",
-                        left: `${overlay.x * scale}px`,
-                        top: `${overlay.y * scale}px`,
-                        width: `${overlay.width * scale}px`,
-                        height: `${overlay.height * scale}px`,
+                        left: `${overlay.x * s}px`,
+                        top: `${overlay.y * s}px`,
+                        width: `${overlay.width * s}px`,
+                        height: `${overlay.height * s}px`,
                         opacity: overlay.opacity,
                         cursor: "grab",
                         zIndex: 20,
                       }}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        startDrag(overlay, e.clientX, e.clientY, "mouse");
-                      }}
-                      onTouchStart={(e) => {
-                        e.preventDefault();
-                        const touch = e.touches[0];
-                        startDrag(overlay, touch.clientX, touch.clientY, "touch");
-                      }}
+                      onMouseDown={(e) => { e.preventDefault(); startDrag(overlay, "overlay", e.clientX, e.clientY, "mouse"); }}
+                      onTouchStart={(e) => { e.preventDefault(); startDrag(overlay, "overlay", e.touches[0].clientX, e.touches[0].clientY, "touch"); }}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={overlay.url}
-                        alt="overlay"
-                        draggable={false}
-                        className="w-full h-full object-contain pointer-events-none select-none"
-                      />
+                      <img src={overlay.url} alt="overlay" draggable={false}
+                        className="w-full h-full object-contain pointer-events-none select-none" />
                     </div>
                   );
                 })}
               </div>
               <p className="text-[10px] text-white/30 mt-2 text-center">
-                1080 × 1350px &middot; Changes apply to all new flyers
+                1080 × 1350px &middot; Drag text + images to position
               </p>
             </div>
           </div>

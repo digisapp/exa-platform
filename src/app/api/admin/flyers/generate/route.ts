@@ -130,26 +130,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // 7. Build event display values
-  const venue = [event.location_city, event.location_state].filter(Boolean).join(", ");
-
-  const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ];
-  let dateDisplay = "";
-  if (event.start_date) {
-    const start = new Date(event.start_date);
-    dateDisplay = `${monthNames[start.getMonth()]} ${start.getFullYear()}`;
-    if (event.end_date) {
-      const end = new Date(event.end_date);
-      if (end.getMonth() !== start.getMonth()) {
-        dateDisplay = `${monthNames[start.getMonth()]} – ${monthNames[end.getMonth()]} ${end.getFullYear()}`;
-      }
-    }
-  }
-
-  // 8. Generate flyers in parallel batches
+  // 7. Generate flyers in parallel batches
   const results: { model_id: string; success: boolean; error?: string }[] = [];
   let generated = 0;
   let failed = 0;
@@ -201,27 +182,17 @@ export async function POST(request: NextRequest) {
     const templateUrl = new URL("/api/admin/flyers/template", request.nextUrl.origin);
     templateUrl.searchParams.set("name", modelName);
     templateUrl.searchParams.set("photo", bestPhotoUrl);
-    // Only set venue/date if designer has values (empty = hidden on flyer)
-    const finalVenue = design ? design.venueOverride : venue;
-    const finalDate = design ? design.dateOverride : dateDisplay;
-    if (finalVenue) templateUrl.searchParams.set("venue", finalVenue);
-    if (finalDate) templateUrl.searchParams.set("date", finalDate);
 
-    // Pass instagram handle
     if (model.instagram_username) {
       templateUrl.searchParams.set("ig", model.instagram_username);
     }
 
-    // Forward design params
+    // Forward all design params
     if (design) {
       const designParams = designToParams(design);
       for (const [key, value] of Object.entries(designParams)) {
-        if (key !== "venue" && key !== "date") {
-          templateUrl.searchParams.set(key, value);
-        }
+        templateUrl.searchParams.set(key, value);
       }
-    } else {
-      templateUrl.searchParams.set("tagline", "Swim Shows");
     }
 
     const flyerResponse = await fetch(templateUrl.toString());

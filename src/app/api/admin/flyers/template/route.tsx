@@ -1,29 +1,21 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
-import type { FlyerOverlay } from "@/types/flyer-design";
+import type { FlyerOverlay, FlyerTextElement } from "@/types/flyer-design";
 
 export const runtime = "edge";
 
 /**
  * GET /api/admin/flyers/template
  *
- * Full-bleed portrait flyer — model photo fills the entire canvas.
- * Top: "exa Swim Shows" branding with gradient fade.
- * Bottom: Model name, @instagram, venue, date, ticket CTA.
+ * Canvas-style flyer: full-bleed model photo with free-form text elements,
+ * image overlays, optional gradient overlays, and auto model name/ig.
  */
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
 
-  // ── Content params — no fallback defaults, empty = hidden ──
+  // ── Auto content (changes per model) ──
   const modelName = sp.get("name") || "";
   const photoUrl = sp.get("photo") || "";
-  const eventDate = sp.get("date") || "";
-  const venue = sp.get("venue") || "";
-  const logoText = sp.get("logoText") || "";
-  const tagline = sp.get("tagline") || "";
-  const badgeText = sp.get("badgeText") || "";
-  const eventTitle = sp.get("eventTitle") || "";
-  const ticketText = sp.get("ticketText") || "";
   const igHandle = sp.get("ig") || "";
 
   // ── Design params ──
@@ -33,39 +25,38 @@ export async function GET(request: NextRequest) {
   const gc3 = sp.get("gc3") || "#FFCC80";
   const gc4 = sp.get("gc4") || "#FFB347";
 
-  const borderColor = sp.get("borderColor") || "#FF69B4";
-  const taglineFontSize = Number(sp.get("taglineFontSize")) || 72;
-  const nameFontSize = Number(sp.get("nameFontSize")) || 48;
-  const venueFontSize = Number(sp.get("venueFontSize")) || 36;
-  const dateFontSize = Number(sp.get("dateFontSize")) || 22;
-
+  const showTopGrad = sp.get("showTopGrad") !== "0";
+  const showBotGrad = sp.get("showBotGrad") !== "0";
   const showPalms = sp.get("showPalms") !== "0";
   const showHearts = sp.get("showHearts") !== "0";
   const showGlows = sp.get("showGlows") !== "0";
+  const showName = sp.get("showName") !== "0";
+  const nameFontSize = Number(sp.get("nameFontSize")) || 48;
   const showIg = sp.get("showIg") !== "0";
+  const showBorder = sp.get("showBorder") !== "0";
+  const borderColor = sp.get("borderColor") || "#FF69B4";
 
-  const ticketColor1 = sp.get("ticketColor1") || "#FF8C00";
-  const ticketColor2 = sp.get("ticketColor2") || "#FF6347";
+  // ── Free-form elements ──
+  let textElements: FlyerTextElement[] = [];
+  try { const t = sp.get("texts"); if (t) textElements = JSON.parse(t); } catch {}
 
-  // ── Overlay images ──
   let overlays: FlyerOverlay[] = [];
-  try {
-    const overlaysJson = sp.get("overlays");
-    if (overlaysJson) overlays = JSON.parse(overlaysJson);
-  } catch {}
+  try { const o = sp.get("overlays"); if (o) overlays = JSON.parse(o); } catch {}
 
   // ── Load fonts ──
-  const fontRes = await fetch(new URL("/fonts/Poppins-Black.ttf", request.nextUrl.origin));
-  if (!fontRes.ok) return new Response("Font not found", { status: 500 });
-  const fontData = await fontRes.arrayBuffer();
-
-  const fontSemiRes = await fetch(new URL("/fonts/Poppins-SemiBold.ttf", request.nextUrl.origin));
-  if (!fontSemiRes.ok) return new Response("Font not found", { status: 500 });
-  const fontSemiData = await fontSemiRes.arrayBuffer();
-
-  const fontRegRes = await fetch(new URL("/fonts/Poppins-Regular.ttf", request.nextUrl.origin));
-  if (!fontRegRes.ok) return new Response("Font not found", { status: 500 });
-  const fontRegData = await fontRegRes.arrayBuffer();
+  const [fontRes, fontSemiRes, fontRegRes] = await Promise.all([
+    fetch(new URL("/fonts/Poppins-Black.ttf", request.nextUrl.origin)),
+    fetch(new URL("/fonts/Poppins-SemiBold.ttf", request.nextUrl.origin)),
+    fetch(new URL("/fonts/Poppins-Regular.ttf", request.nextUrl.origin)),
+  ]);
+  if (!fontRes.ok || !fontSemiRes.ok || !fontRegRes.ok) {
+    return new Response("Font not found", { status: 500 });
+  }
+  const [fontData, fontSemiData, fontRegData] = await Promise.all([
+    fontRes.arrayBuffer(),
+    fontSemiRes.arrayBuffer(),
+    fontRegRes.arrayBuffer(),
+  ]);
 
   return new ImageResponse(
     (
@@ -91,118 +82,78 @@ export async function GET(request: NextRequest) {
             height={1350}
             style={{
               position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
+              top: 0, left: 0,
+              width: "100%", height: "100%",
               objectFit: "cover",
               objectPosition: "center top",
             }}
           />
         ) : (
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              background: `linear-gradient(165deg, ${gc0} 0%, ${gc2} 50%, ${gc4} 100%)`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "200px",
-              fontWeight: 900,
-              color: "rgba(255,255,255,0.08)",
-            }}
-          >
+          <div style={{
+            position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+            background: `linear-gradient(165deg, ${gc0} 0%, ${gc2} 50%, ${gc4} 100%)`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "200px", fontWeight: 900, color: "rgba(255,255,255,0.08)",
+          }}>
             exa
           </div>
         )}
 
-        {/* ── Top gradient overlay — compact, just for branding ── */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "320px",
+        {/* ── Top gradient overlay ── */}
+        {showTopGrad && (
+          <div style={{
+            position: "absolute", top: 0, left: 0, width: "100%", height: "320px",
             background: `linear-gradient(180deg, ${gc0}bb 0%, ${gc0}66 40%, transparent 100%)`,
             display: "flex",
-          }}
-        />
+          }} />
+        )}
 
-        {/* ── Bottom gradient overlay — for model info + event details ── */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            width: "100%",
-            height: "520px",
+        {/* ── Bottom gradient overlay ── */}
+        {showBotGrad && (
+          <div style={{
+            position: "absolute", bottom: 0, left: 0, width: "100%", height: "520px",
             background: `linear-gradient(0deg, ${gc4}ee 0%, ${gc3}bb 25%, ${gc2}66 50%, transparent 100%)`,
             display: "flex",
-          }}
-        />
+          }} />
+        )}
 
         {/* ── Side vignette ── */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "linear-gradient(90deg, rgba(0,0,0,0.12) 0%, transparent 12%, transparent 88%, rgba(0,0,0,0.12) 100%)",
-            display: "flex",
-          }}
-        />
+        <div style={{
+          position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+          background: "linear-gradient(90deg, rgba(0,0,0,0.12) 0%, transparent 12%, transparent 88%, rgba(0,0,0,0.12) 100%)",
+          display: "flex",
+        }} />
 
-        {/* ── Colored glow accents ── */}
+        {/* ── Glow accents ── */}
         {showGlows && (
           <>
             <div style={{ position: "absolute", top: "-100px", left: "-100px", width: "500px", height: "500px", borderRadius: "50%", background: `radial-gradient(circle, ${gc0}88 0%, transparent 60%)`, display: "flex", zIndex: 2 }} />
             <div style={{ position: "absolute", bottom: "-80px", right: "-80px", width: "450px", height: "450px", borderRadius: "50%", background: `radial-gradient(circle, ${gc4}77 0%, transparent 55%)`, display: "flex", zIndex: 2 }} />
-            <div style={{ position: "absolute", top: "350px", right: "-60px", width: "300px", height: "300px", borderRadius: "50%", background: `radial-gradient(circle, ${borderColor}44 0%, transparent 55%)`, display: "flex", zIndex: 2 }} />
           </>
         )}
 
-        {/* ── Hearts — bold, visible against photos ── */}
+        {/* ── Hearts ── */}
         {showHearts && (
           <>
-            {/* Large pink heart top-right */}
             <div style={{ position: "absolute", top: "85px", right: "50px", display: "flex", zIndex: 6 }}>
-              <div style={{ width: "52px", height: "52px", background: `${borderColor}`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 30px ${borderColor}88, 0 0 60px ${borderColor}44` }} />
+              <div style={{ width: "52px", height: "52px", background: `${borderColor}`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 30px ${borderColor}88` }} />
             </div>
-            {/* Medium white heart */}
             <div style={{ position: "absolute", top: "175px", right: "115px", display: "flex", zIndex: 6 }}>
               <div style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.85)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: "0 0 20px rgba(255,255,255,0.4)" }} />
             </div>
-            {/* Blue heart */}
             <div style={{ position: "absolute", top: "260px", right: "40px", display: "flex", zIndex: 6 }}>
               <div style={{ width: "40px", height: "40px", background: "rgba(100,200,255,0.9)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: "0 0 25px rgba(100,200,255,0.5)" }} />
             </div>
-            {/* Pink heart left */}
             <div style={{ position: "absolute", top: "140px", left: "45px", display: "flex", zIndex: 6 }}>
               <div style={{ width: "36px", height: "36px", background: `${borderColor}dd`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 22px ${borderColor}66` }} />
             </div>
-            {/* Small heart middle-left */}
             <div style={{ position: "absolute", top: "380px", left: "60px", display: "flex", zIndex: 6 }}>
-              <div style={{ width: "26px", height: "26px", background: "rgba(255,255,255,0.75)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: "0 0 16px rgba(255,255,255,0.3)" }} />
-            </div>
-            {/* Heart near bottom */}
-            <div style={{ position: "absolute", bottom: "320px", right: "65px", display: "flex", zIndex: 6 }}>
-              <div style={{ width: "30px", height: "30px", background: `${borderColor}cc`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 18px ${borderColor}55` }} />
-            </div>
-            {/* Small blue heart */}
-            <div style={{ position: "absolute", top: "320px", right: "100px", display: "flex", zIndex: 6 }}>
-              <div style={{ width: "22px", height: "22px", background: "rgba(100,200,255,0.8)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
+              <div style={{ width: "26px", height: "26px", background: "rgba(255,255,255,0.75)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
             </div>
           </>
         )}
 
-        {/* ── Palm tree silhouettes — bolder ── */}
+        {/* ── Palm trees ── */}
         {showPalms && (
           <>
             <div style={{ position: "absolute", bottom: "0px", left: "-15px", opacity: 0.3, display: "flex", flexDirection: "column", alignItems: "center", width: "180px", height: "380px", zIndex: 3 }}>
@@ -220,216 +171,34 @@ export async function GET(request: NextRequest) {
           </>
         )}
 
-        {/* ═══════ TOP — branding ═══════ */}
-        {(logoText || tagline) && (
+        {/* ── Free-form text elements ── */}
+        {textElements.map((el, i) => (
           <div
+            key={i}
             style={{
               position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
+              left: `${el.x}px`,
+              top: `${el.y}px`,
+              fontSize: `${el.fontSize}px`,
+              fontWeight: el.fontWeight,
+              color: el.color,
+              fontStyle: el.italic ? "italic" : "normal",
+              textTransform: el.uppercase ? "uppercase" : "none",
+              textShadow: "2px 3px 12px rgba(0,0,0,0.6)",
               display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              paddingTop: "35px",
-              zIndex: 4,
+              whiteSpace: "nowrap",
+              zIndex: 7,
             }}
           >
-            {logoText && (
-              <div
-                style={{
-                  fontSize: "50px",
-                  fontWeight: 900,
-                  color: "white",
-                  letterSpacing: "0.2em",
-                  display: "flex",
-                  textShadow: "0 2px 16px rgba(0,0,0,0.5)",
-                }}
-              >
-                {logoText}
-              </div>
-            )}
-            {tagline && (
-              <div
-                style={{
-                  fontSize: `${taglineFontSize}px`,
-                  fontWeight: 900,
-                  color: "white",
-                  lineHeight: 1,
-                  fontStyle: "italic",
-                  display: "flex",
-                  textShadow: "2px 4px 16px rgba(0,0,0,0.5)",
-                  marginTop: "-4px",
-                }}
-              >
-                {tagline}
-              </div>
-            )}
+            {el.text}
           </div>
-        )}
+        ))}
 
-        {/* ═══════ BOTTOM — Model info + Event details ═══════ */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            paddingBottom: "32px",
-            zIndex: 4,
-          }}
-        >
-          {badgeText && (
-            <div
-              style={{
-                background: `linear-gradient(90deg, rgba(135,206,235,0.9), rgba(176,224,255,0.9))`,
-                color: `${borderColor}`,
-                fontSize: "15px",
-                fontWeight: 900,
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                padding: "4px 22px",
-                borderRadius: "14px",
-                display: "flex",
-              }}
-            >
-              {badgeText}
-            </div>
-          )}
-
-          {modelName && (
-            <div
-              style={{
-                fontSize: `${nameFontSize}px`,
-                fontWeight: 900,
-                color: "white",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                textShadow: "2px 3px 12px rgba(0,0,0,0.6)",
-                marginTop: "6px",
-                textAlign: "center",
-                display: "flex",
-                maxWidth: "950px",
-              }}
-            >
-              {modelName}
-            </div>
-          )}
-
-          {showIg && igHandle && (
-            <div
-              style={{
-                fontSize: "19px",
-                fontWeight: 400,
-                color: "rgba(255,255,255,0.85)",
-                marginTop: "2px",
-                display: "flex",
-                letterSpacing: "0.02em",
-                textShadow: "0 1px 8px rgba(0,0,0,0.5)",
-              }}
-            >
-              @{igHandle}
-            </div>
-          )}
-
-          {(eventTitle || venue || eventDate || ticketText) && (
-            <div
-              style={{
-                width: "100px",
-                height: "2px",
-                background: `linear-gradient(90deg, transparent, ${borderColor}99, transparent)`,
-                marginTop: "14px",
-                marginBottom: "12px",
-                display: "flex",
-              }}
-            />
-          )}
-
-          {eventTitle && (
-            <div
-              style={{
-                fontSize: "40px",
-                fontWeight: 900,
-                color: "white",
-                fontStyle: "italic",
-                textShadow: "2px 4px 12px rgba(0,0,0,0.6)",
-                display: "flex",
-              }}
-            >
-              {eventTitle}
-            </div>
-          )}
-
-          {venue && (
-            <div
-              style={{
-                fontSize: `${venueFontSize}px`,
-                fontWeight: 900,
-                color: "white",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                textShadow: "1px 2px 8px rgba(0,0,0,0.5)",
-                display: "flex",
-                marginTop: "2px",
-              }}
-            >
-              {venue}
-            </div>
-          )}
-
-          {eventDate && (
-            <div
-              style={{
-                fontSize: `${dateFontSize}px`,
-                fontWeight: 600,
-                color: "rgba(255,255,255,0.9)",
-                textTransform: "uppercase",
-                letterSpacing: "0.15em",
-                marginTop: "4px",
-                display: "flex",
-                textShadow: "0 1px 6px rgba(0,0,0,0.5)",
-              }}
-            >
-              {eventDate}
-            </div>
-          )}
-
-          {ticketText && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginTop: "10px",
-                padding: "7px 26px",
-                background: `linear-gradient(90deg, ${ticketColor1}, ${ticketColor2})`,
-                borderRadius: "18px",
-                boxShadow: `0 4px 16px ${ticketColor1}55`,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "white",
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  display: "flex",
-                }}
-              >
-                {ticketText}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── Custom overlay images ── */}
+        {/* ── Image overlays ── */}
         {overlays.map((overlay, i) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            key={i}
+            key={`ov-${i}`}
             src={overlay.url}
             alt=""
             width={overlay.width}
@@ -442,24 +211,65 @@ export async function GET(request: NextRequest) {
               height: `${overlay.height}px`,
               opacity: overlay.opacity,
               objectFit: "contain",
+              zIndex: 7,
             }}
           />
         ))}
 
-        {/* ── Thin border frame ── */}
-        <div
-          style={{
+        {/* ── Auto: Model name + Instagram (bottom center) ── */}
+        {(showName && modelName) || (showIg && igHandle) ? (
+          <div style={{
             position: "absolute",
-            top: "10px",
-            left: "10px",
-            right: "10px",
-            bottom: "10px",
+            bottom: "30px",
+            left: 0,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            zIndex: 8,
+          }}>
+            {showName && modelName && (
+              <div style={{
+                fontSize: `${nameFontSize}px`,
+                fontWeight: 900,
+                color: "white",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                textShadow: "2px 3px 12px rgba(0,0,0,0.7), 0 0 40px rgba(0,0,0,0.3)",
+                textAlign: "center",
+                display: "flex",
+                maxWidth: "950px",
+              }}>
+                {modelName}
+              </div>
+            )}
+            {showIg && igHandle && (
+              <div style={{
+                fontSize: "19px",
+                fontWeight: 400,
+                color: "rgba(255,255,255,0.85)",
+                marginTop: "2px",
+                display: "flex",
+                letterSpacing: "0.02em",
+                textShadow: "0 1px 8px rgba(0,0,0,0.6)",
+              }}>
+                @{igHandle}
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        {/* ── Border frame ── */}
+        {showBorder && (
+          <div style={{
+            position: "absolute",
+            top: "10px", left: "10px", right: "10px", bottom: "10px",
             border: `2px solid ${borderColor}22`,
             borderRadius: "6px",
             display: "flex",
-            zIndex: 5,
-          }}
-        />
+            zIndex: 9,
+          }} />
+        )}
       </div>
     ),
     {
