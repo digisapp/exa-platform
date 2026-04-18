@@ -33,8 +33,10 @@ export async function GET(request: NextRequest) {
   const showName = sp.get("showName") !== "0";
   const nameFontSize = Number(sp.get("nameFontSize")) || 48;
   const showIg = sp.get("showIg") !== "0";
+  const showQr = sp.get("showQr") !== "0";
   const showBorder = sp.get("showBorder") !== "0";
   const borderColor = sp.get("borderColor") || "#FF69B4";
+  const eventUrl = sp.get("eventUrl") || "";
 
   // Resolution: 1 = social (1080x1350), 2 = high (2160x2700), 3 = print (3240x4050)
   const scale = Math.min(4, Math.max(1, Number(sp.get("scale")) || 1));
@@ -262,6 +264,48 @@ export async function GET(request: NextRequest) {
             )}
           </div>
         ) : null}
+
+        {/* ── QR Code (bottom right) ── */}
+        {showQr && eventUrl && (
+          <div style={{
+            position: "absolute",
+            bottom: px(20),
+            right: px(20),
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            zIndex: 8,
+          }}>
+            <div style={{
+              background: "white",
+              borderRadius: px(8),
+              padding: px(6),
+              display: "flex",
+              boxShadow: `0 ${px(2)} ${px(12)} rgba(0,0,0,0.4)`,
+            }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&format=png&margin=0&data=${encodeURIComponent(eventUrl)}`}
+                alt="QR"
+                width={s(100)}
+                height={s(100)}
+                style={{ width: px(100), height: px(100), display: "flex" }}
+              />
+            </div>
+            <div style={{
+              fontSize: px(9),
+              fontWeight: 600,
+              color: "rgba(255,255,255,0.7)",
+              marginTop: px(4),
+              textShadow: `0 ${px(1)} ${px(4)} rgba(0,0,0,0.6)`,
+              display: "flex",
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+            }}>
+              Scan for Tickets
+            </div>
+          </div>
+        )}
 
         {/* ── Border frame ── */}
         {showBorder && (

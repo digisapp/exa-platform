@@ -195,9 +195,13 @@ export async function POST(request: NextRequest) {
     if (bestPhotoUrl) templateUrl.searchParams.set("photo", bestPhotoUrl);
     if (scale && scale > 1) templateUrl.searchParams.set("scale", String(scale));
 
-    // Instagram handle — try all possible column names
-    const igHandle = model.instagram_handle || model.instagram_name || model.instagram_username || "";
+    // Instagram handle (column is instagram_name on models table)
+    const igHandle = model.instagram_name || "";
     if (igHandle) templateUrl.searchParams.set("ig", igHandle);
+
+    // Event show URL for QR code
+    const showUrl = `https://www.examodels.com/shows/${event.slug}`;
+    templateUrl.searchParams.set("eventUrl", showUrl);
 
     // Forward all design params
     if (design) {

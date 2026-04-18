@@ -55,7 +55,7 @@ interface ModelInfo {
   last_name: string | null;
   username: string;
   profile_photo_url: string | null;
-  instagram_handle?: string | null;
+  instagram_name?: string | null;
 }
 
 export default function AdminFlyersPage() {
@@ -137,7 +137,7 @@ export default function AdminFlyersPage() {
     const modelIds = [...new Set(flyerList.map((f) => f.model_id))];
     if (modelIds.length > 0) {
       const { data: modelData } = await (supabase.from("models") as any)
-        .select("id, first_name, last_name, username, profile_photo_url")
+        .select("id, first_name, last_name, username, profile_photo_url, instagram_name")
         .in("id", modelIds);
       const map = new Map<string, ModelInfo>();
       (modelData || []).forEach((m: ModelInfo) => map.set(m.id, m));
@@ -211,8 +211,11 @@ export default function AdminFlyersPage() {
     }
     if (sampleModel?.profile_photo_url)
       params.set("photo", sampleModel.profile_photo_url);
-    const igHandle = (sampleModel as any)?.instagram_handle || (sampleModel as any)?.instagram_name || (sampleModel as any)?.instagram_username || "";
+    const igHandle = sampleModel?.instagram_name || "";
     if (igHandle) params.set("ig", igHandle);
+    // Pass event URL for QR code
+    const event = events.find((e) => e.id === selectedEventId);
+    if (event) params.set("eventUrl", `https://www.examodels.com/shows/${event.slug}`);
     params.set("_t", String(Date.now()));
     return `/api/admin/flyers/template?${params.toString()}`;
   }, [debouncedSettings, sampleModel]);

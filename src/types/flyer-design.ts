@@ -39,6 +39,7 @@ export interface FlyerDesignSettings {
   showModelName: boolean;
   modelNameFontSize: number;
   showInstagram: boolean;
+  showQrCode: boolean;
 
   // Border
   showBorder: boolean;
@@ -59,6 +60,7 @@ export const DEFAULT_DESIGN: FlyerDesignSettings = {
   showModelName: true,
   modelNameFontSize: 48,
   showInstagram: true,
+  showQrCode: true,
   showBorder: true,
   borderColor: "#FF69B4",
   textElements: [],
@@ -138,6 +140,7 @@ export function designToParams(d: FlyerDesignSettings): Record<string, string> {
     showName: d.showModelName ? "1" : "0",
     nameFontSize: String(d.modelNameFontSize),
     showIg: d.showInstagram ? "1" : "0",
+    showQr: d.showQrCode ? "1" : "0",
     showBorder: d.showBorder ? "1" : "0",
     borderColor: d.borderColor,
     ...(d.textElements.length > 0 ? { texts: JSON.stringify(d.textElements) } : {}),

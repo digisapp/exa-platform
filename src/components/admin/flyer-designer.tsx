@@ -514,6 +514,10 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
             <Label className="text-xs text-white/60">Show @Instagram</Label>
             <Switch checked={settings.showInstagram} onCheckedChange={(v) => update({ showInstagram: v })} />
           </div>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-white/60">Show QR Code</Label>
+            <Switch checked={settings.showQrCode} onCheckedChange={(v) => update({ showQrCode: v })} />
+          </div>
         </div>
       </Section>
 
