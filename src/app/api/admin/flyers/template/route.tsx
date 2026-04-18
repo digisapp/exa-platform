@@ -262,7 +262,6 @@ export async function GET(request: NextRequest) {
             position: "absolute",
             top: "10px", left: "10px", right: "10px", bottom: "10px",
             border: `2px solid ${borderColor}22`,
-            borderRadius: "6px",
             display: "flex",
             zIndex: 9,
           }} />

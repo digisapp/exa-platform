@@ -588,7 +588,7 @@ export default function AdminFlyersPage() {
                   " — drag elements to position"}
               </p>
               <div
-                className="relative w-[480px] xl:w-[540px] aspect-[4/5] rounded-xl overflow-hidden border border-white/10 bg-white/5"
+                className="relative w-[480px] xl:w-[540px] aspect-[4/5] overflow-hidden border border-white/10 bg-white/5"
                 ref={previewContainerRef}
               >
                 {previewLoading && (
