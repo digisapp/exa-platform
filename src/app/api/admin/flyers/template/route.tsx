@@ -220,7 +220,7 @@ export async function GET(request: NextRequest) {
         {(showName && modelName) || (showIg && igHandle) ? (
           <div style={{
             position: "absolute",
-            bottom: "30px",
+            bottom: "80px",
             left: 0,
             width: "100%",
             display: "flex",

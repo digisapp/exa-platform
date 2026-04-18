@@ -68,7 +68,7 @@ function Section({
         ) : (
           <ChevronRight className="w-3 h-3 text-white/30" />
         )}
-        <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">
+        <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">
           {title}
         </h3>
       </button>
@@ -121,7 +121,7 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
     <div className="space-y-4 text-sm">
       {/* ── Presets ── */}
       <Section title="Color Presets">
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-3 gap-2">
           {FLYER_PRESETS.map((preset) => (
             <button
               key={preset.name}
@@ -132,14 +132,14 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
                   overlays: settings.overlays,
                 })
               }
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-left"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-left"
             >
               <div className="flex -space-x-0.5">
                 {preset.settings.gradientColors.slice(0, 3).map((c, i) => (
-                  <div key={i} className="w-3 h-3 rounded-full border border-black/30" style={{ backgroundColor: c }} />
+                  <div key={i} className="w-3.5 h-3.5 rounded-full border border-black/30" style={{ backgroundColor: c }} />
                 ))}
               </div>
-              <span className="text-[10px] text-white/60 truncate">{preset.name}</span>
+              <span className="text-xs text-white/60 truncate">{preset.name}</span>
             </button>
           ))}
         </div>
@@ -148,14 +148,14 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
       {/* ── Text Elements ── */}
       <Section title="Text Elements">
         {/* Quick add buttons */}
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {TEXT_PRESETS.map((preset) => (
             <button
               key={preset.label}
               onClick={() => addTextElement(preset)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-[10px] text-white/60 hover:text-white/80"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-xs text-white/60 hover:text-white/80"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-3.5 h-3.5" />
               {preset.label}
             </button>
           ))}

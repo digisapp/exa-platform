@@ -559,8 +559,8 @@ export default function AdminFlyersPage() {
       {showDesigner && (
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Designer sidebar */}
-          <div className="w-full lg:w-[340px] shrink-0">
-            <div className="sticky top-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4 max-h-[calc(100vh-120px)] overflow-y-auto space-y-1">
+          <div className="w-full lg:w-[420px] shrink-0">
+            <div className="sticky top-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5 max-h-[calc(100vh-120px)] overflow-y-auto space-y-2">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-white/70 flex items-center gap-2">
                   <Palette className="w-4 h-4 text-pink-400" />
@@ -589,7 +589,7 @@ export default function AdminFlyersPage() {
                   " — drag elements to position"}
               </p>
               <div
-                className="relative w-[400px] xl:w-[480px] aspect-[4/5] rounded-xl overflow-hidden border border-white/10 bg-white/5"
+                className="relative w-[480px] xl:w-[540px] aspect-[4/5] rounded-xl overflow-hidden border border-white/10 bg-white/5"
                 ref={previewContainerRef}
               >
                 {previewLoading && (
