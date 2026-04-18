@@ -626,17 +626,17 @@ export function HotelFloorPlan() {
             );
           })}
 
-          {/* === BEACH ENTRANCE — palm + star before "Beach", star + palm after "Entrance" === */}
+          {/* === BEACH ENTRANCE — star + palm before "Beach", palm + star after "Entrance" === */}
           <g style={{ pointerEvents: "none" }}>
-            {/* Palm + Star before "Beach" */}
-            <text x={100.8} y={29} textAnchor="middle" dominantBaseline="central" fontSize={3}>🌴</text>
-            <text x={101.2} y={26.5} textAnchor="middle" dominantBaseline="central" fontSize={1.4}>⭐</text>
+            {/* Star + Palm before "Beach" */}
+            <text x={100.8} y={26.5} textAnchor="middle" dominantBaseline="central" fontSize={1.4}>⭐</text>
+            <text x={101.2} y={29} textAnchor="middle" dominantBaseline="central" fontSize={3}>🌴</text>
             {/* "Beach Entrance" vertical text between emojis */}
             <text x={103.5} y={29} textAnchor="middle" fill="rgba(255,255,255,0.95)" fontSize={0.85} fontWeight="900" letterSpacing={0.18}
               transform="rotate(90, 103.5, 29)">Beach Entrance</text>
-            {/* Star + Palm after "Entrance" */}
-            <text x={105.8} y={26.5} textAnchor="middle" dominantBaseline="central" fontSize={1.4}>⭐</text>
-            <text x={106.2} y={29} textAnchor="middle" dominantBaseline="central" fontSize={3}>🌴</text>
+            {/* Palm + Star after "Entrance" */}
+            <text x={105.8} y={29} textAnchor="middle" dominantBaseline="central" fontSize={3}>🌴</text>
+            <text x={106.2} y={26.5} textAnchor="middle" dominantBaseline="central" fontSize={1.4}>⭐</text>
           </g>
 
           {/* === COMPASS ROSE === */}
