@@ -338,10 +338,11 @@ export default function AdminFlyersPage() {
     else setSelectedFlyers(new Set(flyers.map((f) => f.id)));
   }
 
-  // Snap threshold in template coordinates
-  const SNAP_THRESHOLD = 15;
-  const CENTER_X = 540; // 1080 / 2
-  const CENTER_Y = 675; // 1350 / 2
+  // Snap system: canvas center, thirds, and element alignment
+  const SNAP_THRESHOLD = 20;
+  // Snap lines in template coordinates (1080x1350)
+  const SNAP_LINES_X = [0, 270, 540, 810, 1080]; // left, ⅓, center, ⅔, right
+  const SNAP_LINES_Y = [0, 337, 675, 1012, 1350]; // top, ⅓, center, ⅔, bottom
 
   function startDrag(
     item: { id: string; x: number; y: number },
@@ -364,11 +365,15 @@ export default function AdminFlyersPage() {
 
       const guides: { x?: number; y?: number } = {};
 
-      // Snap to canvas center
-      if (Math.abs(newX - CENTER_X) < SNAP_THRESHOLD) { newX = CENTER_X; guides.x = CENTER_X; }
-      if (Math.abs(newY - CENTER_Y) < SNAP_THRESHOLD) { newY = CENTER_Y; guides.y = CENTER_Y; }
+      // Snap to canvas guide lines (center, thirds, edges)
+      for (const snapX of SNAP_LINES_X) {
+        if (Math.abs(newX - snapX) < SNAP_THRESHOLD) { newX = snapX; guides.x = snapX; break; }
+      }
+      for (const snapY of SNAP_LINES_Y) {
+        if (Math.abs(newY - snapY) < SNAP_THRESHOLD) { newY = snapY; guides.y = snapY; break; }
+      }
 
-      // Snap to other elements' positions (read current state)
+      // Snap to other elements' X or Y positions
       setDesignSettings((prev) => {
         const allItems = [
           ...prev.textElements.map((t) => ({ id: t.id, x: t.x, y: t.y })),
@@ -725,43 +730,59 @@ export default function AdminFlyersPage() {
                   );
                 })}
 
-                {/* Snap guide lines */}
+                {/* Permanent faint guide lines (center + thirds) */}
+                {(() => {
+                  const cw = previewContainerRef.current?.offsetWidth || 480;
+                  const sc = cw / 1080;
+                  return (
+                    <>
+                      {/* Vertical guides: center + thirds */}
+                      {[270, 540, 810].map((gx) => (
+                        <div key={`gx-${gx}`} style={{
+                          position: "absolute", left: `${gx * sc}px`, top: 0,
+                          width: gx === 540 ? "1px" : "1px", height: "100%",
+                          background: gx === 540 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)",
+                          zIndex: 15, pointerEvents: "none",
+                        }} />
+                      ))}
+                      {/* Horizontal guides: center + thirds */}
+                      {[337, 675, 1012].map((gy) => (
+                        <div key={`gy-${gy}`} style={{
+                          position: "absolute", top: `${gy * sc}px`, left: 0,
+                          height: "1px", width: "100%",
+                          background: gy === 675 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)",
+                          zIndex: 15, pointerEvents: "none",
+                        }} />
+                      ))}
+                    </>
+                  );
+                })()}
+
+                {/* Active snap guide lines (bright pink when snapped) */}
                 {snapGuides.x !== undefined && (() => {
                   const cw = previewContainerRef.current?.offsetWidth || 480;
-                  const s = cw / 1080;
+                  const sc = cw / 1080;
                   return (
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: `${snapGuides.x * s}px`,
-                        top: 0,
-                        width: "1px",
-                        height: "100%",
-                        background: "rgba(255,105,180,0.7)",
-                        zIndex: 30,
-                        pointerEvents: "none",
-                        boxShadow: "0 0 4px rgba(255,105,180,0.5)",
-                      }}
-                    />
+                    <div style={{
+                      position: "absolute", left: `${snapGuides.x * sc}px`, top: 0,
+                      width: "2px", height: "100%",
+                      background: "rgba(255,105,180,0.9)",
+                      zIndex: 31, pointerEvents: "none",
+                      boxShadow: "0 0 8px rgba(255,105,180,0.6)",
+                    }} />
                   );
                 })()}
                 {snapGuides.y !== undefined && (() => {
                   const cw = previewContainerRef.current?.offsetWidth || 480;
-                  const s = cw / 1080;
+                  const sc = cw / 1080;
                   return (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: `${snapGuides.y * s}px`,
-                        left: 0,
-                        height: "1px",
-                        width: "100%",
-                        background: "rgba(255,105,180,0.7)",
-                        zIndex: 30,
-                        pointerEvents: "none",
-                        boxShadow: "0 0 4px rgba(255,105,180,0.5)",
-                      }}
-                    />
+                    <div style={{
+                      position: "absolute", top: `${snapGuides.y * sc}px`, left: 0,
+                      height: "2px", width: "100%",
+                      background: "rgba(255,105,180,0.9)",
+                      zIndex: 31, pointerEvents: "none",
+                      boxShadow: "0 0 8px rgba(255,105,180,0.6)",
+                    }} />
                   );
                 })()}
               </div>
