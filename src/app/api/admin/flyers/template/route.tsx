@@ -151,43 +151,60 @@ export async function GET(request: NextRequest) {
         {/* ── Colored glow accents ── */}
         {showGlows && (
           <>
-            <div style={{ position: "absolute", top: "-80px", left: "-80px", width: "350px", height: "350px", borderRadius: "50%", background: `radial-gradient(circle, ${gc0}44 0%, transparent 65%)`, display: "flex" }} />
-            <div style={{ position: "absolute", bottom: "-60px", right: "-60px", width: "300px", height: "300px", borderRadius: "50%", background: `radial-gradient(circle, ${gc4}33 0%, transparent 60%)`, display: "flex" }} />
+            <div style={{ position: "absolute", top: "-100px", left: "-100px", width: "500px", height: "500px", borderRadius: "50%", background: `radial-gradient(circle, ${gc0}88 0%, transparent 60%)`, display: "flex", zIndex: 2 }} />
+            <div style={{ position: "absolute", bottom: "-80px", right: "-80px", width: "450px", height: "450px", borderRadius: "50%", background: `radial-gradient(circle, ${gc4}77 0%, transparent 55%)`, display: "flex", zIndex: 2 }} />
+            <div style={{ position: "absolute", top: "350px", right: "-60px", width: "300px", height: "300px", borderRadius: "50%", background: `radial-gradient(circle, ${borderColor}44 0%, transparent 55%)`, display: "flex", zIndex: 2 }} />
           </>
         )}
 
-        {/* ── Hearts ── */}
+        {/* ── Hearts — bold, visible against photos ── */}
         {showHearts && (
           <>
-            <div style={{ position: "absolute", top: "90px", right: "55px", display: "flex", zIndex: 3 }}>
-              <div style={{ width: "34px", height: "34px", background: `${borderColor}bb`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 20px ${borderColor}44` }} />
+            {/* Large pink heart top-right */}
+            <div style={{ position: "absolute", top: "85px", right: "50px", display: "flex", zIndex: 6 }}>
+              <div style={{ width: "52px", height: "52px", background: `${borderColor}`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 30px ${borderColor}88, 0 0 60px ${borderColor}44` }} />
             </div>
-            <div style={{ position: "absolute", top: "180px", right: "120px", display: "flex", zIndex: 3 }}>
-              <div style={{ width: "18px", height: "18px", background: "rgba(255,255,255,0.5)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
+            {/* Medium white heart */}
+            <div style={{ position: "absolute", top: "175px", right: "115px", display: "flex", zIndex: 6 }}>
+              <div style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.85)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: "0 0 20px rgba(255,255,255,0.4)" }} />
             </div>
-            <div style={{ position: "absolute", top: "250px", right: "35px", display: "flex", zIndex: 3 }}>
-              <div style={{ width: "24px", height: "24px", background: "rgba(120,200,255,0.6)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: "0 0 14px rgba(120,200,255,0.25)" }} />
+            {/* Blue heart */}
+            <div style={{ position: "absolute", top: "260px", right: "40px", display: "flex", zIndex: 6 }}>
+              <div style={{ width: "40px", height: "40px", background: "rgba(100,200,255,0.9)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: "0 0 25px rgba(100,200,255,0.5)" }} />
             </div>
-            <div style={{ position: "absolute", top: "140px", left: "45px", display: "flex", zIndex: 3 }}>
-              <div style={{ width: "20px", height: "20px", background: `${borderColor}88`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
+            {/* Pink heart left */}
+            <div style={{ position: "absolute", top: "140px", left: "45px", display: "flex", zIndex: 6 }}>
+              <div style={{ width: "36px", height: "36px", background: `${borderColor}dd`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 22px ${borderColor}66` }} />
+            </div>
+            {/* Small heart middle-left */}
+            <div style={{ position: "absolute", top: "380px", left: "60px", display: "flex", zIndex: 6 }}>
+              <div style={{ width: "26px", height: "26px", background: "rgba(255,255,255,0.75)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: "0 0 16px rgba(255,255,255,0.3)" }} />
+            </div>
+            {/* Heart near bottom */}
+            <div style={{ position: "absolute", bottom: "320px", right: "65px", display: "flex", zIndex: 6 }}>
+              <div style={{ width: "30px", height: "30px", background: `${borderColor}cc`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 18px ${borderColor}55` }} />
+            </div>
+            {/* Small blue heart */}
+            <div style={{ position: "absolute", top: "320px", right: "100px", display: "flex", zIndex: 6 }}>
+              <div style={{ width: "22px", height: "22px", background: "rgba(100,200,255,0.8)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
             </div>
           </>
         )}
 
-        {/* ── Palm tree silhouettes ── */}
+        {/* ── Palm tree silhouettes — bolder ── */}
         {showPalms && (
           <>
-            <div style={{ position: "absolute", bottom: "0px", left: "-10px", opacity: 0.1, display: "flex", flexDirection: "column", alignItems: "center", width: "150px", height: "320px", zIndex: 3 }}>
-              <div style={{ position: "absolute", bottom: "0", width: "12px", height: "230px", background: "white", borderRadius: "6px", display: "flex" }} />
-              <div style={{ position: "absolute", top: "30px", left: "0px", width: "130px", height: "80px", borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "10px", left: "15px", width: "110px", height: "65px", borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "50px", left: "-10px", width: "90px", height: "55px", borderRadius: "50%", background: "white", display: "flex" }} />
+            <div style={{ position: "absolute", bottom: "0px", left: "-15px", opacity: 0.3, display: "flex", flexDirection: "column", alignItems: "center", width: "180px", height: "380px", zIndex: 3 }}>
+              <div style={{ position: "absolute", bottom: "0", width: "16px", height: "270px", background: "white", borderRadius: "8px", display: "flex" }} />
+              <div style={{ position: "absolute", top: "20px", left: "0px", width: "160px", height: "100px", borderRadius: "50%", background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: "0px", left: "20px", width: "130px", height: "80px", borderRadius: "50%", background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: "45px", left: "-15px", width: "110px", height: "70px", borderRadius: "50%", background: "white", display: "flex" }} />
             </div>
-            <div style={{ position: "absolute", bottom: "0px", right: "-10px", opacity: 0.1, display: "flex", flexDirection: "column", alignItems: "center", width: "150px", height: "320px", zIndex: 3 }}>
-              <div style={{ position: "absolute", bottom: "0", width: "12px", height: "230px", background: "white", borderRadius: "6px", display: "flex" }} />
-              <div style={{ position: "absolute", top: "30px", right: "0px", width: "130px", height: "80px", borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "10px", right: "15px", width: "110px", height: "65px", borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "50px", right: "-10px", width: "90px", height: "55px", borderRadius: "50%", background: "white", display: "flex" }} />
+            <div style={{ position: "absolute", bottom: "0px", right: "-15px", opacity: 0.3, display: "flex", flexDirection: "column", alignItems: "center", width: "180px", height: "380px", zIndex: 3 }}>
+              <div style={{ position: "absolute", bottom: "0", width: "16px", height: "270px", background: "white", borderRadius: "8px", display: "flex" }} />
+              <div style={{ position: "absolute", top: "20px", right: "0px", width: "160px", height: "100px", borderRadius: "50%", background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: "0px", right: "20px", width: "130px", height: "80px", borderRadius: "50%", background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: "45px", right: "-15px", width: "110px", height: "70px", borderRadius: "50%", background: "white", display: "flex" }} />
             </div>
           </>
         )}
