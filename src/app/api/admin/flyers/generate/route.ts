@@ -228,12 +228,14 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: { publicUrl } } = admin.storage.from("portfolio").getPublicUrl(storagePath);
+    // Cache-bust so browser/Next.js Image don't serve stale version
+    const versionedUrl = `${publicUrl}?v=${Date.now()}`;
 
     await (admin.from("flyers" as any) as any).insert({
       model_id: model.id,
       event_id: event_id,
       storage_path: storagePath,
-      public_url: publicUrl,
+      public_url: versionedUrl,
       width: 1080 * (scale || 1),
       height: 1350 * (scale || 1),
     });
