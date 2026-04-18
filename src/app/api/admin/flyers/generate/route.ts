@@ -83,15 +83,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `No models with badge for ${event.name} (badge: ${eventBadge.id})` }, { status: 404 });
   }
 
-  // 4. Fetch model data — include instagram, focus_tags, and photo dimensions for hero selection
-  const { data: models } = await (admin.from("models") as any)
-    .select(
-      "id, first_name, last_name, username, profile_photo_url, profile_photo_width, profile_photo_height, instagram_username"
-    )
+  // 4. Fetch model data (only core columns to avoid missing column errors)
+  const { data: models, error: modelsError } = await (admin.from("models") as any)
+    .select("id, first_name, last_name, username, profile_photo_url, instagram_username")
     .in("id", targetModelIds);
 
+  if (modelsError) {
+    return NextResponse.json({
+      error: `Models query failed: ${modelsError.message}`,
+      details: { targetModelIds: targetModelIds.slice(0, 5), count: targetModelIds.length },
+    }, { status: 500 });
+  }
+
   if (!models || models.length === 0) {
-    return NextResponse.json({ error: `Models query returned empty for ${targetModelIds.length} badge holders` }, { status: 404 });
+    return NextResponse.json({
+      error: `Models query returned empty for ${targetModelIds.length} badge holders`,
+      details: { sampleIds: targetModelIds.slice(0, 3) },
+    }, { status: 404 });
   }
 
   // 5. Fetch portfolio photos for hero-quality selection (single batch query)
