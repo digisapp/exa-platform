@@ -220,53 +220,26 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
       {/* ── Text Content ── */}
       <Section title="Text Content">
         <div className="space-y-3">
-          <div>
-            <Label className="text-xs text-white/50 mb-1 block">
-              Tagline
-            </Label>
-            <input
-              type="text"
-              value={settings.tagline}
-              onChange={(e) => update({ tagline: e.target.value })}
-              placeholder="Swim Shows"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-pink-500/50"
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-white/50 mb-1 block">
-              Venue Override
-            </Label>
-            <input
-              type="text"
-              value={settings.venueOverride}
-              onChange={(e) => update({ venueOverride: e.target.value })}
-              placeholder="Auto from event"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-pink-500/50"
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-white/50 mb-1 block">
-              Date Override
-            </Label>
-            <input
-              type="text"
-              value={settings.dateOverride}
-              onChange={(e) => update({ dateOverride: e.target.value })}
-              placeholder="Auto from event"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-pink-500/50"
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-white/50 mb-1 block">
-              Ticket Line
-            </Label>
-            <input
-              type="text"
-              value={settings.ticketLineText}
-              onChange={(e) => update({ ticketLineText: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-pink-500/50"
-            />
-          </div>
+          {([
+            { key: "logoText" as const, label: "Logo Text", placeholder: "exa" },
+            { key: "tagline" as const, label: "Tagline", placeholder: "Swim Shows" },
+            { key: "badgeText" as const, label: "Badge Text", placeholder: "MODEL" },
+            { key: "eventTitle" as const, label: "Event Title", placeholder: "exa Swim Shows" },
+            { key: "venueOverride" as const, label: "Venue", placeholder: "Auto from event" },
+            { key: "dateOverride" as const, label: "Date", placeholder: "Auto from event" },
+            { key: "ticketLineText" as const, label: "Ticket Line", placeholder: "TICKETS + VIP..." },
+          ] as const).map(({ key, label, placeholder }) => (
+            <div key={key}>
+              <Label className="text-xs text-white/50 mb-1 block">{label}</Label>
+              <input
+                type="text"
+                value={settings[key]}
+                onChange={(e) => update({ [key]: e.target.value })}
+                placeholder={placeholder}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-pink-500/50"
+              />
+            </div>
+          ))}
         </div>
       </Section>
 
@@ -435,7 +408,7 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
                     <input
                       type="range"
                       min={30}
-                      max={600}
+                      max={1080}
                       value={overlay.width}
                       onChange={(e) => {
                         const newW = Number(e.target.value);

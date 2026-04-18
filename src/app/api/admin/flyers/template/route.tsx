@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
   const photoUrl = sp.get("photo") || "";
   const eventDate = sp.get("date") || "July 2026";
   const venue = sp.get("venue") || "Miami Beach, FL";
+  const logoText = sp.get("logoText") || "exa";
   const tagline = sp.get("tagline") || "Swim Shows";
+  const badgeText = sp.get("badgeText") || "MODEL";
+  const eventTitle = sp.get("eventTitle") || "exa Swim Shows";
   const ticketText = sp.get("ticketText") || "TICKETS + VIP — EXAMODELS.COM @EXA.MODELS";
   const igHandle = sp.get("ig") || "";
 
@@ -241,7 +244,7 @@ export async function GET(request: NextRequest) {
               textShadow: "0 2px 16px rgba(0,0,0,0.5)",
             }}
           >
-            exa
+            {logoText}
           </div>
           <div
             style={{
@@ -287,7 +290,7 @@ export async function GET(request: NextRequest) {
               display: "flex",
             }}
           >
-            MODEL
+            {badgeText}
           </div>
 
           {/* Model Name */}
@@ -348,7 +351,7 @@ export async function GET(request: NextRequest) {
               display: "flex",
             }}
           >
-            exa {tagline}
+            {eventTitle}
           </div>
 
           {/* Venue */}

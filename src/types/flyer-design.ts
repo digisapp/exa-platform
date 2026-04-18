@@ -13,8 +13,11 @@ export interface FlyerDesignSettings {
   // Background gradient (5 stops: 0%, 25%, 50%, 75%, 100%)
   gradientColors: [string, string, string, string, string];
 
-  // Text content
-  tagline: string;
+  // Text content — all editable
+  logoText: string;           // top logo ("exa")
+  tagline: string;            // top tagline ("Swim Shows")
+  badgeText: string;          // pill badge ("MODEL")
+  eventTitle: string;         // bottom event title ("exa Swim Shows")
   ticketLineText: string;
   // venue + date are derived from event but can be overridden
   venueOverride: string;
@@ -47,7 +50,10 @@ export interface FlyerDesignSettings {
 
 export const DEFAULT_DESIGN: FlyerDesignSettings = {
   gradientColors: ["#FF69B4", "#FF8FA0", "#FFB088", "#FFCC80", "#FFB347"],
+  logoText: "exa",
   tagline: "Swim Shows",
+  badgeText: "MODEL",
+  eventTitle: "exa Swim Shows",
   ticketLineText: "TICKETS + VIP — EXAMODELS.COM @EXA.MODELS",
   venueOverride: "",
   dateOverride: "",
@@ -125,7 +131,10 @@ export function designToParams(d: FlyerDesignSettings): Record<string, string> {
     gc2: d.gradientColors[2],
     gc3: d.gradientColors[3],
     gc4: d.gradientColors[4],
+    logoText: d.logoText,
     tagline: d.tagline,
+    badgeText: d.badgeText,
+    eventTitle: d.eventTitle,
     ticketText: d.ticketLineText,
     borderColor: d.photoBorderColor,
     taglineFontSize: String(d.taglineFontSize),
