@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
   // 4. Fetch model data — include instagram, focus_tags, and photo dimensions for hero selection
   const { data: models } = await (admin.from("models") as any)
     .select(
-      "id, first_name, last_name, username, profile_photo_url, profile_photo_width, profile_photo_height, instagram_username, focus_tags"
+      "id, first_name, last_name, username, profile_photo_url, profile_photo_width, profile_photo_height, instagram_username"
     )
     .in("id", targetModelIds)
     .not("profile_photo_url", "is", null);
@@ -204,11 +204,6 @@ export async function POST(request: NextRequest) {
     // Pass instagram handle
     if (model.instagram_username) {
       templateUrl.searchParams.set("ig", model.instagram_username);
-    }
-
-    // Pass focus tags (first 3)
-    if (model.focus_tags && model.focus_tags.length > 0) {
-      templateUrl.searchParams.set("tags", model.focus_tags.slice(0, 3).join(","));
     }
 
     // Forward design params

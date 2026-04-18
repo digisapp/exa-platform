@@ -21,8 +21,6 @@ export async function GET(request: NextRequest) {
   const tagline = sp.get("tagline") || "Swim Shows";
   const ticketText = sp.get("ticketText") || "TICKETS + VIP — EXAMODELS.COM @EXA.MODELS";
   const igHandle = sp.get("ig") || "";
-  const tagsRaw = sp.get("tags") || "";
-  const tags = tagsRaw ? tagsRaw.split(",").map((t) => t.trim()) : [];
 
   // ── Design params ──
   const gc0 = sp.get("gc0") || "#FF69B4";
@@ -41,7 +39,6 @@ export async function GET(request: NextRequest) {
   const showHearts = sp.get("showHearts") !== "0";
   const showGlows = sp.get("showGlows") !== "0";
   const showIg = sp.get("showIg") !== "0";
-  const showTags = sp.get("showTags") !== "0";
 
   const ticketColor1 = sp.get("ticketColor1") || "#FF8C00";
   const ticketColor2 = sp.get("ticketColor2") || "#FF6347";
@@ -366,29 +363,6 @@ export async function GET(request: NextRequest) {
             </div>
           )}
 
-          {/* Focus tags */}
-          {showTags && tags.length > 0 && (
-            <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-              {tags.map((tag, i) => (
-                <div
-                  key={i}
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    color: "rgba(255,255,255,0.6)",
-                    padding: "3px 12px",
-                    borderRadius: "12px",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    background: "rgba(255,255,255,0.08)",
-                    textTransform: "capitalize",
-                    display: "flex",
-                  }}
-                >
-                  {tag}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* ── Event Details Footer ── */}

@@ -344,13 +344,6 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
               onCheckedChange={(v) => update({ showInstagram: v })}
             />
           </div>
-          <div className="flex items-center justify-between">
-            <Label className="text-xs text-white/60">Specialty Tags</Label>
-            <Switch
-              checked={settings.showTags}
-              onCheckedChange={(v) => update({ showTags: v })}
-            />
-          </div>
         </div>
       </Section>
 
