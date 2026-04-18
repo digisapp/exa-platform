@@ -36,6 +36,13 @@ export async function GET(request: NextRequest) {
   const showBorder = sp.get("showBorder") !== "0";
   const borderColor = sp.get("borderColor") || "#FF69B4";
 
+  // Resolution: 1 = social (1080x1350), 2 = high (2160x2700), 3 = print (3240x4050)
+  const scale = Math.min(4, Math.max(1, Number(sp.get("scale")) || 1));
+  const W = 1080 * scale;
+  const H = 1350 * scale;
+  const px = (v: number) => `${v * scale}px`;
+  const s = (v: number) => Math.round(v * scale);
+
   // ── Free-form elements ──
   let textElements: FlyerTextElement[] = [];
   try { const t = sp.get("texts"); if (t) textElements = JSON.parse(t); } catch {}
@@ -62,8 +69,8 @@ export async function GET(request: NextRequest) {
     (
       <div
         style={{
-          width: "1080px",
-          height: "1350px",
+          width: `${W}px`,
+          height: `${H}px`,
           display: "flex",
           flexDirection: "column",
           fontFamily: "Poppins",
@@ -78,8 +85,8 @@ export async function GET(request: NextRequest) {
           <img
             src={photoUrl}
             alt={modelName}
-            width={1080}
-            height={1350}
+            width={W}
+            height={H}
             style={{
               position: "absolute",
               top: 0, left: 0,
@@ -99,7 +106,7 @@ export async function GET(request: NextRequest) {
         {/* ── Top gradient overlay ── */}
         {showTopGrad && (
           <div style={{
-            position: "absolute", top: 0, left: 0, width: "100%", height: "320px",
+            position: "absolute", top: 0, left: 0, width: "100%", height: px(320),
             background: `linear-gradient(180deg, ${gc0}bb 0%, ${gc0}66 40%, transparent 100%)`,
             display: "flex",
           }} />
@@ -108,7 +115,7 @@ export async function GET(request: NextRequest) {
         {/* ── Bottom gradient overlay ── */}
         {showBotGrad && (
           <div style={{
-            position: "absolute", bottom: 0, left: 0, width: "100%", height: "520px",
+            position: "absolute", bottom: 0, left: 0, width: "100%", height: px(520),
             background: `linear-gradient(0deg, ${gc4}ee 0%, ${gc3}bb 25%, ${gc2}66 50%, transparent 100%)`,
             display: "flex",
           }} />
@@ -124,28 +131,28 @@ export async function GET(request: NextRequest) {
         {/* ── Glow accents ── */}
         {showGlows && (
           <>
-            <div style={{ position: "absolute", top: "-100px", left: "-100px", width: "500px", height: "500px", borderRadius: "50%", background: `radial-gradient(circle, ${gc0}88 0%, transparent 60%)`, display: "flex", zIndex: 2 }} />
-            <div style={{ position: "absolute", bottom: "-80px", right: "-80px", width: "450px", height: "450px", borderRadius: "50%", background: `radial-gradient(circle, ${gc4}77 0%, transparent 55%)`, display: "flex", zIndex: 2 }} />
+            <div style={{ position: "absolute", top: px(-100), left: px(-100), width: px(500), height: px(500), borderRadius: "50%", background: `radial-gradient(circle, ${gc0}88 0%, transparent 60%)`, display: "flex", zIndex: 2 }} />
+            <div style={{ position: "absolute", bottom: px(-80), right: px(-80), width: px(450), height: px(450), borderRadius: "50%", background: `radial-gradient(circle, ${gc4}77 0%, transparent 55%)`, display: "flex", zIndex: 2 }} />
           </>
         )}
 
         {/* ── Hearts ── */}
         {showHearts && (
           <>
-            <div style={{ position: "absolute", top: "85px", right: "50px", display: "flex", zIndex: 6 }}>
-              <div style={{ width: "52px", height: "52px", background: `${borderColor}`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 30px ${borderColor}88` }} />
+            <div style={{ position: "absolute", top: px(85), right: px(50), display: "flex", zIndex: 6 }}>
+              <div style={{ width: px(52), height: px(52), background: `${borderColor}`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 ${px(30)} ${borderColor}88` }} />
             </div>
-            <div style={{ position: "absolute", top: "175px", right: "115px", display: "flex", zIndex: 6 }}>
-              <div style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.85)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: "0 0 20px rgba(255,255,255,0.4)" }} />
+            <div style={{ position: "absolute", top: px(175), right: px(115), display: "flex", zIndex: 6 }}>
+              <div style={{ width: px(32), height: px(32), background: "rgba(255,255,255,0.85)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 ${px(20)} rgba(255,255,255,0.4)` }} />
             </div>
-            <div style={{ position: "absolute", top: "260px", right: "40px", display: "flex", zIndex: 6 }}>
-              <div style={{ width: "40px", height: "40px", background: "rgba(100,200,255,0.9)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: "0 0 25px rgba(100,200,255,0.5)" }} />
+            <div style={{ position: "absolute", top: px(260), right: px(40), display: "flex", zIndex: 6 }}>
+              <div style={{ width: px(40), height: px(40), background: "rgba(100,200,255,0.9)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 ${px(25)} rgba(100,200,255,0.5)` }} />
             </div>
-            <div style={{ position: "absolute", top: "140px", left: "45px", display: "flex", zIndex: 6 }}>
-              <div style={{ width: "36px", height: "36px", background: `${borderColor}dd`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 22px ${borderColor}66` }} />
+            <div style={{ position: "absolute", top: px(140), left: px(45), display: "flex", zIndex: 6 }}>
+              <div style={{ width: px(36), height: px(36), background: `${borderColor}dd`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 ${px(22)} ${borderColor}66` }} />
             </div>
-            <div style={{ position: "absolute", top: "380px", left: "60px", display: "flex", zIndex: 6 }}>
-              <div style={{ width: "26px", height: "26px", background: "rgba(255,255,255,0.75)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
+            <div style={{ position: "absolute", top: px(380), left: px(60), display: "flex", zIndex: 6 }}>
+              <div style={{ width: px(26), height: px(26), background: "rgba(255,255,255,0.75)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
             </div>
           </>
         )}
@@ -153,17 +160,17 @@ export async function GET(request: NextRequest) {
         {/* ── Palm trees ── */}
         {showPalms && (
           <>
-            <div style={{ position: "absolute", bottom: "0px", left: "-15px", opacity: 0.3, display: "flex", flexDirection: "column", alignItems: "center", width: "180px", height: "380px", zIndex: 3 }}>
-              <div style={{ position: "absolute", bottom: "0", width: "16px", height: "270px", background: "white", borderRadius: "8px", display: "flex" }} />
-              <div style={{ position: "absolute", top: "20px", left: "0px", width: "160px", height: "100px", borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "0px", left: "20px", width: "130px", height: "80px", borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "45px", left: "-15px", width: "110px", height: "70px", borderRadius: "50%", background: "white", display: "flex" }} />
+            <div style={{ position: "absolute", bottom: "0px", left: px(-15), opacity: 0.3, display: "flex", flexDirection: "column", alignItems: "center", width: px(180), height: px(380), zIndex: 3 }}>
+              <div style={{ position: "absolute", bottom: "0", width: px(16), height: px(270), background: "white", borderRadius: px(8), display: "flex" }} />
+              <div style={{ position: "absolute", top: px(20), left: "0px", width: px(160), height: px(100), borderRadius: "50%", background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: "0px", left: px(20), width: px(130), height: px(80), borderRadius: "50%", background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: px(45), left: px(-15), width: px(110), height: px(70), borderRadius: "50%", background: "white", display: "flex" }} />
             </div>
-            <div style={{ position: "absolute", bottom: "0px", right: "-15px", opacity: 0.3, display: "flex", flexDirection: "column", alignItems: "center", width: "180px", height: "380px", zIndex: 3 }}>
-              <div style={{ position: "absolute", bottom: "0", width: "16px", height: "270px", background: "white", borderRadius: "8px", display: "flex" }} />
-              <div style={{ position: "absolute", top: "20px", right: "0px", width: "160px", height: "100px", borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "0px", right: "20px", width: "130px", height: "80px", borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "45px", right: "-15px", width: "110px", height: "70px", borderRadius: "50%", background: "white", display: "flex" }} />
+            <div style={{ position: "absolute", bottom: "0px", right: px(-15), opacity: 0.3, display: "flex", flexDirection: "column", alignItems: "center", width: px(180), height: px(380), zIndex: 3 }}>
+              <div style={{ position: "absolute", bottom: "0", width: px(16), height: px(270), background: "white", borderRadius: px(8), display: "flex" }} />
+              <div style={{ position: "absolute", top: px(20), right: "0px", width: px(160), height: px(100), borderRadius: "50%", background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: "0px", right: px(20), width: px(130), height: px(80), borderRadius: "50%", background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: px(45), right: px(-15), width: px(110), height: px(70), borderRadius: "50%", background: "white", display: "flex" }} />
             </div>
           </>
         )}
@@ -174,14 +181,14 @@ export async function GET(request: NextRequest) {
             key={i}
             style={{
               position: "absolute",
-              left: `${el.x}px`,
-              top: `${el.y}px`,
-              fontSize: `${el.fontSize}px`,
+              left: px(el.x),
+              top: px(el.y),
+              fontSize: px(el.fontSize),
               fontWeight: el.fontWeight,
               color: el.color,
               fontStyle: el.italic ? "italic" : "normal",
               textTransform: el.uppercase ? "uppercase" : "none",
-              textShadow: "2px 3px 12px rgba(0,0,0,0.6)",
+              textShadow: `${px(2)} ${px(3)} ${px(12)} rgba(0,0,0,0.6)`,
               display: "flex",
               whiteSpace: "nowrap",
               zIndex: 7,
@@ -198,14 +205,14 @@ export async function GET(request: NextRequest) {
             key={`ov-${i}`}
             src={overlay.url}
             alt=""
-            width={overlay.width}
-            height={overlay.height}
+            width={s(overlay.width)}
+            height={s(overlay.height)}
             style={{
               position: "absolute",
-              left: `${overlay.x}px`,
-              top: `${overlay.y}px`,
-              width: `${overlay.width}px`,
-              height: `${overlay.height}px`,
+              left: px(overlay.x),
+              top: px(overlay.y),
+              width: px(overlay.width),
+              height: px(overlay.height),
               opacity: overlay.opacity,
               objectFit: "contain",
               zIndex: 7,
@@ -213,11 +220,11 @@ export async function GET(request: NextRequest) {
           />
         ))}
 
-        {/* ── Auto: Model name + Instagram (bottom center) ── */}
+        {/* ── Auto: Model name + Instagram ── */}
         {(showName && modelName) || (showIg && igHandle) ? (
           <div style={{
             position: "absolute",
-            bottom: "80px",
+            bottom: px(80),
             left: 0,
             width: "100%",
             display: "flex",
@@ -227,28 +234,28 @@ export async function GET(request: NextRequest) {
           }}>
             {showName && modelName && (
               <div style={{
-                fontSize: `${nameFontSize}px`,
+                fontSize: px(nameFontSize),
                 fontWeight: 900,
                 color: "white",
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
-                textShadow: "2px 3px 12px rgba(0,0,0,0.7), 0 0 40px rgba(0,0,0,0.3)",
+                textShadow: `${px(2)} ${px(3)} ${px(12)} rgba(0,0,0,0.7), 0 0 ${px(40)} rgba(0,0,0,0.3)`,
                 textAlign: "center",
                 display: "flex",
-                maxWidth: "950px",
+                maxWidth: px(950),
               }}>
                 {modelName}
               </div>
             )}
             {showIg && igHandle && (
               <div style={{
-                fontSize: "19px",
+                fontSize: px(19),
                 fontWeight: 400,
                 color: "rgba(255,255,255,0.85)",
-                marginTop: "2px",
+                marginTop: px(2),
                 display: "flex",
                 letterSpacing: "0.02em",
-                textShadow: "0 1px 8px rgba(0,0,0,0.6)",
+                textShadow: `0 ${px(1)} ${px(8)} rgba(0,0,0,0.6)`,
               }}>
                 @{igHandle}
               </div>
@@ -260,8 +267,8 @@ export async function GET(request: NextRequest) {
         {showBorder && (
           <div style={{
             position: "absolute",
-            top: "10px", left: "10px", right: "10px", bottom: "10px",
-            border: `2px solid ${borderColor}22`,
+            top: px(10), left: px(10), right: px(10), bottom: px(10),
+            border: `${px(2)} solid ${borderColor}22`,
             display: "flex",
             zIndex: 9,
           }} />
@@ -269,8 +276,8 @@ export async function GET(request: NextRequest) {
       </div>
     ),
     {
-      width: 1080,
-      height: 1350,
+      width: W,
+      height: H,
       fonts: [
         { name: "Poppins", data: fontData, style: "normal" as const, weight: 900 as const },
         { name: "Poppins", data: fontSemiData, style: "normal" as const, weight: 600 as const },

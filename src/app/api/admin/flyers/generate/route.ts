@@ -31,11 +31,12 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { event_id, model_ids, design, force } = body as {
+  const { event_id, model_ids, design, force, scale } = body as {
     event_id: string;
     model_ids?: string[];
     design?: FlyerDesignSettings;
     force?: boolean;
+    scale?: number;
   };
 
   if (!event_id) {
@@ -183,7 +184,8 @@ export async function POST(request: NextRequest) {
     // Build template URL
     const templateUrl = new URL("/api/admin/flyers/template", request.nextUrl.origin);
     templateUrl.searchParams.set("name", modelName);
-    templateUrl.searchParams.set("photo", bestPhotoUrl);
+    if (bestPhotoUrl) templateUrl.searchParams.set("photo", bestPhotoUrl);
+    if (scale && scale > 1) templateUrl.searchParams.set("scale", String(scale));
 
     if (model.instagram_username) {
       templateUrl.searchParams.set("ig", model.instagram_username);
@@ -220,8 +222,8 @@ export async function POST(request: NextRequest) {
       event_id: event_id,
       storage_path: storagePath,
       public_url: publicUrl,
-      width: 1080,
-      height: 1350,
+      width: 1080 * (scale || 1),
+      height: 1350 * (scale || 1),
     });
 
     generated++;

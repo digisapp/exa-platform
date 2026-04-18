@@ -92,6 +92,7 @@ export default function AdminFlyersPage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [sampleModel, setSampleModel] = useState<ModelInfo | null>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
+  const [resolution, setResolution] = useState<1 | 2 | 3>(1); // 1=social, 2=high, 3=print
 
   // Auto-save design settings to localStorage
   useEffect(() => {
@@ -225,6 +226,7 @@ export default function AdminFlyersPage() {
         event_id: selectedEventId,
         design: designSettings,
         force,
+        scale: resolution,
       };
 
       // For test mode, only generate for the sample model
@@ -444,6 +446,28 @@ export default function AdminFlyersPage() {
           <Palette className="w-4 h-4" />
           {showDesigner ? "Hide Designer" : "Design"}
         </button>
+
+        {/* Resolution selector */}
+        <div className="flex items-center rounded-xl bg-white/5 border border-white/10 overflow-hidden">
+          {([
+            { value: 1 as const, label: "Social", sub: "1080px" },
+            { value: 2 as const, label: "High", sub: "2160px" },
+            { value: 3 as const, label: "Print", sub: "3240px" },
+          ]).map(({ value, label, sub }) => (
+            <button
+              key={value}
+              onClick={() => setResolution(value)}
+              className={`px-3 py-2 text-xs transition-all ${
+                resolution === value
+                  ? "bg-pink-500/20 text-pink-400 font-semibold"
+                  : "text-white/50 hover:text-white/70"
+              }`}
+            >
+              {label}
+              <span className="block text-[9px] text-white/30">{sub}</span>
+            </button>
+          ))}
+        </div>
 
         {/* Test 1 Model button */}
         <button
