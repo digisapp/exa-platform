@@ -20,7 +20,6 @@ export interface FlyerTextElement {
   color: string;      // hex
   italic: boolean;
   uppercase: boolean;
-  align: "left" | "center" | "right";
 }
 
 export interface FlyerDesignSettings {
@@ -70,31 +69,31 @@ export const DEFAULT_DESIGN: FlyerDesignSettings = {
 export const TEXT_PRESETS: { label: string; element: Omit<FlyerTextElement, "id"> }[] = [
   {
     label: "Logo",
-    element: { text: "exa", x: 440, y: 45, fontSize: 50, fontWeight: 900, color: "#FFFFFF", italic: false, uppercase: false, align: "center" },
+    element: { text: "exa", x: 440, y: 45, fontSize: 50, fontWeight: 900, color: "#FFFFFF", italic: false, uppercase: false },
   },
   {
     label: "Tagline",
-    element: { text: "Swim Shows", x: 310, y: 100, fontSize: 72, fontWeight: 900, color: "#FFFFFF", italic: true, uppercase: false, align: "center" },
+    element: { text: "Swim Shows", x: 310, y: 100, fontSize: 72, fontWeight: 900, color: "#FFFFFF", italic: true, uppercase: false },
   },
   {
     label: "Event Title",
-    element: { text: "exa Swim Shows", x: 270, y: 950, fontSize: 42, fontWeight: 900, color: "#FFFFFF", italic: true, uppercase: false, align: "center" },
+    element: { text: "exa Swim Shows", x: 270, y: 950, fontSize: 42, fontWeight: 900, color: "#FFFFFF", italic: true, uppercase: false },
   },
   {
     label: "Venue",
-    element: { text: "MIAMI BEACH, FL", x: 310, y: 1010, fontSize: 36, fontWeight: 900, color: "#FFFFFF", italic: false, uppercase: true, align: "center" },
+    element: { text: "MIAMI BEACH, FL", x: 310, y: 1010, fontSize: 36, fontWeight: 900, color: "#FFFFFF", italic: false, uppercase: true },
   },
   {
     label: "Date",
-    element: { text: "JULY 2026", x: 400, y: 1060, fontSize: 22, fontWeight: 600, color: "#FFFFFF", italic: false, uppercase: true, align: "center" },
+    element: { text: "JULY 2026", x: 400, y: 1060, fontSize: 22, fontWeight: 600, color: "#FFFFFF", italic: false, uppercase: true },
   },
   {
     label: "Ticket Line",
-    element: { text: "TICKETS + VIP — EXAMODELS.COM", x: 280, y: 1110, fontSize: 16, fontWeight: 600, color: "#FFFFFF", italic: false, uppercase: true, align: "center" },
+    element: { text: "TICKETS + VIP — EXAMODELS.COM", x: 280, y: 1110, fontSize: 16, fontWeight: 600, color: "#FFFFFF", italic: false, uppercase: true },
   },
   {
     label: "Custom Text",
-    element: { text: "Your text here", x: 350, y: 600, fontSize: 32, fontWeight: 600, color: "#FFFFFF", italic: false, uppercase: false, align: "center" },
+    element: { text: "Your text here", x: 350, y: 600, fontSize: 32, fontWeight: 600, color: "#FFFFFF", italic: false, uppercase: false },
   },
 ];
 

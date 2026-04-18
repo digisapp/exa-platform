@@ -274,6 +274,7 @@ export default function AdminFlyersPage() {
           event_id: selectedEventId,
           model_ids: [modelId],
           design: designSettings,
+          scale: resolution,
         }),
       });
       if (!genRes.ok) throw new Error("Regenerate failed");
