@@ -87,11 +87,10 @@ export async function POST(request: NextRequest) {
     .select(
       "id, first_name, last_name, username, profile_photo_url, profile_photo_width, profile_photo_height, instagram_username"
     )
-    .in("id", targetModelIds)
-    .not("profile_photo_url", "is", null);
+    .in("id", targetModelIds);
 
   if (!models || models.length === 0) {
-    return NextResponse.json({ error: "No models with profile photos found" }, { status: 404 });
+    return NextResponse.json({ error: "No approved models found" }, { status: 404 });
   }
 
   // 5. Fetch portfolio photos for hero-quality selection (single batch query)
@@ -157,24 +156,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Select best photo using hero portrait logic
+    // Select best photo: portfolio high-res > primary > profile photo > any portfolio
     const portfolioPhotos = modelPortfolioMap.get(model.id) || [];
-    let bestPhotoUrl = model.profile_photo_url;
+    let bestPhotoUrl = model.profile_photo_url || "";
 
-    // Check portfolio for high-res portrait photos first
+    // 1. High-res portrait from portfolio
     const highResPortrait = portfolioPhotos.find(
       (p: any) =>
         p.width && p.height &&
         Math.max(p.width, p.height) >= 1500 &&
-        p.height >= p.width // portrait orientation
+        p.height >= p.width
     );
     if (highResPortrait) {
       bestPhotoUrl = highResPortrait.url;
     } else {
-      // Check for any primary photo
+      // 2. Primary portfolio photo
       const primary = portfolioPhotos.find((p: any) => p.is_primary && p.url);
       if (primary && primary.width && Math.max(primary.width, primary.height || 0) >= 800) {
         bestPhotoUrl = primary.url;
+      } else if (!bestPhotoUrl && portfolioPhotos.length > 0) {
+        // 3. Any portfolio photo as last resort
+        bestPhotoUrl = portfolioPhotos[0].url;
       }
     }
 

@@ -166,7 +166,6 @@ export default function AdminFlyersPage() {
         const { data: sm } = await (supabase.from("models") as any)
           .select("id, first_name, last_name, username, profile_photo_url, instagram_username")
           .eq("id", sampleBadge[0].model_id)
-          .not("profile_photo_url", "is", null)
           .single();
         setSampleModel(sm || null);
       }
