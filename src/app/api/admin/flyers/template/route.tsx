@@ -226,7 +226,7 @@ export async function GET(request: NextRequest) {
         {(showName && modelName) || (showIg && igHandle) ? (
           <div style={{
             position: "absolute",
-            bottom: px(80),
+            bottom: px(220),
             left: 0,
             width: "100%",
             display: "flex",
@@ -251,10 +251,10 @@ export async function GET(request: NextRequest) {
             )}
             {showIg && igHandle && (
               <div style={{
-                fontSize: px(19),
+                fontSize: px(22),
                 fontWeight: 400,
                 color: "rgba(255,255,255,0.85)",
-                marginTop: px(2),
+                marginTop: px(4),
                 display: "flex",
                 letterSpacing: "0.02em",
                 textShadow: `0 ${px(1)} ${px(8)} rgba(0,0,0,0.6)`,
@@ -269,8 +269,8 @@ export async function GET(request: NextRequest) {
         {showQr && eventUrl && (
           <div style={{
             position: "absolute",
-            bottom: px(20),
-            right: px(20),
+            bottom: px(30),
+            right: px(50),
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -278,26 +278,26 @@ export async function GET(request: NextRequest) {
           }}>
             <div style={{
               background: "white",
-              borderRadius: px(8),
-              padding: px(6),
+              borderRadius: px(10),
+              padding: px(8),
               display: "flex",
-              boxShadow: `0 ${px(2)} ${px(12)} rgba(0,0,0,0.4)`,
+              boxShadow: `0 ${px(2)} ${px(16)} rgba(0,0,0,0.5)`,
             }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&format=png&margin=0&data=${encodeURIComponent(eventUrl)}`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&format=png&margin=0&data=${encodeURIComponent(eventUrl)}`}
                 alt="QR"
-                width={s(100)}
-                height={s(100)}
-                style={{ width: px(100), height: px(100), display: "flex" }}
+                width={s(150)}
+                height={s(150)}
+                style={{ width: px(150), height: px(150), display: "flex" }}
               />
             </div>
             <div style={{
-              fontSize: px(9),
+              fontSize: px(11),
               fontWeight: 600,
-              color: "rgba(255,255,255,0.7)",
-              marginTop: px(4),
-              textShadow: `0 ${px(1)} ${px(4)} rgba(0,0,0,0.6)`,
+              color: "rgba(255,255,255,0.8)",
+              marginTop: px(6),
+              textShadow: `0 ${px(1)} ${px(6)} rgba(0,0,0,0.6)`,
               display: "flex",
               letterSpacing: "0.05em",
               textTransform: "uppercase",
