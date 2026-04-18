@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { X, MapPin, Sparkles, Maximize2, Minimize2 } from "lucide-react";
 
@@ -132,6 +132,24 @@ export function HotelFloorPlan() {
   const [selected, setSelected] = useState<Room | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // On mobile (non-fullscreen), tapping the map should enlarge it, not open room popups
+  const handleRoomClick = useCallback((room: Room, isAlreadySelected: boolean) => {
+    if (!isFullscreen && isMobile) {
+      setIsFullscreen(true);
+      return;
+    }
+    setSelected(isAlreadySelected ? null : room);
+  }, [isFullscreen, isMobile]);
 
   const renderShape = (room: Room, isHovered: boolean, isSelected: boolean) => {
     const stroke = isSelected ? "url(#pinkNeon)" : isHovered ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.12)";
@@ -190,7 +208,7 @@ export function HotelFloorPlan() {
 
       {/* Fullscreen overlay */}
       {isFullscreen && (
-        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm" onClick={() => setIsFullscreen(false)} />
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm" onClick={() => { setIsFullscreen(false); setSelected(null); }} />
       )}
 
       {/* Map Container with neon border */}
@@ -204,7 +222,7 @@ export function HotelFloorPlan() {
 
         {/* Expand / Collapse button */}
         <button
-          onClick={() => setIsFullscreen(!isFullscreen)}
+          onClick={() => { if (isFullscreen) setSelected(null); setIsFullscreen(!isFullscreen); }}
           className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-black/60 hover:bg-black/80 border border-white/10 hover:border-pink-500/40 transition-all"
           title={isFullscreen ? "Exit fullscreen" : "Enlarge map"}
         >
@@ -215,7 +233,23 @@ export function HotelFloorPlan() {
           )}
         </button>
 
-        <svg viewBox="-12 0 139 58" className="w-full h-auto relative">
+        {/* Mobile tap-to-enlarge hint */}
+        {!isFullscreen && (
+          <div className="absolute bottom-3 left-0 right-0 text-center pointer-events-none md:hidden">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 border border-white/10 text-xs text-white/70 backdrop-blur-sm">
+              <Maximize2 className="h-3 w-3" /> Tap to enlarge map
+            </span>
+          </div>
+        )}
+
+        <svg viewBox="-12 0 139 58" className="w-full h-auto relative"
+          onClick={(e) => {
+            // If clicking SVG background on mobile (not fullscreen), enlarge
+            if (!isFullscreen && isMobile && e.target === e.currentTarget) {
+              setIsFullscreen(true);
+            }
+          }}
+        >
           <defs>
             {/* === GRADIENTS === */}
             {/* MIAMI BEACH COLORS — bright, sexy, pop */}
@@ -393,7 +427,7 @@ export function HotelFloorPlan() {
 
             return (
               <g key={room.id} className="cursor-pointer"
-                onClick={() => setSelected(isS ? null : room)}
+                onClick={() => handleRoomClick(room, isS)}
                 onMouseEnter={() => setHovered(room.id)}
                 onMouseLeave={() => setHovered(null)}
               >
