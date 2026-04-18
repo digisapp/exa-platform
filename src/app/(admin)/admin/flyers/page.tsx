@@ -55,7 +55,7 @@ interface ModelInfo {
   last_name: string | null;
   username: string;
   profile_photo_url: string | null;
-  instagram_username?: string | null;
+  instagram_handle?: string | null;
 }
 
 export default function AdminFlyersPage() {
@@ -167,7 +167,7 @@ export default function AdminFlyersPage() {
         .limit(1);
       if (sampleBadge && sampleBadge.length > 0) {
         const { data: sm } = await (supabase.from("models") as any)
-          .select("id, first_name, last_name, username, profile_photo_url, instagram_username")
+          .select("id, first_name, last_name, username, profile_photo_url, instagram_handle")
           .eq("id", sampleBadge[0].model_id)
           .single();
         setSampleModel(sm || null);
@@ -211,8 +211,8 @@ export default function AdminFlyersPage() {
     }
     if (sampleModel?.profile_photo_url)
       params.set("photo", sampleModel.profile_photo_url);
-    if (sampleModel?.instagram_username)
-      params.set("ig", sampleModel.instagram_username);
+    if (sampleModel?.instagram_handle)
+      params.set("ig", sampleModel.instagram_handle);
     params.set("_t", String(Date.now()));
     return `/api/admin/flyers/template?${params.toString()}`;
   }, [debouncedSettings, sampleModel]);

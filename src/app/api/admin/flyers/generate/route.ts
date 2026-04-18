@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
   // 4. Fetch model data (only core columns to avoid missing column errors)
   const { data: models, error: modelsError } = await (admin.from("models") as any)
-    .select("id, first_name, last_name, username, profile_photo_url, instagram_username")
+    .select("id, first_name, last_name, username, profile_photo_url, instagram_handle")
     .in("id", targetModelIds);
 
   if (modelsError) {
@@ -195,8 +195,8 @@ export async function POST(request: NextRequest) {
     if (bestPhotoUrl) templateUrl.searchParams.set("photo", bestPhotoUrl);
     if (scale && scale > 1) templateUrl.searchParams.set("scale", String(scale));
 
-    if (model.instagram_username) {
-      templateUrl.searchParams.set("ig", model.instagram_username);
+    if (model.instagram_handle) {
+      templateUrl.searchParams.set("ig", model.instagram_handle);
     }
 
     // Forward all design params
