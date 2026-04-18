@@ -251,7 +251,7 @@ export async function GET(request: NextRequest) {
             )}
             {showIg && igHandle && (
               <div style={{
-                fontSize: px(22),
+                fontSize: px(66),
                 fontWeight: 400,
                 color: "rgba(255,255,255,0.85)",
                 marginTop: px(4),
