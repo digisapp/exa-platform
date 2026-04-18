@@ -20,6 +20,7 @@ import {
 import { FlyerDesigner } from "@/components/admin/flyer-designer";
 import {
   type FlyerDesignSettings,
+  type FlyerOverlay,
   DEFAULT_DESIGN,
   designToParams,
 } from "@/types/flyer-design";
@@ -228,6 +229,8 @@ export default function AdminFlyersPage() {
 
   const previewUrl = useMemo(() => {
     const params = new URLSearchParams(designToParams(debouncedSettings));
+    // Overlays are rendered as draggable elements on the preview, not baked in
+    params.delete("overlays");
     const name = sampleModel
       ? [sampleModel.first_name, sampleModel.last_name]
           .filter(Boolean)
@@ -367,6 +370,54 @@ export default function AdminFlyersPage() {
   function toggleSelectAll() {
     if (selectedFlyers.size === flyers.length) setSelectedFlyers(new Set());
     else setSelectedFlyers(new Set(flyers.map((f) => f.id)));
+  }
+
+  // Unified drag handler for mouse and touch
+  function startDrag(
+    overlay: FlyerOverlay,
+    startClientX: number,
+    startClientY: number,
+    mode: "mouse" | "touch"
+  ) {
+    const container = previewContainerRef.current;
+    if (!container) return;
+    const scl = container.offsetWidth / 1080;
+    const origX = overlay.x;
+    const origY = overlay.y;
+
+    function updatePosition(clientX: number, clientY: number) {
+      const dx = (clientX - startClientX) / scl;
+      const dy = (clientY - startClientY) / scl;
+      const newX = Math.max(0, Math.min(1080 - overlay.width, origX + dx));
+      const newY = Math.max(0, Math.min(1350 - overlay.height, origY + dy));
+      setDesignSettings((prev) => ({
+        ...prev,
+        overlays: prev.overlays.map((o) =>
+          o.id === overlay.id ? { ...o, x: Math.round(newX), y: Math.round(newY) } : o
+        ),
+      }));
+    }
+
+    if (mode === "mouse") {
+      function onMouseMove(ev: MouseEvent) { updatePosition(ev.clientX, ev.clientY); }
+      function onMouseUp() {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+      }
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    } else {
+      function onTouchMove(ev: TouchEvent) {
+        ev.preventDefault();
+        updatePosition(ev.touches[0].clientX, ev.touches[0].clientY);
+      }
+      function onTouchEnd() {
+        document.removeEventListener("touchmove", onTouchMove);
+        document.removeEventListener("touchend", onTouchEnd);
+      }
+      document.addEventListener("touchmove", onTouchMove, { passive: false });
+      document.addEventListener("touchend", onTouchEnd);
+    }
   }
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
@@ -619,33 +670,12 @@ export default function AdminFlyersPage() {
                       }}
                       onMouseDown={(e) => {
                         e.preventDefault();
-                        const container = previewContainerRef.current;
-                        if (!container) return;
-                        const containerWidth = container.offsetWidth;
-                        const scl = containerWidth / 1080;
-                        const startX = e.clientX;
-                        const startY = e.clientY;
-                        const origX = overlay.x;
-                        const origY = overlay.y;
-
-                        function onMove(ev: MouseEvent) {
-                          const dx = (ev.clientX - startX) / scl;
-                          const dy = (ev.clientY - startY) / scl;
-                          const newX = Math.max(0, Math.min(1080 - overlay.width, origX + dx));
-                          const newY = Math.max(0, Math.min(1350 - overlay.height, origY + dy));
-                          setDesignSettings((prev) => ({
-                            ...prev,
-                            overlays: prev.overlays.map((o) =>
-                              o.id === overlay.id ? { ...o, x: Math.round(newX), y: Math.round(newY) } : o
-                            ),
-                          }));
-                        }
-                        function onUp() {
-                          document.removeEventListener("mousemove", onMove);
-                          document.removeEventListener("mouseup", onUp);
-                        }
-                        document.addEventListener("mousemove", onMove);
-                        document.addEventListener("mouseup", onUp);
+                        startDrag(overlay, e.clientX, e.clientY, "mouse");
+                      }}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        startDrag(overlay, touch.clientX, touch.clientY, "touch");
                       }}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}

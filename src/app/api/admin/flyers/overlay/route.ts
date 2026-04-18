@@ -29,12 +29,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
-  if (!file.type.startsWith("image/")) {
-    return NextResponse.json({ error: "Must be an image file" }, { status: 400 });
+  const ALLOWED_TYPES: Record<string, string> = {
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+  };
+
+  if (!ALLOWED_TYPES[file.type]) {
+    return NextResponse.json({ error: "Only PNG, WebP, and GIF files allowed" }, { status: 400 });
+  }
+
+  const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+  if (file.size > MAX_SIZE) {
+    return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
   }
 
   const admin = createServiceRoleClient();
-  const ext = file.name.split(".").pop() || "png";
+  const ext = ALLOWED_TYPES[file.type];
   const storagePath = `flyers/overlays/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
   const bytes = new Uint8Array(await file.arrayBuffer());

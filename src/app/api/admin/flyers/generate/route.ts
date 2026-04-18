@@ -94,17 +94,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No models with profile photos found" }, { status: 404 });
   }
 
-  // 5. Fetch portfolio photos for hero-quality selection
+  // 5. Fetch portfolio photos for hero-quality selection (single batch query)
+  const modelIds = models.map((m: any) => m.id);
+  const { data: allPhotos } = await (admin.from("media_assets") as any)
+    .select("model_id, url, width, height, created_at, is_primary")
+    .in("model_id", modelIds)
+    .eq("type", "photo")
+    .in("asset_type", ["portfolio", "avatar"])
+    .order("created_at", { ascending: false });
+
   const modelPortfolioMap = new Map<string, any[]>();
-  for (const model of models) {
-    const { data: photos } = await (admin.from("media_assets") as any)
-      .select("url, width, height, created_at, is_primary")
-      .eq("model_id", model.id)
-      .eq("type", "photo")
-      .in("asset_type", ["portfolio", "avatar"])
-      .order("created_at", { ascending: false })
-      .limit(10);
-    modelPortfolioMap.set(model.id, photos || []);
+  for (const photo of allPhotos || []) {
+    const existing = modelPortfolioMap.get(photo.model_id) || [];
+    if (existing.length < 10) { // keep top 10 per model
+      existing.push(photo);
+      modelPortfolioMap.set(photo.model_id, existing);
+    }
   }
 
   // 6. If force=true, delete existing flyers
