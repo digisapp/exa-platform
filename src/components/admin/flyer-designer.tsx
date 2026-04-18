@@ -225,8 +225,8 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
             { key: "tagline" as const, label: "Tagline", placeholder: "Swim Shows" },
             { key: "badgeText" as const, label: "Badge Text", placeholder: "MODEL" },
             { key: "eventTitle" as const, label: "Event Title", placeholder: "exa Swim Shows" },
-            { key: "venueOverride" as const, label: "Venue", placeholder: "Auto from event" },
-            { key: "dateOverride" as const, label: "Date", placeholder: "Auto from event" },
+            { key: "venueOverride" as const, label: "Venue", placeholder: "Leave empty to hide" },
+            { key: "dateOverride" as const, label: "Date", placeholder: "Leave empty to hide" },
             { key: "ticketLineText" as const, label: "Ticket Line", placeholder: "TICKETS + VIP..." },
           ] as const).map(({ key, label, placeholder }) => (
             <div key={key}>
