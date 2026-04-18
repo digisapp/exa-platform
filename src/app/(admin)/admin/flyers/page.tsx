@@ -92,7 +92,9 @@ export default function AdminFlyersPage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [sampleModel, setSampleModel] = useState<ModelInfo | null>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
-  const [resolution, setResolution] = useState<1 | 2 | 3>(1); // 1=social, 2=high, 3=print
+  const [resolution, setResolution] = useState<1 | 2 | 3>(1);
+  // Snap guide lines shown during drag (in template coordinates)
+  const [snapGuides, setSnapGuides] = useState<{ x?: number; y?: number }>({});
 
   // Auto-save design settings to localStorage
   useEffect(() => {
@@ -336,7 +338,11 @@ export default function AdminFlyersPage() {
     else setSelectedFlyers(new Set(flyers.map((f) => f.id)));
   }
 
-  // Unified drag handler for overlays and text elements
+  // Snap threshold in template coordinates
+  const SNAP_THRESHOLD = 15;
+  const CENTER_X = 540; // 1080 / 2
+  const CENTER_Y = 675; // 1350 / 2
+
   function startDrag(
     item: { id: string; x: number; y: number },
     type: "overlay" | "text",
@@ -353,27 +359,73 @@ export default function AdminFlyersPage() {
     function updatePosition(clientX: number, clientY: number) {
       const dx = (clientX - startClientX) / scl;
       const dy = (clientY - startClientY) / scl;
-      const newX = Math.max(0, Math.min(1080, Math.round(origX + dx)));
-      const newY = Math.max(0, Math.min(1350, Math.round(origY + dy)));
-      setDesignSettings((prev) => ({
-        ...prev,
-        ...(type === "overlay"
-          ? { overlays: prev.overlays.map((o) => o.id === item.id ? { ...o, x: newX, y: newY } : o) }
-          : { textElements: prev.textElements.map((t) => t.id === item.id ? { ...t, x: newX, y: newY } : t) }
-        ),
-      }));
+      let newX = Math.max(0, Math.min(1080, Math.round(origX + dx)));
+      let newY = Math.max(0, Math.min(1350, Math.round(origY + dy)));
+
+      // Build snap targets: canvas center + other elements' positions
+      const guides: { x?: number; y?: number } = {};
+
+      // Snap to horizontal center
+      if (Math.abs(newX - CENTER_X) < SNAP_THRESHOLD) {
+        newX = CENTER_X;
+        guides.x = CENTER_X;
+      }
+      // Snap to vertical center
+      if (Math.abs(newY - CENTER_Y) < SNAP_THRESHOLD) {
+        newY = CENTER_Y;
+        guides.y = CENTER_Y;
+      }
+
+      // Snap to other elements' X or Y positions
+      setDesignSettings((prev) => {
+        const allItems = [
+          ...prev.textElements.map((t) => ({ id: t.id, x: t.x, y: t.y })),
+          ...prev.overlays.map((o) => ({ id: o.id, x: o.x, y: o.y })),
+        ].filter((el) => el.id !== item.id);
+
+        for (const other of allItems) {
+          if (!guides.x && Math.abs(newX - other.x) < SNAP_THRESHOLD) {
+            newX = other.x;
+            guides.x = other.x;
+          }
+          if (!guides.y && Math.abs(newY - other.y) < SNAP_THRESHOLD) {
+            newY = other.y;
+            guides.y = other.y;
+          }
+        }
+
+        setSnapGuides(guides);
+
+        return {
+          ...prev,
+          ...(type === "overlay"
+            ? { overlays: prev.overlays.map((o) => o.id === item.id ? { ...o, x: newX, y: newY } : o) }
+            : { textElements: prev.textElements.map((t) => t.id === item.id ? { ...t, x: newX, y: newY } : t) }
+          ),
+        };
+      });
     }
 
+    function onEnd() {
+      setSnapGuides({});
+      if (mode === "mouse") {
+        document.removeEventListener("mousemove", onMoveHandler);
+        document.removeEventListener("mouseup", onEnd);
+      } else {
+        document.removeEventListener("touchmove", onMoveHandler);
+        document.removeEventListener("touchend", onEnd);
+      }
+    }
+
+    let onMoveHandler: any;
     if (mode === "mouse") {
-      const onMove = (ev: MouseEvent) => updatePosition(ev.clientX, ev.clientY);
-      const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
+      onMoveHandler = (ev: MouseEvent) => updatePosition(ev.clientX, ev.clientY);
+      document.addEventListener("mousemove", onMoveHandler);
+      document.addEventListener("mouseup", onEnd);
     } else {
-      const onMove = (ev: TouchEvent) => { ev.preventDefault(); updatePosition(ev.touches[0].clientX, ev.touches[0].clientY); };
-      const onUp = () => { document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onUp); };
-      document.addEventListener("touchmove", onMove, { passive: false });
-      document.addEventListener("touchend", onUp);
+      onMoveHandler = (ev: TouchEvent) => { ev.preventDefault(); updatePosition(ev.touches[0].clientX, ev.touches[0].clientY); };
+      document.addEventListener("touchmove", onMoveHandler, { passive: false });
+      document.addEventListener("touchend", onEnd);
     }
   }
 
@@ -686,6 +738,47 @@ export default function AdminFlyersPage() {
                     </div>
                   );
                 })}
+
+                {/* Snap guide lines */}
+                {snapGuides.x !== undefined && (() => {
+                  const cw = previewContainerRef.current?.offsetWidth || 480;
+                  const s = cw / 1080;
+                  return (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: `${snapGuides.x * s}px`,
+                        top: 0,
+                        width: "1px",
+                        height: "100%",
+                        background: "rgba(255,105,180,0.7)",
+                        zIndex: 30,
+                        pointerEvents: "none",
+                        boxShadow: "0 0 4px rgba(255,105,180,0.5)",
+                      }}
+                    />
+                  );
+                })()}
+                {snapGuides.y !== undefined && (() => {
+                  const cw = previewContainerRef.current?.offsetWidth || 480;
+                  const ch = (previewContainerRef.current?.offsetHeight || 600);
+                  const s = cw / 1080;
+                  return (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: `${snapGuides.y * s}px`,
+                        left: 0,
+                        height: "1px",
+                        width: "100%",
+                        background: "rgba(255,105,180,0.7)",
+                        zIndex: 30,
+                        pointerEvents: "none",
+                        boxShadow: "0 0 4px rgba(255,105,180,0.5)",
+                      }}
+                    />
+                  );
+                })()}
               </div>
               <p className="text-[10px] text-white/30 mt-2 text-center">
                 1080 × 1350px &middot; Drag text + images to position
