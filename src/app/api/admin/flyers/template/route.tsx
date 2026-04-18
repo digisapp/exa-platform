@@ -92,9 +92,8 @@ export async function GET(request: NextRequest) {
         {photoUrl && (
           <div style={{
             position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -55%)",
+            top: px(Math.round((1350 - 630) / 2 - 630 * 0.05)),
+            left: px(Math.round((1080 - 630) / 2)),
             width: px(630),
             height: px(630),
             borderRadius: "50%",
