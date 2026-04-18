@@ -95,8 +95,8 @@ export async function GET(request: NextRequest) {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -55%)",
-            width: px(420),
-            height: px(420),
+            width: px(630),
+            height: px(630),
             borderRadius: "50%",
             overflow: "hidden",
             border: `${px(5)} solid rgba(255,255,255,0.25)`,
@@ -108,8 +108,8 @@ export async function GET(request: NextRequest) {
             <img
               src={photoUrl}
               alt={modelName}
-              width={s(420)}
-              height={s(420)}
+              width={s(630)}
+              height={s(630)}
               style={{
                 width: "100%", height: "100%",
                 objectFit: "cover",
