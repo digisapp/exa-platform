@@ -21,7 +21,6 @@ import {
   Italic,
   Save,
   FolderOpen,
-  MoreHorizontal,
 } from "lucide-react";
 
 interface FlyerDesignerProps {
@@ -121,19 +120,28 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
   }
 
   async function updateTemplate(id: string) {
-    await fetch("/api/admin/flyers/templates", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, settings }),
-    });
-    const data = await fetch("/api/admin/flyers/templates").then((r) => r.json());
-    setSavedTemplates(data.templates || []);
+    try {
+      const res = await fetch("/api/admin/flyers/templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, settings }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await fetch("/api/admin/flyers/templates").then((r) => r.json());
+      setSavedTemplates(data.templates || []);
+    } catch {
+      alert("Failed to update template");
+    }
   }
 
   async function deleteTemplate(id: string) {
     if (!confirm("Delete this template?")) return;
-    await fetch(`/api/admin/flyers/templates?id=${id}`, { method: "DELETE" });
-    setSavedTemplates((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await fetch(`/api/admin/flyers/templates?id=${id}`, { method: "DELETE" });
+      setSavedTemplates((prev) => prev.filter((t) => t.id !== id));
+    } catch {
+      alert("Failed to delete template");
+    }
   }
 
   function update(partial: Partial<FlyerDesignSettings>) {

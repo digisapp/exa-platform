@@ -362,21 +362,13 @@ export default function AdminFlyersPage() {
       let newX = Math.max(0, Math.min(1080, Math.round(origX + dx)));
       let newY = Math.max(0, Math.min(1350, Math.round(origY + dy)));
 
-      // Build snap targets: canvas center + other elements' positions
       const guides: { x?: number; y?: number } = {};
 
-      // Snap to horizontal center
-      if (Math.abs(newX - CENTER_X) < SNAP_THRESHOLD) {
-        newX = CENTER_X;
-        guides.x = CENTER_X;
-      }
-      // Snap to vertical center
-      if (Math.abs(newY - CENTER_Y) < SNAP_THRESHOLD) {
-        newY = CENTER_Y;
-        guides.y = CENTER_Y;
-      }
+      // Snap to canvas center
+      if (Math.abs(newX - CENTER_X) < SNAP_THRESHOLD) { newX = CENTER_X; guides.x = CENTER_X; }
+      if (Math.abs(newY - CENTER_Y) < SNAP_THRESHOLD) { newY = CENTER_Y; guides.y = CENTER_Y; }
 
-      // Snap to other elements' X or Y positions
+      // Snap to other elements' positions (read current state)
       setDesignSettings((prev) => {
         const allItems = [
           ...prev.textElements.map((t) => ({ id: t.id, x: t.x, y: t.y })),
@@ -384,17 +376,9 @@ export default function AdminFlyersPage() {
         ].filter((el) => el.id !== item.id);
 
         for (const other of allItems) {
-          if (!guides.x && Math.abs(newX - other.x) < SNAP_THRESHOLD) {
-            newX = other.x;
-            guides.x = other.x;
-          }
-          if (!guides.y && Math.abs(newY - other.y) < SNAP_THRESHOLD) {
-            newY = other.y;
-            guides.y = other.y;
-          }
+          if (!guides.x && Math.abs(newX - other.x) < SNAP_THRESHOLD) { newX = other.x; guides.x = other.x; }
+          if (!guides.y && Math.abs(newY - other.y) < SNAP_THRESHOLD) { newY = other.y; guides.y = other.y; }
         }
-
-        setSnapGuides(guides);
 
         return {
           ...prev,
@@ -404,6 +388,8 @@ export default function AdminFlyersPage() {
           ),
         };
       });
+
+      setSnapGuides(guides);
     }
 
     function onEnd() {
@@ -761,7 +747,6 @@ export default function AdminFlyersPage() {
                 })()}
                 {snapGuides.y !== undefined && (() => {
                   const cw = previewContainerRef.current?.offsetWidth || 480;
-                  const ch = (previewContainerRef.current?.offsetHeight || 600);
                   const s = cw / 1080;
                   return (
                     <div
