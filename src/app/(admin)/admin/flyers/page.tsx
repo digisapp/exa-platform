@@ -53,6 +53,7 @@ interface ModelInfo {
   last_name: string | null;
   username: string;
   profile_photo_url: string | null;
+  instagram_username?: string | null;
 }
 
 export default function AdminFlyersPage() {
@@ -75,7 +76,11 @@ export default function AdminFlyersPage() {
       if (typeof window !== "undefined") {
         try {
           const saved = localStorage.getItem("exa-flyer-design");
-          if (saved) return JSON.parse(saved) as FlyerDesignSettings;
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            // Merge with defaults to handle added/removed fields
+            return { ...DEFAULT_DESIGN, ...parsed };
+          }
         } catch {}
       }
       return DEFAULT_DESIGN;
@@ -156,7 +161,7 @@ export default function AdminFlyersPage() {
         .limit(1);
       if (sampleBadge && sampleBadge.length > 0) {
         const { data: sm } = await (supabase.from("models") as any)
-          .select("id, first_name, last_name, username, profile_photo_url")
+          .select("id, first_name, last_name, username, profile_photo_url, instagram_username")
           .eq("id", sampleBadge[0].model_id)
           .not("profile_photo_url", "is", null)
           .single();
@@ -230,6 +235,8 @@ export default function AdminFlyersPage() {
     params.set("name", name);
     if (sampleModel?.profile_photo_url)
       params.set("photo", sampleModel.profile_photo_url);
+    if (sampleModel?.instagram_username)
+      params.set("ig", sampleModel.instagram_username);
     params.set("event", eventDisplayValues.name);
     params.set(
       "venue",
