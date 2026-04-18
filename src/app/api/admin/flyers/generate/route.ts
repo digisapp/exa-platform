@@ -102,25 +102,7 @@ export async function POST(request: NextRequest) {
     }, { status: 404 });
   }
 
-  // 5. Fetch portfolio photos for hero-quality selection (single batch query)
-  const modelIds = models.map((m: any) => m.id);
-  const { data: allPhotos } = await (admin.from("media_assets") as any)
-    .select("model_id, url, width, height, created_at, is_primary")
-    .in("model_id", modelIds)
-    .eq("type", "photo")
-    .in("asset_type", ["portfolio", "avatar"])
-    .order("created_at", { ascending: false });
-
-  const modelPortfolioMap = new Map<string, any[]>();
-  for (const photo of allPhotos || []) {
-    const existing = modelPortfolioMap.get(photo.model_id) || [];
-    if (existing.length < 10) { // keep top 10 per model
-      existing.push(photo);
-      modelPortfolioMap.set(photo.model_id, existing);
-    }
-  }
-
-  // 6. If force=true, delete existing flyers
+  // 5. If force=true, delete existing flyers
   if (force) {
     const deleteIds = models.map((m: any) => m.id);
     const { data: existingFlyers } = await (admin.from("flyers" as any) as any)
@@ -165,29 +147,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Select best photo: portfolio high-res > primary > profile photo > any portfolio
-    const portfolioPhotos = modelPortfolioMap.get(model.id) || [];
-    let bestPhotoUrl = model.profile_photo_url || "";
-
-    // 1. High-res portrait from portfolio
-    const highResPortrait = portfolioPhotos.find(
-      (p: any) =>
-        p.width && p.height &&
-        Math.max(p.width, p.height) >= 1500 &&
-        p.height >= p.width
-    );
-    if (highResPortrait) {
-      bestPhotoUrl = highResPortrait.url;
-    } else {
-      // 2. Primary portfolio photo
-      const primary = portfolioPhotos.find((p: any) => p.is_primary && p.url);
-      if (primary && primary.width && Math.max(primary.width, primary.height || 0) >= 800) {
-        bestPhotoUrl = primary.url;
-      } else if (!bestPhotoUrl && portfolioPhotos.length > 0) {
-        // 3. Any portfolio photo as last resort
-        bestPhotoUrl = portfolioPhotos[0].url;
-      }
-    }
+    // Use profile photo for circle avatar display
+    const bestPhotoUrl = model.profile_photo_url || "";
 
     // Build template URL
     const templateUrl = new URL("/api/admin/flyers/template", request.nextUrl.origin);

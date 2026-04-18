@@ -81,28 +81,42 @@ export async function GET(request: NextRequest) {
           background: "#000",
         }}
       >
-        {/* ── Full-bleed model photo ── */}
-        {photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={photoUrl}
-            alt={modelName}
-            width={W}
-            height={H}
-            style={{
-              position: "absolute",
-              top: 0, left: 0,
-              width: "100%", height: "100%",
-              objectFit: "cover",
-              objectPosition: "center top",
-            }}
-          />
-        ) : (
+        {/* ── Gradient background ── */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+          background: `linear-gradient(165deg, ${gc0} 0%, ${gc2} 50%, ${gc4} 100%)`,
+          display: "flex",
+        }} />
+
+        {/* ── Centered circle profile photo ── */}
+        {photoUrl && (
           <div style={{
-            position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
-            background: `linear-gradient(165deg, ${gc0} 0%, ${gc2} 50%, ${gc4} 100%)`,
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -55%)",
+            width: px(420),
+            height: px(420),
+            borderRadius: "50%",
+            overflow: "hidden",
+            border: `${px(5)} solid rgba(255,255,255,0.25)`,
+            boxShadow: `0 0 ${px(60)} rgba(0,0,0,0.4), 0 0 ${px(120)} ${gc0}44`,
             display: "flex",
-          }} />
+            zIndex: 5,
+          }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photoUrl}
+              alt={modelName}
+              width={s(420)}
+              height={s(420)}
+              style={{
+                width: "100%", height: "100%",
+                objectFit: "cover",
+                objectPosition: "center top",
+              }}
+            />
+          </div>
         )}
 
         {/* ── Top gradient overlay ── */}
