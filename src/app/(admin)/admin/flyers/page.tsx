@@ -513,43 +513,34 @@ export default function AdminFlyersPage() {
           ))}
         </div>
 
-        {/* Test 1 Model button */}
-        <button
-          onClick={() => handleGenerate(false, true)}
-          disabled={generating || !selectedEventId}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-pink-500/30 text-pink-400 text-sm font-semibold hover:bg-pink-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          {generating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Testing...
-            </>
-          ) : (
-            <>
-              <Eye className="w-4 h-4" />
-              Test 1 Model
-            </>
-          )}
-        </button>
-
-        {/* Generate all button */}
-        <button
-          onClick={() => handleGenerate()}
-          disabled={generating || !selectedEventId}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold hover:from-pink-600 hover:to-violet-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          {generating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4" />
-              Generate All Flyers
-            </>
-          )}
-        </button>
+        {/* Generate buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleGenerate()}
+            disabled={generating || !selectedEventId}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold hover:from-pink-600 hover:to-violet-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                Generate All
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => handleGenerate(false, true)}
+            disabled={generating || !selectedEventId}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/5 border border-pink-500/30 text-pink-400 text-xs font-semibold hover:bg-pink-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Test 1
+          </button>
+        </div>
 
         {flyers.length > 0 && (
           <>
