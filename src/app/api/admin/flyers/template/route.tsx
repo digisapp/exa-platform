@@ -92,11 +92,8 @@ export async function GET(request: NextRequest) {
           <div style={{
             position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
             background: `linear-gradient(165deg, ${gc0} 0%, ${gc2} 50%, ${gc4} 100%)`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "200px", fontWeight: 900, color: "rgba(255,255,255,0.08)",
-          }}>
-            exa
-          </div>
+            display: "flex",
+          }} />
         )}
 
         {/* ── Top gradient overlay ── */}

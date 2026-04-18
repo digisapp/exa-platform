@@ -201,12 +201,12 @@ export default function AdminFlyersPage() {
     // Text + overlays are rendered as draggable elements on the preview, not baked in
     params.delete("overlays");
     params.delete("texts");
-    const name = sampleModel
-      ? [sampleModel.first_name, sampleModel.last_name]
-          .filter(Boolean)
-          .join(" ") || sampleModel.username
-      : "Jane Doe";
-    params.set("name", name);
+    if (sampleModel) {
+      const name = [sampleModel.first_name, sampleModel.last_name]
+        .filter(Boolean)
+        .join(" ") || sampleModel.username;
+      if (name) params.set("name", name);
+    }
     if (sampleModel?.profile_photo_url)
       params.set("photo", sampleModel.profile_photo_url);
     if (sampleModel?.instagram_username)
