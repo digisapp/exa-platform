@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (!eventBadge) {
-    return NextResponse.json({ error: "No event badge found" }, { status: 404 });
+    return NextResponse.json({ error: `No event badge found for event ${event.name}` }, { status: 404 });
   }
 
   // 3. Get approved models (badge holders)
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (targetModelIds.length === 0) {
-    return NextResponse.json({ error: "No approved models found for this event" }, { status: 404 });
+    return NextResponse.json({ error: `No models with badge for ${event.name} (badge: ${eventBadge.id})` }, { status: 404 });
   }
 
   // 4. Fetch model data — include instagram, focus_tags, and photo dimensions for hero selection
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     .in("id", targetModelIds);
 
   if (!models || models.length === 0) {
-    return NextResponse.json({ error: "No approved models found" }, { status: 404 });
+    return NextResponse.json({ error: `Models query returned empty for ${targetModelIds.length} badge holders` }, { status: 404 });
   }
 
   // 5. Fetch portfolio photos for hero-quality selection (single batch query)
