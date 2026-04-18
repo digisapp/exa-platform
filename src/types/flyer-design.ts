@@ -23,6 +23,10 @@ export interface FlyerDesignSettings {
   showHearts: boolean;
   showGlowEffects: boolean;
 
+  // Model info toggles
+  showInstagram: boolean;
+  showTags: boolean;
+
   // Ticket banner gradient
   ticketBannerColor1: string;
   ticketBannerColor2: string;
@@ -42,6 +46,8 @@ export const DEFAULT_DESIGN: FlyerDesignSettings = {
   showPalmTrees: true,
   showHearts: true,
   showGlowEffects: true,
+  showInstagram: true,
+  showTags: true,
   ticketBannerColor1: "#FF8C00",
   ticketBannerColor2: "#FF6347",
 };
@@ -116,6 +122,8 @@ export function designToParams(d: FlyerDesignSettings): Record<string, string> {
     showPalms: d.showPalmTrees ? "1" : "0",
     showHearts: d.showHearts ? "1" : "0",
     showGlows: d.showGlowEffects ? "1" : "0",
+    showIg: d.showInstagram ? "1" : "0",
+    showTags: d.showTags ? "1" : "0",
     ticketColor1: d.ticketBannerColor1,
     ticketColor2: d.ticketBannerColor2,
   };

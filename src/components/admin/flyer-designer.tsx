@@ -334,6 +334,26 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
         />
       </Section>
 
+      {/* ── Model Info ── */}
+      <Section title="Model Info">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-white/60">Instagram Handle</Label>
+            <Switch
+              checked={settings.showInstagram}
+              onCheckedChange={(v) => update({ showInstagram: v })}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-white/60">Specialty Tags</Label>
+            <Switch
+              checked={settings.showTags}
+              onCheckedChange={(v) => update({ showTags: v })}
+            />
+          </div>
+        </div>
+      </Section>
+
       {/* ── Decorations ── */}
       <Section title="Decorations">
         <div className="space-y-3">

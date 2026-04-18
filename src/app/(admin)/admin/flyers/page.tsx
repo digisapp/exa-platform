@@ -70,11 +70,27 @@ export default function AdminFlyersPage() {
     failed: number;
   } | null>(null);
   const [selectedFlyers, setSelectedFlyers] = useState<Set<string>>(new Set());
-  const [designSettings, setDesignSettings] =
-    useState<FlyerDesignSettings>(DEFAULT_DESIGN);
+  const [designSettings, setDesignSettings] = useState<FlyerDesignSettings>(
+    () => {
+      if (typeof window !== "undefined") {
+        try {
+          const saved = localStorage.getItem("exa-flyer-design");
+          if (saved) return JSON.parse(saved) as FlyerDesignSettings;
+        } catch {}
+      }
+      return DEFAULT_DESIGN;
+    }
+  );
   const [showDesigner, setShowDesigner] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [sampleModel, setSampleModel] = useState<ModelInfo | null>(null);
+
+  // Auto-save design settings to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem("exa-flyer-design", JSON.stringify(designSettings));
+    } catch {}
+  }, [designSettings]);
 
   // Load events
   useEffect(() => {
@@ -557,7 +573,7 @@ export default function AdminFlyersPage() {
               <p className="text-xs text-white/40 mb-2 text-center">
                 Live Preview
               </p>
-              <div className="relative w-[324px] aspect-[4/5] rounded-xl overflow-hidden border border-white/10 bg-white/5">
+              <div className="relative w-[400px] xl:w-[480px] aspect-[4/5] rounded-xl overflow-hidden border border-white/10 bg-white/5">
                 {previewLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
                     <Loader2 className="w-6 h-6 animate-spin text-white/50" />

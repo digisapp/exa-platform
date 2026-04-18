@@ -11,9 +11,6 @@ const CONCURRENCY = 5;
 /**
  * POST /api/admin/flyers/generate
  * Body: { event_id: string, model_ids?: string[], design?: FlyerDesignSettings, force?: boolean }
- *
- * Generates flyers for all approved models (with event badge) or specific model_ids.
- * Set force=true to delete and regenerate existing flyers.
  */
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -42,10 +39,7 @@ export async function POST(request: NextRequest) {
   };
 
   if (!event_id) {
-    return NextResponse.json(
-      { error: "event_id required" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "event_id required" }, { status: 400 });
   }
 
   const admin = createServiceRoleClient();
@@ -69,10 +63,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (!eventBadge) {
-    return NextResponse.json(
-      { error: "No event badge found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "No event badge found" }, { status: 404 });
   }
 
   // 3. Get approved models (badge holders)
@@ -88,26 +79,35 @@ export async function POST(request: NextRequest) {
   }
 
   if (targetModelIds.length === 0) {
-    return NextResponse.json(
-      { error: "No approved models found for this event" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "No approved models found for this event" }, { status: 404 });
   }
 
-  // 4. Fetch model data
+  // 4. Fetch model data — include instagram, focus_tags, and photo dimensions for hero selection
   const { data: models } = await (admin.from("models") as any)
-    .select("id, first_name, last_name, username, profile_photo_url")
+    .select(
+      "id, first_name, last_name, username, profile_photo_url, profile_photo_width, profile_photo_height, instagram_username, focus_tags"
+    )
     .in("id", targetModelIds)
     .not("profile_photo_url", "is", null);
 
   if (!models || models.length === 0) {
-    return NextResponse.json(
-      { error: "No models with profile photos found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "No models with profile photos found" }, { status: 404 });
   }
 
-  // 5. If force=true, delete all existing flyers for this event + model set
+  // 5. Fetch portfolio photos for hero-quality selection
+  const modelPortfolioMap = new Map<string, any[]>();
+  for (const model of models) {
+    const { data: photos } = await (admin.from("media_assets") as any)
+      .select("url, width, height, created_at, is_primary")
+      .eq("model_id", model.id)
+      .eq("type", "photo")
+      .in("asset_type", ["portfolio", "avatar"])
+      .order("created_at", { ascending: false })
+      .limit(10);
+    modelPortfolioMap.set(model.id, photos || []);
+  }
+
+  // 6. If force=true, delete existing flyers
   if (force) {
     const deleteIds = models.map((m: any) => m.id);
     const { data: existingFlyers } = await (admin.from("flyers" as any) as any)
@@ -125,11 +125,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // 6. Build event display values
+  // 7. Build event display values
   const eventDisplayName = event.short_name || event.name;
-  const venue = [event.location_city, event.location_state]
-    .filter(Boolean)
-    .join(", ");
+  const venue = [event.location_city, event.location_state].filter(Boolean).join(", ");
 
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -147,7 +145,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // 7. Generate flyers in parallel batches
+  // 8. Generate flyers in parallel batches
   const results: { model_id: string; success: boolean; error?: string }[] = [];
   let generated = 0;
   let failed = 0;
@@ -159,7 +157,7 @@ export async function POST(request: NextRequest) {
       model.username ||
       "Model";
 
-    // Check if flyer already exists (skip unless force was used — already deleted above)
+    // Check existing (skip unless force)
     if (!force) {
       const { data: existing } = await (admin.from("flyers" as any) as any)
         .select("id")
@@ -174,17 +172,46 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build template URL
-    const templateUrl = new URL(
-      "/api/admin/flyers/template",
-      request.nextUrl.origin
+    // Select best photo using hero portrait logic
+    const portfolioPhotos = modelPortfolioMap.get(model.id) || [];
+    let bestPhotoUrl = model.profile_photo_url;
+
+    // Check portfolio for high-res portrait photos first
+    const highResPortrait = portfolioPhotos.find(
+      (p: any) =>
+        p.width && p.height &&
+        Math.max(p.width, p.height) >= 1500 &&
+        p.height >= p.width // portrait orientation
     );
+    if (highResPortrait) {
+      bestPhotoUrl = highResPortrait.url;
+    } else {
+      // Check for any primary photo
+      const primary = portfolioPhotos.find((p: any) => p.is_primary && p.url);
+      if (primary && primary.width && Math.max(primary.width, primary.height || 0) >= 800) {
+        bestPhotoUrl = primary.url;
+      }
+    }
+
+    // Build template URL
+    const templateUrl = new URL("/api/admin/flyers/template", request.nextUrl.origin);
     templateUrl.searchParams.set("name", modelName);
-    templateUrl.searchParams.set("photo", model.profile_photo_url);
+    templateUrl.searchParams.set("photo", bestPhotoUrl);
     templateUrl.searchParams.set("event", eventDisplayName);
     templateUrl.searchParams.set("date", design?.dateOverride || dateDisplay);
     templateUrl.searchParams.set("venue", design?.venueOverride || venue || "Miami Beach, FL");
 
+    // Pass instagram handle
+    if (model.instagram_username) {
+      templateUrl.searchParams.set("ig", model.instagram_username);
+    }
+
+    // Pass focus tags (first 3)
+    if (model.focus_tags && model.focus_tags.length > 0) {
+      templateUrl.searchParams.set("tags", model.focus_tags.slice(0, 3).join(","));
+    }
+
+    // Forward design params
     if (design) {
       const designParams = designToParams(design);
       for (const [key, value] of Object.entries(designParams)) {
@@ -202,24 +229,17 @@ export async function POST(request: NextRequest) {
     }
 
     const flyerBytes = new Uint8Array(await flyerResponse.arrayBuffer());
-
-    // Upload to Supabase Storage
     const storagePath = `flyers/${event.slug}/${model.id}.png`;
 
     const { error: uploadError } = await admin.storage
       .from("portfolio")
-      .upload(storagePath, flyerBytes, {
-        contentType: "image/png",
-        upsert: true,
-      });
+      .upload(storagePath, flyerBytes, { contentType: "image/png", upsert: true });
 
     if (uploadError) {
       throw new Error(`Upload failed: ${uploadError.message}`);
     }
 
-    const {
-      data: { publicUrl },
-    } = admin.storage.from("portfolio").getPublicUrl(storagePath);
+    const { data: { publicUrl } } = admin.storage.from("portfolio").getPublicUrl(storagePath);
 
     await (admin.from("flyers" as any) as any).insert({
       model_id: model.id,
@@ -234,18 +254,13 @@ export async function POST(request: NextRequest) {
     results.push({ model_id: model.id, success: true });
   }
 
-  // Process in batches of CONCURRENCY
   for (let i = 0; i < models.length; i += CONCURRENCY) {
     const batch = models.slice(i, i + CONCURRENCY);
-    const batchResults = await Promise.allSettled(
+    await Promise.allSettled(
       batch.map((model: any) =>
         generateOne(model).catch((err: any) => {
           failed++;
-          results.push({
-            model_id: model.id,
-            success: false,
-            error: err.message,
-          });
+          results.push({ model_id: model.id, success: false, error: err.message });
         })
       )
     );
