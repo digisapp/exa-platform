@@ -391,7 +391,7 @@ export async function GET(request: NextRequest) {
             zIndex: 8,
           }}>
             <div style={{
-              fontSize: px(43),
+              fontSize: px(28),
               fontWeight: 400,
               color: "rgba(255,255,255,0.85)",
               letterSpacing: "0.02em",
