@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
 /**
  * POST /api/admin/flyers/overlay
  * Upload a PNG overlay image to Supabase Storage.

@@ -468,8 +468,31 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
+              // Compress large images client-side to stay under Vercel's 4.5MB body limit
+              let uploadFile: File | Blob = file;
+              if (file.size > 3 * 1024 * 1024 && file.type !== "image/gif") {
+                try {
+                  const bitmap = await createImageBitmap(file);
+                  const MAX_DIM = 2048;
+                  let w = bitmap.width, h = bitmap.height;
+                  if (w > MAX_DIM || h > MAX_DIM) {
+                    const ratio = Math.min(MAX_DIM / w, MAX_DIM / h);
+                    w = Math.round(w * ratio);
+                    h = Math.round(h * ratio);
+                  }
+                  const canvas = new OffscreenCanvas(w, h);
+                  const ctx = canvas.getContext("2d")!;
+                  ctx.drawImage(bitmap, 0, 0, w, h);
+                  uploadFile = await canvas.convertToBlob({ type: "image/png", quality: 0.9 });
+                } catch { /* fallback to original file */ }
+              }
+              if (uploadFile.size > 4 * 1024 * 1024) {
+                alert("Image is too large (max ~4MB after compression). Try a smaller file.");
+                e.target.value = "";
+                return;
+              }
               const formData = new FormData();
-              formData.append("file", file);
+              formData.append("file", uploadFile, file.name);
               try {
                 const res = await fetch("/api/admin/flyers/overlay", { method: "POST", body: formData });
                 const data = await res.json();
