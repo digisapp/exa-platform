@@ -34,6 +34,7 @@ function ModelOnboardingContent() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [instagram, setInstagram] = useState("");
+  const [paymentPlan, setPaymentPlan] = useState<"full" | "split">("full");
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
@@ -66,6 +67,7 @@ function ModelOnboardingContent() {
           name: name.trim(),
           email: email.trim().toLowerCase(),
           instagram: instagram.trim(),
+          paymentPlan,
         }),
       });
 
@@ -273,14 +275,55 @@ function ModelOnboardingContent() {
             <div className="rounded-2xl border border-white/[0.08] bg-black/40 p-6 md:p-8 space-y-6">
               {/* Price */}
               <div className="text-center pb-4 border-b border-white/[0.06]">
-                <p className="text-4xl font-black">$550</p>
+                <p className="text-4xl font-black">
+                  {paymentPlan === "full" ? "$550" : "$275"}
+                </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Complete Model Onboarding
+                  {paymentPlan === "full"
+                    ? "Complete Model Onboarding"
+                    : "First of 2 monthly payments"}
                 </p>
                 <div className="flex items-center justify-center gap-3 mt-2 text-xs text-muted-foreground">
                   <span>$350 runway workshop</span>
                   <span>+</span>
                   <span>$200 digitals</span>
+                </div>
+              </div>
+
+              {/* Payment Plan Toggle */}
+              <div className="space-y-2">
+                <Label className="text-sm">Payment Option</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentPlan("full")}
+                    className={`relative rounded-xl border p-3 text-left transition-all ${
+                      paymentPlan === "full"
+                        ? "border-pink-500 bg-pink-500/10"
+                        : "border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15]"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold">Pay in Full</p>
+                    <p className="text-lg font-bold mt-0.5">$550</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      One-time payment
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentPlan("split")}
+                    className={`relative rounded-xl border p-3 text-left transition-all ${
+                      paymentPlan === "split"
+                        ? "border-pink-500 bg-pink-500/10"
+                        : "border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15]"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold">2 Payments</p>
+                    <p className="text-lg font-bold mt-0.5">$275<span className="text-xs font-normal text-muted-foreground">/mo</span></p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Today + 30 days
+                    </p>
+                  </button>
                 </div>
               </div>
 
@@ -350,7 +393,9 @@ function ModelOnboardingContent() {
                   </>
                 ) : (
                   <>
-                    Complete Onboarding — $550
+                    {paymentPlan === "full"
+                      ? "Complete Onboarding — $550"
+                      : "Start Payment Plan — $275 today"}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}

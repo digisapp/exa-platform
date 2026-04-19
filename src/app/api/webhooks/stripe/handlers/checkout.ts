@@ -609,23 +609,98 @@ async function handleMiamiDigitalsPayment(session: Stripe.Checkout.Session, supa
 
 async function handleModelOnboardingPayment(session: Stripe.Checkout.Session, supabaseAdmin: SupabaseClient) {
   const stripeSessionId = session.id;
-  const paymentIntentId =
-    typeof session.payment_intent === "string"
-      ? session.payment_intent
-      : session.payment_intent?.id;
+  const paymentPlan = session.metadata?.payment_plan || "full";
+
+  if (paymentPlan === "split") {
+    // For split payments, the first payment is collected via the subscription.
+    // Mark as partial — the second payment is handled by handleModelOnboardingSplitPayment.
+    const subscriptionId =
+      typeof session.subscription === "string"
+        ? session.subscription
+        : (session.subscription as any)?.id;
+
+    // Schedule subscription to cancel after 2nd payment (~35 days)
+    if (subscriptionId) {
+      try {
+        const cancelAt = Math.floor(Date.now() / 1000) + 35 * 24 * 60 * 60;
+        await stripe.subscriptions.update(subscriptionId, { cancel_at: cancelAt });
+      } catch (err) {
+        logger.error("Failed to schedule onboarding subscription cancellation", err);
+      }
+    }
+
+    const { error: updateError } = await (supabaseAdmin as any)
+      .from("model_onboarding_bookings")
+      .update({
+        status: "partial",
+        payments_completed: 1,
+        stripe_subscription_id: subscriptionId || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("stripe_session_id", stripeSessionId)
+      .eq("status", "pending");
+
+    if (updateError) {
+      logger.error("Error updating model onboarding split booking", updateError);
+    }
+  } else {
+    // Full payment — mark as paid immediately
+    const paymentIntentId =
+      typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : session.payment_intent?.id;
+
+    const { error: updateError } = await (supabaseAdmin as any)
+      .from("model_onboarding_bookings")
+      .update({
+        status: "paid",
+        payments_completed: 1,
+        stripe_payment_intent_id: paymentIntentId || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("stripe_session_id", stripeSessionId)
+      .eq("status", "pending");
+
+    if (updateError) {
+      logger.error("Error updating model onboarding booking", updateError);
+    }
+  }
+}
+
+/**
+ * Handle the second split payment for model onboarding via invoice.paid webhook.
+ * Called when a subscription renewal invoice is paid.
+ */
+export async function handleModelOnboardingSplitPayment(
+  subscriptionId: string,
+  billingReason: string,
+  supabaseAdmin: SupabaseClient
+) {
+  // Only handle renewal invoices (the second payment)
+  if (billingReason !== "subscription_cycle") return;
+
+  // Check if this subscription belongs to a model onboarding booking
+  const { data: booking, error: fetchError } = await (supabaseAdmin as any)
+    .from("model_onboarding_bookings")
+    .select("id, status, payment_plan")
+    .eq("stripe_subscription_id", subscriptionId)
+    .eq("payment_plan", "split")
+    .eq("status", "partial")
+    .single();
+
+  if (fetchError || !booking) return; // Not a model onboarding subscription
 
   const { error: updateError } = await (supabaseAdmin as any)
     .from("model_onboarding_bookings")
     .update({
       status: "paid",
-      stripe_payment_intent_id: paymentIntentId || null,
+      payments_completed: 2,
       updated_at: new Date().toISOString(),
     })
-    .eq("stripe_session_id", stripeSessionId)
-    .eq("status", "pending");
+    .eq("id", booking.id);
 
   if (updateError) {
-    logger.error("Error updating model onboarding booking", updateError);
+    logger.error("Error updating model onboarding split payment", updateError);
   }
 }
 

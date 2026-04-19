@@ -13,6 +13,7 @@ import {
   handleChargeRefunded,
   handleChargeDisputeCreated,
   handleChargeDisputeClosed,
+  handleModelOnboardingSplitPayment,
 } from "./handlers";
 
 // Create admin client for webhook (no auth context)
@@ -84,8 +85,16 @@ export async function POST(request: NextRequest) {
       case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = (invoice as any).subscription;
-        if (subscriptionId && invoice.billing_reason === "subscription_cycle") {
-          await grantMonthlyCoins(invoice, supabaseAdmin);
+        if (subscriptionId) {
+          if (invoice.billing_reason === "subscription_cycle") {
+            await grantMonthlyCoins(invoice, supabaseAdmin);
+          }
+          // Handle model onboarding split payments (both initial and renewal)
+          await handleModelOnboardingSplitPayment(
+            subscriptionId as string,
+            invoice.billing_reason as string,
+            supabaseAdmin
+          );
         }
         break;
       }
