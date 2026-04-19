@@ -88,55 +88,51 @@ export async function GET(request: NextRequest) {
           display: "flex",
         }} />
 
-        {/* ── Wave layers ── */}
-        {/* Wave 1 - back, large */}
-        <div style={{
-          position: "absolute",
-          bottom: px(-40),
-          left: px(-200),
-          width: px(1480),
-          height: px(500),
-          borderRadius: "50% 50% 0 0",
-          background: "rgba(255,255,255,0.08)",
-          display: "flex",
-          zIndex: 1,
-        }} />
-        {/* Wave 2 - mid */}
-        <div style={{
-          position: "absolute",
-          bottom: px(-80),
-          left: px(-100),
-          width: px(1380),
-          height: px(450),
-          borderRadius: "50% 50% 0 0",
-          background: "rgba(255,255,255,0.06)",
-          display: "flex",
-          zIndex: 1,
-        }} />
-        {/* Wave 3 - front */}
-        <div style={{
-          position: "absolute",
-          bottom: px(-100),
-          left: px(100),
-          width: px(1200),
-          height: px(380),
-          borderRadius: "50% 50% 0 0",
-          background: "rgba(255,255,255,0.05)",
-          display: "flex",
-          zIndex: 1,
-        }} />
-        {/* Wave 4 - top accent */}
-        <div style={{
-          position: "absolute",
-          top: px(-150),
-          left: px(-150),
-          width: px(1400),
-          height: px(400),
-          borderRadius: "0 0 50% 50%",
-          background: "rgba(255,255,255,0.05)",
-          display: "flex",
-          zIndex: 1,
-        }} />
+        {/* ── Line-art wave illustrations ── */}
+        {/* Bottom wave group - 3 flowing lines */}
+        <svg
+          width={W}
+          height={H}
+          viewBox="0 0 1080 1350"
+          style={{ position: "absolute", top: 0, left: 0, zIndex: 1 }}
+        >
+          {/* Wave line 1 - lowest, gentle curve */}
+          <path
+            d="M-50,1280 C150,1230 300,1310 500,1260 C700,1210 850,1290 1130,1240"
+            fill="none"
+            stroke="rgba(255,255,255,0.2)"
+            strokeWidth={`${scale * 1.5}`}
+          />
+          {/* Wave line 2 - mid, deeper curve */}
+          <path
+            d="M-50,1220 C200,1160 350,1250 540,1190 C730,1130 880,1230 1130,1170"
+            fill="none"
+            stroke="rgba(255,255,255,0.15)"
+            strokeWidth={`${scale * 1.2}`}
+          />
+          {/* Wave line 3 - highest of bottom group */}
+          <path
+            d="M-50,1160 C180,1110 320,1180 520,1120 C720,1060 900,1160 1130,1100"
+            fill="none"
+            stroke="rgba(255,255,255,0.1)"
+            strokeWidth={`${scale * 1}`}
+          />
+
+          {/* Top accent wave - subtle single line */}
+          <path
+            d="M-50,120 C200,80 400,150 600,100 C800,50 950,130 1130,90"
+            fill="none"
+            stroke="rgba(255,255,255,0.1)"
+            strokeWidth={`${scale * 1}`}
+          />
+          {/* Top accent wave 2 */}
+          <path
+            d="M-50,160 C180,130 380,190 580,140 C780,90 920,170 1130,130"
+            fill="none"
+            stroke="rgba(255,255,255,0.07)"
+            strokeWidth={`${scale * 0.8}`}
+          />
+        </svg>
 
         {/* ── Centered circle profile photo ── */}
         {photoUrl && (
