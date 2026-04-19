@@ -99,6 +99,79 @@ export const TEXT_PRESETS: { label: string; element: Omit<FlyerTextElement, "id"
   },
 ];
 
+/** Built-in pattern overlays as SVG data URIs */
+export interface PatternPreset {
+  name: string;
+  svg: string; // SVG data URI
+}
+
+function svgToDataUri(svg: string): string {
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+export const PATTERN_PRESETS: PatternPreset[] = [
+  {
+    name: "Cheetah",
+    svg: svgToDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+      <rect width="200" height="200" fill="none"/>
+      ${Array.from({ length: 40 }, (_, i) => {
+        const x = (i * 37 + 13) % 190 + 5;
+        const y = (i * 53 + 7) % 190 + 5;
+        const rx = 4 + (i % 5) * 2;
+        const ry = 3 + (i % 4) * 2;
+        return `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="rgba(255,255,255,0.15)"/>`;
+      }).join("")}
+    </svg>`),
+  },
+  {
+    name: "Leopard",
+    svg: svgToDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+      <rect width="200" height="200" fill="none"/>
+      ${Array.from({ length: 20 }, (_, i) => {
+        const x = (i * 43 + 17) % 180 + 10;
+        const y = (i * 61 + 11) % 180 + 10;
+        const r = 7 + (i % 4) * 2;
+        return `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2.5"/><circle cx="${x}" cy="${y}" r="${r - 3}" fill="rgba(255,255,255,0.06)"/>`;
+      }).join("")}
+    </svg>`),
+  },
+  {
+    name: "Zebra",
+    svg: svgToDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+      <rect width="120" height="120" fill="none"/>
+      <path d="M-10,20 Q30,10 60,25 Q90,40 130,30" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8"/>
+      <path d="M-10,50 Q30,40 60,55 Q90,70 130,60" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="7"/>
+      <path d="M-10,80 Q30,70 60,85 Q90,100 130,90" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8"/>
+      <path d="M-10,110 Q30,100 60,115 Q90,130 130,120" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6"/>
+    </svg>`),
+  },
+  {
+    name: "Snakeskin",
+    svg: svgToDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+      <rect width="100" height="100" fill="none"/>
+      ${Array.from({ length: 5 }, (_, row) =>
+        Array.from({ length: 5 }, (_, col) => {
+          const x = col * 20 + (row % 2) * 10 + 10;
+          const y = row * 20 + 10;
+          return `<path d="M${x},${y - 8} L${x + 8},${y} L${x},${y + 8} L${x - 8},${y} Z" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>`;
+        }).join("")
+      ).join("")}
+    </svg>`),
+  },
+  {
+    name: "Stars",
+    svg: svgToDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+      <rect width="200" height="200" fill="none"/>
+      ${Array.from({ length: 25 }, (_, i) => {
+        const x = (i * 41 + 19) % 190 + 5;
+        const y = (i * 59 + 13) % 190 + 5;
+        const s = 3 + (i % 4) * 1.5;
+        return `<polygon points="${x},${y - s} ${x + s * 0.4},${y - s * 0.3} ${x + s},${y - s * 0.3} ${x + s * 0.5},${y + s * 0.2} ${x + s * 0.7},${y + s} ${x},${y + s * 0.5} ${x - s * 0.7},${y + s} ${x - s * 0.5},${y + s * 0.2} ${x - s},${y - s * 0.3} ${x - s * 0.4},${y - s * 0.3}" fill="rgba(255,255,255,0.15)"/>`;
+      }).join("")}
+    </svg>`),
+  },
+];
+
 export interface FlyerPreset {
   name: string;
   settings: FlyerDesignSettings;
