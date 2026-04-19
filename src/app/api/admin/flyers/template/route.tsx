@@ -92,48 +92,48 @@ export async function GET(request: NextRequest) {
         {/* Wave 1 - back, large */}
         <div style={{
           position: "absolute",
-          bottom: px(-80),
+          bottom: px(-40),
           left: px(-200),
           width: px(1480),
           height: px(500),
           borderRadius: "50% 50% 0 0",
-          background: `${gc1}33`,
+          background: "rgba(255,255,255,0.08)",
           display: "flex",
           zIndex: 1,
         }} />
         {/* Wave 2 - mid */}
         <div style={{
           position: "absolute",
-          bottom: px(-120),
+          bottom: px(-80),
           left: px(-100),
           width: px(1380),
           height: px(450),
           borderRadius: "50% 50% 0 0",
-          background: `${gc3}33`,
+          background: "rgba(255,255,255,0.06)",
           display: "flex",
           zIndex: 1,
         }} />
-        {/* Wave 3 - front, smaller */}
+        {/* Wave 3 - front */}
         <div style={{
           position: "absolute",
-          bottom: px(-150),
-          left: px(0),
-          width: px(1280),
-          height: px(400),
+          bottom: px(-100),
+          left: px(100),
+          width: px(1200),
+          height: px(380),
           borderRadius: "50% 50% 0 0",
-          background: `${gc0}22`,
+          background: "rgba(255,255,255,0.05)",
           display: "flex",
           zIndex: 1,
         }} />
         {/* Wave 4 - top accent */}
         <div style={{
           position: "absolute",
-          top: px(-200),
+          top: px(-150),
           left: px(-150),
           width: px(1400),
-          height: px(450),
+          height: px(400),
           borderRadius: "0 0 50% 50%",
-          background: `${gc2}22`,
+          background: "rgba(255,255,255,0.05)",
           display: "flex",
           zIndex: 1,
         }} />
@@ -369,11 +369,9 @@ export async function GET(request: NextRequest) {
         {showQr && eventUrl && (
           <div style={{
             position: "absolute",
-            bottom: px(30),
+            bottom: px(20),
             right: px(50),
             display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
             zIndex: 8,
           }}>
             <div style={{
@@ -391,18 +389,6 @@ export async function GET(request: NextRequest) {
                 height={s(150)}
                 style={{ width: px(150), height: px(150), display: "flex" }}
               />
-            </div>
-            <div style={{
-              fontSize: px(11),
-              fontWeight: 600,
-              color: "rgba(255,255,255,0.8)",
-              marginTop: px(6),
-              textShadow: `0 ${px(1)} ${px(6)} rgba(0,0,0,0.6)`,
-              display: "flex",
-              letterSpacing: "0.05em",
-              textTransform: "uppercase",
-            }}>
-              Scan for Tickets
             </div>
           </div>
         )}
