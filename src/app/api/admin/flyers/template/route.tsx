@@ -257,6 +257,8 @@ export async function GET(request: NextRequest) {
                   textTransform: "uppercase",
                   marginBottom: px(4),
                   display: "flex",
+                  justifyContent: "center",
+                  width: "100%",
                   textShadow: `0 ${px(1)} ${px(6)} rgba(0,0,0,0.5)`,
                 }}>
                   Catch Me on the Runway
@@ -268,9 +270,9 @@ export async function GET(request: NextRequest) {
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   textShadow: `${px(2)} ${px(3)} ${px(12)} rgba(0,0,0,0.7), 0 0 ${px(40)} rgba(0,0,0,0.3)`,
-                  textAlign: "center",
                   display: "flex",
-                  maxWidth: px(950),
+                  justifyContent: "center",
+                  width: "100%",
                 }}>
                   {modelName}
                 </div>
@@ -283,6 +285,8 @@ export async function GET(request: NextRequest) {
                 color: "rgba(255,255,255,0.85)",
                 marginTop: px(0),
                 display: "flex",
+                justifyContent: "center",
+                width: "100%",
                 letterSpacing: "0.02em",
                 textShadow: `0 ${px(1)} ${px(8)} rgba(0,0,0,0.6)`,
               }}>
