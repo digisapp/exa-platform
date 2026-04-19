@@ -248,19 +248,33 @@ export async function GET(request: NextRequest) {
             zIndex: 8,
           }}>
             {showName && modelName && (
-              <div style={{
-                fontSize: px(nameFontSize),
-                fontWeight: 900,
-                color: "white",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                textShadow: `${px(2)} ${px(3)} ${px(12)} rgba(0,0,0,0.7), 0 0 ${px(40)} rgba(0,0,0,0.3)`,
-                textAlign: "center",
-                display: "flex",
-                maxWidth: px(950),
-              }}>
-                {modelName}
-              </div>
+              <>
+                <div style={{
+                  fontSize: px(18),
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.6)",
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                  marginBottom: px(4),
+                  display: "flex",
+                  textShadow: `0 ${px(1)} ${px(6)} rgba(0,0,0,0.5)`,
+                }}>
+                  Catch Me on the Runway
+                </div>
+                <div style={{
+                  fontSize: px(nameFontSize),
+                  fontWeight: 900,
+                  color: "white",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  textShadow: `${px(2)} ${px(3)} ${px(12)} rgba(0,0,0,0.7), 0 0 ${px(40)} rgba(0,0,0,0.3)`,
+                  textAlign: "center",
+                  display: "flex",
+                  maxWidth: px(950),
+                }}>
+                  {modelName}
+                </div>
+              </>
             )}
             {showIg && igHandle && (
               <div style={{
