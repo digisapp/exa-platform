@@ -242,14 +242,14 @@ export async function GET(request: NextRequest) {
             top: px(Math.round((1350 - 630) / 2 - 630 * 0.05) + 630 + 20),
             left: px(0),
             width: `${W}px`,
-            height: px(28),
+            height: px(40),
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 8,
           }}>
             <div style={{
-              fontSize: px(18),
+              fontSize: px(28),
               fontWeight: 600,
               color: "rgba(255,255,255,0.6)",
               letterSpacing: "0.15em",
@@ -266,17 +266,17 @@ export async function GET(request: NextRequest) {
         {showName && modelName && (
           <div style={{
             position: "absolute",
-            top: px(Math.round((1350 - 630) / 2 - 630 * 0.05) + 630 + 50),
+            top: px(Math.round((1350 - 630) / 2 - 630 * 0.05) + 630 + 62),
             left: px(0),
             width: `${W}px`,
-            height: px(60),
+            height: px(82),
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 8,
           }}>
             <div style={{
-              fontSize: px(nameFontSize),
+              fontSize: px(Math.round(nameFontSize * 1.5)),
               fontWeight: 900,
               color: "white",
               textTransform: "uppercase",
@@ -293,7 +293,7 @@ export async function GET(request: NextRequest) {
         {showIg && igHandle && (
           <div style={{
             position: "absolute",
-            top: px(Math.round((1350 - 630) / 2 - 630 * 0.05) + 630 + 112),
+            top: px(Math.round((1350 - 630) / 2 - 630 * 0.05) + 630 + 146),
             left: px(0),
             width: `${W}px`,
             height: px(52),
