@@ -11,6 +11,12 @@ export function createServiceRoleClient() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
+    // During build phase, return a dummy client that will never be called
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+      return createClient<Database>('http://localhost', 'dummy', {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+    }
     throw new Error("Missing Supabase service role configuration");
   }
 
