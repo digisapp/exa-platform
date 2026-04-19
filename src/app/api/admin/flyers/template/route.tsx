@@ -235,66 +235,85 @@ export async function GET(request: NextRequest) {
           />
         ))}
 
-        {/* ── Auto: Model name + Instagram ── */}
-        {(showName && modelName) || (showIg && igHandle) ? (
+        {/* ── Row 1: Tagline ── */}
+        {showName && modelName && (
           <div style={{
             position: "absolute",
-            top: px(Math.round((1350 - 630) / 2 - 630 * 0.05) + 630 + 25),
-            left: 0,
-            width: "100%",
+            top: px(Math.round((1350 - 630) / 2 - 630 * 0.05) + 630 + 20),
+            left: px(0),
+            width: `${W}px`,
+            height: px(28),
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
+            justifyContent: "center",
             zIndex: 8,
           }}>
-            {showName && modelName && (
-              <>
-                <div style={{
-                  fontSize: px(18),
-                  fontWeight: 600,
-                  color: "rgba(255,255,255,0.6)",
-                  letterSpacing: "0.15em",
-                  textTransform: "uppercase",
-                  marginBottom: px(4),
-                  display: "flex",
-                  justifyContent: "center",
-                  width: "100%",
-                  textShadow: `0 ${px(1)} ${px(6)} rgba(0,0,0,0.5)`,
-                }}>
-                  Catch Me on the Runway
-                </div>
-                <div style={{
-                  fontSize: px(nameFontSize),
-                  fontWeight: 900,
-                  color: "white",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  textShadow: `${px(2)} ${px(3)} ${px(12)} rgba(0,0,0,0.7), 0 0 ${px(40)} rgba(0,0,0,0.3)`,
-                  display: "flex",
-                  justifyContent: "center",
-                  width: "100%",
-                }}>
-                  {modelName}
-                </div>
-              </>
-            )}
-            {showIg && igHandle && (
-              <div style={{
-                fontSize: px(43),
-                fontWeight: 400,
-                color: "rgba(255,255,255,0.85)",
-                marginTop: px(0),
-                display: "flex",
-                justifyContent: "center",
-                width: "100%",
-                letterSpacing: "0.02em",
-                textShadow: `0 ${px(1)} ${px(8)} rgba(0,0,0,0.6)`,
-              }}>
-                @{igHandle}
-              </div>
-            )}
+            <div style={{
+              fontSize: px(18),
+              fontWeight: 600,
+              color: "rgba(255,255,255,0.6)",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              display: "flex",
+              textShadow: `0 ${px(1)} ${px(6)} rgba(0,0,0,0.5)`,
+            }}>
+              Catch Me on the Runway
+            </div>
           </div>
-        ) : null}
+        )}
+
+        {/* ── Row 2: Model Name ── */}
+        {showName && modelName && (
+          <div style={{
+            position: "absolute",
+            top: px(Math.round((1350 - 630) / 2 - 630 * 0.05) + 630 + 50),
+            left: px(0),
+            width: `${W}px`,
+            height: px(60),
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 8,
+          }}>
+            <div style={{
+              fontSize: px(nameFontSize),
+              fontWeight: 900,
+              color: "white",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              display: "flex",
+              textShadow: `${px(2)} ${px(3)} ${px(12)} rgba(0,0,0,0.7), 0 0 ${px(40)} rgba(0,0,0,0.3)`,
+            }}>
+              {modelName}
+            </div>
+          </div>
+        )}
+
+        {/* ── Row 3: Instagram ── */}
+        {showIg && igHandle && (
+          <div style={{
+            position: "absolute",
+            top: px(Math.round((1350 - 630) / 2 - 630 * 0.05) + 630 + 112),
+            left: px(0),
+            width: `${W}px`,
+            height: px(52),
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 8,
+          }}>
+            <div style={{
+              fontSize: px(43),
+              fontWeight: 400,
+              color: "rgba(255,255,255,0.85)",
+              letterSpacing: "0.02em",
+              display: "flex",
+              textShadow: `0 ${px(1)} ${px(8)} rgba(0,0,0,0.6)`,
+            }}>
+              @{igHandle}
+            </div>
+          </div>
+        )}
 
         {/* ── QR Code (bottom right) ── */}
         {showQr && eventUrl && (
