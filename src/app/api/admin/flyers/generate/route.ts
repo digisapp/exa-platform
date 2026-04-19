@@ -160,8 +160,10 @@ export async function POST(request: NextRequest) {
     const igHandle = model.instagram_name || "";
     if (igHandle) templateUrl.searchParams.set("ig", igHandle);
 
-    // Event show URL for QR code
-    const showUrl = `https://www.examodels.com/shows/${event.slug}`;
+    // Event show URL for QR code — use model's affiliate link for tracking
+    const showUrl = model.affiliate_code
+      ? `https://www.examodels.com/shows/${event.slug}?ref=${model.affiliate_code}`
+      : `https://www.examodels.com/shows/${event.slug}`;
     templateUrl.searchParams.set("eventUrl", showUrl);
 
     // Forward all design params
