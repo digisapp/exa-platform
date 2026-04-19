@@ -1,4 +1,7 @@
 export type XAIImageModel = "grok-imagine-image" | "grok-imagine-image-pro";
+export type XAIVideoModel = "grok-imagine-video";
+
+export type OutputType = "image" | "video";
 
 export type AspectRatio =
   | "1:1"
@@ -12,7 +15,10 @@ export type AspectRatio =
   | "1:2"
   | "auto";
 
+export type VideoAspectRatio = "1:1" | "16:9" | "9:16" | "4:3" | "3:4" | "3:2" | "2:3";
+
 export type Resolution = "1k" | "2k";
+export type VideoResolution = "480p" | "720p";
 
 export type GenerationMode = "generate" | "edit" | "style-transfer";
 
@@ -21,12 +27,14 @@ export interface GeneratedImage {
   url: string;
   saved_url?: string;
   prompt: string;
-  model: XAIImageModel;
+  model: XAIImageModel | XAIVideoModel;
   aspect_ratio: AspectRatio;
-  resolution: Resolution;
+  resolution: Resolution | VideoResolution;
   mode: GenerationMode;
+  output_type: OutputType;
   created_at: string;
   parent_id?: string;
+  duration?: number;
 }
 
 export interface StudioSession {
@@ -108,6 +116,15 @@ export const ASPECT_RATIOS: { value: AspectRatio; label: string; icon: string }[
   { value: "3:2", label: "Photo", icon: "▭" },
   { value: "2:1", label: "Banner", icon: "▬" },
   { value: "auto", label: "Auto", icon: "✦" },
+];
+
+export const VIDEO_ASPECT_RATIOS: { value: VideoAspectRatio; label: string; icon: string }[] = [
+  { value: "1:1", label: "Square", icon: "◻" },
+  { value: "9:16", label: "Story", icon: "▯" },
+  { value: "16:9", label: "Wide", icon: "▬" },
+  { value: "4:3", label: "Standard", icon: "▭" },
+  { value: "3:4", label: "Portrait", icon: "▯" },
+  { value: "3:2", label: "Photo", icon: "▭" },
 ];
 
 export const STYLE_TRANSFER_STYLES = [
