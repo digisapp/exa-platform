@@ -272,7 +272,11 @@ export default function AdminAIStudioPage() {
 
   const handleDownload = useCallback(async (url: string, filename: string) => {
     try {
-      const res = await fetch(url);
+      // Proxy xAI URLs through our API to avoid CORS blocks
+      const fetchUrl = url.includes(".x.ai")
+        ? `/api/admin/ai-studio/proxy?url=${encodeURIComponent(url)}`
+        : url;
+      const res = await fetch(fetchUrl);
       const blob = await res.blob();
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
