@@ -88,6 +88,56 @@ export async function GET(request: NextRequest) {
           display: "flex",
         }} />
 
+        {/* ── Wave layers ── */}
+        {/* Wave 1 - back, large */}
+        <div style={{
+          position: "absolute",
+          bottom: px(-80),
+          left: px(-200),
+          width: px(1480),
+          height: px(500),
+          borderRadius: "50% 50% 0 0",
+          background: `${gc1}33`,
+          display: "flex",
+          zIndex: 1,
+        }} />
+        {/* Wave 2 - mid */}
+        <div style={{
+          position: "absolute",
+          bottom: px(-120),
+          left: px(-100),
+          width: px(1380),
+          height: px(450),
+          borderRadius: "50% 50% 0 0",
+          background: `${gc3}33`,
+          display: "flex",
+          zIndex: 1,
+        }} />
+        {/* Wave 3 - front, smaller */}
+        <div style={{
+          position: "absolute",
+          bottom: px(-150),
+          left: px(0),
+          width: px(1280),
+          height: px(400),
+          borderRadius: "50% 50% 0 0",
+          background: `${gc0}22`,
+          display: "flex",
+          zIndex: 1,
+        }} />
+        {/* Wave 4 - top accent */}
+        <div style={{
+          position: "absolute",
+          top: px(-200),
+          left: px(-150),
+          width: px(1400),
+          height: px(450),
+          borderRadius: "0 0 50% 50%",
+          background: `${gc2}22`,
+          display: "flex",
+          zIndex: 1,
+        }} />
+
         {/* ── Centered circle profile photo ── */}
         {photoUrl && (
           <div style={{
