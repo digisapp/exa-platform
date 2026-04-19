@@ -239,7 +239,7 @@ export async function GET(request: NextRequest) {
         {(showName && modelName) || (showIg && igHandle) ? (
           <div style={{
             position: "absolute",
-            bottom: px(220),
+            top: px(Math.round((1350 - 630) / 2 - 630 * 0.05) + 630 + 25),
             left: 0,
             width: "100%",
             display: "flex",
@@ -267,7 +267,7 @@ export async function GET(request: NextRequest) {
                 fontSize: px(43),
                 fontWeight: 400,
                 color: "rgba(255,255,255,0.85)",
-                marginTop: px(4),
+                marginTop: px(0),
                 display: "flex",
                 letterSpacing: "0.02em",
                 textShadow: `0 ${px(1)} ${px(8)} rgba(0,0,0,0.6)`,
