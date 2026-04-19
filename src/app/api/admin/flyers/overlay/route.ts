@@ -60,3 +60,42 @@ export async function POST(request: NextRequest) {
     publicUrl,
   });
 }
+
+/**
+ * DELETE /api/admin/flyers/overlay
+ * Removes an overlay image from Supabase Storage.
+ * Body: { storagePath: string }
+ */
+export async function DELETE(request: NextRequest) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: actor } = await (supabase.from("actors") as any)
+    .select("type")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!actor || actor.type !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { storagePath } = await request.json();
+
+  if (!storagePath || typeof storagePath !== "string" || !storagePath.startsWith("flyers/overlays/")) {
+    return NextResponse.json({ error: "Invalid storage path" }, { status: 400 });
+  }
+
+  const admin = createServiceRoleClient();
+
+  const { error } = await admin.storage
+    .from("portfolio")
+    .remove([storagePath]);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}

@@ -2,6 +2,7 @@
 export interface FlyerOverlay {
   id: string;
   url: string;
+  storagePath?: string; // Supabase Storage path for cleanup
   x: number;          // 0–1080 (template coordinates)
   y: number;          // 0–1350
   width: number;

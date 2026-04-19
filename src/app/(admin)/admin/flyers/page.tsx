@@ -259,6 +259,22 @@ export default function AdminFlyersPage() {
         failed: data.failed,
       });
 
+      // Clean up temporary overlay images from storage after successful generation
+      if (!testOne && data.generated > 0) {
+        const overlayPaths = designSettings.overlays
+          .map((o) => o.storagePath)
+          .filter(Boolean) as string[];
+        if (overlayPaths.length > 0) {
+          for (const path of overlayPaths) {
+            fetch("/api/admin/flyers/overlay", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ storagePath: path }),
+            }).catch(() => {});
+          }
+        }
+      }
+
       await loadFlyers();
     } catch {
       alert("Failed to generate flyers. Please try again.");

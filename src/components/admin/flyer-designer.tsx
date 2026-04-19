@@ -501,6 +501,7 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
                     {
                       id: `overlay-${Date.now()}`,
                       url: data.publicUrl,
+                      storagePath: data.storagePath,
                       x: 440,
                       y: 400,
                       width: Math.round(natW * scale),
@@ -540,7 +541,9 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
                 <span className="text-[10px] text-white/40 w-6 text-right">{Math.round(overlay.opacity * 100)}%</span>
               </div>
             </div>
-            <button onClick={() => update({ overlays: settings.overlays.filter((o) => o.id !== overlay.id) })}
+            <button onClick={() => {
+              update({ overlays: settings.overlays.filter((o) => o.id !== overlay.id) });
+            }}
               className="p-1 rounded hover:bg-red-500/20 text-white/30 hover:text-red-400 shrink-0">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
