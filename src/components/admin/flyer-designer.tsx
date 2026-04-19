@@ -22,6 +22,7 @@ import {
   Italic,
   Save,
   FolderOpen,
+  Layers,
 } from "lucide-react";
 
 interface FlyerDesignerProps {
@@ -541,6 +542,13 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
                 <span className="text-[10px] text-white/40 w-6 text-right">{Math.round(overlay.opacity * 100)}%</span>
               </div>
             </div>
+            <button
+              onClick={() => update({ overlays: settings.overlays.map((o) => o.id === overlay.id ? { ...o, layer: o.layer === "back" ? "front" : "back" } : o) })}
+              className={`p-1 rounded shrink-0 transition-colors ${overlay.layer === "back" ? "bg-purple-500/20 text-purple-400" : "text-white/30 hover:text-white/60 hover:bg-white/10"}`}
+              title={overlay.layer === "back" ? "Layer: Back (behind model)" : "Layer: Front (above model)"}
+            >
+              <Layers className="w-3.5 h-3.5" />
+            </button>
             <button onClick={() => {
               update({ overlays: settings.overlays.filter((o) => o.id !== overlay.id) });
             }}

@@ -728,7 +728,7 @@ export default function AdminFlyersPage() {
                         height: `${overlay.height * s}px`,
                         opacity: overlay.opacity,
                         cursor: "grab",
-                        zIndex: 20,
+                        zIndex: overlay.layer === "back" ? 5 : 20,
                       }}
                       onMouseDown={(e) => { e.preventDefault(); startDrag(overlay, "overlay", e.clientX, e.clientY, "mouse"); }}
                       onTouchStart={(e) => { e.preventDefault(); startDrag(overlay, "overlay", e.touches[0].clientX, e.touches[0].clientY, "touch"); }}

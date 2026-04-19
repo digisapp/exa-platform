@@ -8,6 +8,7 @@ export interface FlyerOverlay {
   width: number;
   height: number;
   opacity: number;    // 0–1
+  layer?: "front" | "back"; // "back" renders behind model photo; default "front"
 }
 
 /** A draggable text element placed on the flyer */
