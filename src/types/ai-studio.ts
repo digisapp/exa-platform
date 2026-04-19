@@ -125,6 +125,7 @@ export const VIDEO_ASPECT_RATIOS: { value: VideoAspectRatio; label: string; icon
   { value: "4:3", label: "Standard", icon: "▭" },
   { value: "3:4", label: "Portrait", icon: "▯" },
   { value: "3:2", label: "Photo", icon: "▭" },
+  { value: "2:3", label: "Tall", icon: "▯" },
 ];
 
 export const STYLE_TRANSFER_STYLES = [

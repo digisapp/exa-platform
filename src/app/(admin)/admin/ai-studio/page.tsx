@@ -60,6 +60,7 @@ export default function AdminAIStudioPage() {
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxIsVideo, setLightboxIsVideo] = useState(false);
   const [showPresets, setShowPresets] = useState(true);
   const [showStyleTransfer, setShowStyleTransfer] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -83,73 +84,12 @@ export default function AdminAIStudioPage() {
   }, [session]);
 
   // ───── Handlers ─────
-  const handleGenerate = useCallback(async () => {
+  const handleGenerateVideo = useCallback(async () => {
     if (!prompt.trim()) {
       toast.error("Enter a prompt first");
       return;
     }
 
-    if (outputType === "video") {
-      return handleGenerateVideo();
-    }
-
-    setGenerating(true);
-    try {
-      const body: Record<string, unknown> = {
-        prompt: prompt.trim(),
-        model,
-        n: count,
-        aspect_ratio: aspectRatio,
-        resolution,
-        mode,
-      };
-
-      if (sourceImageUrl && (mode === "edit" || mode === "style-transfer")) {
-        body.image_url = sourceImageUrl;
-      }
-
-      const res = await fetch("/api/admin/ai-studio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Generation failed" }));
-        throw new Error(err.error || `HTTP ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      const newImages: GeneratedImage[] = data.images.map(
-        (img: { url: string; saved_url?: string }, i: number) => ({
-          id: `${Date.now()}-${i}`,
-          url: img.url,
-          saved_url: img.saved_url,
-          prompt: prompt.trim(),
-          model,
-          aspect_ratio: aspectRatio,
-          resolution,
-          mode,
-          output_type: "image" as const,
-          created_at: new Date().toISOString(),
-          parent_id: selectedImageId || undefined,
-        })
-      );
-
-      setSession((prev) => ({
-        images: [...newImages, ...prev.images].slice(0, MAX_HISTORY),
-      }));
-
-      toast.success(`Generated ${newImages.length} image${newImages.length > 1 ? "s" : ""}`);
-    } catch (err: any) {
-      toast.error(err.message || "Generation failed");
-    } finally {
-      setGenerating(false);
-    }
-  }, [prompt, model, count, aspectRatio, resolution, mode, sourceImageUrl, selectedImageId, outputType]);
-
-  const handleGenerateVideo = useCallback(async () => {
     setGenerating(true);
     setVideoPolling(true);
     setVideoProgress("Submitting video generation...");
@@ -238,37 +178,95 @@ export default function AdminAIStudioPage() {
     }
   }, [prompt, videoDuration, videoAspectRatio, videoResolution, sourceImageUrl, mode]);
 
-  const handleSaveToStorage = useCallback(async (image: GeneratedImage) => {
+  const handleGenerate = useCallback(async () => {
+    if (!prompt.trim()) {
+      toast.error("Enter a prompt first");
+      return;
+    }
+
+    if (outputType === "video") {
+      return handleGenerateVideo();
+    }
+
+    setGenerating(true);
     try {
+      const body: Record<string, unknown> = {
+        prompt: prompt.trim(),
+        model,
+        n: count,
+        aspect_ratio: aspectRatio,
+        resolution,
+        mode,
+      };
+
+      if (sourceImageUrl && (mode === "edit" || mode === "style-transfer")) {
+        body.image_url = sourceImageUrl;
+      }
+
       const res = await fetch("/api/admin/ai-studio", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: image.prompt,
-          model: image.model,
-          n: 1,
-          aspect_ratio: image.aspect_ratio,
-          resolution: image.resolution,
-          mode: image.mode,
-          save_to_storage: true,
-          ...(image.url ? { image_url: image.url } : {}),
-        }),
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Generation failed" }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      const newImages: GeneratedImage[] = data.images.map(
+        (img: { url: string; saved_url?: string }, i: number) => ({
+          id: `${Date.now()}-${i}`,
+          url: img.url,
+          saved_url: img.saved_url,
+          prompt: prompt.trim(),
+          model,
+          aspect_ratio: aspectRatio,
+          resolution,
+          mode,
+          output_type: "image" as const,
+          created_at: new Date().toISOString(),
+          parent_id: selectedImageId || undefined,
+        })
+      );
+
+      setSession((prev) => ({
+        images: [...newImages, ...prev.images].slice(0, MAX_HISTORY),
+      }));
+
+      toast.success(`Generated ${newImages.length} image${newImages.length > 1 ? "s" : ""}`);
+    } catch (err: any) {
+      toast.error(err.message || "Generation failed");
+    } finally {
+      setGenerating(false);
+    }
+  }, [prompt, model, count, aspectRatio, resolution, mode, sourceImageUrl, selectedImageId, outputType, handleGenerateVideo]);
+
+  const handleSaveToStorage = useCallback(async (image: GeneratedImage) => {
+    try {
+      // Use the video route's save_url endpoint for both images and videos
+      // This directly downloads the URL and stores it — no re-generation needed
+      const res = await fetch("/api/admin/ai-studio/video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ save_url: image.url }),
       });
 
       if (!res.ok) throw new Error("Save failed");
       const data = await res.json();
-      const savedUrl = data.images?.[0]?.saved_url;
 
-      if (savedUrl) {
+      if (data.saved_url) {
         setSession((prev) => ({
           images: prev.images.map((img) =>
-            img.id === image.id ? { ...img, saved_url: savedUrl } : img
+            img.id === image.id ? { ...img, saved_url: data.saved_url } : img
           ),
         }));
-        toast.success("Saved to Media Hub storage");
+        toast.success("Saved to storage");
       }
     } catch {
-      toast.error("Failed to save image");
+      toast.error("Failed to save");
     }
   }, []);
 
@@ -834,7 +832,10 @@ export default function AdminAIStudioPage() {
                   onStyleTransfer={(stylePrompt) =>
                     handleStyleTransfer(image, stylePrompt)
                   }
-                  onLightbox={() => setLightboxUrl(image.saved_url || image.url)}
+                  onLightbox={() => {
+                    setLightboxUrl(image.saved_url || image.url);
+                    setLightboxIsVideo(image.output_type === "video");
+                  }}
                 />
               ))}
             </div>
@@ -846,10 +847,10 @@ export default function AdminAIStudioPage() {
       {lightboxUrl && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-          onClick={() => setLightboxUrl(null)}
+          onClick={() => { setLightboxUrl(null); setLightboxIsVideo(false); }}
         >
           <div className="relative max-w-[90vw] max-h-[90vh]">
-            {lightboxUrl.includes(".mp4") || lightboxUrl.includes("video") ? (
+            {lightboxIsVideo ? (
               <video
                 src={lightboxUrl}
                 controls
@@ -865,7 +866,7 @@ export default function AdminAIStudioPage() {
               />
             )}
             <button
-              onClick={() => setLightboxUrl(null)}
+              onClick={() => { setLightboxUrl(null); setLightboxIsVideo(false); }}
               className="absolute top-3 right-3 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
             >
               <X className="w-5 h-5" />

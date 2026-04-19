@@ -22,6 +22,10 @@ const statusSchema = z.object({
   save_to_storage: z.boolean().default(false),
 });
 
+const saveSchema = z.object({
+  save_url: z.string().url(),
+});
+
 /**
  * POST /api/admin/ai-studio/video
  * Submit video generation or check status
@@ -52,6 +56,39 @@ export async function POST(request: NextRequest) {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  // Save an existing media URL to storage
+  if (body.save_url) {
+    const parsed = saveSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+    }
+
+    try {
+      const admin = createServiceRoleClient();
+      const { buffer, contentType } = await downloadImage(parsed.data.save_url);
+      const isVideoContent = contentType.includes("video") || parsed.data.save_url.includes(".mp4");
+      const ext = isVideoContent ? "mp4" : "png";
+      const storagePath = `ai-studio/${isVideoContent ? "video" : "img"}-${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await admin.storage
+        .from("portfolio")
+        .upload(storagePath, buffer, {
+          contentType: isVideoContent ? "video/mp4" : contentType,
+          upsert: true,
+        });
+
+      if (uploadError) throw new Error(uploadError.message);
+
+      const {
+        data: { publicUrl },
+      } = admin.storage.from("portfolio").getPublicUrl(storagePath);
+
+      return NextResponse.json({ saved_url: `${publicUrl}?v=${Date.now()}` });
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message || "Save failed" }, { status: 500 });
+    }
   }
 
   // Check if this is a status poll or a new generation
