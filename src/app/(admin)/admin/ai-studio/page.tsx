@@ -59,8 +59,7 @@ export default function AdminAIStudioPage() {
   const [sourceImageUrl, setSourceImageUrl] = useState<string | null>(null);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
-  const [lightboxIsVideo, setLightboxIsVideo] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<GeneratedImage | null>(null);
   const [showPresets, setShowPresets] = useState(true);
   const [showStyleTransfer, setShowStyleTransfer] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -837,8 +836,7 @@ export default function AdminAIStudioPage() {
                     handleStyleTransfer(image, stylePrompt)
                   }
                   onLightbox={() => {
-                    setLightboxUrl(image.saved_url || image.url);
-                    setLightboxIsVideo(image.output_type === "video");
+                    setLightboxImage(image);
                   }}
                 />
               ))}
@@ -848,29 +846,53 @@ export default function AdminAIStudioPage() {
       </div>
 
       {/* ─── Lightbox ─── */}
-      {lightboxUrl && (
+      {lightboxImage && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-          onClick={() => { setLightboxUrl(null); setLightboxIsVideo(false); }}
+          onClick={() => setLightboxImage(null)}
         >
-          <div className="relative max-w-[90vw] max-h-[90vh]">
-            {lightboxIsVideo ? (
+          <div className="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            {lightboxImage.output_type === "video" ? (
               <video
-                src={lightboxUrl}
+                src={lightboxImage.saved_url || lightboxImage.url}
                 controls
                 autoPlay
-                className="max-w-full max-h-[90vh] rounded-2xl"
+                className="max-w-full max-h-[75vh] rounded-2xl"
               />
             ) : (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
-                src={lightboxUrl}
-                alt="Full size"
-                className="max-w-full max-h-[90vh] object-contain rounded-2xl"
+                src={lightboxImage.saved_url || lightboxImage.url}
+                alt={lightboxImage.prompt}
+                className="max-w-full max-h-[75vh] object-contain rounded-2xl"
               />
             )}
+            {/* Prompt display */}
+            <div className="mt-3 max-w-2xl w-full px-4">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-white/50 uppercase tracking-wider">
+                  {lightboxImage.model}
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-white/50">
+                  {lightboxImage.aspect_ratio} · {lightboxImage.resolution}
+                </span>
+              </div>
+              <p className="text-sm text-white/80 leading-relaxed">
+                {lightboxImage.prompt}
+              </p>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(lightboxImage.prompt);
+                  toast.success("Prompt copied");
+                }}
+                className="mt-2 flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors"
+              >
+                <Copy className="w-3 h-3" />
+                Copy prompt
+              </button>
+            </div>
             <button
-              onClick={() => { setLightboxUrl(null); setLightboxIsVideo(false); }}
+              onClick={() => setLightboxImage(null)}
               className="absolute top-3 right-3 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
             >
               <X className="w-5 h-5" />
