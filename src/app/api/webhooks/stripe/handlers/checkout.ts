@@ -619,10 +619,10 @@ async function handleModelOnboardingPayment(session: Stripe.Checkout.Session, su
         ? session.subscription
         : (session.subscription as any)?.id;
 
-    // Schedule subscription to cancel after 2nd payment (~35 days)
+    // Schedule subscription to cancel after 3rd payment (~40 days = 18+18+buffer)
     if (subscriptionId) {
       try {
-        const cancelAt = Math.floor(Date.now() / 1000) + 35 * 24 * 60 * 60;
+        const cancelAt = Math.floor(Date.now() / 1000) + 40 * 24 * 60 * 60;
         await stripe.subscriptions.update(subscriptionId, { cancel_at: cancelAt });
       } catch (err) {
         logger.error("Failed to schedule onboarding subscription cancellation", err);
@@ -668,21 +668,21 @@ async function handleModelOnboardingPayment(session: Stripe.Checkout.Session, su
 }
 
 /**
- * Handle the second split payment for model onboarding via invoice.paid webhook.
- * Called when a subscription renewal invoice is paid.
+ * Handle split payments for model onboarding via invoice.paid webhook.
+ * Called when a subscription renewal invoice is paid (2nd and 3rd payments).
  */
 export async function handleModelOnboardingSplitPayment(
   subscriptionId: string,
   billingReason: string,
   supabaseAdmin: SupabaseClient
 ) {
-  // Only handle renewal invoices (the second payment)
+  // Only handle renewal invoices (not the initial checkout)
   if (billingReason !== "subscription_cycle") return;
 
   // Check if this subscription belongs to a model onboarding booking
   const { data: booking, error: fetchError } = await (supabaseAdmin as any)
     .from("model_onboarding_bookings")
-    .select("id, status, payment_plan")
+    .select("id, status, payment_plan, payments_completed")
     .eq("stripe_subscription_id", subscriptionId)
     .eq("payment_plan", "split")
     .eq("status", "partial")
@@ -690,11 +690,14 @@ export async function handleModelOnboardingSplitPayment(
 
   if (fetchError || !booking) return; // Not a model onboarding subscription
 
+  const newCount = (booking.payments_completed || 0) + 1;
+  const isFullyPaid = newCount >= 3;
+
   const { error: updateError } = await (supabaseAdmin as any)
     .from("model_onboarding_bookings")
     .update({
-      status: "paid",
-      payments_completed: 2,
+      status: isFullyPaid ? "paid" : "partial",
+      payments_completed: newCount,
       updated_at: new Date().toISOString(),
     })
     .eq("id", booking.id);

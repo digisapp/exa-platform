@@ -8,7 +8,7 @@ import { logger } from "@/lib/logger";
 const RUNWAY_WORKSHOP_CENTS = 35000; // $350
 const SWIMWEAR_DIGITALS_CENTS = 20000; // $200
 const TOTAL_CENTS = RUNWAY_WORKSHOP_CENTS + SWIMWEAR_DIGITALS_CENTS; // $550
-const SPLIT_PAYMENT_CENTS = Math.round(TOTAL_CENTS / 2); // $275
+const SPLIT_PAYMENT_CENTS = Math.ceil(TOTAL_CENTS / 3); // $183.34 × 3 payments
 const BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
   process.env.NEXT_PUBLIC_SITE_URL ||
@@ -68,19 +68,19 @@ export async function POST(request: NextRequest) {
     let session;
 
     if (paymentPlan === "split") {
-      // Split into 2 monthly payments of $275
+      // Split into 3 payments of $183.34 every 18 days
       session = await stripe.checkout.sessions.create({
         line_items: [
           {
             price_data: {
               currency: "usd",
               product_data: {
-                name: "Model Onboarding — Payment 1 of 2",
+                name: "Model Onboarding — Payment 1 of 3",
                 description:
-                  "Runway Workshop + Swimwear Digitals ($275 now, $275 in 30 days)",
+                  "Runway Workshop + Swimwear Digitals (3 payments of $183.34 every 18 days)",
               },
               unit_amount: SPLIT_PAYMENT_CENTS,
-              recurring: { interval: "month", interval_count: 1 },
+              recurring: { interval: "day", interval_count: 18 },
             },
             quantity: 1,
           },

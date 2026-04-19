@@ -276,12 +276,12 @@ function ModelOnboardingContent() {
               {/* Price */}
               <div className="text-center pb-4 border-b border-white/[0.06]">
                 <p className="text-4xl font-black">
-                  {paymentPlan === "full" ? "$550" : "$275"}
+                  {paymentPlan === "full" ? "$550" : "$183.34"}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
                   {paymentPlan === "full"
                     ? "Complete Model Onboarding"
-                    : "First of 2 monthly payments"}
+                    : "First of 3 payments"}
                 </p>
                 <div className="flex items-center justify-center gap-3 mt-2 text-xs text-muted-foreground">
                   <span>$350 runway workshop</span>
@@ -318,10 +318,10 @@ function ModelOnboardingContent() {
                         : "border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15]"
                     }`}
                   >
-                    <p className="text-sm font-semibold">2 Payments</p>
-                    <p className="text-lg font-bold mt-0.5">$275<span className="text-xs font-normal text-muted-foreground">/mo</span></p>
+                    <p className="text-sm font-semibold">3 Payments</p>
+                    <p className="text-lg font-bold mt-0.5">$183.34<span className="text-xs font-normal text-muted-foreground"> each</span></p>
                     <p className="text-[11px] text-muted-foreground">
-                      Today + 30 days
+                      Every 18 days
                     </p>
                   </button>
                 </div>
@@ -395,7 +395,7 @@ function ModelOnboardingContent() {
                   <>
                     {paymentPlan === "full"
                       ? "Complete Onboarding — $550"
-                      : "Start Payment Plan — $275 today"}
+                      : "Start Payment Plan — $183.34 today"}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
