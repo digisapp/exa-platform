@@ -133,6 +133,28 @@ export async function GET(request: NextRequest) {
           display: "flex", zIndex: 1,
         }} />
 
+        {/* ── Image overlays (back layer — behind model photo) ── */}
+        {overlays.filter((o) => o.layer === "back").map((overlay, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={`ov-back-${i}`}
+            src={overlay.url}
+            alt=""
+            width={s(overlay.width)}
+            height={s(overlay.height)}
+            style={{
+              position: "absolute",
+              left: px(overlay.x),
+              top: px(overlay.y),
+              width: px(overlay.width),
+              height: px(overlay.height),
+              opacity: overlay.opacity,
+              objectFit: "contain",
+              zIndex: 2,
+            }}
+          />
+        ))}
+
         {/* ── Centered circle profile photo ── */}
         {photoUrl && (
           <div style={{
@@ -219,11 +241,11 @@ export async function GET(request: NextRequest) {
           </div>
         ))}
 
-        {/* ── Image overlays ── */}
-        {overlays.map((overlay, i) => (
+        {/* ── Image overlays (front layer — above model photo, below text/name) ── */}
+        {overlays.filter((o) => o.layer !== "back").map((overlay, i) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            key={`ov-${i}`}
+            key={`ov-front-${i}`}
             src={overlay.url}
             alt=""
             width={s(overlay.width)}
@@ -236,7 +258,7 @@ export async function GET(request: NextRequest) {
               height: px(overlay.height),
               opacity: overlay.opacity,
               objectFit: "contain",
-              zIndex: overlay.layer === "back" ? 1 : 4,
+              zIndex: 6,
             }}
           />
         ))}
