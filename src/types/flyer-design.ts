@@ -189,6 +189,62 @@ export const FLYER_PRESETS: FlyerPreset[] = [
       showBorder: true,
     },
   },
+  {
+    name: "South Beach",
+    settings: {
+      ...DEFAULT_DESIGN,
+      gradientColors: ["#00BFA5", "#26C6DA", "#4DD0E1", "#80DEEA", "#E0F7FA"],
+      borderColor: "#26C6DA",
+      showGlowEffects: true,
+      showTopGradient: true,
+      showBottomGradient: true,
+      showPalmTrees: true,
+      showHearts: false,
+      showBorder: true,
+    },
+  },
+  {
+    name: "Art Deco",
+    settings: {
+      ...DEFAULT_DESIGN,
+      gradientColors: ["#1A1A2E", "#16213E", "#0F3460", "#D4AF37", "#F1C40F"],
+      borderColor: "#D4AF37",
+      showGlowEffects: false,
+      showTopGradient: false,
+      showBottomGradient: true,
+      showPalmTrees: false,
+      showHearts: false,
+      showBorder: true,
+    },
+  },
+  {
+    name: "Ocean Drive",
+    settings: {
+      ...DEFAULT_DESIGN,
+      gradientColors: ["#FF6B6B", "#FF8E71", "#FFB088", "#48C9B0", "#1ABC9C"],
+      borderColor: "#FF6B6B",
+      showGlowEffects: true,
+      showTopGradient: true,
+      showBottomGradient: true,
+      showPalmTrees: true,
+      showHearts: false,
+      showBorder: false,
+    },
+  },
+  {
+    name: "Coral Reef",
+    settings: {
+      ...DEFAULT_DESIGN,
+      gradientColors: ["#FF7043", "#FF8A65", "#FFAB91", "#80CBC4", "#4DB6AC"],
+      borderColor: "#FF7043",
+      showGlowEffects: true,
+      showTopGradient: true,
+      showBottomGradient: true,
+      showHearts: false,
+      showPalmTrees: false,
+      showBorder: true,
+    },
+  },
 ];
 
 /** Serialize design settings to URL search params */

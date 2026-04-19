@@ -88,51 +88,52 @@ export async function GET(request: NextRequest) {
           display: "flex",
         }} />
 
-        {/* ── Line-art wave illustrations ── */}
-        {/* Bottom wave group - 3 flowing lines */}
-        <svg
-          width={W}
-          height={H}
-          viewBox="0 0 1080 1350"
-          style={{ position: "absolute", top: 0, left: 0, zIndex: 1 }}
-        >
-          {/* Wave line 1 - lowest, gentle curve */}
-          <path
-            d="M-50,1280 C150,1230 300,1310 500,1260 C700,1210 850,1290 1130,1240"
-            fill="none"
-            stroke="rgba(255,255,255,0.2)"
-            strokeWidth={`${scale * 1.5}`}
-          />
-          {/* Wave line 2 - mid, deeper curve */}
-          <path
-            d="M-50,1220 C200,1160 350,1250 540,1190 C730,1130 880,1230 1130,1170"
-            fill="none"
-            stroke="rgba(255,255,255,0.15)"
-            strokeWidth={`${scale * 1.2}`}
-          />
-          {/* Wave line 3 - highest of bottom group */}
-          <path
-            d="M-50,1160 C180,1110 320,1180 520,1120 C720,1060 900,1160 1130,1100"
-            fill="none"
-            stroke="rgba(255,255,255,0.1)"
-            strokeWidth={`${scale * 1}`}
-          />
-
-          {/* Top accent wave - subtle single line */}
-          <path
-            d="M-50,120 C200,80 400,150 600,100 C800,50 950,130 1130,90"
-            fill="none"
-            stroke="rgba(255,255,255,0.1)"
-            strokeWidth={`${scale * 1}`}
-          />
-          {/* Top accent wave 2 */}
-          <path
-            d="M-50,160 C180,130 380,190 580,140 C780,90 920,170 1130,130"
-            fill="none"
-            stroke="rgba(255,255,255,0.07)"
-            strokeWidth={`${scale * 0.8}`}
-          />
-        </svg>
+        {/* ── Wave lines (thin elliptical borders) ── */}
+        {/* Bottom wave 1 */}
+        <div style={{
+          position: "absolute", bottom: px(-220), left: px(-200),
+          width: px(1480), height: px(500),
+          borderRadius: "50%",
+          border: `${px(2)} solid rgba(255,255,255,0.18)`,
+          background: "transparent",
+          display: "flex", zIndex: 1,
+        }} />
+        {/* Bottom wave 2 */}
+        <div style={{
+          position: "absolute", bottom: px(-280), left: px(-100),
+          width: px(1380), height: px(480),
+          borderRadius: "50%",
+          border: `${px(1.5)} solid rgba(255,255,255,0.13)`,
+          background: "transparent",
+          display: "flex", zIndex: 1,
+        }} />
+        {/* Bottom wave 3 */}
+        <div style={{
+          position: "absolute", bottom: px(-320), left: px(50),
+          width: px(1200), height: px(440),
+          borderRadius: "50%",
+          border: `${px(1)} solid rgba(255,255,255,0.09)`,
+          background: "transparent",
+          display: "flex", zIndex: 1,
+        }} />
+        {/* Top wave 1 */}
+        <div style={{
+          position: "absolute", top: px(-280), left: px(-150),
+          width: px(1400), height: px(420),
+          borderRadius: "50%",
+          border: `${px(1.5)} solid rgba(255,255,255,0.1)`,
+          background: "transparent",
+          display: "flex", zIndex: 1,
+        }} />
+        {/* Top wave 2 */}
+        <div style={{
+          position: "absolute", top: px(-320), left: px(-50),
+          width: px(1250), height: px(400),
+          borderRadius: "50%",
+          border: `${px(1)} solid rgba(255,255,255,0.07)`,
+          background: "transparent",
+          display: "flex", zIndex: 1,
+        }} />
 
         {/* ── Centered circle profile photo ── */}
         {photoUrl && (
@@ -197,41 +198,82 @@ export async function GET(request: NextRequest) {
           </>
         )}
 
-        {/* ── Hearts ── */}
+        {/* ── Hearts (two circles + square, no transform needed) ── */}
         {showHearts && (
           <>
-            <div style={{ position: "absolute", top: px(85), right: px(50), display: "flex", zIndex: 6 }}>
-              <div style={{ width: px(52), height: px(52), background: `${borderColor}`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 ${px(30)} ${borderColor}88` }} />
-            </div>
-            <div style={{ position: "absolute", top: px(175), right: px(115), display: "flex", zIndex: 6 }}>
-              <div style={{ width: px(32), height: px(32), background: "rgba(255,255,255,0.85)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 ${px(20)} rgba(255,255,255,0.4)` }} />
-            </div>
-            <div style={{ position: "absolute", top: px(260), right: px(40), display: "flex", zIndex: 6 }}>
-              <div style={{ width: px(40), height: px(40), background: "rgba(100,200,255,0.9)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 ${px(25)} rgba(100,200,255,0.5)` }} />
-            </div>
-            <div style={{ position: "absolute", top: px(140), left: px(45), display: "flex", zIndex: 6 }}>
-              <div style={{ width: px(36), height: px(36), background: `${borderColor}dd`, borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex", boxShadow: `0 0 ${px(22)} ${borderColor}66` }} />
-            </div>
-            <div style={{ position: "absolute", top: px(380), left: px(60), display: "flex", zIndex: 6 }}>
-              <div style={{ width: px(26), height: px(26), background: "rgba(255,255,255,0.75)", borderRadius: "50% 50% 50% 0", transform: "rotate(-45deg)", display: "flex" }} />
-            </div>
+            {[
+              { top: 85, left: 920, size: 44, color: borderColor, opacity: 0.9 },
+              { top: 175, left: 850, size: 28, color: "#FFFFFF", opacity: 0.7 },
+              { top: 260, left: 950, size: 34, color: "#64C8FF", opacity: 0.8 },
+              { top: 140, left: 45, size: 30, color: borderColor, opacity: 0.8 },
+              { top: 380, left: 60, size: 22, color: "#FFFFFF", opacity: 0.6 },
+            ].map((h, i) => {
+              const r = Math.round(h.size / 2);
+              return (
+                <div key={`heart-${i}`} style={{
+                  position: "absolute",
+                  top: px(h.top),
+                  left: px(h.left),
+                  width: px(h.size),
+                  height: px(h.size),
+                  display: "flex",
+                  zIndex: 6,
+                  opacity: h.opacity,
+                }}>
+                  {/* Left circle */}
+                  <div style={{
+                    position: "absolute", top: px(0), left: px(0),
+                    width: px(r), height: px(r),
+                    borderRadius: "50%",
+                    background: h.color,
+                    display: "flex",
+                  }} />
+                  {/* Right circle */}
+                  <div style={{
+                    position: "absolute", top: px(0), left: px(r),
+                    width: px(r), height: px(r),
+                    borderRadius: "50%",
+                    background: h.color,
+                    display: "flex",
+                  }} />
+                  {/* Bottom triangle (square clipped) */}
+                  <div style={{
+                    position: "absolute", top: px(Math.round(r * 0.45)), left: px(Math.round(r * 0.5)),
+                    width: px(r), height: px(r),
+                    background: h.color,
+                    borderRadius: `0 0 ${px(4)} ${px(4)}`,
+                    display: "flex",
+                  }} />
+                </div>
+              );
+            })}
           </>
         )}
 
-        {/* ── Palm trees ── */}
+        {/* ── Palm trees (leaf fans + trunk) ── */}
         {showPalms && (
           <>
-            <div style={{ position: "absolute", bottom: "0px", left: px(-15), opacity: 0.3, display: "flex", flexDirection: "column", alignItems: "center", width: px(180), height: px(380), zIndex: 3 }}>
-              <div style={{ position: "absolute", bottom: "0", width: px(16), height: px(270), background: "white", borderRadius: px(8), display: "flex" }} />
-              <div style={{ position: "absolute", top: px(20), left: "0px", width: px(160), height: px(100), borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "0px", left: px(20), width: px(130), height: px(80), borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: px(45), left: px(-15), width: px(110), height: px(70), borderRadius: "50%", background: "white", display: "flex" }} />
+            {/* Left palm */}
+            <div style={{ position: "absolute", bottom: px(0), left: px(10), width: px(200), height: px(420), display: "flex", opacity: 0.2, zIndex: 3 }}>
+              {/* Trunk */}
+              <div style={{ position: "absolute", bottom: px(0), left: px(85), width: px(14), height: px(300), background: "white", borderRadius: px(7), display: "flex" }} />
+              {/* Leaves - elongated ellipses fanning out */}
+              <div style={{ position: "absolute", top: px(30), left: px(0), width: px(120), height: px(40), borderRadius: `${px(20)} ${px(20)} ${px(20)} 0`, background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: px(10), left: px(30), width: px(130), height: px(36), borderRadius: px(18), background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: px(0), left: px(60), width: px(140), height: px(34), borderRadius: `0 ${px(17)} ${px(17)} ${px(17)}`, background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: px(50), left: px(10), width: px(100), height: px(35), borderRadius: `${px(18)} ${px(18)} 0 ${px(18)}`, background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: px(65), left: px(50), width: px(110), height: px(30), borderRadius: px(15), background: "white", display: "flex" }} />
             </div>
-            <div style={{ position: "absolute", bottom: "0px", right: px(-15), opacity: 0.3, display: "flex", flexDirection: "column", alignItems: "center", width: px(180), height: px(380), zIndex: 3 }}>
-              <div style={{ position: "absolute", bottom: "0", width: px(16), height: px(270), background: "white", borderRadius: px(8), display: "flex" }} />
-              <div style={{ position: "absolute", top: px(20), right: "0px", width: px(160), height: px(100), borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: "0px", right: px(20), width: px(130), height: px(80), borderRadius: "50%", background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: px(45), right: px(-15), width: px(110), height: px(70), borderRadius: "50%", background: "white", display: "flex" }} />
+            {/* Right palm */}
+            <div style={{ position: "absolute", bottom: px(0), right: px(10), width: px(200), height: px(420), display: "flex", opacity: 0.2, zIndex: 3 }}>
+              {/* Trunk */}
+              <div style={{ position: "absolute", bottom: px(0), right: px(85), width: px(14), height: px(300), background: "white", borderRadius: px(7), display: "flex" }} />
+              {/* Leaves */}
+              <div style={{ position: "absolute", top: px(30), right: px(0), width: px(120), height: px(40), borderRadius: `${px(20)} ${px(20)} 0 ${px(20)}`, background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: px(10), right: px(30), width: px(130), height: px(36), borderRadius: px(18), background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: px(0), right: px(60), width: px(140), height: px(34), borderRadius: `${px(17)} 0 ${px(17)} ${px(17)}`, background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: px(50), right: px(10), width: px(100), height: px(35), borderRadius: `${px(18)} ${px(18)} ${px(18)} 0`, background: "white", display: "flex" }} />
+              <div style={{ position: "absolute", top: px(65), right: px(50), width: px(110), height: px(30), borderRadius: px(15), background: "white", display: "flex" }} />
             </div>
           </>
         )}
