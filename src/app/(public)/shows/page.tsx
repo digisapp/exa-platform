@@ -110,7 +110,7 @@ export default async function EventsPage() {
       <div className="relative overflow-hidden">
         <div className="aspect-[21/9] md:aspect-[3/1] relative">
           <iframe
-            src="https://www.youtube.com/embed/Iu68o0MCuvw?autoplay=1&mute=1&loop=1&playlist=Iu68o0MCuvw&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
+            src="https://www.youtube.com/embed/LRzzpEl7kiU?autoplay=1&mute=1&loop=1&playlist=LRzzpEl7kiU&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
             title="EXA Shows"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
