@@ -468,37 +468,29 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
-              // Compress large images client-side to stay under Vercel's 4.5MB body limit
-              let uploadFile: File | Blob = file;
-              if (file.size > 3 * 1024 * 1024 && file.type !== "image/gif") {
-                try {
-                  const bitmap = await createImageBitmap(file);
-                  const MAX_DIM = 2048;
-                  let w = bitmap.width, h = bitmap.height;
-                  if (w > MAX_DIM || h > MAX_DIM) {
-                    const ratio = Math.min(MAX_DIM / w, MAX_DIM / h);
-                    w = Math.round(w * ratio);
-                    h = Math.round(h * ratio);
-                  }
-                  const canvas = new OffscreenCanvas(w, h);
-                  const ctx = canvas.getContext("2d")!;
-                  ctx.drawImage(bitmap, 0, 0, w, h);
-                  uploadFile = await canvas.convertToBlob({ type: "image/png", quality: 0.9 });
-                } catch { /* fallback to original file */ }
-              }
-              if (uploadFile.size > 4 * 1024 * 1024) {
-                alert("Image is too large (max ~4MB after compression). Try a smaller file.");
+              if (file.size > 20 * 1024 * 1024) {
+                alert("Image is too large (max 20MB). Try a smaller file.");
                 e.target.value = "";
                 return;
               }
-              const formData = new FormData();
-              formData.append("file", uploadFile, file.name);
               try {
-                const res = await fetch("/api/admin/flyers/overlay", { method: "POST", body: formData });
+                // Get a signed upload URL from our API
+                const res = await fetch("/api/admin/flyers/overlay", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ contentType: file.type }),
+                });
                 const data = await res.json();
                 if (!res.ok) { alert(data.error || "Upload failed"); return; }
+                // Upload directly to Supabase Storage (bypasses Vercel body limit)
+                const uploadRes = await fetch(data.signedUrl, {
+                  method: "PUT",
+                  headers: { "Content-Type": file.type },
+                  body: file,
+                });
+                if (!uploadRes.ok) { alert("Upload failed"); return; }
                 const img = new Image();
-                img.src = data.url;
+                img.src = data.publicUrl;
                 await new Promise<void>((resolve) => { img.onload = () => resolve(); img.onerror = () => resolve(); });
                 const natW = img.naturalWidth || 200;
                 const natH = img.naturalHeight || 200;
@@ -508,7 +500,7 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
                     ...settings.overlays,
                     {
                       id: `overlay-${Date.now()}`,
-                      url: data.url,
+                      url: data.publicUrl,
                       x: 440,
                       y: 400,
                       width: Math.round(natW * scale),

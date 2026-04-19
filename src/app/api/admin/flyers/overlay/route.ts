@@ -3,12 +3,18 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 
 export const runtime = "nodejs";
-export const maxDuration = 30;
+
+const ALLOWED_TYPES: Record<string, string> = {
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
 
 /**
  * POST /api/admin/flyers/overlay
- * Upload a PNG overlay image to Supabase Storage.
- * Returns the public URL.
+ * Creates a signed upload URL for direct-to-Supabase upload.
+ * Body: { contentType: string }
+ * Returns: { signedUrl, storagePath, publicUrl }
  */
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -25,48 +31,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const formData = await request.formData();
-  const file = formData.get("file") as File | null;
+  const { contentType } = await request.json();
 
-  if (!file) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
-  }
-
-  const ALLOWED_TYPES: Record<string, string> = {
-    "image/png": "png",
-    "image/webp": "webp",
-    "image/gif": "gif",
-  };
-
-  if (!ALLOWED_TYPES[file.type]) {
+  if (!contentType || !ALLOWED_TYPES[contentType]) {
     return NextResponse.json({ error: "Only PNG, WebP, and GIF files allowed" }, { status: 400 });
   }
 
-  const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-  if (file.size > MAX_SIZE) {
-    return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
-  }
-
   const admin = createServiceRoleClient();
-  const ext = ALLOWED_TYPES[file.type];
+  const ext = ALLOWED_TYPES[contentType];
   const storagePath = `flyers/overlays/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-  const bytes = new Uint8Array(await file.arrayBuffer());
-
-  const { error: uploadError } = await admin.storage
+  const { data: signedData, error: signError } = await admin.storage
     .from("portfolio")
-    .upload(storagePath, bytes, {
-      contentType: file.type,
-      upsert: false,
-    });
+    .createSignedUploadUrl(storagePath);
 
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
+  if (signError || !signedData) {
+    return NextResponse.json({ error: signError?.message || "Failed to create upload URL" }, { status: 500 });
   }
 
   const { data: { publicUrl } } = admin.storage
     .from("portfolio")
     .getPublicUrl(storagePath);
 
-  return NextResponse.json({ url: publicUrl, storagePath });
+  return NextResponse.json({
+    signedUrl: signedData.signedUrl,
+    token: signedData.token,
+    storagePath,
+    publicUrl,
+  });
 }
