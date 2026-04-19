@@ -381,7 +381,7 @@ export async function GET(request: NextRequest) {
         {showIg && igHandle && (
           <div style={{
             position: "absolute",
-            top: px(Math.round((1350 - 630) / 2 - 630 * 0.05) + 630 + 120),
+            top: px(Math.round((1350 - 630) / 2 - 630 * 0.05) + 630 + 132),
             left: px(0),
             width: `${W}px`,
             height: px(52),
