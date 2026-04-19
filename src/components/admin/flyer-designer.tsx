@@ -614,14 +614,6 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
       <Section title="Decorations" defaultOpen={false}>
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <Label className="text-xs text-white/60">Hearts</Label>
-            <Switch checked={settings.showHearts} onCheckedChange={(v) => update({ showHearts: v })} />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label className="text-xs text-white/60">Palm Trees</Label>
-            <Switch checked={settings.showPalmTrees} onCheckedChange={(v) => update({ showPalmTrees: v })} />
-          </div>
-          <div className="flex items-center justify-between">
             <Label className="text-xs text-white/60">Glow Effects</Label>
             <Switch checked={settings.showGlowEffects} onCheckedChange={(v) => update({ showGlowEffects: v })} />
           </div>

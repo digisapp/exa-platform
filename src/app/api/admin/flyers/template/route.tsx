@@ -27,8 +27,6 @@ export async function GET(request: NextRequest) {
 
   const showTopGrad = sp.get("showTopGrad") !== "0";
   const showBotGrad = sp.get("showBotGrad") !== "0";
-  const showPalms = sp.get("showPalms") !== "0";
-  const showHearts = sp.get("showHearts") !== "0";
   const showGlows = sp.get("showGlows") !== "0";
   const showName = sp.get("showName") !== "0";
   const nameFontSize = Number(sp.get("nameFontSize")) || 48;
@@ -195,86 +193,6 @@ export async function GET(request: NextRequest) {
           <>
             <div style={{ position: "absolute", top: px(-100), left: px(-100), width: px(500), height: px(500), borderRadius: "50%", background: `radial-gradient(circle, ${gc0}88 0%, transparent 60%)`, display: "flex", zIndex: 2 }} />
             <div style={{ position: "absolute", bottom: px(-80), right: px(-80), width: px(450), height: px(450), borderRadius: "50%", background: `radial-gradient(circle, ${gc4}77 0%, transparent 55%)`, display: "flex", zIndex: 2 }} />
-          </>
-        )}
-
-        {/* ── Hearts (two circles + square, no transform needed) ── */}
-        {showHearts && (
-          <>
-            {[
-              { top: 85, left: 920, size: 44, color: borderColor, opacity: 0.9 },
-              { top: 175, left: 850, size: 28, color: "#FFFFFF", opacity: 0.7 },
-              { top: 260, left: 950, size: 34, color: "#64C8FF", opacity: 0.8 },
-              { top: 140, left: 45, size: 30, color: borderColor, opacity: 0.8 },
-              { top: 380, left: 60, size: 22, color: "#FFFFFF", opacity: 0.6 },
-            ].map((h, i) => {
-              const r = Math.round(h.size / 2);
-              return (
-                <div key={`heart-${i}`} style={{
-                  position: "absolute",
-                  top: px(h.top),
-                  left: px(h.left),
-                  width: px(h.size),
-                  height: px(h.size),
-                  display: "flex",
-                  zIndex: 6,
-                  opacity: h.opacity,
-                }}>
-                  {/* Left circle */}
-                  <div style={{
-                    position: "absolute", top: px(0), left: px(0),
-                    width: px(r), height: px(r),
-                    borderRadius: "50%",
-                    background: h.color,
-                    display: "flex",
-                  }} />
-                  {/* Right circle */}
-                  <div style={{
-                    position: "absolute", top: px(0), left: px(r),
-                    width: px(r), height: px(r),
-                    borderRadius: "50%",
-                    background: h.color,
-                    display: "flex",
-                  }} />
-                  {/* Bottom triangle (square clipped) */}
-                  <div style={{
-                    position: "absolute", top: px(Math.round(r * 0.45)), left: px(Math.round(r * 0.5)),
-                    width: px(r), height: px(r),
-                    background: h.color,
-                    borderRadius: `0 0 ${px(4)} ${px(4)}`,
-                    display: "flex",
-                  }} />
-                </div>
-              );
-            })}
-          </>
-        )}
-
-        {/* ── Palm trees (leaf fans + trunk) ── */}
-        {showPalms && (
-          <>
-            {/* Left palm */}
-            <div style={{ position: "absolute", bottom: px(0), left: px(10), width: px(200), height: px(420), display: "flex", opacity: 0.2, zIndex: 3 }}>
-              {/* Trunk */}
-              <div style={{ position: "absolute", bottom: px(0), left: px(85), width: px(14), height: px(300), background: "white", borderRadius: px(7), display: "flex" }} />
-              {/* Leaves - elongated ellipses fanning out */}
-              <div style={{ position: "absolute", top: px(30), left: px(0), width: px(120), height: px(40), borderRadius: `${px(20)} ${px(20)} ${px(20)} 0`, background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: px(10), left: px(30), width: px(130), height: px(36), borderRadius: px(18), background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: px(0), left: px(60), width: px(140), height: px(34), borderRadius: `0 ${px(17)} ${px(17)} ${px(17)}`, background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: px(50), left: px(10), width: px(100), height: px(35), borderRadius: `${px(18)} ${px(18)} 0 ${px(18)}`, background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: px(65), left: px(50), width: px(110), height: px(30), borderRadius: px(15), background: "white", display: "flex" }} />
-            </div>
-            {/* Right palm */}
-            <div style={{ position: "absolute", bottom: px(0), right: px(10), width: px(200), height: px(420), display: "flex", opacity: 0.2, zIndex: 3 }}>
-              {/* Trunk */}
-              <div style={{ position: "absolute", bottom: px(0), right: px(85), width: px(14), height: px(300), background: "white", borderRadius: px(7), display: "flex" }} />
-              {/* Leaves */}
-              <div style={{ position: "absolute", top: px(30), right: px(0), width: px(120), height: px(40), borderRadius: `${px(20)} ${px(20)} 0 ${px(20)}`, background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: px(10), right: px(30), width: px(130), height: px(36), borderRadius: px(18), background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: px(0), right: px(60), width: px(140), height: px(34), borderRadius: `${px(17)} 0 ${px(17)} ${px(17)}`, background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: px(50), right: px(10), width: px(100), height: px(35), borderRadius: `${px(18)} ${px(18)} ${px(18)} 0`, background: "white", display: "flex" }} />
-              <div style={{ position: "absolute", top: px(65), right: px(50), width: px(110), height: px(30), borderRadius: px(15), background: "white", display: "flex" }} />
-            </div>
           </>
         )}
 
