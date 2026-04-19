@@ -545,7 +545,7 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
             <button
               onClick={() => update({ overlays: settings.overlays.map((o) => o.id === overlay.id ? { ...o, layer: o.layer === "back" ? "front" : "back" } : o) })}
               className={`p-1 rounded shrink-0 transition-colors ${overlay.layer === "back" ? "bg-purple-500/20 text-purple-400" : "text-white/30 hover:text-white/60 hover:bg-white/10"}`}
-              title={overlay.layer === "back" ? "Layer: Back (behind model)" : "Layer: Front (above model)"}
+              title={overlay.layer === "back" ? "Behind everything (background)" : "Behind model photo (default)"}
             >
               <Layers className="w-3.5 h-3.5" />
             </button>

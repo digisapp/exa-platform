@@ -236,7 +236,7 @@ export async function GET(request: NextRequest) {
               height: px(overlay.height),
               opacity: overlay.opacity,
               objectFit: "contain",
-              zIndex: overlay.layer === "back" ? 1 : 7,
+              zIndex: overlay.layer === "back" ? 1 : 4,
             }}
           />
         ))}
