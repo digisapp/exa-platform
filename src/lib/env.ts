@@ -15,8 +15,8 @@ const requiredEnvVars = [
   'STRIPE_WEBHOOK_SECRET',
 ] as const;
 
-// Validate on module load (server-side only)
-if (typeof window === 'undefined') {
+// Validate on module load (server-side only, skip during build)
+if (typeof window === 'undefined' && process.env.NEXT_PHASE !== 'phase-production-build') {
   const missing = requiredEnvVars.filter(key => !process.env[key]);
   if (missing.length > 0) {
     throw new Error(
