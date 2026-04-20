@@ -567,14 +567,20 @@ export function FlyerDesigner({ settings, onChange }: FlyerDesignerProps) {
             <Switch checked={settings.showModelName} onCheckedChange={(v) => update({ showModelName: v })} />
           </div>
           {settings.showModelName && (
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-white/40">Name Size</span>
-              <input type="range" min={24} max={72} value={settings.modelNameFontSize}
-                onChange={(e) => update({ modelNameFontSize: Number(e.target.value) })}
-                className="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-pink-500 [&::-webkit-slider-thumb]:cursor-pointer"
-              />
-              <span className="text-[10px] text-white/50">{settings.modelNameFontSize}px</span>
-            </div>
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-white/40">Name Size</span>
+                <input type="range" min={24} max={72} value={settings.modelNameFontSize}
+                  onChange={(e) => update({ modelNameFontSize: Number(e.target.value) })}
+                  className="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-pink-500 [&::-webkit-slider-thumb]:cursor-pointer"
+                />
+                <span className="text-[10px] text-white/50">{settings.modelNameFontSize}px</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ColorInput value={settings.textColor} onChange={(c) => update({ textColor: c })} />
+                <span className="text-[10px] text-white/40">Text Color</span>
+              </div>
+            </>
           )}
           <div className="flex items-center justify-between">
             <Label className="text-xs text-white/60">Show @Instagram</Label>

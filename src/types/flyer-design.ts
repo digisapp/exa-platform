@@ -38,6 +38,7 @@ export interface FlyerDesignSettings {
   // Auto model info (changes per model)
   showModelName: boolean;
   modelNameFontSize: number;
+  textColor: string; // color for tagline, name, and instagram text
   showInstagram: boolean;
   showQrCode: boolean;
 
@@ -57,6 +58,7 @@ export const DEFAULT_DESIGN: FlyerDesignSettings = {
   showGlowEffects: true,
   showModelName: true,
   modelNameFontSize: 48,
+  textColor: "#FFFFFF",
   showInstagram: true,
   showQrCode: true,
   showBorder: true,
@@ -271,6 +273,7 @@ export function designToParams(d: FlyerDesignSettings): Record<string, string> {
     showGlows: d.showGlowEffects ? "1" : "0",
     showName: d.showModelName ? "1" : "0",
     nameFontSize: String(d.modelNameFontSize),
+    textColor: d.textColor,
     showIg: d.showInstagram ? "1" : "0",
     showQr: d.showQrCode ? "1" : "0",
     showBorder: d.showBorder ? "1" : "0",

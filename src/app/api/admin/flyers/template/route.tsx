@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
   const showGlows = sp.get("showGlows") !== "0";
   const showName = sp.get("showName") !== "0";
   const nameFontSize = Number(sp.get("nameFontSize")) || 48;
+  const textColor = sp.get("textColor") || "#FFFFFF";
   const showIg = sp.get("showIg") !== "0";
   const showQr = sp.get("showQr") !== "0";
   const showBorder = sp.get("showBorder") !== "0";
@@ -279,7 +280,8 @@ export async function GET(request: NextRequest) {
             <div style={{
               fontSize: px(28),
               fontWeight: 600,
-              color: "rgba(255,255,255,0.6)",
+              color: textColor,
+              opacity: 0.85,
               letterSpacing: "0.15em",
               textTransform: "uppercase",
               display: "flex",
@@ -306,7 +308,7 @@ export async function GET(request: NextRequest) {
             <div style={{
               fontSize: px(Math.round(nameFontSize * 1.5)),
               fontWeight: 900,
-              color: "white",
+              color: textColor,
               textTransform: "uppercase",
               letterSpacing: "0.06em",
               display: "flex",
@@ -333,7 +335,8 @@ export async function GET(request: NextRequest) {
             <div style={{
               fontSize: px(28),
               fontWeight: 400,
-              color: "rgba(255,255,255,0.85)",
+              color: textColor,
+              opacity: 0.9,
               letterSpacing: "0.02em",
               display: "flex",
               textShadow: `0 ${px(1)} ${px(8)} rgba(0,0,0,0.6)`,
