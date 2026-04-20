@@ -293,7 +293,7 @@ create policy "System can delete model badges" on public.model_badges
 
 insert into public.events (slug, name, short_name, description, location_city, location_state, start_date, end_date, year, points_awarded)
 values
-  ('miami-swim-week-2026', 'Miami Swim Week 2026', 'MSW', 'The premier swimwear fashion event featuring the hottest designers and models.', 'Miami', 'FL', '2026-05-29', '2026-06-01', 2026, 500),
+  ('miami-swim-week-2026', 'EXA''s Miami Swim Week 2026', 'MSW', 'The premier swimwear fashion event featuring the hottest designers and models.', 'Miami', 'FL', '2026-05-29', '2026-06-01', 2026, 500),
   ('nyfw-fall-2026', 'New York Fashion Week Fall 2026', 'NYFW', 'The iconic New York Fashion Week showcasing fall collections from top designers.', 'New York', 'NY', '2026-09-11', '2026-09-16', 2026, 750),
   ('miami-art-week-2026', 'Miami Art Week 2026', 'MAW', 'Experience the fusion of art, fashion, and culture during Miami Art Week.', 'Miami', 'FL', '2026-12-01', '2026-12-06', 2026, 500);
 

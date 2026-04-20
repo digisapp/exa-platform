@@ -23,13 +23,13 @@ import { Footer } from "@/components/layout/footer";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Designers — Miami Swim Week 2026 | EXA Models",
+  title: "Designers — EXA's Miami Swim Week 2026 | EXA Models",
   description:
-    "Showcase your swimwear, resortwear, or lingerie collection at Miami Swim Week 2026 (May 26–31, Miami, FL). Book your runway show slot with EXA Models professional talent.",
+    "Showcase your swimwear, resortwear, or lingerie collection at EXA's Miami Swim Week 2026 (May 26–31, The Alexander Hotel, Miami Beach). Book your runway show slot with EXA Models professional talent.",
   openGraph: {
-    title: "Designers — Miami Swim Week 2026 | EXA Models",
+    title: "Designers — EXA's Miami Swim Week 2026 | EXA Models",
     description:
-      "Secure your runway show slot at Miami Swim Week 2026. Opening Night ($3,500), Day 2 ($2,500), Day 3–6 ($1,500 each), Daytime Show ($1,000).",
+      "Secure your runway show slot at EXA's Miami Swim Week 2026. Opening Night ($3,500), Day 2 ($2,500), Day 3–6 ($1,500 each), Daytime Show ($1,000).",
   },
 };
 
@@ -192,7 +192,7 @@ export default async function MswBrandPage() {
         <div className="aspect-video relative max-h-[75vh]">
           <iframe
             src="https://www.youtube.com/embed/LRzzpEl7kiU?autoplay=1&mute=1&loop=1&playlist=LRzzpEl7kiU&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
-            title="Miami Swim Week 2026"
+            title="EXA's Miami Swim Week 2026"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             className="absolute inset-0 w-full h-full"
@@ -209,7 +209,7 @@ export default async function MswBrandPage() {
             Runway 2026
           </p>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-            Miami Swim Week 2026
+            EXA&apos;s Miami Swim Week 2026
           </h1>
           <p className="text-white/90 text-lg md:text-xl mb-5 max-w-2xl leading-relaxed drop-shadow">
             Showcase your collection. Own the runway. Own the moment.
@@ -507,10 +507,10 @@ export default async function MswBrandPage() {
         )}
 
 
-        {/* Cross-links — Also Participating in Miami Swim Week? */}
+        {/* Cross-links — Also Participating in EXA's Miami Swim Week? */}
         <div className="mb-14">
           <p className="text-center text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
-            Also participating in Miami Swim Week?
+            Also participating in EXA&apos;s Miami Swim Week?
           </p>
           <h3 className="text-center text-xl md:text-2xl font-bold mb-6">
             <span className="exa-gradient-text">Explore the full week</span>

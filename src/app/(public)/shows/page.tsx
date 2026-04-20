@@ -20,7 +20,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Upcoming Shows | EXA Models",
-  description: "Discover fashion shows featuring EXA models - Miami Swim Week, New York Fashion Week, Miami Art Week and more.",
+  description: "Discover fashion shows featuring EXA models - EXA's Miami Swim Week, New York Fashion Week, Miami Art Week and more.",
 };
 
 export default async function EventsPage() {
@@ -136,7 +136,7 @@ export default async function EventsPage() {
               <span className="exa-gradient-text">EXA Shows</span>
             </h1>
             <p className="text-sm md:text-base text-white/80 max-w-xl drop-shadow">
-              Miami Swim Week, NY Fashion Week, Art Week — discover shows featuring EXA models around the world.
+              EXA&apos;s Miami Swim Week, NY Fashion Week, Art Week — discover shows featuring EXA models around the world.
             </p>
           </div>
         </div>

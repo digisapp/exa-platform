@@ -1,5 +1,5 @@
 /**
- * Miami Swim Week 2026 — shared schedule data.
+ * EXA's Miami Swim Week 2026 — shared schedule data.
  *
  * Used by both the public sponsor page (/sponsors/miami-swim-week) and the
  * public show landing page (/shows/miami-swim-week-2026) so the week is
@@ -41,7 +41,7 @@ export const MSW_2026_SCHEDULE: MSWScheduleEntry[] = [
     dateNum: "26",
     title: "Opening Show",
     description:
-      "Doors 6pm · Show 7pm · The grand opening runway show of Miami Swim Week 2026.",
+      "Doors 6pm · Show 7pm · The grand opening runway show of EXA's Miami Swim Week 2026.",
     highlight: true,
     badge: null,
   },

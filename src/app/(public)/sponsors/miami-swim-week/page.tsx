@@ -43,13 +43,13 @@ import {
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sponsor Miami Swim Week 2026 | EXA Models",
+  title: "Sponsor EXA's Miami Swim Week 2026 | EXA Models",
   description:
-    "Partner with EXA Models at Miami Swim Week 2026 (May 25–31, The Alexander Hotel, Miami Beach). 600+ models, 7 days, runway shows, casting call sponsorships, activations, gift bags, and more.",
+    "Partner with EXA Models at EXA's Miami Swim Week 2026 (May 25–31, The Alexander Hotel, Miami Beach). 600+ models, 7 days, runway shows, casting call sponsorships, activations, gift bags, and more.",
   openGraph: {
-    title: "Sponsor Miami Swim Week 2026 | EXA Models",
+    title: "Sponsor EXA's Miami Swim Week 2026 | EXA Models",
     description:
-      "Get your brand in front of 300+ curated models and creators, 6 runway shows, and a full-week takeover of The Alexander Hotel at Miami Swim Week 2026. Packages from $2,000 to $45,000.",
+      "Get your brand in front of 300+ curated models and creators, 6 runway shows, and a full-week takeover of The Alexander Hotel at EXA's Miami Swim Week 2026. Packages from $2,000 to $45,000.",
   },
 };
 
@@ -337,7 +337,7 @@ const PACKAGES = [
   {
     id: "presenting",
     name: "Presenting Sponsor",
-    tagline: "Miami Swim Week 2026 Presented by [Your Brand]",
+    tagline: "EXA's Miami Swim Week 2026 Presented by [Your Brand]",
     price: 45000,
     badge: "Only 1 Available",
     badgeGradient: "from-yellow-500 to-amber-500",
@@ -398,7 +398,7 @@ const PACKAGES = [
     color: "from-cyan-500/10 to-blue-500/10",
     icon: <Star className="h-5 w-5 text-cyan-400" />,
     features: [
-      "\u201cOfficial [Category] Partner of Miami Swim Week 2026\u201d \u2014 exclusive to your vertical",
+      "\u201cOfficial [Category] Partner of EXA\u2019s Miami Swim Week 2026\u201d \u2014 exclusive to your vertical",
       "All models use your product for their runway look (beauty, wellness, skincare)",
       "Backstage photo opportunity with full model lineup",
       "Brand activation booth (2 full days)",
@@ -496,9 +496,9 @@ const PACKAGES = [
 
 
 function SponsorContactButton({ packageName, price }: { packageName: string; price: number }) {
-  const subject = encodeURIComponent(`Miami Swim Week 2026 — ${packageName} ($${price.toLocaleString()})`);
+  const subject = encodeURIComponent(`EXA's Miami Swim Week 2026 — ${packageName} ($${price.toLocaleString()})`);
   const body = encodeURIComponent(
-    `Hi Nathan,\n\nI'm interested in the ${packageName} ($${price.toLocaleString()}) for Miami Swim Week 2026.\n\nBrand name: \nWebsite: \nContact name: \n\nLooking forward to hearing from you.`
+    `Hi Nathan,\n\nI'm interested in the ${packageName} ($${price.toLocaleString()}) for EXA's Miami Swim Week 2026.\n\nBrand name: \nWebsite: \nContact name: \n\nLooking forward to hearing from you.`
   );
   return (
     <a
@@ -562,7 +562,7 @@ export default async function SponsorMswPage() {
         <div className="aspect-video relative max-h-[75vh]">
           <iframe
             src="https://www.youtube.com/embed/LRzzpEl7kiU?autoplay=1&mute=1&loop=1&playlist=LRzzpEl7kiU&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
-            title="Miami Swim Week 2026"
+            title="EXA's Miami Swim Week 2026"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             className="absolute inset-0 w-full h-full"
@@ -579,7 +579,7 @@ export default async function SponsorMswPage() {
             Partnership 2026
           </p>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-            Miami Swim Week 2026
+            EXA&apos;s Miami Swim Week 2026
           </h1>
           <div className="flex flex-wrap gap-2 text-white/90">
             <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
@@ -607,7 +607,7 @@ export default async function SponsorMswPage() {
               The pitch
             </p>
             <h2 className="text-3xl md:text-4xl font-bold mb-5">
-              <span className="exa-gradient-text">Position Your Brand at the Center of Miami Swim Week</span>
+              <span className="exa-gradient-text">Position Your Brand at the Center of EXA&apos;s Miami Swim Week</span>
             </h2>
             <p className="text-white/70 text-lg leading-relaxed mb-8">
               A full 7-day takeover of The Alexander Hotel with creators whose audiences range from 5K to 5M. <span className="text-white font-semibold">Six evening runway shows, each featuring global designers and 100+ models on the runway.</span> From a Monday ticketed day party and sunset beach runway to a 120ft yacht and on-site content production all week, your brand is seamlessly integrated into every moment — captured, shared, and distributed across millions of viewers worldwide.
@@ -706,10 +706,10 @@ export default async function SponsorMswPage() {
                   Watch past years
                 </p>
                 <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                  See what EXA Miami Swim Week looks like
+                  See what EXA&apos;s Miami Swim Week looks like
                 </h3>
                 <p className="text-white/70 leading-relaxed mb-4 max-w-2xl">
-                  Full runway shows, backstage content, brand activations, and casting footage from past Miami Swim Weeks. The complete library — 4K, free to watch.
+                  Full runway shows, backstage content, brand activations, and casting footage from past EXA Swim Weeks. The complete library — 4K, free to watch.
                 </p>
                 <div className="flex items-center gap-2 text-white/90 font-semibold group-hover:text-pink-300 transition-colors">
                   <span>Watch at examodels.com/tv</span>
@@ -849,15 +849,15 @@ export default async function SponsorMswPage() {
               Build a Custom Influencer Campaign
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              Don&apos;t see a package that fits? Work directly with our team to build a custom campaign using our confirmed Miami Swim Week models. Choose your deliverables, pick your models, and set your budget.
+              Don&apos;t see a package that fits? Work directly with our team to build a custom campaign using our confirmed EXA&apos;s Miami Swim Week models. Choose your deliverables, pick your models, and set your budget.
             </p>
 
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
               {[
-                { icon: <Camera className="h-5 w-5 text-cyan-400" />, title: "Content Creation", desc: "Reels, TikToks, Stories, and photo content from professional models — shot during Swim Week" },
+                { icon: <Camera className="h-5 w-5 text-cyan-400" />, title: "Content Creation", desc: "Reels, TikToks, Stories, and photo content from professional models — shot during EXA&apos;s Swim Week" },
                 { icon: <Target className="h-5 w-5 text-cyan-400" />, title: "Affiliate & Swipe-Up Links", desc: "Tracked affiliate campaigns with swipe-up links — measure real ROI from model-driven traffic" },
                 { icon: <Megaphone className="h-5 w-5 text-cyan-400" />, title: "Product Reviews & Unboxing", desc: "Authentic product reviews and unboxing content from models your target audience follows" },
-                { icon: <Zap className="h-5 w-5 text-cyan-400" />, title: "Story Takeovers", desc: "Models take over your brand&apos;s Instagram Stories live from Miami Swim Week — real-time engagement" },
+                { icon: <Zap className="h-5 w-5 text-cyan-400" />, title: "Story Takeovers", desc: "Models take over your brand&apos;s Instagram Stories live from EXA&apos;s Miami Swim Week — real-time engagement" },
                 { icon: <Users className="h-5 w-5 text-cyan-400" />, title: "Pick Your Models", desc: "Hand-select models from our confirmed roster based on follower count, aesthetic, niche, or audience demo" },
                 { icon: <ShoppingBag className="h-5 w-5 text-cyan-400" />, title: "Product Seeding", desc: "Get your product into the hands of specific models — they wear it, use it, and post about it organically" },
               ].map((item) => (
@@ -870,7 +870,7 @@ export default async function SponsorMswPage() {
             </div>
 
             <a
-              href="mailto:nathan@examodels.com?subject=Custom%20Influencer%20Campaign%20—%20Miami%20Swim%20Week%202026&body=Hi%20Nathan%2C%0A%0AI%27m%20interested%20in%20building%20a%20custom%20influencer%20campaign%20for%20Miami%20Swim%20Week%202026.%0A%0ABrand%3A%20%0AWebsite%3A%20%0AGoal%3A%20%0ABudget%20range%3A%20%0ADeliverables%20I%27m%20interested%20in%3A%20%0A%0ALooking%20forward%20to%20connecting."
+              href="mailto:nathan@examodels.com?subject=Custom%20Influencer%20Campaign%20—%20EXA%27s%20Miami%20Swim%20Week%202026&body=Hi%20Nathan%2C%0A%0AI%27m%20interested%20in%20building%20a%20custom%20influencer%20campaign%20for%20EXA%27s%20Miami%20Swim%20Week%202026.%0A%0ABrand%3A%20%0AWebsite%3A%20%0AGoal%3A%20%0ABudget%20range%3A%20%0ADeliverables%20I%27m%20interested%20in%3A%20%0A%0ALooking%20forward%20to%20connecting."
               className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold px-8 py-4 rounded-xl transition-all hover:shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02]"
             >
               <Mail className="h-5 w-5" />
@@ -882,10 +882,10 @@ export default async function SponsorMswPage() {
 
 
 
-        {/* Cross-links — Also Participating in Miami Swim Week? */}
+        {/* Cross-links — Also Participating in EXA's Miami Swim Week? */}
         <div className="mb-14">
           <p className="text-center text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
-            Also participating in Miami Swim Week?
+            Also participating in EXA&apos;s Miami Swim Week?
           </p>
           <h3 className="text-center text-xl md:text-2xl font-bold mb-6">
             <span className="exa-gradient-text">Explore the full week</span>
@@ -946,7 +946,7 @@ export default async function SponsorMswPage() {
               </div>
             </div>
             <a
-              href="mailto:nathan@examodels.com?subject=Miami%20Swim%20Week%202026%20—%20Reserve%20My%20Spot&body=Hi%20Nathan%2C%0A%0AI%20want%20to%20secure%20a%20sponsorship%20for%20Miami%20Swim%20Week%202026.%0A%0ABrand%3A%20%0AWebsite%3A%20%0APackage(s)%20of%20interest%3A%20%0ABudget%20range%3A%20%0A%0ALooking%20forward%20to%20connecting."
+              href="mailto:nathan@examodels.com?subject=EXA%27s%20Miami%20Swim%20Week%202026%20—%20Reserve%20My%20Spot&body=Hi%20Nathan%2C%0A%0AI%20want%20to%20secure%20a%20sponsorship%20for%20EXA%27s%20Miami%20Swim%20Week%202026.%0A%0ABrand%3A%20%0AWebsite%3A%20%0APackage(s)%20of%20interest%3A%20%0ABudget%20range%3A%20%0A%0ALooking%20forward%20to%20connecting."
               className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-400 hover:via-orange-400 hover:to-pink-400 text-white font-bold px-8 py-4 rounded-full transition-all shadow-[0_0_24px_rgba(245,158,11,0.5)] hover:shadow-[0_0_32px_rgba(245,158,11,0.7)] active:scale-[0.98]"
             >
               <Mail className="h-5 w-5" />
