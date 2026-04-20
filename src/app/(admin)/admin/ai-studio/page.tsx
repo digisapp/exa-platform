@@ -70,7 +70,14 @@ export default function AdminAIStudioPage() {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem("exa-ai-studio-session");
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          const parsed: StudioSession = JSON.parse(saved);
+          // Prune images with expired temporary URLs (no saved permanent URL)
+          parsed.images = parsed.images.filter(
+            (img) => img.saved_url || !img.url.includes(".x.ai")
+          );
+          return parsed;
+        }
       } catch {}
     }
     return { images: [] };
