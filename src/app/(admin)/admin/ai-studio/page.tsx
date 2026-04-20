@@ -196,6 +196,7 @@ export default function AdminAIStudioPage() {
         aspect_ratio: aspectRatio,
         resolution,
         mode,
+        save_to_storage: true,
       };
 
       if (sourceImageUrl && (mode === "edit" || mode === "style-transfer")) {
@@ -935,6 +936,7 @@ function ImageCard({
 }) {
   const [showActions, setShowActions] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const displayUrl = image.saved_url || image.url;
   const isVideo = image.output_type === "video";
 
@@ -966,6 +968,11 @@ function ImageCard({
               v.currentTime = 0;
             }}
           />
+        ) : imgError ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-white/30">
+            <ImageIcon className="w-8 h-8" />
+            <span className="text-[10px]">Expired</span>
+          </div>
         ) : (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -973,6 +980,7 @@ function ImageCard({
             alt={image.prompt}
             className="w-full h-full object-cover"
             loading="lazy"
+            onError={() => setImgError(true)}
           />
         )}
 
