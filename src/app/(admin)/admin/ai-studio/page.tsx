@@ -70,14 +70,7 @@ export default function AdminAIStudioPage() {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem("exa-ai-studio-session");
-        if (saved) {
-          const parsed: StudioSession = JSON.parse(saved);
-          // Prune images with expired temporary URLs (no saved permanent URL)
-          parsed.images = parsed.images.filter(
-            (img) => img.saved_url || !img.url.includes(".x.ai")
-          );
-          return parsed;
-        }
+        if (saved) return JSON.parse(saved);
       } catch {}
     }
     return { images: [] };
@@ -88,6 +81,42 @@ export default function AdminAIStudioPage() {
       localStorage.setItem("exa-ai-studio-session", JSON.stringify(session));
     } catch {}
   }, [session]);
+
+  // Auto-save any images that don't have a permanent URL yet
+  useEffect(() => {
+    const unsaved = session.images.filter(
+      (img) => !img.saved_url && img.url.includes(".x.ai")
+    );
+    if (unsaved.length === 0) return;
+
+    let cancelled = false;
+    (async () => {
+      for (const img of unsaved) {
+        if (cancelled) break;
+        try {
+          const res = await fetch("/api/admin/ai-studio/video", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ save_url: img.url }),
+          });
+          if (!res.ok) continue;
+          const { saved_url } = await res.json();
+          if (saved_url && !cancelled) {
+            setSession((prev) => ({
+              images: prev.images.map((i) =>
+                i.id === img.id ? { ...i, saved_url } : i
+              ),
+            }));
+          }
+        } catch {
+          // Non-fatal — image may already be expired
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ───── Handlers ─────
   const handleGenerateVideo = useCallback(async () => {
