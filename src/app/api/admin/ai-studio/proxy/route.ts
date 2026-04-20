@@ -32,9 +32,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
   }
 
-  // Only allow proxying from x.ai domains
+  // Only allow proxying from x.ai or supabase storage domains
   const parsed = new URL(url);
-  if (!parsed.hostname.endsWith(".x.ai")) {
+  const allowedDomains = [".x.ai", ".supabase.co"];
+  if (!allowedDomains.some((d) => parsed.hostname.endsWith(d))) {
     return NextResponse.json({ error: "Invalid URL domain" }, { status: 400 });
   }
 

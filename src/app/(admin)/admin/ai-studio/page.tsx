@@ -271,11 +271,21 @@ export default function AdminAIStudioPage() {
 
   const handleDownload = useCallback(async (url: string, filename: string) => {
     try {
-      // Proxy xAI URLs through our API to avoid CORS blocks
-      const fetchUrl = url.includes(".x.ai")
+      // Proxy all external URLs through our API to avoid CORS blocks
+      const isExternal = url.startsWith("http");
+      const fetchUrl = isExternal
         ? `/api/admin/ai-studio/proxy?url=${encodeURIComponent(url)}`
         : url;
       const res = await fetch(fetchUrl);
+      if (!res.ok) {
+        toast.error("Download failed — image may have expired. Try saving to storage first.");
+        return;
+      }
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.startsWith("image/") && !contentType.startsWith("video/") && !contentType.startsWith("application/octet-stream")) {
+        toast.error("Download failed — unexpected response type");
+        return;
+      }
       const blob = await res.blob();
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
