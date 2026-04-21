@@ -21,6 +21,7 @@ import {
   Image as ImageIcon,
   Play,
   Clock,
+  Maximize,
 } from "lucide-react";
 import {
   type GeneratedImage,
@@ -389,6 +390,49 @@ export default function AdminAIStudioPage() {
     setSession((prev) => ({
       images: prev.images.filter((img) => img.id !== id),
     }));
+  }, []);
+
+  const handleUpscale = useCallback(async (image: GeneratedImage, scale: "2x" | "4x") => {
+    const imageUrl = image.saved_url || image.url;
+    toast.info(`Upscaling ${scale}... this may take a moment`);
+
+    try {
+      const res = await fetch("/api/admin/ai-studio/upscale", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_url: imageUrl, scale }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Upscale failed" }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // Add upscaled image as a new entry in the gallery
+      const upscaledImage: GeneratedImage = {
+        id: `${Date.now()}-upscaled`,
+        url: data.saved_url,
+        saved_url: data.saved_url,
+        prompt: `[${scale} upscale] ${image.prompt}`,
+        model: image.model,
+        aspect_ratio: image.aspect_ratio,
+        resolution: scale === "4x" ? "4x" as any : "2x" as any,
+        mode: image.mode,
+        output_type: "image",
+        created_at: new Date().toISOString(),
+        parent_id: image.id,
+      };
+
+      setSession((prev) => ({
+        images: [upscaledImage, ...prev.images].slice(0, MAX_HISTORY),
+      }));
+
+      toast.success(`${scale} upscale complete — print-ready image added to gallery`);
+    } catch (err: any) {
+      toast.error(err.message || "Upscale failed");
+    }
   }, []);
 
   const handleClearHistory = useCallback(() => {
@@ -879,6 +923,7 @@ export default function AdminAIStudioPage() {
                   onEdit={handleEditImage}
                   onSave={handleSaveToStorage}
                   onRemove={handleRemoveImage}
+                  onUpscale={handleUpscale}
                   onStyleTransfer={(stylePrompt) =>
                     handleStyleTransfer(image, stylePrompt)
                   }
@@ -959,6 +1004,7 @@ function ImageCard({
   onEdit,
   onSave,
   onRemove,
+  onUpscale,
   onStyleTransfer,
   onLightbox,
 }: {
@@ -967,11 +1013,13 @@ function ImageCard({
   onEdit: (image: GeneratedImage) => void;
   onSave: (image: GeneratedImage) => void;
   onRemove: (id: string) => void;
+  onUpscale: (image: GeneratedImage, scale: "2x" | "4x") => void;
   onStyleTransfer: (stylePrompt: string) => void;
   onLightbox: () => void;
 }) {
   const [showActions, setShowActions] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [upscaling, setUpscaling] = useState(false);
   const [imgError, setImgError] = useState(false);
   const displayUrl = image.saved_url || image.url;
   const isVideo = image.output_type === "video";
@@ -1087,6 +1135,25 @@ function ImageCard({
                   title="Edit this image"
                 >
                   <Paintbrush className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {!isVideo && (
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    setUpscaling(true);
+                    await onUpscale(image, "4x");
+                    setUpscaling(false);
+                  }}
+                  disabled={upscaling}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-purple-500/30 text-white transition-colors"
+                  title="Upscale 4x (print-ready)"
+                >
+                  {upscaling ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Maximize className="w-3.5 h-3.5" />
+                  )}
                 </button>
               )}
               {!image.saved_url && (
