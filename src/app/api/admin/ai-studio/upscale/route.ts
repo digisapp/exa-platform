@@ -7,7 +7,6 @@ import { z } from "zod";
 export const maxDuration = 120;
 
 const FAL_KEY = process.env.FAL_KEY;
-const UPSCALE_MODEL = "fal-ai/aura-sr";
 
 const requestSchema = z.object({
   image_url: z.string().url(),
@@ -17,7 +16,7 @@ const requestSchema = z.object({
 /**
  * POST /api/admin/ai-studio/upscale
  * Upscales an image using FAL.ai's Aura SR model (up to 4x).
- * Saves the result to Supabase storage and returns the permanent URL.
+ * Uses the queue API for reliability with large images.
  */
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -53,41 +52,48 @@ export async function POST(request: NextRequest) {
   const { image_url, scale } = parsed.data;
 
   try {
-    // Call FAL.ai upscaler
-    const falRes = await fetch(`https://fal.run/${UPSCALE_MODEL}`, {
+    // Use fal.run (synchronous) — simpler for this use case
+    const falRes = await fetch("https://fal.run/fal-ai/aura-sr", {
       method: "POST",
       headers: {
         Authorization: `Key ${FAL_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        image_url,
-        upscale_factor: scale === "4x" ? 4 : 2,
-        overlapping_tiles: true,
-        checkpoint: "v2",
-      }),
+      body: JSON.stringify(
+        scale === "4x"
+          ? { image_url }
+          : { image_url, upscaling_factor: 2 }
+      ),
     });
 
     if (!falRes.ok) {
       const errorText = await falRes.text().catch(() => "Unknown error");
-      console.error("[Upscale] FAL error:", errorText);
+      console.error("[Upscale] FAL error:", falRes.status, errorText);
       return NextResponse.json(
-        { error: `Upscale failed: ${falRes.status}` },
+        { error: `Upscale service error (${falRes.status}): ${errorText.slice(0, 200)}` },
         { status: 502 }
       );
     }
 
     const falData = await falRes.json();
-    const upscaledUrl = falData.image?.url;
+    // aura-sr returns { image: { url, width, height, content_type } }
+    const upscaledUrl = falData?.image?.url;
 
     if (!upscaledUrl) {
-      return NextResponse.json({ error: "No image returned from upscaler" }, { status: 502 });
+      console.error("[Upscale] Unexpected FAL response:", JSON.stringify(falData).slice(0, 500));
+      return NextResponse.json(
+        { error: "No image in upscaler response" },
+        { status: 502 }
+      );
     }
 
     // Download the upscaled image
     const imgRes = await fetch(upscaledUrl);
     if (!imgRes.ok) {
-      return NextResponse.json({ error: "Failed to download upscaled image" }, { status: 502 });
+      return NextResponse.json(
+        { error: `Failed to download upscaled image: ${imgRes.status}` },
+        { status: 502 }
+      );
     }
 
     const contentType = imgRes.headers.get("content-type") || "image/png";
@@ -103,28 +109,25 @@ export async function POST(request: NextRequest) {
 
     if (uploadError) {
       console.error("[Upscale] Storage upload error:", uploadError);
-      return NextResponse.json({ error: "Failed to save upscaled image" }, { status: 500 });
+      return NextResponse.json(
+        { error: `Storage upload failed: ${uploadError.message}` },
+        { status: 500 }
+      );
     }
 
     const {
       data: { publicUrl },
     } = admin.storage.from("portfolio").getPublicUrl(storagePath);
 
-    const savedUrl = `${publicUrl}?v=${Date.now()}`;
-
-    // Get approximate dimensions
-    const dimensions = scale === "4x"
-      ? { note: "4x upscaled (~8192px for 2k source)" }
-      : { note: "2x upscaled (~4096px for 2k source)" };
-
     return NextResponse.json({
-      saved_url: savedUrl,
-      ...dimensions,
+      saved_url: `${publicUrl}?v=${Date.now()}`,
+      width: falData.image.width,
+      height: falData.image.height,
     });
   } catch (error: any) {
-    console.error("[Upscale] Error:", error);
+    console.error("[Upscale] Unexpected error:", error);
     return NextResponse.json(
-      { error: error.message || "Upscale failed" },
+      { error: error.message || "Upscale failed unexpectedly" },
       { status: 500 }
     );
   }

@@ -67,24 +67,29 @@ export default function AdminAIStudioPage() {
   const pollRef = useRef<boolean>(false);
 
   // Session persistence (localStorage)
-  const [session, setSession] = useState<StudioSession>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("exa-ai-studio-session");
-        if (saved) return JSON.parse(saved);
-      } catch {}
-    }
-    return { images: [] };
-  });
+  const [session, setSession] = useState<StudioSession>({ images: [] });
+  const [sessionLoaded, setSessionLoaded] = useState(false);
 
+  // Load from localStorage on mount (avoids hydration mismatch)
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem("exa-ai-studio-session");
+      if (saved) setSession(JSON.parse(saved));
+    } catch {}
+    setSessionLoaded(true);
+  }, []);
+
+  // Persist to localStorage on change (only after initial load)
+  useEffect(() => {
+    if (!sessionLoaded) return;
     try {
       localStorage.setItem("exa-ai-studio-session", JSON.stringify(session));
     } catch {}
-  }, [session]);
+  }, [session, sessionLoaded]);
 
   // Auto-save any images that don't have a permanent URL yet
   useEffect(() => {
+    if (!sessionLoaded) return;
     const unsaved = session.images.filter(
       (img) => !img.saved_url && img.url.includes(".x.ai")
     );
@@ -117,7 +122,7 @@ export default function AdminAIStudioPage() {
 
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sessionLoaded]);
 
   // ───── Handlers ─────
   const handleGenerateVideo = useCallback(async () => {
