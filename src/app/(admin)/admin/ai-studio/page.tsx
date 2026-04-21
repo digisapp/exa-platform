@@ -434,7 +434,8 @@ export default function AdminAIStudioPage() {
         images: [upscaledImage, ...prev.images].slice(0, MAX_HISTORY),
       }));
 
-      toast.success(`${scale} upscale complete — print-ready image added to gallery`);
+      const formatInfo = data.format ? ` (${data.format}, ${data.size_mb}MB)` : "";
+      toast.success(`${scale} upscale complete${formatInfo} — ${data.width}x${data.height}px`);
     } catch (err: any) {
       toast.error(err.message || "Upscale failed");
     }

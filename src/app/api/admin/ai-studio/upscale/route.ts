@@ -147,12 +147,30 @@ export async function POST(request: NextRequest) {
         }
 
         const rawBuffer = Buffer.from(await upscaledRes.arrayBuffer());
-        // Compress to JPEG to stay within storage limits (8192px PNG can be 50-100MB)
-        const buffer = await sharp(rawBuffer)
-          .jpeg({ quality: 92, mozjpeg: true })
+        // Try PNG first (lossless, best for print). Fall back to JPEG 98 if too large.
+        let buffer: Buffer;
+        let upscaledType: string;
+        let storagePath: string;
+        const timestamp = Date.now();
+
+        // Optimize PNG with sharp (strips metadata, applies compression)
+        const pngBuffer = await sharp(rawBuffer)
+          .png({ compressionLevel: 9, effort: 10 })
           .toBuffer();
-        const upscaledType = "image/jpeg";
-        const storagePath = `ai-studio/upscaled-${Date.now()}.jpg`;
+
+        if (pngBuffer.length <= 50 * 1024 * 1024) {
+          // Under 50MB — use PNG (lossless, ideal for fabric printing)
+          buffer = pngBuffer;
+          upscaledType = "image/png";
+          storagePath = `ai-studio/upscaled-${timestamp}.png`;
+        } else {
+          // Over 50MB — compress to JPEG at quality 98 (near-lossless)
+          buffer = await sharp(rawBuffer)
+            .jpeg({ quality: 98, mozjpeg: true })
+            .toBuffer();
+          upscaledType = "image/jpeg";
+          storagePath = `ai-studio/upscaled-${timestamp}.jpg`;
+        }
 
         const admin = createServiceRoleClient();
         const { error: uploadError } = await admin.storage
@@ -175,6 +193,8 @@ export async function POST(request: NextRequest) {
           saved_url: `${publicUrl}?v=${Date.now()}`,
           width: result.image.width,
           height: result.image.height,
+          format: upscaledType === "image/png" ? "PNG (lossless)" : "JPEG 98 (near-lossless)",
+          size_mb: Math.round(buffer.length / 1024 / 1024 * 10) / 10,
         });
       }
 
