@@ -1102,6 +1102,18 @@ function ImageCard({
                 PRO
               </span>
             )}
+            {image.prompt.startsWith("[4x upscale]") && (
+              <span className="px-2 py-0.5 rounded-full bg-purple-500/50 text-[9px] text-white font-semibold backdrop-blur-sm flex items-center gap-1">
+                <Maximize className="w-2.5 h-2.5" />
+                4x PRINT
+              </span>
+            )}
+            {image.prompt.startsWith("[2x upscale]") && (
+              <span className="px-2 py-0.5 rounded-full bg-purple-500/50 text-[9px] text-white font-semibold backdrop-blur-sm flex items-center gap-1">
+                <Maximize className="w-2.5 h-2.5" />
+                2x
+              </span>
+            )}
           </div>
 
           {/* Zoom icon */}
