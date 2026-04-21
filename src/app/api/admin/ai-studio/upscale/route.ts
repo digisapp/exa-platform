@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import sharp from "sharp";
 
 export const maxDuration = 300;
 
@@ -139,16 +140,19 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "No image in upscale result" }, { status: 502 });
         }
 
-        // Step 5: Download upscaled image and save to Supabase storage
+        // Step 5: Download upscaled image, compress to JPEG, save to Supabase
         const upscaledRes = await fetch(upscaledUrl);
         if (!upscaledRes.ok) {
           return NextResponse.json({ error: "Failed to download upscaled image" }, { status: 502 });
         }
 
-        const upscaledType = upscaledRes.headers.get("content-type") || "image/png";
-        const buffer = new Uint8Array(await upscaledRes.arrayBuffer());
-        const ext = upscaledType.includes("png") ? "png" : "jpg";
-        const storagePath = `ai-studio/upscaled-${Date.now()}.${ext}`;
+        const rawBuffer = Buffer.from(await upscaledRes.arrayBuffer());
+        // Compress to JPEG to stay within storage limits (8192px PNG can be 50-100MB)
+        const buffer = await sharp(rawBuffer)
+          .jpeg({ quality: 92, mozjpeg: true })
+          .toBuffer();
+        const upscaledType = "image/jpeg";
+        const storagePath = `ai-studio/upscaled-${Date.now()}.jpg`;
 
         const admin = createServiceRoleClient();
         const { error: uploadError } = await admin.storage
