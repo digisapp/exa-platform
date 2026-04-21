@@ -4,6 +4,8 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
+export const maxDuration = 120;
+
 const FAL_KEY = process.env.FAL_KEY;
 const UPSCALE_MODEL = "fal-ai/aura-sr";
 
@@ -60,7 +62,9 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         image_url,
-        upscaling_factor: scale === "4x" ? 4 : 2,
+        upscale_factor: scale === "4x" ? 4 : 2,
+        overlapping_tiles: true,
+        checkpoint: "v2",
       }),
     });
 
