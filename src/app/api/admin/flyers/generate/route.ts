@@ -3,10 +3,56 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { type FlyerDesignSettings, designToParams } from "@/types/flyer-design";
 
-// Allow up to 5 minutes for large batches (Vercel Pro)
-export const maxDuration = 300;
+export const maxDuration = 120;
 
-const CONCURRENCY = 5;
+const CONCURRENCY = 3;
+
+/**
+ * GET /api/admin/flyers/generate?event_id=xxx
+ * Returns eligible model IDs for flyer generation.
+ */
+export async function GET(request: NextRequest) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: actor } = await (supabase.from("actors") as any)
+    .select("type")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!actor || actor.type !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const eventId = request.nextUrl.searchParams.get("event_id");
+  if (!eventId) return NextResponse.json({ error: "event_id required" }, { status: 400 });
+
+  const admin = createServiceRoleClient();
+
+  const { data: event } = await (admin.from("events") as any)
+    .select("id, name")
+    .eq("id", eventId)
+    .single();
+  if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
+
+  const { data: eventBadge } = await (admin.from("badges") as any)
+    .select("id")
+    .eq("event_id", eventId)
+    .eq("badge_type", "event")
+    .eq("is_active", true)
+    .single();
+  if (!eventBadge) return NextResponse.json({ error: `No event badge for ${event.name}` }, { status: 404 });
+
+  const { data: badgeHolders } = await (admin.from("model_badges") as any)
+    .select("model_id")
+    .eq("badge_id", eventBadge.id);
+
+  const modelIds = (badgeHolders || []).map((b: any) => b.model_id);
+
+  return NextResponse.json({ model_ids: modelIds, total: modelIds.length });
+}
 
 /**
  * POST /api/admin/flyers/generate

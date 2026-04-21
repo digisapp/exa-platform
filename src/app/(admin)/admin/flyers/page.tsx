@@ -220,58 +220,98 @@ export default function AdminFlyersPage() {
     return `/api/admin/flyers/template?${params.toString()}`;
   }, [debouncedSettings, sampleModel]);
 
-  // Generate flyers
+  // Generate flyers in batches to avoid Vercel timeout
+  const BATCH_SIZE = 3;
+
   async function handleGenerate(force = false, testOne = false) {
     if (!selectedEventId) return;
     setGenerating(true);
     setProgress(null);
 
     try {
-      const payload: any = {
-        event_id: selectedEventId,
-        design: designSettings,
-        force,
-        scale: resolution,
-      };
-
-      // For test mode, only generate for the sample model
+      // Test one model
       if (testOne && sampleModel) {
-        payload.model_ids = [sampleModel.id];
-        payload.force = true; // always regenerate the test model
-      }
-
-      const res = await fetch("/api/admin/flyers/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "Failed to generate flyers");
+        const res = await fetch("/api/admin/flyers/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_id: selectedEventId,
+            design: designSettings,
+            model_ids: [sampleModel.id],
+            force: true,
+            scale: resolution,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) { alert(data.error || "Failed to generate flyer"); return; }
+        setProgress({ total: 1, generated: data.generated, skipped: data.skipped, failed: data.failed });
+        await loadFlyers();
         return;
       }
 
+      // Full generate: fetch eligible model IDs first
+      const listRes = await fetch(`/api/admin/flyers/generate?event_id=${selectedEventId}`);
+      const listData = await listRes.json();
+      if (!listRes.ok) { alert(listData.error || "Failed to load models"); return; }
+
+      const allModelIds: string[] = listData.model_ids;
+      if (allModelIds.length === 0) { alert("No eligible models found"); return; }
+
+      let totalGenerated = 0;
+      let totalSkipped = 0;
+      let totalFailed = 0;
+
+      // Process in batches
+      for (let i = 0; i < allModelIds.length; i += BATCH_SIZE) {
+        const batchIds = allModelIds.slice(i, i + BATCH_SIZE);
+
+        setProgress({
+          total: allModelIds.length,
+          generated: totalGenerated,
+          skipped: totalSkipped,
+          failed: totalFailed,
+        });
+
+        const res = await fetch("/api/admin/flyers/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_id: selectedEventId,
+            design: designSettings,
+            model_ids: batchIds,
+            force,
+            scale: resolution,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          totalGenerated += data.generated || 0;
+          totalSkipped += data.skipped || 0;
+          totalFailed += data.failed || 0;
+        } else {
+          totalFailed += batchIds.length;
+        }
+      }
+
       setProgress({
-        total: data.total,
-        generated: data.generated,
-        skipped: data.skipped,
-        failed: data.failed,
+        total: allModelIds.length,
+        generated: totalGenerated,
+        skipped: totalSkipped,
+        failed: totalFailed,
       });
 
-      // Clean up temporary overlay images from storage after successful generation
-      if (!testOne && data.generated > 0) {
+      // Clean up temporary overlay images from storage
+      if (totalGenerated > 0) {
         const overlayPaths = designSettings.overlays
           .map((o) => o.storagePath)
           .filter(Boolean) as string[];
-        if (overlayPaths.length > 0) {
-          for (const path of overlayPaths) {
-            fetch("/api/admin/flyers/overlay", {
-              method: "DELETE",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ storagePath: path }),
-            }).catch(() => {});
-          }
+        for (const path of overlayPaths) {
+          fetch("/api/admin/flyers/overlay", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ storagePath: path }),
+          }).catch(() => {});
         }
       }
 
