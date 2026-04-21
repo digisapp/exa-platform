@@ -914,7 +914,7 @@ export default function AdminAIStudioPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {session.images.map((image) => (
                 <ImageCard
                   key={image.id}
@@ -960,7 +960,7 @@ export default function AdminAIStudioPage() {
               />
             )}
             {/* Prompt display */}
-            <div className="mt-3 max-w-2xl w-full px-4">
+            <div className="mt-3 max-w-3xl w-full px-4 max-h-[12vh] overflow-y-auto">
               <div className="flex items-center gap-2 mb-1">
                 <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-white/50 uppercase tracking-wider">
                   {lightboxImage.model}
@@ -969,7 +969,7 @@ export default function AdminAIStudioPage() {
                   {lightboxImage.aspect_ratio} · {lightboxImage.resolution}
                 </span>
               </div>
-              <p className="text-sm text-white/80 leading-relaxed">
+              <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap break-words">
                 {lightboxImage.prompt}
               </p>
               <button
@@ -1122,20 +1122,20 @@ function ImageCard({
           </div>
 
           {/* Bottom actions */}
-          <div className="absolute bottom-0 left-0 right-0 p-2.5">
-            <p className="text-[10px] text-white/70 line-clamp-2 mb-2">
+          <div className="absolute bottom-0 left-0 right-0 p-3">
+            <p className="text-xs text-white/70 line-clamp-2 mb-2.5">
               {image.prompt}
             </p>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onDownload(displayUrl, `exa-ai-${image.id}.${isVideo ? "mp4" : "png"}`);
                 }}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
                 title="Download"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-4 h-4" />
               </button>
               {!isVideo && (
                 <button
@@ -1143,10 +1143,10 @@ function ImageCard({
                     e.stopPropagation();
                     onEdit(image);
                   }}
-                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
                   title="Edit this image"
                 >
-                  <Paintbrush className="w-3.5 h-3.5" />
+                  <Paintbrush className="w-4 h-4" />
                 </button>
               )}
               {!isVideo && (
@@ -1158,13 +1158,13 @@ function ImageCard({
                     setUpscaling(false);
                   }}
                   disabled={upscaling}
-                  className="p-1.5 rounded-lg bg-white/10 hover:bg-purple-500/30 text-white transition-colors"
+                  className="p-2 rounded-lg bg-white/10 hover:bg-purple-500/30 text-white transition-colors"
                   title="Upscale 4x (print-ready)"
                 >
                   {upscaling ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <Maximize className="w-3.5 h-3.5" />
+                    <Maximize className="w-4 h-4" />
                   )}
                 </button>
               )}
@@ -1175,20 +1175,15 @@ function ImageCard({
                     handleSave();
                   }}
                   disabled={saving}
-                  className="p-1.5 rounded-lg bg-white/10 hover:bg-emerald-500/30 text-white transition-colors"
+                  className="p-2 rounded-lg bg-white/10 hover:bg-emerald-500/30 text-white transition-colors"
                   title="Save to storage"
                 >
                   {saving ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <Save className="w-3.5 h-3.5" />
+                    <Save className="w-4 h-4" />
                   )}
                 </button>
-              )}
-              {image.saved_url && (
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-[9px] text-emerald-400">
-                  Saved
-                </span>
               )}
               <button
                 onClick={(e) => {
@@ -1196,20 +1191,20 @@ function ImageCard({
                   navigator.clipboard.writeText(displayUrl);
                   toast.success("URL copied");
                 }}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
                 title="Copy URL"
               >
-                <Copy className="w-3.5 h-3.5" />
+                <Copy className="w-4 h-4" />
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onRemove(image.id);
                 }}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-red-500/30 text-white transition-colors ml-auto"
-                title="Remove from history"
+                className="p-2 rounded-lg bg-white/10 hover:bg-red-500/30 text-white transition-colors ml-auto"
+                title="Delete"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </div>
