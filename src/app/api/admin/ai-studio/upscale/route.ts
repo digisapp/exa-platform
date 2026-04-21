@@ -4,7 +4,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 const FAL_KEY = process.env.FAL_KEY;
 
@@ -15,8 +15,8 @@ const requestSchema = z.object({
 
 /**
  * POST /api/admin/ai-studio/upscale
- * Upscales an image using FAL.ai's Aura SR model (up to 4x).
- * Uses the queue API for reliability with large images.
+ * Upscales an image using FAL.ai's Aura SR model (4x default).
+ * Uses the queue API to avoid timeout on large images.
  */
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -50,80 +50,117 @@ export async function POST(request: NextRequest) {
   }
 
   const { image_url, scale } = parsed.data;
+  const headers = {
+    Authorization: `Key ${FAL_KEY}`,
+    "Content-Type": "application/json",
+  };
 
   try {
-    // Use fal.run (synchronous) — simpler for this use case
-    const falRes = await fetch("https://fal.run/fal-ai/aura-sr", {
+    // Step 1: Submit to FAL queue
+    const submitRes = await fetch("https://queue.fal.run/fal-ai/aura-sr", {
       method: "POST",
-      headers: {
-        Authorization: `Key ${FAL_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify(
-        scale === "4x"
-          ? { image_url }
-          : { image_url, upscaling_factor: 2 }
+        scale === "4x" ? { image_url } : { image_url, upscaling_factor: 2 }
       ),
     });
 
-    if (!falRes.ok) {
-      const errorText = await falRes.text().catch(() => "Unknown error");
-      console.error("[Upscale] FAL error:", falRes.status, errorText);
+    if (!submitRes.ok) {
+      const errorText = await submitRes.text().catch(() => "Unknown error");
+      console.error("[Upscale] FAL submit error:", submitRes.status, errorText);
       return NextResponse.json(
-        { error: `Upscale service error (${falRes.status}): ${errorText.slice(0, 200)}` },
+        { error: `Upscale submit failed (${submitRes.status}): ${errorText.slice(0, 200)}` },
         { status: 502 }
       );
     }
 
-    const falData = await falRes.json();
-    // aura-sr returns { image: { url, width, height, content_type } }
-    const upscaledUrl = falData?.image?.url;
-
-    if (!upscaledUrl) {
-      console.error("[Upscale] Unexpected FAL response:", JSON.stringify(falData).slice(0, 500));
-      return NextResponse.json(
-        { error: "No image in upscaler response" },
-        { status: 502 }
-      );
+    const { request_id } = await submitRes.json();
+    if (!request_id) {
+      return NextResponse.json({ error: "No request_id from FAL queue" }, { status: 502 });
     }
 
-    // Download the upscaled image
-    const imgRes = await fetch(upscaledUrl);
-    if (!imgRes.ok) {
-      return NextResponse.json(
-        { error: `Failed to download upscaled image: ${imgRes.status}` },
-        { status: 502 }
+    // Step 2: Poll for completion (up to 4 minutes)
+    const maxWait = 240_000;
+    const pollInterval = 3000;
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < maxWait) {
+      await new Promise((r) => setTimeout(r, pollInterval));
+
+      const statusRes = await fetch(
+        `https://queue.fal.run/fal-ai/aura-sr/requests/${request_id}/status`,
+        { headers: { Authorization: `Key ${FAL_KEY}` } }
       );
+
+      if (!statusRes.ok) continue;
+      const status = await statusRes.json();
+
+      if (status.status === "COMPLETED") {
+        // Step 3: Get the result
+        const resultRes = await fetch(
+          `https://queue.fal.run/fal-ai/aura-sr/requests/${request_id}`,
+          { headers: { Authorization: `Key ${FAL_KEY}` } }
+        );
+
+        if (!resultRes.ok) {
+          return NextResponse.json({ error: "Failed to fetch upscale result" }, { status: 502 });
+        }
+
+        const result = await resultRes.json();
+        const upscaledUrl = result?.image?.url;
+
+        if (!upscaledUrl) {
+          console.error("[Upscale] Unexpected result:", JSON.stringify(result).slice(0, 500));
+          return NextResponse.json({ error: "No image in upscale result" }, { status: 502 });
+        }
+
+        // Step 4: Download and save to Supabase storage
+        const imgRes = await fetch(upscaledUrl);
+        if (!imgRes.ok) {
+          return NextResponse.json({ error: "Failed to download upscaled image" }, { status: 502 });
+        }
+
+        const contentType = imgRes.headers.get("content-type") || "image/png";
+        const buffer = new Uint8Array(await imgRes.arrayBuffer());
+        const ext = contentType.includes("png") ? "png" : "jpg";
+        const storagePath = `ai-studio/upscaled-${Date.now()}.${ext}`;
+
+        const admin = createServiceRoleClient();
+        const { error: uploadError } = await admin.storage
+          .from("portfolio")
+          .upload(storagePath, buffer, { contentType, upsert: true });
+
+        if (uploadError) {
+          console.error("[Upscale] Storage error:", uploadError);
+          return NextResponse.json(
+            { error: `Storage upload failed: ${uploadError.message}` },
+            { status: 500 }
+          );
+        }
+
+        const {
+          data: { publicUrl },
+        } = admin.storage.from("portfolio").getPublicUrl(storagePath);
+
+        return NextResponse.json({
+          saved_url: `${publicUrl}?v=${Date.now()}`,
+          width: result.image.width,
+          height: result.image.height,
+        });
+      }
+
+      if (status.status === "FAILED") {
+        console.error("[Upscale] FAL job failed:", status);
+        return NextResponse.json(
+          { error: "Upscale processing failed" },
+          { status: 502 }
+        );
+      }
+
+      // IN_QUEUE or IN_PROGRESS — keep polling
     }
 
-    const contentType = imgRes.headers.get("content-type") || "image/png";
-    const buffer = new Uint8Array(await imgRes.arrayBuffer());
-    const ext = contentType.includes("png") ? "png" : "jpg";
-    const storagePath = `ai-studio/upscaled-${Date.now()}.${ext}`;
-
-    // Save to Supabase storage
-    const admin = createServiceRoleClient();
-    const { error: uploadError } = await admin.storage
-      .from("portfolio")
-      .upload(storagePath, buffer, { contentType, upsert: true });
-
-    if (uploadError) {
-      console.error("[Upscale] Storage upload error:", uploadError);
-      return NextResponse.json(
-        { error: `Storage upload failed: ${uploadError.message}` },
-        { status: 500 }
-      );
-    }
-
-    const {
-      data: { publicUrl },
-    } = admin.storage.from("portfolio").getPublicUrl(storagePath);
-
-    return NextResponse.json({
-      saved_url: `${publicUrl}?v=${Date.now()}`,
-      width: falData.image.width,
-      height: falData.image.height,
-    });
+    return NextResponse.json({ error: "Upscale timed out (4 min)" }, { status: 504 });
   } catch (error: any) {
     console.error("[Upscale] Unexpected error:", error);
     return NextResponse.json(
