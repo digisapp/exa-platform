@@ -1,7 +1,37 @@
 export type XAIImageModel = "grok-imagine-image" | "grok-imagine-image-pro";
 export type XAIVideoModel = "grok-imagine-video";
+export type GPTImageModel = "gpt-image-2";
+
+export type ImageProvider = "xai" | "gpt-image-2";
 
 export type OutputType = "image" | "video";
+
+export type GPTImageQuality = "low" | "medium" | "high";
+
+export type GPTImageSize =
+  | "auto"
+  | "square_hd"
+  | "square"
+  | "portrait_4_3"
+  | "portrait_16_9"
+  | "landscape_4_3"
+  | "landscape_16_9";
+
+export const GPT_IMAGE_SIZES: { value: GPTImageSize; label: string; icon: string }[] = [
+  { value: "auto", label: "Auto", icon: "✦" },
+  { value: "square_hd", label: "Square HD", icon: "◻" },
+  { value: "square", label: "Square", icon: "◻" },
+  { value: "portrait_4_3", label: "Portrait", icon: "▯" },
+  { value: "portrait_16_9", label: "Tall", icon: "▯" },
+  { value: "landscape_4_3", label: "Landscape", icon: "▭" },
+  { value: "landscape_16_9", label: "Wide", icon: "▬" },
+];
+
+export const GPT_IMAGE_QUALITY_OPTIONS: { value: GPTImageQuality; label: string; cost: string }[] = [
+  { value: "low", label: "Low", cost: "$0.01-0.02" },
+  { value: "medium", label: "Medium", cost: "$0.04-0.11" },
+  { value: "high", label: "High", cost: "$0.15-0.41" },
+];
 
 export type AspectRatio =
   | "1:1"
@@ -27,14 +57,16 @@ export interface GeneratedImage {
   url: string;
   saved_url?: string;
   prompt: string;
-  model: XAIImageModel | XAIVideoModel;
-  aspect_ratio: AspectRatio;
-  resolution: Resolution | VideoResolution;
+  model: XAIImageModel | XAIVideoModel | GPTImageModel;
+  aspect_ratio: AspectRatio | GPTImageSize;
+  resolution: Resolution | VideoResolution | GPTImageQuality;
   mode: GenerationMode;
   output_type: OutputType;
   created_at: string;
   parent_id?: string;
   duration?: number;
+  provider?: ImageProvider;
+  quality?: GPTImageQuality;
 }
 
 export interface StudioSession {

@@ -33,10 +33,15 @@ import {
   type OutputType,
   type VideoAspectRatio,
   type VideoResolution,
+  type ImageProvider,
+  type GPTImageQuality,
+  type GPTImageSize,
   EXA_PRESETS,
   ASPECT_RATIOS,
   VIDEO_ASPECT_RATIOS,
   STYLE_TRANSFER_STYLES,
+  GPT_IMAGE_SIZES,
+  GPT_IMAGE_QUALITY_OPTIONS,
 } from "@/types/ai-studio";
 import { toast } from "sonner";
 
@@ -57,6 +62,10 @@ export default function AdminAIStudioPage() {
   const [generating, setGenerating] = useState(false);
   const [videoPolling, setVideoPolling] = useState(false);
   const [videoProgress, setVideoProgress] = useState("");
+  const [provider, setProvider] = useState<ImageProvider>("xai");
+  const [gptQuality, setGptQuality] = useState<GPTImageQuality>("high");
+  const [gptSize, setGptSize] = useState<GPTImageSize>("auto");
+  const [maskImageUrl, setMaskImageUrl] = useState<string | null>(null);
   const [sourceImageUrl, setSourceImageUrl] = useState<string | null>(null);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
@@ -64,6 +73,7 @@ export default function AdminAIStudioPage() {
   const [showPresets, setShowPresets] = useState(true);
   const [showStyleTransfer, setShowStyleTransfer] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const maskInputRef = useRef<HTMLInputElement>(null);
   const pollRef = useRef<boolean>(false);
 
   // Session persistence (localStorage)
@@ -91,7 +101,7 @@ export default function AdminAIStudioPage() {
   useEffect(() => {
     if (!sessionLoaded) return;
     const unsaved = session.images.filter(
-      (img) => !img.saved_url && img.url.includes(".x.ai")
+      (img) => !img.saved_url && (img.url.includes(".x.ai") || img.url.includes(".fal.media"))
     );
     if (unsaved.length === 0) return;
 
@@ -231,25 +241,56 @@ export default function AdminAIStudioPage() {
 
     setGenerating(true);
     try {
-      const body: Record<string, unknown> = {
-        prompt: prompt.trim(),
-        model,
-        n: count,
-        aspect_ratio: aspectRatio,
-        resolution,
-        mode,
-        save_to_storage: true,
-      };
+      let res: Response;
+      let apiModel: string;
 
-      if (sourceImageUrl && (mode === "edit" || mode === "style-transfer")) {
-        body.image_url = sourceImageUrl;
+      if (provider === "gpt-image-2") {
+        // GPT Image 2 via fal
+        const body: Record<string, unknown> = {
+          prompt: prompt.trim(),
+          mode: sourceImageUrl && (mode === "edit" || mode === "style-transfer") ? "edit" : "generate",
+          image_size: gptSize,
+          quality: gptQuality,
+          num_images: count,
+          save_to_storage: true,
+        };
+
+        if (sourceImageUrl && (mode === "edit" || mode === "style-transfer")) {
+          body.image_urls = [sourceImageUrl];
+        }
+        if (maskImageUrl) {
+          body.mask_image_url = maskImageUrl;
+        }
+
+        res = await fetch("/api/admin/ai-studio/gpt-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        apiModel = "gpt-image-2";
+      } else {
+        // xAI Grok (existing)
+        const body: Record<string, unknown> = {
+          prompt: prompt.trim(),
+          model,
+          n: count,
+          aspect_ratio: aspectRatio,
+          resolution,
+          mode,
+          save_to_storage: true,
+        };
+
+        if (sourceImageUrl && (mode === "edit" || mode === "style-transfer")) {
+          body.image_url = sourceImageUrl;
+        }
+
+        res = await fetch("/api/admin/ai-studio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        apiModel = model;
       }
-
-      const res = await fetch("/api/admin/ai-studio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Generation failed" }));
@@ -264,13 +305,15 @@ export default function AdminAIStudioPage() {
           url: img.url,
           saved_url: img.saved_url,
           prompt: prompt.trim(),
-          model,
-          aspect_ratio: aspectRatio,
-          resolution,
+          model: apiModel,
+          aspect_ratio: provider === "gpt-image-2" ? gptSize : aspectRatio,
+          resolution: provider === "gpt-image-2" ? gptQuality : resolution,
           mode,
           output_type: "image" as const,
           created_at: new Date().toISOString(),
           parent_id: selectedImageId || undefined,
+          provider,
+          quality: provider === "gpt-image-2" ? gptQuality : undefined,
         })
       );
 
@@ -284,7 +327,7 @@ export default function AdminAIStudioPage() {
     } finally {
       setGenerating(false);
     }
-  }, [prompt, model, count, aspectRatio, resolution, mode, sourceImageUrl, selectedImageId, outputType, handleGenerateVideo]);
+  }, [prompt, model, count, aspectRatio, resolution, mode, sourceImageUrl, selectedImageId, outputType, handleGenerateVideo, provider, gptQuality, gptSize, maskImageUrl]);
 
   const handleSaveToStorage = useCallback(async (image: GeneratedImage) => {
     try {
@@ -459,9 +502,35 @@ export default function AdminAIStudioPage() {
     setMode("generate");
   }, []);
 
+  const handleMaskUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please upload an image file");
+        return;
+      }
+
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error("Mask must be under 20MB");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        setMaskImageUrl(reader.result as string);
+        toast.success("Mask uploaded — white areas will be edited");
+      };
+      reader.readAsDataURL(file);
+    },
+    []
+  );
+
   const clearSource = useCallback(() => {
     setSourceImageUrl(null);
     setSelectedImageId(null);
+    setMaskImageUrl(null);
     setMode("generate");
   }, []);
 
@@ -487,7 +556,7 @@ export default function AdminAIStudioPage() {
               <span className="exa-gradient-text">AI Design Studio</span>
             </h1>
             <p className="text-sm text-white/50 mt-1">
-              Generate images and videos with Grok AI
+              Generate images and videos with Grok AI &amp; GPT Image 2
             </p>
           </div>
           <Wand2 className="w-10 h-10 text-violet-400/50" />
@@ -551,39 +620,92 @@ export default function AdminAIStudioPage() {
         {/* Image-specific controls */}
         {outputType === "image" && (
           <>
-            {/* Model selector */}
-            <div className="relative">
-              <select
-                value={model}
-                onChange={(e) => setModel(e.target.value as XAIImageModel)}
-                className="appearance-none bg-white/5 border border-white/10 rounded-xl px-3 py-2 pr-8 text-xs text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+            {/* Provider toggle */}
+            <div className="flex items-center rounded-xl bg-white/5 border border-white/10 overflow-hidden">
+              <button
+                onClick={() => setProvider("xai")}
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs transition-all ${
+                  provider === "xai"
+                    ? "bg-violet-500/20 text-violet-400 font-semibold"
+                    : "text-white/50 hover:text-white/70"
+                }`}
               >
-                <option value="grok-imagine-image" className="bg-zinc-900">
-                  Fast ($0.02/img)
-                </option>
-                <option value="grok-imagine-image-pro" className="bg-zinc-900">
-                  Pro ($0.07/img)
-                </option>
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40 pointer-events-none" />
+                Grok
+              </button>
+              <button
+                onClick={() => setProvider("gpt-image-2")}
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs transition-all ${
+                  provider === "gpt-image-2"
+                    ? "bg-emerald-500/20 text-emerald-400 font-semibold"
+                    : "text-white/50 hover:text-white/70"
+                }`}
+              >
+                GPT Image 2
+              </button>
             </div>
 
-            {/* Resolution */}
-            <div className="flex items-center rounded-xl bg-white/5 border border-white/10 overflow-hidden">
-              {(["1k", "2k"] as Resolution[]).map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setResolution(r)}
-                  className={`px-3 py-2 text-xs transition-all ${
-                    resolution === r
-                      ? "bg-violet-500/20 text-violet-400 font-semibold"
-                      : "text-white/50 hover:text-white/70"
-                  }`}
-                >
-                  {r.toUpperCase()}
-                </button>
-              ))}
-            </div>
+            {provider === "xai" ? (
+              <>
+                {/* xAI Model selector */}
+                <div className="relative">
+                  <select
+                    value={model}
+                    onChange={(e) => setModel(e.target.value as XAIImageModel)}
+                    className="appearance-none bg-white/5 border border-white/10 rounded-xl px-3 py-2 pr-8 text-xs text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                  >
+                    <option value="grok-imagine-image" className="bg-zinc-900">
+                      Fast ($0.02/img)
+                    </option>
+                    <option value="grok-imagine-image-pro" className="bg-zinc-900">
+                      Pro ($0.07/img)
+                    </option>
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40 pointer-events-none" />
+                </div>
+
+                {/* Resolution */}
+                <div className="flex items-center rounded-xl bg-white/5 border border-white/10 overflow-hidden">
+                  {(["1k", "2k"] as Resolution[]).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setResolution(r)}
+                      className={`px-3 py-2 text-xs transition-all ${
+                        resolution === r
+                          ? "bg-violet-500/20 text-violet-400 font-semibold"
+                          : "text-white/50 hover:text-white/70"
+                      }`}
+                    >
+                      {r.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* GPT Image 2 Quality selector */}
+                <div className="flex items-center rounded-xl bg-white/5 border border-white/10 overflow-hidden">
+                  {GPT_IMAGE_QUALITY_OPTIONS.map(({ value, label, cost }) => (
+                    <button
+                      key={value}
+                      onClick={() => setGptQuality(value)}
+                      className={`px-3 py-2 text-xs transition-all ${
+                        gptQuality === value
+                          ? "bg-emerald-500/20 text-emerald-400 font-semibold"
+                          : "text-white/50 hover:text-white/70"
+                      }`}
+                      title={cost}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* GPT Image 2 cost estimate */}
+                <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-white/50">
+                  {GPT_IMAGE_QUALITY_OPTIONS.find((q) => q.value === gptQuality)?.cost}/img
+                </div>
+              </>
+            )}
 
             {/* Count */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
@@ -591,9 +713,9 @@ export default function AdminAIStudioPage() {
               <input
                 type="number"
                 min={1}
-                max={10}
+                max={provider === "gpt-image-2" ? 4 : 10}
                 value={count}
-                onChange={(e) => setCount(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
+                onChange={(e) => setCount(Math.min(provider === "gpt-image-2" ? 4 : 10, Math.max(1, parseInt(e.target.value) || 1)))}
                 className="w-10 bg-transparent text-center text-xs text-white border-none focus:outline-none"
               />
             </div>
@@ -755,6 +877,8 @@ export default function AdminAIStudioPage() {
             className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all ${
               outputType === "video"
                 ? "bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600"
+                : provider === "gpt-image-2"
+                ? "bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600"
                 : "bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
             }`}
           >
@@ -791,28 +915,14 @@ export default function AdminAIStudioPage() {
             </div>
           )}
 
-          {/* Aspect Ratio Grid */}
+          {/* Aspect Ratio / Size Grid */}
           <div className="space-y-2">
             <span className="text-[10px] uppercase tracking-wider text-white/40 font-semibold">
-              Aspect Ratio
+              {outputType === "image" && provider === "gpt-image-2" ? "Image Size" : "Aspect Ratio"}
             </span>
             <div className="grid grid-cols-4 gap-1.5">
-              {outputType === "image"
-                ? ASPECT_RATIOS.map(({ value, label, icon }) => (
-                    <button
-                      key={value}
-                      onClick={() => setAspectRatio(value)}
-                      className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg text-xs transition-all ${
-                        aspectRatio === value
-                          ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
-                          : "bg-white/5 text-white/50 border border-transparent hover:bg-white/10"
-                      }`}
-                    >
-                      <span className="text-sm">{icon}</span>
-                      <span className="text-[9px]">{label}</span>
-                    </button>
-                  ))
-                : VIDEO_ASPECT_RATIOS.map(({ value, label, icon }) => (
+              {outputType === "video"
+                ? VIDEO_ASPECT_RATIOS.map(({ value, label, icon }) => (
                     <button
                       key={value}
                       onClick={() => setVideoAspectRatio(value)}
@@ -825,9 +935,79 @@ export default function AdminAIStudioPage() {
                       <span className="text-sm">{icon}</span>
                       <span className="text-[9px]">{label}</span>
                     </button>
+                  ))
+                : provider === "gpt-image-2"
+                ? GPT_IMAGE_SIZES.map(({ value, label, icon }) => (
+                    <button
+                      key={value}
+                      onClick={() => setGptSize(value)}
+                      className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg text-xs transition-all ${
+                        gptSize === value
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                          : "bg-white/5 text-white/50 border border-transparent hover:bg-white/10"
+                      }`}
+                    >
+                      <span className="text-sm">{icon}</span>
+                      <span className="text-[9px]">{label}</span>
+                    </button>
+                  ))
+                : ASPECT_RATIOS.map(({ value, label, icon }) => (
+                    <button
+                      key={value}
+                      onClick={() => setAspectRatio(value)}
+                      className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg text-xs transition-all ${
+                        aspectRatio === value
+                          ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
+                          : "bg-white/5 text-white/50 border border-transparent hover:bg-white/10"
+                      }`}
+                    >
+                      <span className="text-sm">{icon}</span>
+                      <span className="text-[9px]">{label}</span>
+                    </button>
                   ))}
             </div>
           </div>
+
+          {/* Mask Image (GPT Image 2 edit mode only) */}
+          {provider === "gpt-image-2" && (mode === "edit" || mode === "style-transfer") && sourceImageUrl && (
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase tracking-wider text-white/40 font-semibold">
+                Mask (Optional)
+              </span>
+              {maskImageUrl ? (
+                <div className="relative rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-emerald-400">White = edit area</span>
+                    <button
+                      onClick={() => setMaskImageUrl(null)}
+                      className="p-1 rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      <X className="w-3 h-3 text-white/50" />
+                    </button>
+                  </div>
+                  <div className="aspect-square rounded-lg overflow-hidden bg-black/30 max-h-32">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={maskImageUrl} alt="Mask" className="w-full h-full object-contain" />
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => maskInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-white/15 hover:border-emerald-500/40 bg-white/[0.02] hover:bg-emerald-500/5 transition-all cursor-pointer text-xs text-white/40"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Upload mask (white = edit area)
+                </button>
+              )}
+              <input
+                ref={maskInputRef}
+                type="file"
+                accept="image/png"
+                onChange={handleMaskUpload}
+                className="hidden"
+              />
+            </div>
+          )}
 
           {/* EXA Presets */}
           <div className="space-y-2">
@@ -1106,6 +1286,11 @@ function ImageCard({
             {image.model === "grok-imagine-image-pro" && (
               <span className="px-2 py-0.5 rounded-full bg-violet-500/50 text-[9px] text-white font-semibold backdrop-blur-sm">
                 PRO
+              </span>
+            )}
+            {image.model === "gpt-image-2" && (
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/50 text-[9px] text-white font-semibold backdrop-blur-sm">
+                GPT-I2{image.quality ? ` ${image.quality[0].toUpperCase()}` : ""}
               </span>
             )}
             {image.prompt.startsWith("[4x upscale]") && (

@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
   // Only allow proxying from x.ai or supabase storage domains
   const parsed = new URL(url);
-  const allowedDomains = [".x.ai", ".supabase.co"];
+  const allowedDomains = [".x.ai", ".supabase.co", ".fal.media", "fal.media"];
   if (!allowedDomains.some((d) => parsed.hostname.endsWith(d))) {
     return NextResponse.json({ error: "Invalid URL domain" }, { status: 400 });
   }
