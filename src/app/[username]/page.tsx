@@ -33,6 +33,8 @@ import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 import { ViewTracker } from "@/components/profile/ViewTracker";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 import { AdminProfileToolbar } from "@/components/admin/AdminProfileToolbar";
+import { ProfileQRCode } from "@/components/profile/ProfileQRCode";
+import QRCode from "qrcode";
 
 // Use ISR - revalidate every 60 seconds for fresh content without regenerating on every request
 // This dramatically improves performance while keeping data reasonably fresh
@@ -384,6 +386,14 @@ export default async function ModelProfilePage({ params }: Props) {
     }),
     sameAs: socialLinks.map(link => link.url),
   };
+
+  // Generate QR code for desktop scan-to-open
+  const profileUrl = `https://www.examodels.com/${model.username}`;
+  const qrDataUrl = await QRCode.toDataURL(profileUrl, {
+    width: 200,
+    margin: 2,
+    color: { dark: "#ffffff", light: "#09090b" },
+  });
 
   return (
     <>
@@ -929,6 +939,9 @@ export default async function ModelProfilePage({ params }: Props) {
         </div>
       </div>
       </div>
+
+      {/* Desktop QR code for scan-to-open */}
+      <ProfileQRCode qrDataUrl={qrDataUrl} username={model.username} />
 
       {/* Admin floating edit button */}
       {isAdmin && <AdminProfileToolbar modelId={model.id} />}
