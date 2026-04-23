@@ -5,13 +5,15 @@ import { enrichLiveWallAvatars } from "@/lib/live-wall-avatars";
 interface Props {
   actorId: string;
   actorType: string;
+  /** Sidebar mode: fills container height, no collapse toggle */
+  compact?: boolean;
 }
 
 /**
  * Server component wrapper that fetches initial messages + coin balance
  * and renders the LiveWall client component. Drop this into any page.
  */
-export async function LiveWallServer({ actorId, actorType }: Props) {
+export async function LiveWallServer({ actorId, actorType, compact }: Props) {
   const supabase = await createClient();
 
   // Fetch initial messages
@@ -67,6 +69,7 @@ export async function LiveWallServer({ actorId, actorType }: Props) {
     <LiveWall
       initialMessages={messages}
       currentUser={{ actorId, actorType, coinBalance }}
+      compact={compact}
     />
   );
 }

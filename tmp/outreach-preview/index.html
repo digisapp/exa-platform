@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MSW Sponsor Outreach Preview — 3 emails</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #0a0a0a; color: #fff; padding: 40px; max-width: 1100px; margin: 0 auto; }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    .meta { color: #888; font-size: 14px; margin-bottom: 32px; }
+    .subject { color: #ec4899; font-weight: 600; font-size: 13px; margin-top: 8px; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 32px; }
+    .stat { background: #1a1a1a; padding: 16px; border-radius: 12px; }
+    .stat-num { font-size: 22px; font-weight: 800; color: #ec4899; }
+    .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; background: #111; border-radius: 12px; overflow: hidden; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #222; font-size: 13px; }
+    th { background: #1a1a1a; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+    a { color: #a78bfa; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .missing { color: #f59e0b; font-style: italic; }
+    .warning { background: #2a1a0a; border: 1px solid #92400e; padding: 16px; border-radius: 12px; margin-bottom: 24px; color: #fcd34d; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>📧 MSW Sponsor Outreach Preview</h1>
+  <p class="meta">3 emails · filter: <code>status=contacted</code> · click a row to preview the full rendered email</p>
+
+  <div class="warning">⚠️  3 contacts are missing a contact_name — these will say "Hi there" instead of a personalized greeting.</div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">3</div>
+      <div class="stat-label">Emails Previewed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">0</div>
+      <div class="stat-label">With First Name</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">3</div>
+      <div class="stat-label">Missing Name</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">3</div>
+      <div class="stat-label">Categories</div>
+    </div>
+  </div>
+
+  <p class="meta"><strong>Campaign subject:</strong> <span style="color:#ec4899">{{brand_name}} × Miami Swim Week</span></p>
+  <p class="meta"><strong>CTA URL:</strong> <a href="https://www.examodels.com/sponsors/miami-swim-week">https://www.examodels.com/sponsors/miami-swim-week</a></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Brand</th>
+        <th>Contact</th>
+        <th>Email</th>
+        <th>Category</th>
+        <th>Preview</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+            <td>1</td>
+            <td><strong>Tekla</strong></td>
+            <td><span class="missing">(missing)</span></td>
+            <td>press@teklafabrics.com</td>
+            <td>resort_wear</td>
+            <td><a href="./001-tekla.html" target="_blank">Open →</a></td>
+          </tr>
+<tr>
+            <td>2</td>
+            <td><strong>HydraFacial</strong></td>
+            <td><span class="missing">(missing)</span></td>
+            <td>press@hydrafacial.com</td>
+            <td>medspa</td>
+            <td><a href="./002-hydrafacial.html" target="_blank">Open →</a></td>
+          </tr>
+<tr>
+            <td>3</td>
+            <td><strong>Tewimake Hotel</strong></td>
+            <td><span class="missing">(missing)</span></td>
+            <td>info@tewimakehotel.com</td>
+            <td>travel</td>
+            <td><a href="./003-tewimake-hotel.html" target="_blank">Open →</a></td>
+          </tr>
+    </tbody>
+  </table>
+</body>
+</html>

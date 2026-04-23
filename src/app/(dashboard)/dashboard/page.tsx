@@ -38,8 +38,6 @@ import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { ProfilePhotoBanner } from "@/components/dashboard/ProfilePhotoBanner";
-import { DashboardLiveChats } from "@/components/dashboard/DashboardLiveChats";
-import { fetchConversationList } from "@/lib/chat-queries";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 
 // Helper function to format relative time
@@ -572,46 +570,13 @@ export default async function DashboardPage() {
     ? `${model.first_name} ${model.last_name || ""}`.trim()
     : model.username || "Model";
 
-  // ============================================
-  // LIVE CHATS — recent conversations for sidebar
-  // ============================================
-  const { conversations: recentConversations } = await fetchConversationList(
-    supabase,
-    adminClient,
-    actor.id
-  );
-
-  const liveChatItems = recentConversations.slice(0, 12).map((c: any) => {
-    const other = c.otherParticipants?.[0];
-    const name = other?.fan?.display_name
-      || other?.fan?.username
-      || (other?.model ? `${other.model.first_name || ""} ${other.model.last_name || ""}`.trim() || other.model.username : null)
-      || other?.brand?.company_name
-      || "Unknown";
-    const avatar = other?.fan?.avatar_url
-      || other?.model?.profile_photo_url
-      || other?.brand?.logo_url
-      || null;
-
-    return {
-      conversationId: c.conversation_id,
-      name,
-      avatar,
-      lastMessage: c.lastMessage?.content?.slice(0, 60) || null,
-      lastMessageAt: c.lastMessage?.created_at || c.conversation?.updated_at || "",
-      mediaType: c.lastMessage?.media_type || null,
-      unreadCount: c.unread_count || 0,
-      isSystem: c.lastMessage?.is_system || false,
-    };
-  });
-
   return (
     <div className="max-w-7xl mx-auto">
       {/* ══════════════════════════════════════════════════════
           DESKTOP: 2-column layout — main content left, chats right
           MOBILE: single column, chats appear after gigs
          ══════════════════════════════════════════════════════ */}
-      <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-6">
+      <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6">
 
       {/* ── LEFT COLUMN: all dashboard sections ── */}
       <div className="space-y-6">
@@ -753,15 +718,10 @@ export default async function DashboardPage() {
         </aside>
       </section>
 
-      {/* Mobile-only: Live Chats appear here after gigs */}
+      {/* Mobile-only: EXA Live Chat appears here after gigs */}
       <div className="lg:hidden">
-        <DashboardLiveChats chats={liveChatItems} />
+        <LiveWallServer actorId={actor.id} actorType={actor.type} />
       </div>
-
-      {/* ──────────────────────────────────────────────────────
-          EXA Live Wall (kept as standalone section)
-         ────────────────────────────────────────────────────── */}
-      <LiveWallServer actorId={actor.id} actorType={actor.type} />
 
       {/* ──────────────────────────────────────────────────────
           BIDS + GIGS — side by side
@@ -959,9 +919,9 @@ export default async function DashboardPage() {
       <div className="h-2" />
       </div>{/* end left column */}
 
-      {/* ── RIGHT COLUMN: EXA Live Chats (desktop only) ── */}
-      <aside className="hidden lg:block lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)]">
-        <DashboardLiveChats chats={liveChatItems} />
+      {/* ── RIGHT COLUMN: EXA Live Chat (desktop only) ── */}
+      <aside className="hidden lg:block lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)]">
+        <LiveWallServer actorId={actor.id} actorType={actor.type} compact />
       </aside>
 
       </div>{/* end 2-column layout */}

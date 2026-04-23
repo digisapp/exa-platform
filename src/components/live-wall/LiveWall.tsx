@@ -39,6 +39,8 @@ interface CurrentUser {
 interface Props {
   initialMessages: LiveWallMessageData[];
   currentUser: CurrentUser | null;
+  /** Sidebar mode: fills container height, no collapse toggle */
+  compact?: boolean;
 }
 
 // ─── Sound ───────────────────────────────────────────────
@@ -63,7 +65,7 @@ function playChime(ctx: AudioContext) {
   }
 }
 
-export function LiveWall({ initialMessages, currentUser }: Props) {
+export function LiveWall({ initialMessages, currentUser, compact = false }: Props) {
   const [messages, setMessages] = useState<LiveWallMessageData[]>(initialMessages);
   const [isConnected, setIsConnected] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -524,7 +526,7 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
       </Dialog>
 
       {/* ── Inline Live Wall ── */}
-      <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-sm overflow-hidden">
+      <div className={`rounded-2xl border border-white/10 bg-black/40 backdrop-blur-sm overflow-hidden ${compact ? "flex flex-col h-full" : ""}`}>
         {/* Header */}
         <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-white/10 bg-gradient-to-r from-pink-500/[0.03] to-violet-500/[0.03]">
           <button
@@ -560,10 +562,10 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
               )}
             </button>
 
-            {/* Expand/collapse (mobile) */}
+            {/* Expand/collapse (mobile, hidden in compact sidebar) */}
             <button
               onClick={() => setIsExpanded((prev) => !prev)}
-              className="md:hidden text-white/30"
+              className={compact ? "hidden" : "md:hidden text-white/30"}
             >
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />
@@ -575,8 +577,8 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
         </div>
 
         {/* Messages + Input (collapsible) */}
-        {isExpanded && (
-          <>
+        {(isExpanded || compact) && (
+          <div className={compact ? "flex flex-col flex-1 min-h-0" : "contents"}>
             {/* Pinned message (above scroll) */}
             {pinnedMessage && (
               <LiveWallMessage
@@ -608,7 +610,7 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
               <div
                 ref={scrollRef}
                 onScroll={handleScroll}
-                className="overflow-y-auto p-3 space-y-1 h-[380px] md:h-[480px]"
+                className={`overflow-y-auto p-3 space-y-1 ${compact ? "flex-1 min-h-0" : "h-[380px] md:h-[480px]"}`}
               >
                 {messages.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
@@ -672,7 +674,7 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
                 onAuthPrompt={() => setShowAuthDialog(true)}
               />
             )}
-          </>
+          </div>
         )}
       </div>
     </>
