@@ -812,7 +812,6 @@ export default async function DashboardPage() {
                 <Sparkles className="h-4 w-4 text-pink-400" />
                 <h3 className="text-sm font-semibold">Live pulse</h3>
               </div>
-              <Link href="/chats" className="text-xs text-pink-400 hover:text-pink-300">View all</Link>
             </header>
             <div className="p-2 space-y-1">
               {activityFeed.length === 0 ? (
