@@ -180,11 +180,11 @@ export function ProfilePhotoBanner({
   return (
     <>
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
-        <div className="p-4">
+        <div className="p-5 sm:p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xs font-semibold text-white/60 uppercase tracking-wider">
-              Your Photos
+              Profile Pictures
             </h2>
             <Link
               href={`/${username}`}
@@ -200,14 +200,14 @@ export function ProfilePhotoBanner({
             <div className="flex flex-col items-center gap-1.5">
               <button
                 onClick={() => setPickerOpen(true)}
-                className="relative group shrink-0 w-20 h-[100px] sm:w-24 sm:h-[120px] rounded-xl overflow-hidden bg-gradient-to-br from-[#1a0033] to-[#2d1b69] ring-1 ring-white/10 hover:ring-pink-500/50 transition-all"
+                className="relative group shrink-0 w-24 h-[120px] sm:w-32 sm:h-[160px] rounded-xl overflow-hidden bg-gradient-to-br from-[#1a0033] to-[#2d1b69] ring-1 ring-white/10 hover:ring-pink-500/50 transition-all"
               >
                 {heroPhotoUrl ? (
                   <Image
                     src={heroPhotoUrl}
                     alt="Portrait"
                     fill
-                    sizes="96px"
+                    sizes="128px"
                     className="object-cover object-top"
                   />
                 ) : (
@@ -244,12 +244,12 @@ export function ProfilePhotoBanner({
                   <Image
                     src={profilePhotoUrl}
                     alt="Avatar"
-                    width={72}
-                    height={72}
-                    className="w-[72px] h-[72px] rounded-full object-cover ring-2 ring-pink-500/40 group-hover:ring-pink-500 transition-all"
+                    width={96}
+                    height={96}
+                    className="w-[96px] h-[96px] rounded-full object-cover ring-2 ring-pink-500/40 group-hover:ring-pink-500 transition-all"
                   />
                 ) : (
-                  <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-lg font-bold ring-2 ring-white/10">
+                  <div className="w-[96px] h-[96px] rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-xl font-bold ring-2 ring-white/10">
                     {initials}
                   </div>
                 )}

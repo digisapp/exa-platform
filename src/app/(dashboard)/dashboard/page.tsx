@@ -585,38 +585,32 @@ export default async function DashboardPage() {
           portfolioPhotos={portfolioPhotos}
         />
 
-        {/* KPI cards — right column */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-amber-500/40 hover:bg-white/[0.08]">
+        {/* KPI cards — right column, stacked vertically to match Profile Pictures height */}
+        <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+          <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 transition-all hover:border-amber-500/40 hover:bg-white/[0.08] flex items-center gap-4">
             <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-amber-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative">
-              <div className="flex items-center gap-2 text-xs text-white/60">
-                <Coins className="h-3.5 w-3.5 text-amber-400" />
-                <span className="font-medium uppercase tracking-wider">Balance</span>
-              </div>
-              <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">{formatCoins(model.coin_balance || 0)}</p>
+            <div className="relative flex items-center gap-4 w-full">
+              <Coins className="h-5 w-5 text-amber-400 shrink-0" />
+              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Balance</span>
+              <p className="ml-auto text-2xl font-bold tracking-tight">{formatCoins(model.coin_balance || 0)}</p>
             </div>
           </Link>
 
-          <Link href="/analytics" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-emerald-500/40 hover:bg-white/[0.08]">
+          <Link href="/analytics" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 transition-all hover:border-emerald-500/40 hover:bg-white/[0.08] flex items-center gap-4">
             <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-emerald-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative">
-              <div className="flex items-center gap-2 text-xs text-white/60">
-                <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="font-medium uppercase tracking-wider">This Month</span>
-              </div>
-              <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">{formatCoins(thisMonthEarnings)}</p>
+            <div className="relative flex items-center gap-4 w-full">
+              <TrendingUp className="h-5 w-5 text-emerald-400 shrink-0" />
+              <span className="text-xs font-medium uppercase tracking-wider text-white/60">This Month</span>
+              <p className="ml-auto text-2xl font-bold tracking-tight">{formatCoins(thisMonthEarnings)}</p>
             </div>
           </Link>
 
-          <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-pink-500/40 hover:bg-white/[0.08]">
+          <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 transition-all hover:border-pink-500/40 hover:bg-white/[0.08] flex items-center gap-4">
             <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-pink-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative">
-              <div className="flex items-center gap-2 text-xs text-white/60">
-                <Zap className="h-3.5 w-3.5 text-pink-400" />
-                <span className="font-medium uppercase tracking-wider">Tips · 7d</span>
-              </div>
-              <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">{formatCoins(tips7dTotal)}</p>
+            <div className="relative flex items-center gap-4 w-full">
+              <Zap className="h-5 w-5 text-pink-400 shrink-0" />
+              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Tips · 7d</span>
+              <p className="ml-auto text-2xl font-bold tracking-tight">{formatCoins(tips7dTotal)}</p>
             </div>
           </Link>
         </div>
