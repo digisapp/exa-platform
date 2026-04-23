@@ -180,58 +180,54 @@ export function ProfilePhotoBanner({
   return (
     <>
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
-        <div className="p-5">
-          {/* Header label */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-white/70 uppercase tracking-wider">
-              Your Profile
+        <div className="p-4">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-semibold text-white/60 uppercase tracking-wider">
+              Your Photos
             </h2>
             <Link
               href={`/${username}`}
-              className="text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 transition-colors"
+              className="text-[11px] text-pink-400 hover:text-pink-300 flex items-center gap-1 transition-colors"
             >
-              View public profile <ExternalLink className="h-3 w-3" />
+              View profile <ExternalLink className="h-3 w-3" />
             </Link>
           </div>
 
-          {/* Two-panel preview */}
-          <div className="flex items-center gap-5">
+          {/* Portrait + Avatar side by side */}
+          <div className="flex items-center gap-4">
             {/* ── Portrait (hero) preview ── */}
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-1.5">
               <button
                 onClick={() => setPickerOpen(true)}
-                className="relative group shrink-0 w-28 h-36 sm:w-32 sm:h-40 rounded-xl overflow-hidden bg-gradient-to-br from-[#1a0033] to-[#2d1b69] ring-1 ring-white/10 hover:ring-pink-500/50 transition-all"
+                className="relative group shrink-0 w-20 h-[100px] sm:w-24 sm:h-[120px] rounded-xl overflow-hidden bg-gradient-to-br from-[#1a0033] to-[#2d1b69] ring-1 ring-white/10 hover:ring-pink-500/50 transition-all"
               >
                 {heroPhotoUrl ? (
                   <Image
                     src={heroPhotoUrl}
-                    alt="Profile portrait"
+                    alt="Portrait"
                     fill
-                    sizes="128px"
+                    sizes="96px"
                     className="object-cover object-top"
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white/30">
+                    <span className="text-lg font-bold text-white/30">
                       {initials}
                     </span>
                   </div>
                 )}
-                {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="h-5 w-5 text-white mb-1" />
-                  <span className="text-[10px] text-white/80 font-medium">
-                    Change Portrait
-                  </span>
+                  <Camera className="h-4 w-4 text-white" />
                 </div>
               </button>
-              <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">
+              <span className="text-[10px] text-white/40 font-medium">
                 Portrait
               </span>
             </div>
 
             {/* ── Circle avatar ── */}
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-1.5">
               <input
                 ref={avatarInputRef}
                 type="file"
@@ -248,44 +244,26 @@ export function ProfilePhotoBanner({
                   <Image
                     src={profilePhotoUrl}
                     alt="Avatar"
-                    width={80}
-                    height={80}
-                    className="w-20 h-20 rounded-full object-cover ring-2 ring-pink-500/40 group-hover:ring-pink-500 transition-all"
+                    width={72}
+                    height={72}
+                    className="w-[72px] h-[72px] rounded-full object-cover ring-2 ring-pink-500/40 group-hover:ring-pink-500 transition-all"
                   />
                 ) : (
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-xl font-bold ring-2 ring-white/10">
+                  <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-lg font-bold ring-2 ring-white/10">
                     {initials}
                   </div>
                 )}
                 <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   {uploadingAvatar ? (
-                    <Loader2 className="h-5 w-5 text-white animate-spin" />
+                    <Loader2 className="h-4 w-4 text-white animate-spin" />
                   ) : (
-                    <Camera className="h-5 w-5 text-white" />
+                    <Camera className="h-4 w-4 text-white" />
                   )}
                 </div>
               </button>
-              <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">
+              <span className="text-[10px] text-white/40 font-medium">
                 Avatar
               </span>
-            </div>
-
-            {/* ── Info + hints ── */}
-            <div className="flex-1 min-w-0 hidden sm:block">
-              <p className="text-base font-semibold text-white truncate">
-                {displayName}
-              </p>
-              <p className="text-xs text-white/40 mt-0.5">@{username}</p>
-              <div className="mt-3 space-y-1.5">
-                <p className="text-[11px] text-white/50 leading-relaxed">
-                  <span className="text-white/70 font-medium">Portrait</span>{" "}
-                  — tap to choose from your portfolio photos
-                </p>
-                <p className="text-[11px] text-white/50 leading-relaxed">
-                  <span className="text-white/70 font-medium">Avatar</span>{" "}
-                  — your circle picture across the platform
-                </p>
-              </div>
             </div>
           </div>
         </div>

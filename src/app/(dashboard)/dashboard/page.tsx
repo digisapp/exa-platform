@@ -26,16 +26,14 @@ import {
   MessageCircle,
   Gavel,
   Plus,
-  Eye,
   TrendingUp,
   Flame,
   Sparkles,
   Zap,
-  Users,
   Heart,
   Clock,
 } from "lucide-react";
-import { formatCoins, coinsToUsd, formatUsd } from "@/lib/coin-config";
+import { formatCoins } from "@/lib/coin-config";
 import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
@@ -435,7 +433,7 @@ export default async function DashboardPage() {
   // 7-DAY AGGREGATES + TOP TIPPERS
   // ============================================
   const tips7dTotal = (recentTips || []).reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
-  const newFollowers7d = (recentFollowers || []).length;
+
 
   const tipperTotals = new Map<string, number>();
   for (const tip of recentTips || []) {
@@ -575,79 +573,53 @@ export default async function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* ──────────────────────────────────────────────────────
-          PROFILE BANNER — avatar + portrait
+          PROFILE PHOTOS + KPI RAIL (shared row on desktop)
          ────────────────────────────────────────────────────── */}
-      <ProfilePhotoBanner
-        username={model.username || ""}
-        displayName={displayName}
-        profilePhotoUrl={model.profile_photo_url || null}
-        heroPhotoUrl={heroSource?.url ?? model.profile_photo_url ?? null}
-        portfolioPhotos={portfolioPhotos}
-      />
+      <section className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-3">
+        {/* Profile photos — left column */}
+        <ProfilePhotoBanner
+          username={model.username || ""}
+          displayName={displayName}
+          profilePhotoUrl={model.profile_photo_url || null}
+          heroPhotoUrl={heroSource?.url ?? model.profile_photo_url ?? null}
+          portfolioPhotos={portfolioPhotos}
+        />
 
-      {/* ──────────────────────────────────────────────────────
-          KPI RAIL
-         ────────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-amber-500/40 hover:bg-white/[0.08]">
-          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-amber-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Coins className="h-3.5 w-3.5 text-amber-400" />
-              <span className="font-medium uppercase tracking-wider">Balance</span>
+        {/* KPI cards — right column */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-amber-500/40 hover:bg-white/[0.08]">
+            <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-amber-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="flex items-center gap-2 text-xs text-white/60">
+                <Coins className="h-3.5 w-3.5 text-amber-400" />
+                <span className="font-medium uppercase tracking-wider">Balance</span>
+              </div>
+              <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">{formatCoins(model.coin_balance || 0)}</p>
             </div>
-            <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">{formatCoins(model.coin_balance || 0)}</p>
-            <p className="text-xs text-white/50 mt-0.5">{formatUsd(coinsToUsd(model.coin_balance || 0))} · withdrawable</p>
-          </div>
-        </Link>
+          </Link>
 
-        <Link href="/analytics" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-emerald-500/40 hover:bg-white/[0.08]">
-          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-emerald-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
-              <span className="font-medium uppercase tracking-wider">This Month</span>
+          <Link href="/analytics" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-emerald-500/40 hover:bg-white/[0.08]">
+            <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-emerald-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="flex items-center gap-2 text-xs text-white/60">
+                <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+                <span className="font-medium uppercase tracking-wider">This Month</span>
+              </div>
+              <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">{formatCoins(thisMonthEarnings)}</p>
             </div>
-            <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">{formatCoins(thisMonthEarnings)}</p>
-            <p className="text-xs text-white/50 mt-0.5">
-              {monthDeltaPct >= 0 ? (
-                <span className="text-emerald-400 font-semibold">+{monthDeltaPct}%</span>
-              ) : (
-                <span className="text-rose-400 font-semibold">{monthDeltaPct}%</span>
-              )}
-              <span> vs last month</span>
-            </p>
-          </div>
-        </Link>
+          </Link>
 
-        <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-pink-500/40 hover:bg-white/[0.08]">
-          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-pink-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Zap className="h-3.5 w-3.5 text-pink-400" />
-              <span className="font-medium uppercase tracking-wider">Tips · 7d</span>
+          <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-pink-500/40 hover:bg-white/[0.08]">
+            <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-pink-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="flex items-center gap-2 text-xs text-white/60">
+                <Zap className="h-3.5 w-3.5 text-pink-400" />
+                <span className="font-medium uppercase tracking-wider">Tips · 7d</span>
+              </div>
+              <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">{formatCoins(tips7dTotal)}</p>
             </div>
-            <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">{formatCoins(tips7dTotal)}</p>
-            <p className="text-xs text-white/50 mt-0.5">
-              from {tipperTotals.size} {tipperTotals.size === 1 ? "fan" : "fans"}
-            </p>
-          </div>
-        </Link>
-
-        <Link href="/followers" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-cyan-500/40 hover:bg-white/[0.08]">
-          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-cyan-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Users className="h-3.5 w-3.5 text-cyan-400" />
-              <span className="font-medium uppercase tracking-wider">New followers · 7d</span>
-            </div>
-            <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">+{newFollowers7d}</p>
-            <p className="text-xs text-white/50 mt-0.5">
-              <Eye className="inline h-3 w-3 mr-1" />
-              {(model.profile_views || 0).toLocaleString()} profile views
-            </p>
-          </div>
-        </Link>
+          </Link>
+        </div>
       </section>
 
       {/* ──────────────────────────────────────────────────────
