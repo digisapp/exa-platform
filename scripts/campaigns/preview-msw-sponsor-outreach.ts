@@ -53,30 +53,34 @@ const OUT_DIR = join(process.cwd(), "tmp", "outreach-preview");
 // CAMPAIGN CONTENT — edit these to tune the outreach
 // =============================================
 
-const SUBJECT_TEMPLATE =
-  "{{brand_name}} x Miami Swim Week 2026 — partnership invitation";
+const SUBJECT_TEMPLATE = "{{brand_name}} × Miami Swim Week";
 
 const BODY_TEMPLATE = `Hi {{contact_name}},
 
-I'm reaching out because {{brand_name}} feels like a natural fit for what we're producing at Miami Swim Week 2026.
+{{brand_name}} is exactly the type of brand we're aligning with for Miami Swim Week this year.
 
-Quick context: EXA is taking over The Alexander Hotel in Miami Beach from May 25–31 for a full 7-day experience — a ticketed Casting Day Party, six evening runway shows (each featuring global designers and 100+ models), a sunset beach show, a 120ft yacht, and continuous content production the entire week. 300+ curated models and creators will be onsite with audiences ranging from 5K to 5M each.
+We're taking over The Alexander Hotel in Miami Beach for a full 7-day experience — six runway shows, a sunset beach show, yacht activations, and nonstop content production with 300+ curated models and creators on site.
 
-We have sponsorship openings that line up well with {{brand_name}} — from product seeding and backstage integration to official category exclusivity. Category partners lock in before May 1, so I wanted to reach out early.
+Your brand would be featured directly in the hands, content, and audience of hundreds of high-reach creators in real time.
 
-A few ways we typically integrate brands like {{brand_name}}:
+This isn't a typical sponsorship — it's full brand immersion inside the environment where the content is actually created.
 
-– Official Category Partner (exclusive to your vertical)
-– Backstage & activation presence across the week
-– Gift bag + creator seeding (300+ models distributing organically)
-– Custom content packages built around your goals
+A few ways we'd integrate {{brand_name}}:
 
-Worth a quick 20-minute call to walk through it?
+– Official Category Partner (exclusive to your space)
+– Backstage + on-site activations across the week
+– Creator seeding with 300+ models generating organic content
+– Custom content production tied directly to your brand
 
-Full packages, schedule, and past-year content at the link below.
+We're locking category partners before May 1, so timing is key.
 
-Talk soon,
-Nathan`;
+Worth a quick 15–20 min call this week?
+
+Full details + past shows at the link below.
+
+Best,
+Nathan
+EXA Models`;
 
 const CTA_URL = `${BASE_URL}/sponsors/miami-swim-week`;
 const CTA_TEXT = "View Sponsorship Packages";
@@ -120,163 +124,61 @@ function renderSponsorEmailHtml({
     .map((line) =>
       line.trim() === ""
         ? ""
-        : `<p style="margin: 0 0 14px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">${escapeHtml(line)}</p>`,
+        : `<p style="margin: 0 0 16px; color: #1f2937; font-size: 15px; line-height: 1.7;">${escapeHtml(line)}</p>`,
     )
     .join("\n");
 
+  // Light editorial template with EXA brand color accents — pink/violet on clean white.
+  // Renders cleanly in Outlook + Gmail corporate mailboxes.
   return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #050505; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #050505; padding: 40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px;">
-          <tr>
-            <td style="background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 100%); height: 4px; border-radius: 4px 4px 0 0;"></td>
-          </tr>
-          <tr>
-            <td style="background-color: #111111; border-radius: 0 0 16px 16px; padding: 40px 36px;">
-              <p style="margin: 0 0 8px; color: #ec4899; font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;">EXA Models · Exclusive Invitation</p>
-              <h1 style="margin: 0 0 6px; color: #ffffff; font-size: 30px; font-weight: 800; line-height: 1.15;">Miami Swim Week 2026</h1>
-              <p style="margin: 0 0 32px; color: #71717a; font-size: 15px;">May 25–31 &nbsp;·&nbsp; The Alexander Hotel, Miami Beach</p>
-              <div style="height: 1px; background: linear-gradient(90deg, #ec4899, #8b5cf6, transparent); margin-bottom: 28px;"></div>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f7f6f3; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f7f6f3; padding: 40px 20px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 580px; background-color: #ffffff; border: 1px solid #e5e4e0;">
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
-                <tr>
-                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
-                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">300+</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Curated Models</p>
-                  </td>
-                  <td style="width: 6px;"></td>
-                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
-                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">6</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Runway Shows</p>
-                  </td>
-                  <td style="width: 6px;"></td>
-                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
-                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">7 Days</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Hotel Takeover</p>
-                  </td>
-                  <td style="width: 6px;"></td>
-                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
-                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">50M+</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Combined Reach</p>
-                  </td>
-                </tr>
-              </table>
+        <!-- Brand accent bar -->
+        <tr><td style="background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 100%); height: 4px; font-size: 0; line-height: 0;">&nbsp;</td></tr>
 
-              ${htmlBody}
+        <tr><td style="padding: 36px 40px 20px; border-bottom: 1px solid #e5e4e0;">
+          <p style="margin: 0 0 6px; color: #ec4899; font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;">EXA Models · Invitation</p>
+          <h1 style="margin: 0 0 6px; color: #111111; font-size: 28px; font-weight: 400; line-height: 1.2; letter-spacing: -0.3px; font-family: Georgia, 'Times New Roman', serif;">Miami Swim Week 2026</h1>
+          <p style="margin: 0; color: #6b6b6b; font-size: 14px;">May 25–31 &nbsp;·&nbsp; The Alexander Hotel, Miami Beach</p>
+        </td></tr>
 
-              <p style="margin: 24px 0 16px; color: #ffffff; font-size: 15px; font-weight: 700; letter-spacing: 0.3px;">What Your Sponsorship Includes:</p>
+        <tr><td style="padding: 24px 40px; background-color: #fafaf8; border-bottom: 1px solid #e5e4e0;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="text-align: center;"><p style="margin: 0 0 2px; color: #ec4899; font-size: 18px; font-weight: 700;">300+</p><p style="margin: 0; color: #8a8a8a; font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;">Models</p></td>
+              <td style="text-align: center;"><p style="margin: 0 0 2px; color: #ec4899; font-size: 18px; font-weight: 700;">6</p><p style="margin: 0; color: #8a8a8a; font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;">Shows</p></td>
+              <td style="text-align: center;"><p style="margin: 0 0 2px; color: #ec4899; font-size: 18px; font-weight: 700;">7 Days</p><p style="margin: 0; color: #8a8a8a; font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;">Takeover</p></td>
+              <td style="text-align: center;"><p style="margin: 0 0 2px; color: #ec4899; font-size: 18px; font-weight: 700;">50M+</p><p style="margin: 0; color: #8a8a8a; font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;">Reach</p></td>
+            </tr>
+          </table>
+        </td></tr>
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
-                <tr><td style="padding: 14px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #ec4899;">
-                  <table cellpadding="0" cellspacing="0"><tr>
-                    <td style="vertical-align: middle; padding-right: 14px; font-size: 22px; width: 36px;">🎯</td>
-                    <td>
-                      <p style="margin: 0 0 3px; color: #ffffff; font-size: 14px; font-weight: 600;">Brand Placement Across the Week</p>
-                      <p style="margin: 0; color: #71717a; font-size: 13px;">Runway backdrops, signage, digital screens, and step-and-repeats</p>
-                    </td>
-                  </tr></table>
-                </td></tr>
-              </table>
+        <tr><td style="padding: 36px 40px 8px;">
+          ${htmlBody}
+        </td></tr>
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
-                <tr><td style="padding: 14px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #8b5cf6;">
-                  <table cellpadding="0" cellspacing="0"><tr>
-                    <td style="vertical-align: middle; padding-right: 14px; font-size: 22px; width: 36px;">📸</td>
-                    <td>
-                      <p style="margin: 0 0 3px; color: #ffffff; font-size: 14px; font-weight: 600;">Organic Creator Distribution</p>
-                      <p style="margin: 0; color: #71717a; font-size: 13px;">300+ creators posting across the week — full content library with usage rights</p>
-                    </td>
-                  </tr></table>
-                </td></tr>
-              </table>
+        <tr><td style="padding: 12px 40px 36px;" align="left">
+          <a href="${ctaUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; font-weight: 600; font-size: 14px; letter-spacing: 0.3px; border-radius: 6px;">${ctaText} →</a>
+        </td></tr>
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
-                <tr><td style="padding: 14px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #06b6d4;">
-                  <table cellpadding="0" cellspacing="0"><tr>
-                    <td style="vertical-align: middle; padding-right: 14px; font-size: 22px; width: 36px;">🥂</td>
-                    <td>
-                      <p style="margin: 0 0 3px; color: #ffffff; font-size: 14px; font-weight: 600;">Activation Presence</p>
-                      <p style="margin: 0; color: #71717a; font-size: 13px;">Pool deck, backstage, yacht, beach runway — embedded moments, not bolted-on sponsorships</p>
-                    </td>
-                  </tr></table>
-                </td></tr>
-              </table>
+        <tr><td style="padding: 24px 40px 32px; border-top: 1px solid #e5e4e0; background-color: #fafaf8;">
+          <p style="margin: 0 0 6px; color: #111111; font-weight: 600; font-size: 14px;">${escapeHtml(fromName)}</p>
+          <p style="margin: 0 0 14px; color: #6b6b6b; font-size: 13px;">Reply directly to this email to connect.</p>
+          <p style="margin: 0; color: #9a9a9a; font-size: 12px;">
+            <a href="${BASE_URL}" style="color: #ec4899; text-decoration: none;">examodels.com</a> &nbsp;·&nbsp;
+            <a href="${BASE_URL}/tv" style="color: #ec4899; text-decoration: none;">Past shows</a> &nbsp;·&nbsp;
+            <a href="https://instagram.com/examodels" style="color: #ec4899; text-decoration: none;">@examodels</a>
+          </p>
+        </td></tr>
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
-                <tr><td style="padding: 14px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #f59e0b;">
-                  <table cellpadding="0" cellspacing="0"><tr>
-                    <td style="vertical-align: middle; padding-right: 14px; font-size: 22px; width: 36px;">⭐</td>
-                    <td>
-                      <p style="margin: 0 0 3px; color: #ffffff; font-size: 14px; font-weight: 600;">Category Exclusivity Available</p>
-                      <p style="margin: 0; color: #71717a; font-size: 13px;">Only one Official Partner per vertical — locks in before May 1, 2026</p>
-                    </td>
-                  </tr></table>
-                </td></tr>
-              </table>
-
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px; background-color: #0d0d0d; border-radius: 12px; border: 1px solid #262626;">
-                <tr><td style="padding: 20px 20px 16px;">
-                  <p style="margin: 0 0 14px; color: #71717a; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">Sponsorship Packages</p>
-                  <table width="100%" cellpadding="0" cellspacing="0"><tr>
-                    <td style="padding: 10px 8px; background-color: #1a1a1a; border-radius: 8px; text-align: center; width: 25%;">
-                      <p style="margin: 0 0 2px; color: #ec4899; font-size: 17px; font-weight: 800;">$2K</p>
-                      <p style="margin: 0; color: #71717a; font-size: 11px;">Gift Bag</p>
-                    </td>
-                    <td style="width: 6px;"></td>
-                    <td style="padding: 10px 8px; background-color: #1a1a1a; border-radius: 8px; text-align: center; width: 25%;">
-                      <p style="margin: 0 0 2px; color: #ec4899; font-size: 17px; font-weight: 800;">$8K</p>
-                      <p style="margin: 0; color: #71717a; font-size: 11px;">Pool Deck</p>
-                    </td>
-                    <td style="width: 6px;"></td>
-                    <td style="padding: 10px 8px; background-color: #1f0f2e; border-radius: 8px; text-align: center; border: 1px solid #8b5cf6; width: 25%;">
-                      <p style="margin: 0 0 2px; color: #a78bfa; font-size: 17px; font-weight: 800;">$22.5K</p>
-                      <p style="margin: 0; color: #71717a; font-size: 11px;">Category Partner</p>
-                    </td>
-                    <td style="width: 6px;"></td>
-                    <td style="padding: 10px 8px; background-color: #1a1a1a; border-radius: 8px; text-align: center; width: 25%;">
-                      <p style="margin: 0 0 2px; color: #ec4899; font-size: 17px; font-weight: 800;">$45K</p>
-                      <p style="margin: 0; color: #71717a; font-size: 11px;">Presenting</p>
-                    </td>
-                  </tr></table>
-                </td></tr>
-              </table>
-
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 36px;">
-                <tr><td align="center">
-                  <a href="${ctaUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 44px; border-radius: 10px; font-weight: 700; font-size: 16px; letter-spacing: 0.3px;">
-                    ${ctaText}
-                  </a>
-                </td></tr>
-              </table>
-
-              <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #262626; padding-top: 24px;">
-                <tr><td>
-                  <p style="margin: 0 0 4px; color: #ffffff; font-weight: 600; font-size: 14px;">${escapeHtml(fromName)}</p>
-                  <p style="margin: 0 0 10px; color: #71717a; font-size: 13px;">Reply to this email to connect with our team</p>
-                  <p style="margin: 0; color: #71717a; font-size: 12px;">
-                    <a href="${BASE_URL}" style="color: #ec4899; text-decoration: none;">examodels.com</a>
-                    &nbsp;·&nbsp;
-                    <a href="${BASE_URL}/tv" style="color: #ec4899; text-decoration: none;">Watch past shows</a>
-                    &nbsp;·&nbsp;
-                    <a href="https://instagram.com/examodels" style="color: #ec4899; text-decoration: none;">@examodels</a>
-                  </p>
-                </td></tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
+      </table>
+    </td></tr>
   </table>
-</body>
-</html>`;
+</body></html>`;
 }
 
 // =============================================

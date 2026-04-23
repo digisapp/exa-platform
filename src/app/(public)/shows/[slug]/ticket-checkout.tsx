@@ -365,33 +365,7 @@ export function TicketCheckout({
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.15),transparent)] pointer-events-none" />
           <DialogHeader>
             <DialogTitle className="text-left">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="p-1.5 rounded-lg bg-white/20">
-                    <Ticket className="h-4 w-4 text-white" />
-                  </div>
-                  <span className="text-xs font-semibold text-white/75 uppercase tracking-widest">
-                    {selectedDay ? "Choose Your Seat" : "Pick Your Night"}
-                  </span>
-                </div>
-                <span className="text-xl font-bold text-white leading-tight">
-                  {eventName}
-                </span>
-                <div className="flex flex-wrap gap-3 mt-2">
-                  {eventDate && (
-                    <div className="flex items-center gap-1.5 text-white/80 text-sm">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>{eventDate}</span>
-                    </div>
-                  )}
-                  {eventLocation && (
-                    <div className="flex items-center gap-1.5 text-white/80 text-sm">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>{eventLocation}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <span className="text-xl font-bold text-white leading-tight">Tickets</span>
             </DialogTitle>
           </DialogHeader>
         </div>
@@ -399,10 +373,6 @@ export function TicketCheckout({
         {/* STEP 1 — DAY PICKER */}
         {!selectedDay && (
           <div className="p-6 space-y-4">
-            <p className="text-sm text-white/70">
-              Miami Swim Week is a 7-day takeover. Start by picking the night
-              you want to attend.
-            </p>
             <div className="grid sm:grid-cols-2 gap-3">
               {dayKeys.map((key) => {
                 const meta = DAY_META[key] ?? DEFAULT_DAY;
