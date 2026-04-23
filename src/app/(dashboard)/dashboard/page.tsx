@@ -576,14 +576,14 @@ export default async function DashboardPage() {
           DESKTOP: 2-column layout — main content left, chats right
           MOBILE: single column, chats appear after gigs
          ══════════════════════════════════════════════════════ */}
-      <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6">
+      <div className="lg:grid lg:grid-cols-[1fr_420px] lg:gap-6">
 
       {/* ── LEFT COLUMN: all dashboard sections ── */}
       <div className="space-y-6">
       {/* ──────────────────────────────────────────────────────
           PROFILE PHOTOS + KPI RAIL (shared row on desktop)
          ────────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-1 lg:grid-cols-[auto_auto] gap-3">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Profile photos — left column */}
         <ProfilePhotoBanner
           username={model.username || ""}
@@ -594,7 +594,7 @@ export default async function DashboardPage() {
         />
 
         {/* KPI cards — right column, stacked vertically to match Profile Pictures height */}
-        <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 lg:w-[260px]">
+        <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
           <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 transition-all hover:border-amber-500/40 hover:bg-white/[0.08] flex items-center gap-4">
             <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-amber-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-center gap-4 w-full">

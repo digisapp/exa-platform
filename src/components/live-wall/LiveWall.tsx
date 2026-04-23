@@ -606,7 +606,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
             )}
 
             {/* Scrollable message area */}
-            <div className="relative">
+            <div className={`relative ${compact ? "flex-1 min-h-0 flex flex-col" : ""}`}>
               <div
                 ref={scrollRef}
                 onScroll={handleScroll}
@@ -660,20 +660,22 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
               )}
             </div>
 
-            {isFan ? (
-              <div className="border-t border-white/10 px-4 py-3 flex items-center">
-                <div className="flex items-center gap-2 text-white/40 text-sm">
-                  <Eye className="h-4 w-4" />
-                  <span>React & tip to support your favorite models</span>
+            <div className="shrink-0">
+              {isFan ? (
+                <div className="border-t border-white/10 px-4 py-3 flex items-center">
+                  <div className="flex items-center gap-2 text-white/40 text-sm">
+                    <Eye className="h-4 w-4" />
+                    <span>React & tip to support your favorite models</span>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <LiveWallInput
-                isLoggedIn={!!currentUser}
-                onSend={handleSend}
-                onAuthPrompt={() => setShowAuthDialog(true)}
-              />
-            )}
+              ) : (
+                <LiveWallInput
+                  isLoggedIn={!!currentUser}
+                  onSend={handleSend}
+                  onAuthPrompt={() => setShowAuthDialog(true)}
+                />
+              )}
+            </div>
           </div>
         )}
       </div>
