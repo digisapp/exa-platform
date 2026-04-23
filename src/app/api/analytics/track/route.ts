@@ -126,10 +126,21 @@ export async function POST(request: NextRequest) {
     const { createServiceRoleClient } = await import("@/lib/supabase/service");
     const serviceClient = createServiceRoleClient();
 
+    // Resolve model_id from username if not provided directly
+    let resolvedModelId = modelId || null;
+    if (!resolvedModelId && modelUsername) {
+      const { data: modelRow } = await (serviceClient as any)
+        .from("models")
+        .select("id")
+        .ilike("username", modelUsername)
+        .maybeSingle();
+      if (modelRow) resolvedModelId = modelRow.id;
+    }
+
     const { error } = await (serviceClient as any).from("page_views").insert({
       page_path: path,
       page_type: pageType,
-      model_id: modelId || null,
+      model_id: resolvedModelId,
       model_username: modelUsername || null,
       visitor_id: visitorId,
       session_id: sessionId || null,

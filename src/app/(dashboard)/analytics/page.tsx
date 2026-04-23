@@ -391,7 +391,6 @@ export default async function AnalyticsPage() {
         {model.username && (
           <span className="text-pink-400 font-medium">examodels.com/{model.username}</span>
         )}
-        {" "}— or download the QR code above and add it to your stories.
       </div>
     </div>
   );
