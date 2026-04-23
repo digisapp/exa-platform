@@ -39,6 +39,8 @@ import { formatCoins, coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
+import { ProfilePhotoBanner } from "@/components/dashboard/ProfilePhotoBanner";
+import { getHeroPortrait } from "@/lib/hero-portrait";
 
 // Helper function to format relative time
 function getTimeAgo(dateString: string): string {
@@ -105,7 +107,7 @@ export default async function DashboardPage() {
 
   if (!model) redirect("/fan/signup");
 
-  // Stats queries: this month + previous month earnings + bookings (parallel)
+  // Stats queries: this month + previous month earnings + bookings + portfolio photos (parallel)
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
   const twoMonthsAgo = new Date();
@@ -115,6 +117,7 @@ export default async function DashboardPage() {
     { data: monthlyTransactions },
     { data: previousMonthTransactions },
     { data: allBookings },
+    { data: rawPortfolioPhotos },
   ] = await Promise.all([
     (adminClient.from("coin_transactions") as any)
       .select("amount, created_at")
@@ -133,6 +136,15 @@ export default async function DashboardPage() {
       .eq("model_id", model.id)
       .order("created_at", { ascending: false })
       .limit(20),
+    // Portfolio photos for profile banner portrait picker
+    (supabase as any)
+      .from("content_items")
+      .select("id, media_url, media_type, width, height, is_primary, created_at")
+      .eq("model_id", model.id)
+      .eq("status", "portfolio")
+      .eq("media_type", "image")
+      .order("created_at", { ascending: false })
+      .limit(50),
   ]);
 
   const thisMonthEarnings = (monthlyTransactions || []).reduce((sum: number, t: any) => sum + t.amount, 0);
@@ -528,8 +540,51 @@ export default async function DashboardPage() {
 
   inboxItems.sort((a, b) => b.sortKey - a.sortKey);
 
+  // ============================================
+  // PROFILE BANNER — hero portrait + avatar
+  // ============================================
+  const resolveMediaUrl = (url: string) =>
+    url.startsWith("http")
+      ? url
+      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
+
+  const portfolioPhotos = (rawPortfolioPhotos || []).map((p: any) => ({
+    id: p.id as string,
+    url: resolveMediaUrl(p.media_url),
+    width: (p.width ?? null) as number | null,
+    height: (p.height ?? null) as number | null,
+    is_primary: !!p.is_primary,
+  }));
+
+  const heroSource = getHeroPortrait({
+    profilePhotoUrl: model.profile_photo_url ?? null,
+    profilePhotoWidth: model.profile_photo_width ?? null,
+    profilePhotoHeight: model.profile_photo_height ?? null,
+    portfolioPhotos: portfolioPhotos.map((p: any) => ({
+      url: p.url,
+      width: p.width,
+      height: p.height,
+      isPrimary: p.is_primary,
+    })),
+  });
+
+  const displayName = model.first_name
+    ? `${model.first_name} ${model.last_name || ""}`.trim()
+    : model.username || "Model";
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {/* ──────────────────────────────────────────────────────
+          PROFILE BANNER — avatar + portrait
+         ────────────────────────────────────────────────────── */}
+      <ProfilePhotoBanner
+        username={model.username || ""}
+        displayName={displayName}
+        profilePhotoUrl={model.profile_photo_url || null}
+        heroPhotoUrl={heroSource?.url ?? model.profile_photo_url ?? null}
+        portfolioPhotos={portfolioPhotos}
+      />
+
       {/* ──────────────────────────────────────────────────────
           KPI RAIL
          ────────────────────────────────────────────────────── */}
