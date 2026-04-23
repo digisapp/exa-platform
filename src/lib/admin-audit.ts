@@ -58,6 +58,7 @@ export const AdminActions = {
   MODEL_RATING_CHANGED: "model_rating_changed",
   MODEL_CONVERTED_TO_FAN: "model_converted_to_fan",
   MODEL_NEW_FACE_SET: "model_new_face_set",
+  MODEL_PHOTO_UPDATED: "model_photo_updated",
 
   // Fan actions
   FAN_CONVERTED_TO_MODEL: "fan_converted_to_model",

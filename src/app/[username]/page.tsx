@@ -32,6 +32,7 @@ import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons"
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 import { ViewTracker } from "@/components/profile/ViewTracker";
 import { getHeroPortrait } from "@/lib/hero-portrait";
+import { AdminProfileToolbar } from "@/components/admin/AdminProfileToolbar";
 
 // Use ISR - revalidate every 60 seconds for fresh content without regenerating on every request
 // This dramatically improves performance while keeping data reasonably fresh
@@ -928,6 +929,9 @@ export default async function ModelProfilePage({ params }: Props) {
         </div>
       </div>
       </div>
+
+      {/* Admin floating edit button */}
+      {isAdmin && <AdminProfileToolbar modelId={model.id} />}
     </>
   );
 }

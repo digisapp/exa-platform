@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -35,7 +35,10 @@ import {
   Copy,
   Check,
   Pencil,
+  Camera,
+  Upload,
 } from "lucide-react";
+import { ImageCropper } from "@/components/upload/ImageCropper";
 import { toast } from "sonner";
 
 interface ModelDetails {
@@ -195,6 +198,10 @@ export default function AdminModelDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Partial<ModelDetails>>({});
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState("");
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [application, setApplication] = useState<ModelApplication | null>(null);
   const [stats, setStats] = useState<ModelStats>({
     followers_count: 0,
@@ -351,6 +358,53 @@ export default function AdminModelDetailPage() {
   };
 
   const instagramHandle = model.instagram_name;
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropperSrc(reader.result as string);
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setCropperOpen(false);
+    setPhotoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", croppedBlob, "profile-photo.jpg");
+
+      const res = await fetch(`/api/admin/models/${model.id}/photo`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to upload photo");
+      }
+
+      const data = await res.json();
+
+      // Update local state with new photo
+      setModel((prev) => prev ? {
+        ...prev,
+        profile_photo_url: data.url,
+      } : prev);
+
+      toast.success("Profile photo updated");
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to upload photo";
+      toast.error(message);
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
 
   const openEdit = () => {
     setForm({
@@ -512,7 +566,7 @@ export default function AdminModelDetailPage() {
           {/* Profile Photo */}
           <Card>
             <CardContent className="pt-6">
-              <div className="aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+              <div className="relative group aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
                 {profilePhoto ? (
                   <Image
                     src={profilePhoto}
@@ -526,7 +580,45 @@ export default function AdminModelDetailPage() {
                     <User className="h-24 w-24 text-muted-foreground/30" />
                   </div>
                 )}
+                {/* Photo upload overlay */}
+                <div
+                  className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                  onClick={() => photoInputRef.current?.click()}
+                >
+                  {photoUploading ? (
+                    <div className="text-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-white mx-auto" />
+                      <p className="text-white text-sm mt-2">Uploading...</p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Camera className="h-8 w-8 text-white mx-auto" />
+                      <p className="text-white text-sm mt-2">Change Photo</p>
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handlePhotoSelect}
+                  className="hidden"
+                />
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-3"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={photoUploading}
+              >
+                {photoUploading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4 mr-2" />
+                )}
+                {profilePhoto ? "Replace Photo" : "Upload Photo"}
+              </Button>
               {model.admin_rating !== null && (
                 <div className="mt-4 flex items-center justify-center gap-2">
                   <span className="text-sm text-muted-foreground">Admin Rating:</span>
@@ -535,6 +627,16 @@ export default function AdminModelDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Image Cropper Dialog */}
+          <ImageCropper
+            open={cropperOpen}
+            onClose={() => setCropperOpen(false)}
+            imageSrc={cropperSrc}
+            onCropComplete={handleCropComplete}
+            aspectRatio={1}
+            circularCrop={false}
+          />
 
           {/* Contact Info */}
           <Card>
