@@ -419,8 +419,8 @@ export function ProfileContentTabs({
                         sizes={isFeatured ? "(max-width: 640px) 66vw, 40vw" : "(max-width: 640px) 33vw, 20vw"}
                         priority={index < 3}
                       />
-                      {/* Primary badge */}
-                      {photo.is_primary && (
+                      {/* Primary badge (owner only) */}
+                      {isOwner && photo.is_primary && (
                         <div className="absolute top-2 left-2 z-10 px-2 py-0.5 bg-yellow-500/90 text-yellow-950 text-[10px] font-bold rounded-full flex items-center gap-1 backdrop-blur-sm">
                           <Star className="h-2.5 w-2.5 fill-current" />
                           Hero

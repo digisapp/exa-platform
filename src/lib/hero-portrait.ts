@@ -56,20 +56,15 @@ export interface HeroPortraitResult {
 }
 
 export function getHeroPortrait(input: HeroSourceInput): HeroPortraitResult | null {
-  // 1. Model's explicit "Primary" choice — if it meets the minimum resolution,
-  //    always respect the model's pick regardless of orientation or pixel count.
+  // 1. Model's explicit "Primary" choice — always respect the model's pick.
+  //    If they chose it, show it, regardless of resolution or orientation.
   const primary = input.portfolioPhotos.find((p) => p.isPrimary);
-  if (
-    primary &&
-    primary.width !== null &&
-    primary.height !== null &&
-    Math.max(primary.width!, primary.height!) >= MIN_PORTFOLIO_HERO_LONG_EDGE
-  ) {
+  if (primary) {
     return {
       url: primary.url,
       source: "portfolio-high-res",
-      width: primary.width,
-      height: primary.height,
+      width: primary.width ?? null,
+      height: primary.height ?? null,
     };
   }
 
