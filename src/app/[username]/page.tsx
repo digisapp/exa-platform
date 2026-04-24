@@ -478,7 +478,7 @@ export default async function ModelProfilePage({ params }: Props) {
               {/* Full-width compact rows */}
               <div className="space-y-1.5">
                 {liveAuctions.map((auction: any) => {
-                  const coins = auction.current_bid ?? auction.starting_price;
+                  const coins = auction.current_bid || auction.starting_price;
                   const emoji = AUCTION_EMOJI[auction.category] || "💫";
                   return (
                     <Link
