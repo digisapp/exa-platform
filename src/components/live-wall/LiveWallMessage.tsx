@@ -80,7 +80,7 @@ function CoinTipButton({
   disabled,
 }: {
   tipTotal: number;
-  onTip: () => void;
+  onTip: () => Promise<boolean>;
   onSuperTip: () => void;
   displayName: string;
   disabled?: boolean;
@@ -112,24 +112,26 @@ function CoinTipButton({
     }, 500);
   }, [onSuperTip, disabled]);
 
-  const endPress = useCallback(() => {
+  const endPress = useCallback(async () => {
     setIsPressed(false);
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
     if (!didLongPress.current && !disabled) {
-      onTip();
-      // Inline flyup "+1" animation
-      const id = Date.now();
-      setFlyups((prev) => [...prev, id]);
-      setTimeout(() => setFlyups((prev) => prev.filter((f) => f !== id)), 900);
-      // Show "Hold for Super Tip" hint on first 3 taps
-      tapCount.current += 1;
-      if (tapCount.current <= 3) {
-        setShowHint(true);
-        if (hintTimer.current) clearTimeout(hintTimer.current);
-        hintTimer.current = setTimeout(() => setShowHint(false), 5000);
+      // Only animate if the tip was actually initiated (not blocked by balance/state checks)
+      const tipInitiated = await onTip();
+      if (tipInitiated) {
+        const id = Date.now();
+        setFlyups((prev) => [...prev, id]);
+        setTimeout(() => setFlyups((prev) => prev.filter((f) => f !== id)), 900);
+        // Show "Hold for Super Tip" hint on first 3 taps
+        tapCount.current += 1;
+        if (tapCount.current <= 3) {
+          setShowHint(true);
+          if (hintTimer.current) clearTimeout(hintTimer.current);
+          hintTimer.current = setTimeout(() => setShowHint(false), 5000);
+        }
       }
     }
   }, [onTip, disabled]);
@@ -197,7 +199,7 @@ interface Props {
   onReact?: (messageId: string, emoji: string) => void;
   onDelete?: (messageId: string) => void;
   onPin?: (messageId: string, pin: boolean) => void;
-  onTip?: (messageId: string) => void;
+  onTip?: (messageId: string) => Promise<boolean>;
   onSuperTip?: (messageId: string) => void;
   isTipping?: boolean;
   isPinnedDisplay?: boolean;
@@ -391,7 +393,7 @@ export function LiveWallMessage({
             <div className="relative">
               <CoinTipButton
                 tipTotal={message.tip_total || 0}
-                onTip={() => onTip?.(message.id)}
+                onTip={() => onTip?.(message.id) ?? Promise.resolve(false)}
                 onSuperTip={() => onSuperTip?.(message.id)}
                 displayName={message.display_name}
                 disabled={isTipping}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   LiveWallMessage,
@@ -66,6 +67,7 @@ function playChime(ctx: AudioContext) {
 }
 
 export function LiveWall({ initialMessages, currentUser, compact = false }: Props) {
+  const router = useRouter();
   const [messages, setMessages] = useState<LiveWallMessageData[]>(initialMessages);
   const [isConnected, setIsConnected] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -373,6 +375,8 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
         }
 
         setCoinBalance(data.newBalance);
+        // Refresh server components so wallet balance is up to date everywhere
+        router.refresh();
 
         // Optimistic: bump tip_total in local state for instant feedback
         setMessages((prev) =>
@@ -426,13 +430,15 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
   );
 
   // Micro-tip: 1 coin on tap (debounced — waits for API before allowing next tap)
+  // Returns true if the tip was actually initiated (so the caller can play the animation),
+  // false if blocked by a pre-flight check.
   const handleMicroTip = useCallback(
-    async (messageId: string) => {
+    async (messageId: string): Promise<boolean> => {
       if (!currentUser) {
         setShowAuthDialog(true);
-        return;
+        return false;
       }
-      if (isMicroTipping) return;
+      if (isMicroTipping) return false;
       if (coinBalance < 1) {
         toast.error("Not enough coins", {
           action: {
@@ -440,12 +446,14 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
             onClick: () => (window.location.href = "/coins"),
           },
         });
-        return;
+        return false;
       }
       setIsMicroTipping(true);
       setCoinBalance((b) => b - 1);
-      await sendTip(messageId, 1);
-      setIsMicroTipping(false);
+      // Fire-and-forget the API call — return true immediately so the
+      // animation plays without waiting for the network round-trip.
+      sendTip(messageId, 1).finally(() => setIsMicroTipping(false));
+      return true;
     },
     [currentUser, coinBalance, sendTip, isMicroTipping]
   );
