@@ -17,6 +17,8 @@ import {
   Volume2,
   VolumeX,
   ArrowDown,
+  Info,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -79,6 +81,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
   const [tippingMessageId, setTippingMessageId] = useState<string | null>(null);
   const [coinBalance, setCoinBalance] = useState(currentUser?.coinBalance ?? 0);
   const [isMicroTipping, setIsMicroTipping] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const supabaseRef = useRef(createClient());
@@ -537,6 +540,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
       {/* ── Inline Live Wall ── */}
       <div className={`rounded-2xl border border-white/10 bg-black/40 backdrop-blur-sm overflow-hidden ${compact ? "flex flex-col h-full" : ""}`}>
         {/* Header */}
+        <div className="relative">
         <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-white/10 bg-gradient-to-r from-pink-500/[0.03] to-violet-500/[0.03]">
           <button
             onClick={() => setIsExpanded((prev) => !prev)}
@@ -547,6 +551,16 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
             {isConnected && (
               <span className="h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse" />
             )}
+          </button>
+
+          {/* Info toggle */}
+          <button
+            onClick={() => setShowInfo((prev) => !prev)}
+            className={`transition-colors ${showInfo ? "text-pink-400" : "text-white/30 hover:text-white/60"}`}
+            title="How it works"
+            aria-label="How the Live Wall works"
+          >
+            <Info className="h-3.5 w-3.5" />
           </button>
 
           <div className="ml-auto flex items-center gap-3">
@@ -583,6 +597,55 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
               )}
             </button>
           </div>
+        </div>
+
+        {/* Info popover */}
+        {showInfo && (
+          <div className="absolute top-full left-0 right-0 z-50 mx-3 mt-1.5">
+            <div className="rounded-2xl border border-pink-500/20 bg-gradient-to-b from-[#1a1025]/98 to-[#0f0a18]/98 backdrop-blur-xl shadow-2xl shadow-pink-500/10 p-4">
+              {/* Close */}
+              <button
+                onClick={() => setShowInfo(false)}
+                className="absolute top-3 right-3 text-white/30 hover:text-white/60 transition-colors"
+                aria-label="Close"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-base">✨</span>
+                <span className="text-sm font-bold text-white">How the Live Wall works</span>
+              </div>
+
+              <ul className="space-y-2.5 text-[13px] text-white/60 leading-relaxed">
+                <li className="flex items-start gap-2.5">
+                  <span className="text-pink-400 mt-0.5">💬</span>
+                  <span><span className="text-white/80 font-medium">Models post</span> — only models can share messages, photos, and GIFs on the wall.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-amber-400 mt-0.5">🔥</span>
+                  <span><span className="text-white/80 font-medium">React</span> — tap 🔥 ❤️ 👑 on any message to show some love.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-amber-400 mt-0.5">💰</span>
+                  <span><span className="text-white/80 font-medium">Tip coins</span> — tap the 💰 on a message to send 1 coin instantly. Hold it for a bigger tip.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-violet-400 mt-0.5">👑</span>
+                  <span><span className="text-white/80 font-medium">Glow up</span> — messages heat up visually as they earn more tips. Reach 100 coins for legendary status.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-cyan-400 mt-0.5">⚡</span>
+                  <span><span className="text-white/80 font-medium">Live</span> — the wall updates in real time. No refresh needed.</span>
+                </li>
+              </ul>
+
+              <div className="mt-3.5 pt-3 border-t border-white/[0.06] text-[11px] text-white/30 text-center">
+                1 coin = $0.10 · <Link href="/coins" className="text-pink-400/70 hover:text-pink-400 transition-colors" onClick={() => setShowInfo(false)}>Get coins</Link>
+              </div>
+            </div>
+          </div>
+        )}
         </div>
 
         {/* Messages + Input (collapsible) */}
