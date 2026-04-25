@@ -319,7 +319,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* EXA Live Chat */}
+        {/* EXA Live Wall */}
         <section className="container px-8 md:px-16 py-6">
           <LiveWall
             initialMessages={liveWallMessages || []}

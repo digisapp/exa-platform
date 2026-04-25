@@ -497,7 +497,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
               <MessageSquare className="h-5 w-5 text-pink-500" /> Join the conversation
             </DialogTitle>
             <DialogDescription className="text-muted-foreground text-center">
-              Sign in or create an account to chat on EXA Live Chat
+              Sign in or create an account to post on EXA Live Wall
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3 pt-2">
@@ -542,7 +542,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
             className="flex items-center gap-2.5 md:cursor-default"
           >
             <MessageSquare className="h-5 w-5 text-pink-400" />
-            <span className="text-base font-bold text-white">EXA Live Chat</span>
+            <span className="text-base font-bold text-white">EXA Live Wall</span>
             {isConnected && (
               <span className="h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse" />
             )}

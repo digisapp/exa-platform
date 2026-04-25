@@ -718,7 +718,7 @@ export default async function DashboardPage() {
         </aside>
       </section>
 
-      {/* Mobile-only: EXA Live Chat appears here after gigs */}
+      {/* Mobile-only: EXA Live Wall appears here after gigs */}
       <div className="lg:hidden">
         <LiveWallServer actorId={actor.id} actorType={actor.type} />
       </div>
@@ -918,7 +918,7 @@ export default async function DashboardPage() {
       <div className="h-2" />
       </div>{/* end left column */}
 
-      {/* ── RIGHT COLUMN: EXA Live Chat (desktop only) ── */}
+      {/* ── RIGHT COLUMN: EXA Live Wall (desktop only) ── */}
       <aside className="hidden lg:block lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)]">
         <LiveWallServer actorId={actor.id} actorType={actor.type} compact />
       </aside>
