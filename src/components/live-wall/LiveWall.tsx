@@ -17,7 +17,6 @@ import {
   Volume2,
   VolumeX,
   ArrowDown,
-  Info,
   X,
 } from "lucide-react";
 import {
@@ -556,11 +555,14 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
           {/* Info toggle */}
           <button
             onClick={() => setShowInfo((prev) => !prev)}
-            className={`transition-colors ${showInfo ? "text-pink-400" : "text-white/30 hover:text-white/60"}`}
             title="How it works"
             aria-label="How the Live Wall works"
           >
-            <Info className="h-3.5 w-3.5" />
+            <span className={`flex items-center justify-center h-4 w-4 rounded-full border text-[10px] font-bold italic transition-all ${
+              showInfo
+                ? "border-pink-500/60 bg-pink-500/20 text-pink-400"
+                : "border-white/20 text-white/40 hover:border-pink-500/40 hover:text-pink-400"
+            }`}>i</span>
           </button>
 
           <div className="ml-auto flex items-center gap-3">
