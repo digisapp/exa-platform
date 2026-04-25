@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -12,6 +13,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Home,
   Users,
@@ -34,12 +40,14 @@ import {
   ArrowUpRight,
   CircleDollarSign,
   Bell,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 import { useTranslation } from "@/i18n";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
+import { COIN_PACKAGES } from "@/lib/stripe-config";
 
 interface NavbarProps {
   user?: {
@@ -73,6 +81,24 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
   const coinBalanceContext = useCoinBalanceOptional();
   const coinBalance = coinBalanceContext?.balance ?? 0;
   const { t } = useTranslation();
+  const [purchasing, setPurchasing] = useState<number | null>(null);
+
+  const handleCoinPurchase = async (coins: number) => {
+    setPurchasing(coins);
+    try {
+      const response = await fetch("/api/coins/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coins }),
+      });
+      const data = await response.json();
+      if (data.url) window.location.href = data.url;
+    } catch {
+      // silent
+    } finally {
+      setPurchasing(null);
+    }
+  };
 
   // Notification destination by actor type
   // Models: dashboard's Priority Inbox shows offers/bookings/auctions
@@ -181,71 +207,68 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
             <>
               {/* ───────── Wallet / Earnings pill ───────── */}
               {isCreator ? (
-                // Creators: "ready to withdraw" — emerald→pink gradient, USD primary
+                // Creators: coins primary — click to /wallet to see USD/withdraw
                 <Link
                   href="/wallet"
                   className="group flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-gradient-to-r from-emerald-500/15 to-pink-500/15 border border-emerald-500/30 hover:border-emerald-500/60 hover:from-emerald-500/25 hover:to-pink-500/25 transition-all shadow-[0_0_12px_rgba(52,211,153,0.15)] hover:shadow-[0_0_20px_rgba(52,211,153,0.35)]"
                 >
-                  <CircleDollarSign className="h-4 w-4 text-emerald-400" />
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-sm font-bold text-white">
-                      {formatUsd(usdValue)}
-                    </span>
-                    <span className="hidden sm:inline text-[10px] text-white/40 font-medium">
-                      {coinBalance.toLocaleString()}c
-                    </span>
-                  </div>
+                  <Coins className="h-4 w-4 text-emerald-400" />
+                  <span className="text-sm font-bold text-white">
+                    {coinBalance.toLocaleString()}
+                  </span>
                   <ArrowUpRight className="hidden md:inline h-3 w-3 text-emerald-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                 </Link>
               ) : actorType === "fan" ? (
-                // Fans: "coins to spend" — keep amber palette but improve dropdown
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                // Fans: coins pill → inline buy popover (no redirect to /wallet)
+                <Popover>
+                  <PopoverTrigger asChild>
                     <button className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-gradient-to-r from-amber-500/15 to-orange-500/15 border border-amber-500/30 hover:border-amber-500/60 hover:from-amber-500/25 hover:to-orange-500/25 transition-all shadow-[0_0_12px_rgba(245,158,11,0.15)] hover:shadow-[0_0_20px_rgba(245,158,11,0.35)]">
                       <Coins className="h-4 w-4 text-amber-400" />
                       <span className="text-sm font-bold text-white">
                         {coinBalance.toLocaleString()}
                       </span>
-                      <span className="hidden sm:inline text-[10px] text-white/40 font-medium">
-                        {formatUsd(usdValue)}
-                      </span>
                     </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
+                  </PopoverTrigger>
+                  <PopoverContent
                     align="end"
-                    className={cn(DROPDOWN_GLASS_CLASS, "w-56")}
+                    className="w-64 p-3 bg-[#120a24]/95 backdrop-blur-xl border-violet-500/30 text-white shadow-2xl shadow-violet-500/10"
                   >
-                    <div className="px-3 py-3 text-center rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 mb-1">
-                      <p className="text-[10px] uppercase tracking-wider text-white/50">
-                        {t.nav.availableBalance}
-                      </p>
-                      <p className="mt-1 text-2xl font-bold text-amber-300">
-                        {coinBalance.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-white/50 mt-0.5">
-                        {formatUsd(usdValue)}
-                      </p>
+                    {/* Balance header */}
+                    <div className="flex items-center justify-between mb-3 px-1">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-white/40">{t.nav.availableBalance}</p>
+                        <p className="text-xl font-bold text-amber-300 leading-tight">{coinBalance.toLocaleString()} <span className="text-xs font-normal text-white/40">coins</span></p>
+                        <p className="text-xs text-white/40">{formatUsd(usdValue)}</p>
+                      </div>
+                      <Coins className="h-7 w-7 text-amber-400/40" />
                     </div>
-                    <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
-                      <Link href="/wallet?amount=100" className="w-full">
-                        <Plus className="mr-2 h-4 w-4 text-amber-400" />
-                        {t.nav.topUpCoins.replace("{amount}", "100")}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
-                      <Link href="/wallet?amount=500" className="w-full">
-                        <Plus className="mr-2 h-4 w-4 text-amber-400" />
-                        {t.nav.topUpCoins.replace("{amount}", "500")}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
-                      <Link href="/wallet" className="w-full">
-                        <Coins className="mr-2 h-4 w-4 text-amber-400" />
-                        {t.nav.buyCoins}
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    {/* Coin packages */}
+                    <div className="space-y-1">
+                      {COIN_PACKAGES.map((pack) => (
+                        <button
+                          key={pack.coins}
+                          onClick={() => handleCoinPurchase(pack.coins)}
+                          disabled={purchasing !== null}
+                          className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-white/8 transition-colors group disabled:opacity-60"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Coins className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                            <span className="text-sm font-semibold text-white">{pack.coins.toLocaleString()}</span>
+                            <span className="text-[10px] text-white/40">coins</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-amber-300">{pack.priceDisplay}</span>
+                            {purchasing === pack.coins ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-amber-400" />
+                            ) : (
+                              <span className="text-[10px] text-white/30 group-hover:text-amber-400 transition-colors">Buy →</span>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               ) : (
                 // Brands: coin balance — cyan accent to match brand nav color
                 <Link
@@ -255,9 +278,6 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                   <Coins className="h-4 w-4 text-cyan-400" />
                   <span className="text-sm font-bold text-white">
                     {coinBalance.toLocaleString()}
-                  </span>
-                  <span className="hidden sm:inline text-[10px] text-white/40 font-medium">
-                    {formatUsd(usdValue)}
                   </span>
                 </Link>
               )}
