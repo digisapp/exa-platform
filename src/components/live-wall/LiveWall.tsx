@@ -558,10 +558,10 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
             title="How it works"
             aria-label="How the Live Wall works"
           >
-            <span className={`flex items-center justify-center h-4 w-4 rounded-full border text-[10px] font-bold italic transition-all ${
+            <span className={`flex items-center justify-center h-[18px] w-[18px] rounded-full border text-[11px] font-extrabold italic transition-all duration-200 ${
               showInfo
-                ? "border-pink-500/60 bg-pink-500/20 text-pink-400"
-                : "border-white/20 text-white/40 hover:border-pink-500/40 hover:text-pink-400"
+                ? "border-pink-500 bg-gradient-to-br from-pink-500 to-violet-500 text-white shadow-[0_0_10px_rgba(236,72,153,0.6)]"
+                : "border-pink-500/40 bg-pink-500/10 text-pink-400 hover:border-pink-500 hover:bg-gradient-to-br hover:from-pink-500 hover:to-violet-500 hover:text-white hover:shadow-[0_0_10px_rgba(236,72,153,0.5)]"
             }`}>i</span>
           </button>
 
