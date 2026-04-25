@@ -599,7 +599,7 @@ export default async function DashboardPage() {
             <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-amber-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-center gap-4 w-full">
               <Coins className="h-5 w-5 text-amber-400 shrink-0" />
-              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Balance</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Coins</span>
               <p className="ml-auto text-2xl font-bold tracking-tight">{formatCoins(model.coin_balance || 0)}</p>
             </div>
           </Link>
@@ -608,7 +608,7 @@ export default async function DashboardPage() {
             <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-emerald-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-center gap-4 w-full">
               <TrendingUp className="h-5 w-5 text-emerald-400 shrink-0" />
-              <span className="text-xs font-medium uppercase tracking-wider text-white/60">This Month</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Views</span>
               <p className="ml-auto text-2xl font-bold tracking-tight">{formatCoins(thisMonthEarnings)}</p>
             </div>
           </Link>
@@ -617,7 +617,7 @@ export default async function DashboardPage() {
             <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-pink-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-center gap-4 w-full">
               <Zap className="h-5 w-5 text-pink-400 shrink-0" />
-              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Tips · 7d</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Tips</span>
               <p className="ml-auto text-2xl font-bold tracking-tight">{formatCoins(tips7dTotal)}</p>
             </div>
           </Link>
