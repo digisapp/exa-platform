@@ -60,10 +60,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
 
-    // Fans can react and tip but not post messages
-    if (actor.type === "fan") {
+    // Fans and brands can react and tip but not post messages
+    if (actor.type === "fan" || actor.type === "brand") {
       return NextResponse.json(
-        { error: "Fans cannot post messages on the live wall" },
+        { error: "Only models can post messages on the live wall" },
         { status: 403 }
       );
     }

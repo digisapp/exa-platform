@@ -481,7 +481,8 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
   );
 
   const isAdmin = currentUser?.actorType === "admin";
-  const isFan = currentUser?.actorType === "fan";
+  // Fans and brands can react + tip but cannot post
+  const isViewOnly = currentUser?.actorType === "fan" || currentUser?.actorType === "brand";
   const pinnedMessage = messages.find((m) => m.is_pinned);
   const tippingMessage = tippingMessageId
     ? messages.find((m) => m.id === tippingMessageId)
@@ -623,7 +624,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
                 {messages.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
                     <p className="text-sm text-white/30">
-                      {isFan ? "No messages yet. Stay tuned!" : "No messages yet. Be the first!"}
+                      {isViewOnly ? "No messages yet. Stay tuned!" : "No messages yet. Be the first!"}
                     </p>
                   </div>
                 ) : (
@@ -669,7 +670,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
             </div>
 
             <div className="shrink-0">
-              {isFan ? (
+              {isViewOnly ? (
                 <div className="border-t border-white/10 px-4 py-3 flex items-center">
                   <div className="flex items-center gap-2 text-white/40 text-sm">
                     <Eye className="h-4 w-4" />
