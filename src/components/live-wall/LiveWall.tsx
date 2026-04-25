@@ -634,16 +634,18 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-violet-400 mt-0.5">👑</span>
-                  <span><span className="text-white/80 font-medium">Glow up</span> — messages heat up visually as they earn more tips. Reach 100 coins for legendary status.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-cyan-400 mt-0.5">⚡</span>
-                  <span><span className="text-white/80 font-medium">Live</span> — the wall updates in real time. No refresh needed.</span>
+                  <span><span className="text-white/80 font-medium">Glow up</span> — messages heat up visually as they earn more tips.</span>
                 </li>
               </ul>
 
-              <div className="mt-3.5 pt-3 border-t border-white/[0.06] text-[11px] text-white/30 text-center">
-                1 coin = $0.10 · <Link href="/coins" className="text-pink-400/70 hover:text-pink-400 transition-colors" onClick={() => setShowInfo(false)}>Get coins</Link>
+              <div className="mt-3.5 pt-3 border-t border-white/[0.06]">
+                <Link
+                  href="/coins"
+                  onClick={() => setShowInfo(false)}
+                  className="flex items-center justify-center gap-2 w-full rounded-full py-2 px-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white text-xs font-semibold shadow-lg shadow-pink-500/20 hover:shadow-pink-500/30 transition-all"
+                >
+                  <span>🪙</span> Buy Coins
+                </Link>
               </div>
             </div>
           </div>
