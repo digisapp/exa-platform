@@ -17,7 +17,6 @@ import {
 import { format } from "date-fns";
 import type { Metadata } from "next";
 import { WorkshopCheckout } from "./workshop-checkout";
-import { CoachingProgramSection } from "./coaching-program-section";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -144,17 +143,6 @@ export default async function WorkshopPage({ params }: Props) {
     : profileData?.first_name
       ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
       : profileData?.username || undefined;
-
-  // Fetch coaching program if this is the runway-workshop page
-  let coachingWorkshopId: string | null = null;
-  if (slug === "runway-workshop") {
-    const { data: coachingData } = await (supabase as any)
-      .from("workshops")
-      .select("id")
-      .eq("slug", "3-month-runway-coaching")
-      .single() as { data: { id: string } | null };
-    coachingWorkshopId = coachingData?.id ?? null;
-  }
 
   // Calculate availability
   const spotsLeft = workshop.spots_available
@@ -364,11 +352,6 @@ export default async function WorkshopPage({ params }: Props) {
                 </div>
               )}
 
-              {/* 3-Month Coaching Program info (runway-workshop only) */}
-              {coachingWorkshopId && (
-                <CoachingProgramSection />
-              )}
-
               {/* Gallery */}
               {workshop.gallery_media && workshop.gallery_media.length > 0 && (
                 <div>
@@ -418,7 +401,6 @@ export default async function WorkshopPage({ params }: Props) {
                     spotsLeft: spotsLeft,
                     isSoldOut: isSoldOut,
                   }}
-                  coachingWorkshopId={coachingWorkshopId}
                 />
               </div>
             </div>

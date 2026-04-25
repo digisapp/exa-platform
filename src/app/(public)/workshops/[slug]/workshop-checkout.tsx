@@ -14,8 +14,6 @@ import {
   Users,
   AlertCircle,
   CalendarClock,
-  Video,
-  MapPin,
 } from "lucide-react";
 
 interface WorkshopCheckoutProps {
@@ -27,11 +25,9 @@ interface WorkshopCheckoutProps {
     spotsLeft: number | null;
     isSoldOut: boolean;
   };
-  coachingWorkshopId?: string | null;
 }
 
-export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheckoutProps) {
-  const [product, setProduct] = useState<"workshop" | "coaching">("workshop");
+export function WorkshopCheckout({ workshop }: WorkshopCheckoutProps) {
   const [quantity, setQuantity] = useState(1);
   const [paymentType, setPaymentType] = useState<"full" | "installment">("full");
   const [buyerEmail, setBuyerEmail] = useState("");
@@ -40,26 +36,12 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const showCoachingTab = !!coachingWorkshopId;
-  const isCoaching = product === "coaching";
-
-  // Workshop pricing
-  const workshopInstallmentAmount = 12500; // $125
-  const workshopInstallmentTotal = 37500;  // $375
-
-  // Coaching pricing — $450/mo × 3 months
-  const coachingInstallmentAmount = 45000; // $450/mo
-  const coachingFullPrice = 119900;        // $1,199 pay in full
-
-  const handleProductChange = (p: "workshop" | "coaching") => {
-    setProduct(p);
-    setPaymentType("full");
-    setQuantity(1);
-    setError(null);
-  };
+  // Workshop installment pricing
+  const installmentAmount = 12500; // $125
+  const installmentTotal = 37500;  // $375
 
   const handleQuantityChange = (delta: number) => {
-    if (paymentType === "installment" || isCoaching) return;
+    if (paymentType === "installment") return;
     const newQty = quantity + delta;
     if (newQty < 1) return;
     if (newQty > 5) return;
@@ -72,13 +54,13 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
     if (type === "installment") setQuantity(1);
   };
 
-  const workshopTotal = paymentType === "installment"
-    ? workshopInstallmentTotal / 100
+  const total = paymentType === "installment"
+    ? installmentTotal / 100
     : (workshop.priceCents * quantity) / 100;
   const originalTotal = workshop.originalPriceCents
     ? (workshop.originalPriceCents * quantity) / 100
     : null;
-  const workshopSavings = paymentType === "full" && originalTotal ? originalTotal - workshopTotal : 0;
+  const savings = paymentType === "full" && originalTotal ? originalTotal - total : 0;
 
   const handleCheckout = async () => {
     if (!buyerEmail || !buyerEmail.includes("@")) {
@@ -98,8 +80,8 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          workshopId: isCoaching ? coachingWorkshopId : workshop.id,
-          quantity: 1,
+          workshopId: workshop.id,
+          quantity,
           buyerEmail,
           buyerName,
           buyerPhone: buyerPhone || null,
@@ -116,7 +98,7 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
     }
   };
 
-  if (workshop.isSoldOut && !showCoachingTab) {
+  if (workshop.isSoldOut) {
     return (
       <Card className="border-red-500/30">
         <CardHeader>
@@ -135,11 +117,11 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
   }
 
   return (
-    <Card className={isCoaching ? "border-violet-500/50" : "border-pink-500/50"}>
-      <CardHeader className={`rounded-t-xl pb-3 ${isCoaching ? "bg-violet-500/5" : "bg-pink-500/5"}`}>
+    <Card className="border-pink-500/50">
+      <CardHeader className="rounded-t-xl pb-3 bg-pink-500/5">
         <CardTitle className="flex items-center justify-between">
-          <span className={isCoaching ? "text-violet-400" : "text-pink-500"}>{isCoaching ? "Enroll" : "Register"}</span>
-          {!isCoaching && workshop.spotsLeft !== null && (
+          <span className="text-pink-500">Register</span>
+          {workshop.spotsLeft !== null && (
             <span className="text-sm font-normal text-muted-foreground flex items-center gap-1">
               <Users className="h-4 w-4" />
               {workshop.spotsLeft} spots left
@@ -149,219 +131,99 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
       </CardHeader>
       <CardContent className="space-y-4">
 
-        {/* Product selector (only when coaching option exists) */}
-        {showCoachingTab && (
-          <>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Choose your package</p>
-            <div className="grid grid-cols-2 gap-2">
-              {/* In-Person Workshop option */}
-              <button
-                type="button"
-                onClick={() => handleProductChange("workshop")}
-                className={`relative p-3 rounded-xl border-2 text-left transition-all ${
-                  !isCoaching
-                    ? "border-pink-500 bg-pink-500/10 shadow-sm shadow-pink-500/10"
-                    : "border-border hover:border-pink-500/40 bg-transparent"
-                }`}
-              >
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-pink-500 flex-shrink-0" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-pink-500">In Person</span>
-                </div>
-                <p className="text-sm font-bold leading-tight">Workshop Only</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">1-day live event</p>
-                <p className="text-base font-bold text-pink-500 mt-1.5">
-                  ${(workshop.priceCents / 100).toFixed(0)}
-                </p>
-              </button>
+        {/* Payment Type Toggle */}
+        <div className="space-y-2">
+          <Label className="text-sm text-muted-foreground">Payment Option</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => handlePaymentTypeChange("full")}
+              className={`p-3 rounded-lg border-2 text-left transition-colors ${
+                paymentType === "full"
+                  ? "border-pink-500 bg-pink-500/10"
+                  : "border-muted hover:border-muted-foreground/50"
+              }`}
+            >
+              <div className="font-semibold text-sm">Pay in Full</div>
+              <div className="text-lg font-bold text-pink-500">
+                ${(workshop.priceCents / 100).toFixed(0)}
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePaymentTypeChange("installment")}
+              className={`p-3 rounded-lg border-2 text-left transition-colors ${
+                paymentType === "installment"
+                  ? "border-pink-500 bg-pink-500/10"
+                  : "border-muted hover:border-muted-foreground/50"
+              }`}
+            >
+              <div className="font-semibold text-sm flex items-center gap-1">
+                <CalendarClock className="h-3.5 w-3.5" />
+                Payment Plan
+              </div>
+              <div className="text-lg font-bold text-pink-500">3 × $125</div>
+              <div className="text-xs text-muted-foreground">$375 total</div>
+            </button>
+          </div>
+        </div>
 
-              {/* 3-Month Coaching option */}
-              <button
-                type="button"
-                onClick={() => handleProductChange("coaching")}
-                className={`relative p-3 rounded-xl border-2 text-left transition-all ${
-                  isCoaching
-                    ? "border-violet-500 bg-violet-500/10 shadow-sm shadow-violet-500/10"
-                    : "border-border hover:border-violet-500/40 bg-transparent"
-                }`}
-              >
-                <div className="flex items-center gap-1.5 mb-1.5 mt-0.5">
-                  <Video className="h-3.5 w-3.5 text-violet-400 flex-shrink-0" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">Virtual + Live</span>
-                </div>
-                <p className="text-sm font-bold leading-tight">3-Mo Coaching</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">Workshop + coaching</p>
-                <p className="text-base font-bold text-violet-400 mt-1.5">
-                  $450<span className="text-xs font-normal text-muted-foreground">/mo</span>
-                </p>
-              </button>
-            </div>
-          </>
+        {paymentType === "installment" && (
+          <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 space-y-1">
+            <p className="font-medium text-foreground">How it works:</p>
+            <p>1st payment of $125 due today</p>
+            <p>2nd payment of $125 due in 30 days</p>
+            <p>3rd payment of $125 due in 60 days</p>
+          </div>
         )}
 
-        {/* ── COACHING MODE ── */}
-        {isCoaching && (
-          <>
-            {/* Includes workshop callout */}
-            <div className="rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-2.5 space-y-1">
-              <p className="text-xs font-semibold text-green-400">Everything included:</p>
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <span className="text-green-400">✓</span> Your in-person workshop seat
-              </p>
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <span className="text-green-400">✓</span> 3 months of virtual 1-on-1 coaching
-              </p>
+        {/* Price Display (full payment) */}
+        {paymentType === "full" && (
+          <div className="text-center pb-4 border-b">
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-4xl font-bold text-pink-500">
+                ${(workshop.priceCents / 100).toFixed(0)}
+              </span>
+              {workshop.originalPriceCents && workshop.originalPriceCents > workshop.priceCents && (
+                <span className="text-xl text-muted-foreground line-through">
+                  ${(workshop.originalPriceCents / 100).toFixed(0)}
+                </span>
+              )}
             </div>
+            <p className="text-sm text-muted-foreground">per person</p>
+          </div>
+        )}
 
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              1 one-on-one video call per week (8 sessions) with personalized coaching. Get runway-ready from anywhere in the world.
-            </p>
-
-            {/* Payment toggle */}
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Payment Option</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handlePaymentTypeChange("installment")}
-                  className={`p-3 rounded-lg border-2 text-left transition-colors ${
-                    paymentType === "installment"
-                      ? "border-violet-500 bg-violet-500/10"
-                      : "border-muted hover:border-muted-foreground/50"
-                  }`}
-                >
-                  <div className="font-semibold text-sm flex items-center gap-1">
-                    <CalendarClock className="h-3.5 w-3.5" />
-                    3-Month Plan
-                  </div>
-                  <div className="text-lg font-bold text-violet-400">$450<span className="text-sm font-normal">/mo</span></div>
-                  <div className="text-xs text-muted-foreground">$1,350 total</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePaymentTypeChange("full")}
-                  className={`p-3 rounded-lg border-2 text-left transition-colors ${
-                    paymentType === "full"
-                      ? "border-violet-500 bg-violet-500/10"
-                      : "border-muted hover:border-muted-foreground/50"
-                  }`}
-                >
-                  <div className="font-semibold text-sm">Pay in Full</div>
-                  <div className="text-lg font-bold text-violet-400">$1,199</div>
-                  <div className="text-xs text-green-400">Save $151</div>
-                </button>
-              </div>
-            </div>
-
+        {/* Quantity Selector */}
+        <div>
+          <Label className="text-sm text-muted-foreground">
+            Number of Spots
             {paymentType === "installment" && (
-              <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 space-y-1">
-                <p className="font-medium text-foreground">Payment schedule:</p>
-                <p>1st payment of $450 — due today</p>
-                <p>2nd payment of $450 — due in 30 days</p>
-                <p>3rd payment of $450 — due in 60 days</p>
-              </div>
+              <span className="text-xs ml-1">(1 per payment plan)</span>
             )}
-          </>
-        )}
+          </Label>
+          <div className="flex items-center justify-center gap-4 mt-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleQuantityChange(-1)}
+              disabled={quantity <= 1 || paymentType === "installment"}
+            >
+              <Minus className="h-4 w-4" />
+            </Button>
+            <span className="text-2xl font-bold w-12 text-center">{quantity}</span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleQuantityChange(1)}
+              disabled={quantity >= 5 || paymentType === "installment" || (workshop.spotsLeft !== null && quantity >= workshop.spotsLeft)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
 
-        {/* ── WORKSHOP MODE ── */}
-        {!isCoaching && (
-          <>
-            {/* Payment Type Toggle */}
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Payment Option</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handlePaymentTypeChange("full")}
-                  className={`p-3 rounded-lg border-2 text-left transition-colors ${
-                    paymentType === "full"
-                      ? "border-pink-500 bg-pink-500/10"
-                      : "border-muted hover:border-muted-foreground/50"
-                  }`}
-                >
-                  <div className="font-semibold text-sm">Pay in Full</div>
-                  <div className="text-lg font-bold text-pink-500">
-                    ${(workshop.priceCents / 100).toFixed(0)}
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePaymentTypeChange("installment")}
-                  className={`p-3 rounded-lg border-2 text-left transition-colors ${
-                    paymentType === "installment"
-                      ? "border-pink-500 bg-pink-500/10"
-                      : "border-muted hover:border-muted-foreground/50"
-                  }`}
-                >
-                  <div className="font-semibold text-sm flex items-center gap-1">
-                    <CalendarClock className="h-3.5 w-3.5" />
-                    Payment Plan
-                  </div>
-                  <div className="text-lg font-bold text-pink-500">3 x $125</div>
-                  <div className="text-xs text-muted-foreground">$375 total</div>
-                </button>
-              </div>
-            </div>
-
-            {paymentType === "installment" && (
-              <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 space-y-1">
-                <p className="font-medium text-foreground">How it works:</p>
-                <p>1st payment of $125 due today</p>
-                <p>2nd payment of $125 due in 30 days</p>
-                <p>3rd payment of $125 due in 60 days</p>
-              </div>
-            )}
-
-            {/* Price Display (full payment) */}
-            {paymentType === "full" && (
-              <div className="text-center pb-4 border-b">
-                <div className="flex items-center justify-center gap-3">
-                  <span className="text-4xl font-bold text-pink-500">
-                    ${(workshop.priceCents / 100).toFixed(0)}
-                  </span>
-                  {workshop.originalPriceCents && workshop.originalPriceCents > workshop.priceCents && (
-                    <span className="text-xl text-muted-foreground line-through">
-                      ${(workshop.originalPriceCents / 100).toFixed(0)}
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">per person</p>
-              </div>
-            )}
-
-            {/* Quantity Selector */}
-            <div>
-              <Label className="text-sm text-muted-foreground">
-                Number of Spots
-                {paymentType === "installment" && (
-                  <span className="text-xs ml-1">(1 per payment plan)</span>
-                )}
-              </Label>
-              <div className="flex items-center justify-center gap-4 mt-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handleQuantityChange(-1)}
-                  disabled={quantity <= 1 || paymentType === "installment"}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="text-2xl font-bold w-12 text-center">{quantity}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handleQuantityChange(1)}
-                  disabled={quantity >= 5 || paymentType === "installment" || (workshop.spotsLeft !== null && quantity >= workshop.spotsLeft)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Buyer Info — shared */}
+        {/* Buyer Info */}
         <div className="space-y-3">
           <div>
             <Label htmlFor="buyerName">Full Name *</Label>
@@ -408,43 +270,34 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
 
         {/* Total & Checkout */}
         <div className="pt-4 border-t space-y-3">
-          {isCoaching ? (
-            <div className="flex justify-between text-lg font-semibold">
-              <span>{paymentType === "installment" ? "Due Today" : "Total"}</span>
-              <span className="text-violet-400">
-                ${paymentType === "installment"
-                  ? (coachingInstallmentAmount / 100).toFixed(2)
-                  : (coachingFullPrice / 100).toFixed(2)}
-              </span>
-            </div>
-          ) : paymentType === "installment" ? (
+          {paymentType === "installment" ? (
             <>
               <div className="flex justify-between text-lg font-semibold">
                 <span>Due Today</span>
-                <span className="text-pink-500">${(workshopInstallmentAmount / 100).toFixed(2)}</span>
+                <span className="text-pink-500">${(installmentAmount / 100).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Total (3 payments)</span>
-                <span>${(workshopInstallmentTotal / 100).toFixed(2)}</span>
+                <span>${(installmentTotal / 100).toFixed(2)}</span>
               </div>
             </>
           ) : (
             <>
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total</span>
-                <span className="text-pink-500">${workshopTotal.toFixed(2)}</span>
+                <span className="text-pink-500">${total.toFixed(2)}</span>
               </div>
-              {workshopSavings > 0 && (
+              {savings > 0 && (
                 <div className="flex justify-between text-sm text-green-500">
                   <span>You save</span>
-                  <span>${workshopSavings.toFixed(2)}</span>
+                  <span>${savings.toFixed(2)}</span>
                 </div>
               )}
             </>
           )}
 
           <Button
-            className={`w-full ${isCoaching ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700" : "exa-gradient-button"}`}
+            className="w-full exa-gradient-button"
             size="lg"
             onClick={handleCheckout}
             disabled={isLoading}
@@ -457,13 +310,7 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
             ) : (
               <>
                 <CreditCard className="h-4 w-4 mr-2" />
-                {isCoaching
-                  ? paymentType === "installment"
-                    ? "Enroll — $450 First Month"
-                    : "Enroll — Pay in Full $1,199"
-                  : paymentType === "installment"
-                    ? "Pay $125 — First Installment"
-                    : "Register Now"}
+                {paymentType === "installment" ? "Pay $125 — First Installment" : "Register Now"}
               </>
             )}
           </Button>
