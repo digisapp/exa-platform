@@ -119,6 +119,7 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
   const translatedFanLinks = [
     { href: "/dashboard", label: t.nav.home, icon: Home },
     { href: "/models", label: t.nav.explore, icon: Users },
+    { href: "/favorites", label: "Favs", icon: Heart },
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
     { href: "/bids", label: t.nav.bids, icon: Gavel },
   ];
@@ -496,6 +497,22 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                             </p>
                           </div>
                           <ArrowUpRight className="h-4 w-4 text-orange-400 shrink-0" />
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem asChild className="p-0 focus:bg-transparent mt-1">
+                        <Link
+                          href="/favorites"
+                          className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-pink-500/15 to-rose-500/10 border border-pink-500/25 hover:from-pink-500/25 hover:to-rose-500/15 hover:border-pink-500/50 transition-all"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center shrink-0">
+                            <Heart className="h-4 w-4 text-pink-300 fill-pink-300" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-white">Favs</p>
+                            <p className="text-[11px] text-pink-300">Your favorite models</p>
+                          </div>
+                          <ArrowUpRight className="h-4 w-4 text-pink-400 shrink-0" />
                         </Link>
                       </DropdownMenuItem>
 
