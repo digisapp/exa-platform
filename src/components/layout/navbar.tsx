@@ -103,11 +103,11 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
 
   // Notification destination by actor type
   // Models: dashboard's Priority Inbox shows offers/bookings/auctions
-  // Fans: bids page shows their auction status
+  // Fans: dashboard shows their feed and activity
   // Brands: dashboard shows pending campaigns + responses + upcoming bookings
   // Admins: admin dashboard
   const notificationHref =
-    actorType === "fan" ? "/bids" : actorType === "admin" ? "/admin" : "/dashboard";
+    actorType === "admin" ? "/admin" : "/dashboard";
 
   // Translated nav links
   // Models now get Bookings + Bids promoted to the top nav (revenue-critical)
