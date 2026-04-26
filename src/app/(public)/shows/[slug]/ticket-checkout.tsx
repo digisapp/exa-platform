@@ -55,7 +55,7 @@ interface TicketCheckoutProps {
  * Show metadata per day of Miami Swim Week 2026.
  *
  * Keyed by "May DD" which matches the string embedded in every tier name:
- *   "Casting Call Day Party — GA (May 25)"
+ *   "Casting Call Day — GA (May 25)"
  *   "Day 1 - First Row (May 26)"
  *
  * If a tier's name doesn't match a day here, it falls under `DEFAULT_DAY`
@@ -80,8 +80,8 @@ const DAY_META: Record<
   "May 25": {
     dayLabel: "Mon",
     dateNum: "25",
-    title: "Casting Call Day Party",
-    subtitle: "11am–4pm · Pool, sun, music · 600+ models casting",
+    title: "Casting Call Day",
+    subtitle: "11am–4pm · Pool, sun, music · 100's of models cast for EXA Shows",
     badge: "Day Party",
     badgeGradient: "from-amber-500 to-orange-500",
     gradient: "from-amber-500/20 via-orange-500/10 to-transparent",

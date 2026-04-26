@@ -59,8 +59,8 @@ const DAY_META: Record<
   "May 25": {
     dayLabel: "Mon",
     dateNum: "25",
-    title: "Casting Call Day Party",
-    subtitle: "11am\u20134pm \u00b7 Pool, sun, music \u00b7 600+ models casting",
+    title: "Casting Call Day",
+    subtitle: "11am\u20134pm \u00b7 Pool, sun, music \u00b7 100's of models cast for EXA Shows",
     badge: "Day Party",
     badgeGradient: "from-amber-500 to-orange-500",
     gradient: "from-amber-500/20 via-orange-500/10 to-transparent",
