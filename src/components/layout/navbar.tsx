@@ -39,7 +39,6 @@ import {
   Calendar,
   ArrowUpRight,
   CircleDollarSign,
-  Bell,
   Loader2,
   Gift,
 } from "lucide-react";
@@ -100,14 +99,6 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
       setPurchasing(null);
     }
   };
-
-  // Notification destination by actor type
-  // Models: dashboard's Priority Inbox shows offers/bookings/auctions
-  // Fans: dashboard shows their feed and activity
-  // Brands: dashboard shows pending campaigns + responses + upcoming bookings
-  // Admins: admin dashboard
-  const notificationHref =
-    actorType === "admin" ? "/admin" : "/dashboard";
 
   // Translated nav links
   // Models now get Bookings + Bids promoted to the top nav (revenue-critical)
@@ -290,25 +281,6 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                 </Link>
               )}
 
-              {/* ───────── Notification bell (models + brands only — fans use nav badges) ───────── */}
-              {actorType !== "admin" && actorType !== "fan" && (
-                <Link
-                  href={notificationHref}
-                  aria-label={`${t.nav.notifications}${notificationCount > 0 ? ` (${notificationCount})` : ""}`}
-                  className="relative flex items-center justify-center h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/40 text-white/60 hover:text-pink-300 transition-all"
-                >
-                  <Bell className={cn(
-                    "h-4 w-4 transition-colors",
-                    notificationCount > 0 && "text-pink-300"
-                  )} />
-                  {notificationCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-4.5 px-1 flex items-center justify-center text-[10px] font-bold bg-pink-500 text-white rounded-full shadow-[0_0_10px_rgba(236,72,153,0.8)]">
-                      {notificationCount > 9 ? "9+" : notificationCount}
-                    </span>
-                  )}
-                </Link>
-              )}
-
               {/* ───────── Profile dropdown ───────── */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -323,6 +295,17 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                         {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
+                    {/* Notification badge — fans: bids activity (amber); others: action needed (pink) */}
+                    {notificationCount > 0 && (
+                      <span className={cn(
+                        "absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold text-white rounded-full z-10",
+                        actorType === "fan"
+                          ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]"
+                          : "bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.8)]"
+                      )}>
+                        {notificationCount > 9 ? "9+" : notificationCount}
+                      </span>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
