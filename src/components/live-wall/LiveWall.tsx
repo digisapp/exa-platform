@@ -18,6 +18,7 @@ import {
   VolumeX,
   ArrowDown,
   X,
+  Coins,
 } from "lucide-react";
 import {
   Dialog,
@@ -88,6 +89,23 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
   const audioCtxRef = useRef<AudioContext | null>(null);
   const audioInitRef = useRef(false);
   const messagesRef = useRef(messages);
+  const infoRef = useRef<HTMLDivElement>(null);
+  const infoToggleRef = useRef<HTMLButtonElement>(null);
+
+  // Close info popover when clicking outside
+  useEffect(() => {
+    if (!showInfo) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        infoRef.current && !infoRef.current.contains(e.target as Node) &&
+        infoToggleRef.current && !infoToggleRef.current.contains(e.target as Node)
+      ) {
+        setShowInfo(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showInfo]);
 
   // ─── Audio init on first interaction ───────────────────
   useEffect(() => {
@@ -554,6 +572,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
 
           {/* Info toggle */}
           <button
+            ref={infoToggleRef}
             onClick={() => setShowInfo((prev) => !prev)}
             title="How it works"
             aria-label="How the Live Wall works"
@@ -603,54 +622,54 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
 
         {/* Info popover */}
         {showInfo && (
-          <div className="absolute top-full left-0 right-0 z-50 mx-3 mt-1.5">
+          <div className="absolute top-full left-0 right-0 z-50 mx-3 mt-1.5 flex justify-center">
             {/* Outer ambient glow */}
             <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-pink-500/25 via-violet-500/15 to-pink-500/25 rounded-3xl scale-110 pointer-events-none" />
 
-            <div className="relative rounded-2xl border border-pink-500/40 bg-gradient-to-b from-[#1e0f2e]/98 to-[#0d0818]/98 backdrop-blur-xl shadow-2xl shadow-pink-500/20 p-4 overflow-hidden">
+            <div ref={infoRef} className="relative w-full max-w-xs rounded-2xl border border-pink-500/40 bg-gradient-to-b from-[#1e0f2e]/98 to-[#0d0818]/98 backdrop-blur-xl shadow-2xl shadow-pink-500/20 p-5 overflow-hidden">
               {/* Top shimmer line */}
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-pink-500/60 to-transparent" />
 
               {/* Close */}
               <button
                 onClick={() => setShowInfo(false)}
-                className="absolute top-3 right-3 text-white/40 hover:text-white/70 transition-colors"
+                className="absolute top-2.5 right-2.5 flex items-center justify-center h-7 w-7 rounded-full bg-white/5 hover:bg-white/15 text-white/50 hover:text-white transition-all"
                 aria-label="Close"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-5 w-5" />
               </button>
 
-              <div className="flex items-center gap-2 mb-3.5">
-                <span className="text-base">✨</span>
-                <span className="text-sm font-bold bg-gradient-to-r from-pink-300 to-violet-300 bg-clip-text text-transparent">How the Live Wall works</span>
+              <div className="flex items-center gap-2 mb-4 pr-8">
+                <span className="text-lg">✨</span>
+                <span className="text-base font-bold bg-gradient-to-r from-pink-300 to-violet-300 bg-clip-text text-transparent">How the Live Wall works</span>
               </div>
 
-              <ul className="space-y-2.5 text-[13px] text-white/70 leading-relaxed">
-                <li className="flex items-start gap-2.5">
-                  <span className="shrink-0 flex items-center justify-center h-6 w-6 rounded-full bg-pink-500/15 border border-pink-500/25 mt-0.5 text-sm">💬</span>
+              <ul className="space-y-3 text-[14px] text-white/70 leading-relaxed">
+                <li className="flex items-start gap-3">
+                  <span className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-pink-500/15 border border-pink-500/25 mt-0.5 text-base">💬</span>
                   <span><span className="text-white font-semibold">Models post</span> — only models can share messages, photos, and GIFs on the wall.</span>
                 </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="shrink-0 flex items-center justify-center h-6 w-6 rounded-full bg-amber-500/15 border border-amber-500/25 mt-0.5 text-sm">🔥</span>
+                <li className="flex items-start gap-3">
+                  <span className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-amber-500/15 border border-amber-500/25 mt-0.5 text-base">🔥</span>
                   <span><span className="text-white font-semibold">React</span> — tap 🔥 ❤️ 👑 on any message to show some love.</span>
                 </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="shrink-0 flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500/15 border border-yellow-500/25 mt-0.5 text-sm">💰</span>
+                <li className="flex items-start gap-3">
+                  <span className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-yellow-500/15 border border-yellow-500/25 mt-0.5 text-base">💰</span>
                   <span><span className="text-white font-semibold">Tip coins</span> — tap the 💰 on a message to send 1 coin instantly. Hold it for a bigger tip.</span>
                 </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="shrink-0 flex items-center justify-center h-6 w-6 rounded-full bg-violet-500/15 border border-violet-500/25 mt-0.5 text-sm">👑</span>
+                <li className="flex items-start gap-3">
+                  <span className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-violet-500/15 border border-violet-500/25 mt-0.5 text-base">👑</span>
                   <span><span className="text-white font-semibold">Glow up</span> — messages heat up visually as they earn more tips.</span>
                 </li>
               </ul>
 
-              <div className="mt-3.5 pt-3 border-t border-white/[0.08]">
+              <div className="mt-4 pt-3.5 border-t border-white/[0.08]">
                 <Link
                   href="/coins"
                   onClick={() => setShowInfo(false)}
-                  className="flex items-center justify-center gap-2 w-full rounded-full py-2 px-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white text-xs font-semibold shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all"
+                  className="flex items-center justify-center gap-2.5 w-full rounded-full py-3 px-5 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white text-sm font-bold shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all"
                 >
-                  <span>🪙</span> Buy Coins
+                  <Coins className="h-5 w-5 text-amber-300" /> Buy Coins
                 </Link>
               </div>
             </div>
