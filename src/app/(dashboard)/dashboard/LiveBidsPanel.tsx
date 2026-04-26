@@ -123,7 +123,7 @@ export function LiveBidsPanel({ auctions }: LiveBidsPanelProps) {
                 <p className="text-xs font-semibold text-white truncate">{auction.title}</p>
                 <p className="text-[11px] text-white/50 truncate">{modelName} · {timeLeft}</p>
                 {isOutbid && (
-                  <p className="text-[10px] text-red-400 font-semibold">You've been outbid</p>
+                  <p className="text-[10px] text-red-400 font-semibold">You&apos;ve been outbid</p>
                 )}
                 {isWinning && (
                   <p className="text-[10px] text-amber-400 font-semibold">Winning</p>
