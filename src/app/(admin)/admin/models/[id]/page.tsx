@@ -37,6 +37,8 @@ import {
   Pencil,
   Camera,
   Upload,
+  LayoutGrid,
+  X,
 } from "lucide-react";
 import { ImageCropper } from "@/components/upload/ImageCropper";
 import { toast } from "sonner";
@@ -202,6 +204,14 @@ export default function AdminModelDetailPage() {
   const [cropperOpen, setCropperOpen] = useState(false);
   const [cropperSrc, setCropperSrc] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // Portrait & content picker state
+  const [portraitItem, setPortraitItem] = useState<{ id: string; media_url: string } | null>(null);
+  const [contentImages, setContentImages] = useState<Array<{ id: string; media_url: string; title: string | null; is_primary: boolean }>>([]);
+  const [contentPickerOpen, setContentPickerOpen] = useState(false);
+  const [contentPickerMode, setContentPickerMode] = useState<"avatar" | "portrait">("avatar");
+  const [contentPickerSaving, setContentPickerSaving] = useState(false);
+
   const [application, setApplication] = useState<ModelApplication | null>(null);
   const [stats, setStats] = useState<ModelStats>({
     followers_count: 0,
@@ -231,6 +241,21 @@ export default function AdminModelDetailPage() {
       }
 
       setModel(modelData);
+
+      // Fetch portfolio images for content picker
+      const { data: images } = await (supabase as any)
+        .from("content_items")
+        .select("id, media_url, title, is_primary")
+        .eq("model_id", modelId)
+        .eq("media_type", "image")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (images && isMounted) {
+        setContentImages(images);
+        const primary = images.find((img: any) => img.is_primary);
+        if (primary) setPortraitItem({ id: primary.id, media_url: primary.media_url });
+      }
 
       // Fetch application if exists (by user_id)
       if (modelData.user_id) {
@@ -406,6 +431,36 @@ export default function AdminModelDetailPage() {
     }
   };
 
+  const handlePickFromPortfolio = async (img: { id: string; media_url: string }) => {
+    setContentPickerSaving(true);
+    try {
+      const res = await fetch(`/api/admin/models/${model!.id}/images`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: contentPickerMode, contentItemId: img.id }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed");
+      }
+      if (contentPickerMode === "avatar") {
+        setModel((prev) => prev ? { ...prev, profile_photo_url: img.media_url } : prev);
+        toast.success("Avatar updated");
+      } else {
+        setPortraitItem({ id: img.id, media_url: img.media_url });
+        setContentImages((prev) =>
+          prev.map((i) => ({ ...i, is_primary: i.id === img.id }))
+        );
+        toast.success("Portrait updated");
+      }
+      setContentPickerOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update");
+    } finally {
+      setContentPickerSaving(false);
+    }
+  };
+
   const openEdit = () => {
     setForm({
       first_name: model.first_name,
@@ -563,67 +618,150 @@ export default function AdminModelDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Photo & Basic Info */}
         <div className="space-y-6">
-          {/* Profile Photo */}
+          {/* Avatar Photo */}
           <Card>
-            <CardContent className="pt-6">
-              <div className="relative group aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-                {profilePhoto ? (
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Avatar (Circle)</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3">
+              <div className="flex items-center gap-4">
+                {/* Circle preview */}
+                <div className="relative group shrink-0">
+                  <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 ring-2 ring-border">
+                    {profilePhoto ? (
+                      <Image
+                        src={profilePhoto}
+                        alt={displayName}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <User className="h-8 w-8 text-muted-foreground/30" />
+                      </div>
+                    )}
+                    <div
+                      className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                      onClick={() => photoInputRef.current?.click()}
+                    >
+                      {photoUploading ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-white" />
+                      ) : (
+                        <Camera className="h-4 w-4 text-white" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 flex-1 min-w-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={photoUploading}
+                  >
+                    {photoUploading ? (
+                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="h-3 w-3 mr-2" />
+                    )}
+                    Upload New
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => { setContentPickerMode("avatar"); setContentPickerOpen(true); }}
+                    disabled={contentImages.length === 0 || photoUploading}
+                  >
+                    <LayoutGrid className="h-3 w-3 mr-2" />
+                    {contentImages.length === 0 ? "No portfolio images" : "Pick from Portfolio"}
+                  </Button>
+                </div>
+              </div>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handlePhotoSelect}
+                className="hidden"
+              />
+              {model.admin_rating !== null && (
+                <div className="flex items-center justify-center gap-2 pt-1 border-t">
+                  <span className="text-sm text-muted-foreground">Admin Rating:</span>
+                  <RatingStars rating={model.admin_rating} />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Portrait Photo */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Portrait (Hero)</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3">
+              <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+                {portraitItem ? (
                   <Image
-                    src={profilePhoto}
-                    alt={displayName}
-                    width={400}
-                    height={400}
-                    className="w-full h-full object-cover"
+                    src={portraitItem.media_url}
+                    alt="Portrait"
+                    fill
+                    className="object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <User className="h-24 w-24 text-muted-foreground/30" />
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                    <User className="h-10 w-10 text-muted-foreground/20" />
+                    <p className="text-xs text-muted-foreground">Auto-selected from portfolio</p>
                   </div>
                 )}
-                {/* Photo upload overlay */}
-                <div
-                  className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                  onClick={() => photoInputRef.current?.click()}
-                >
-                  {photoUploading ? (
-                    <div className="text-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-white mx-auto" />
-                      <p className="text-white text-sm mt-2">Uploading...</p>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <Camera className="h-8 w-8 text-white mx-auto" />
-                      <p className="text-white text-sm mt-2">Change Photo</p>
-                    </div>
-                  )}
-                </div>
-                <input
-                  ref={photoInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handlePhotoSelect}
-                  className="hidden"
-                />
+                {portraitItem && (
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-yellow-500/90 text-white text-xs">
+                      <Star className="h-3 w-3 mr-1 fill-white" />
+                      Primary
+                    </Badge>
+                  </div>
+                )}
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full mt-3"
-                onClick={() => photoInputRef.current?.click()}
-                disabled={photoUploading}
+                className="w-full"
+                onClick={() => { setContentPickerMode("portrait"); setContentPickerOpen(true); }}
+                disabled={contentImages.length === 0}
               >
-                {photoUploading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4 mr-2" />
-                )}
-                {profilePhoto ? "Replace Photo" : "Upload Photo"}
+                <LayoutGrid className="h-3 w-3 mr-2" />
+                {contentImages.length === 0 ? "No portfolio images" : "Set from Portfolio"}
               </Button>
-              {model.admin_rating !== null && (
-                <div className="mt-4 flex items-center justify-center gap-2">
-                  <span className="text-sm text-muted-foreground">Admin Rating:</span>
-                  <RatingStars rating={model.admin_rating} />
-                </div>
+              {portraitItem && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-muted-foreground hover:text-destructive"
+                  onClick={async () => {
+                    try {
+                      // Clear is_primary — portrait reverts to auto-selection
+                      const res = await fetch(`/api/admin/models/${model.id}/images`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ type: "portrait", contentItemId: portraitItem.id, clear: true }),
+                      });
+                      if (!res.ok) throw new Error("Failed");
+                      setPortraitItem(null);
+                      setContentImages((prev) =>
+                        prev.map((i) => ({ ...i, is_primary: false }))
+                      );
+                      toast.success("Portrait cleared — will auto-select");
+                    } catch {
+                      toast.error("Failed to clear portrait");
+                    }
+                  }}
+                >
+                  <X className="h-3 w-3 mr-2" />
+                  Clear (use auto-select)
+                </Button>
               )}
             </CardContent>
           </Card>
@@ -919,6 +1057,62 @@ export default function AdminModelDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Content Portfolio Picker Dialog */}
+      <Dialog open={contentPickerOpen} onOpenChange={setContentPickerOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col gap-0 p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+            <DialogTitle>
+              {contentPickerMode === "avatar" ? "Pick Avatar from Portfolio" : "Set Portrait from Portfolio"}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {contentPickerMode === "avatar"
+                ? "Choose an image to use as the circle avatar across the platform."
+                : "Choose an image to pin as the hero portrait on this model's public profile."}
+            </p>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1 p-4">
+            {contentImages.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-12">No portfolio images found</p>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {contentImages.map((img) => (
+                  <button
+                    key={img.id}
+                    onClick={() => handlePickFromPortfolio(img)}
+                    disabled={contentPickerSaving}
+                    className="relative aspect-square rounded-lg overflow-hidden group border-2 border-transparent hover:border-pink-500 focus-visible:border-pink-500 transition-all outline-none disabled:opacity-50"
+                  >
+                    <Image
+                      src={img.media_url}
+                      alt={img.title || "Portfolio image"}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 33vw, 25vw"
+                    />
+                    {img.is_primary && (
+                      <div className="absolute top-1 right-1 bg-yellow-500 rounded-full p-0.5 shadow">
+                        <Star className="h-3 w-3 text-white fill-white" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 group-focus-visible:bg-black/20 transition-colors" />
+                    {contentPickerSaving && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <Loader2 className="h-5 w-5 animate-spin text-white" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="px-6 py-4 border-t shrink-0 flex justify-end">
+            <Button variant="outline" onClick={() => setContentPickerOpen(false)} disabled={contentPickerSaving}>
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
