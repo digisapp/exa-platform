@@ -10,6 +10,7 @@ interface ModelsGridProps {
   isLoggedIn: boolean;
   favoriteModelIds: string[];
   actorType?: "model" | "fan" | "brand" | "admin" | null;
+  currentModelId?: string;
 }
 
 function ModelCardSkeleton() {
@@ -20,7 +21,7 @@ function ModelCardSkeleton() {
   );
 }
 
-export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType }: ModelsGridProps) {
+export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType, currentModelId }: ModelsGridProps) {
   const searchParams = useSearchParams();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -67,6 +68,7 @@ export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType }: 
             showListButton={actorType === "brand"}
             isLoggedIn={isLoggedIn}
             isFavorited={favoriteSet.has(model.id)}
+            isOwner={!!currentModelId && model.id === currentModelId}
             onAuthRequired={handleAuthRequired}
             priority={index < 10}
           />

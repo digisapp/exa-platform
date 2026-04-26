@@ -305,7 +305,59 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
 
       {/* ──────────────────────────────────────────────
           Favorites strip — full width
-         ────────────────────────────────────────────── */}
+          When empty: show "start following" nudge
+         ────────────────────────────────────────── */}
+      {favoriteModels.length === 0 && featuredModels.length > 0 && (
+        <div className="p-5 rounded-2xl border border-pink-500/25 bg-gradient-to-r from-pink-500/10 via-violet-500/5 to-transparent">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-white">
+                <Sparkles className="h-4 w-4 text-pink-400" />
+                Follow models to personalise your feed
+              </h3>
+              <p className="text-xs text-white/50 mt-0.5">Tap a heart on any model to add them to your Favs</p>
+            </div>
+            <Link
+              href="/models"
+              className="shrink-0 text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 font-semibold"
+            >
+              Browse all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+            {featuredModels.slice(0, 10).map((model: any) => (
+              <Link
+                key={model.id}
+                href={`/${model.username}`}
+                className="flex-shrink-0 flex flex-col items-center gap-2 group"
+              >
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-pink-500/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative w-14 h-14 rounded-full ring-2 ring-white/10 group-hover:ring-pink-500/60 transition-all overflow-hidden">
+                    {model.profile_photo_url ? (
+                      <Image
+                        src={model.profile_photo_url}
+                        alt={model.first_name || model.username}
+                        width={56}
+                        height={56}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold">
+                        {(model.first_name || model.username || "?")[0].toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-xs text-white/50 group-hover:text-white transition-colors truncate max-w-[64px] text-center">
+                  {model.first_name || model.username}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {favoriteModels.length > 0 && (
         <div>
           <h3 className="flex items-center gap-2 text-base font-semibold mb-3 text-white">

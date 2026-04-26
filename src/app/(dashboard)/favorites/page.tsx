@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Heart, Users } from "lucide-react";
-import { ModelCard } from "@/components/models/model-card";
-import Link from "next/link";
+import { Heart } from "lucide-react";
+import { FavoritesGrid } from "./FavoritesGrid";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -74,42 +73,10 @@ export default async function FavoritesPage() {
           </div>
           <h1 className="text-3xl font-bold">Favs</h1>
         </div>
-        <p className="text-sm text-white/50 ml-[52px]">
-          {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"}
-        </p>
       </div>
 
-      {/* Grid */}
-      {orderedModels.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {orderedModels.map((model: any) => (
-            <ModelCard
-              key={model.id}
-              model={model}
-              showFavorite={true}
-              isLoggedIn={true}
-              isFavorited={true}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-pink-500/10 ring-1 ring-pink-500/20 mb-4">
-            <Heart className="h-8 w-8 text-pink-500/50" />
-          </div>
-          <h2 className="text-xl font-semibold mb-2">No favorites yet</h2>
-          <p className="text-white/50 text-sm mb-6">
-            Browse models and tap the heart icon to save them here.
-          </p>
-          <Link
-            href="/models"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-sm font-semibold text-white shadow-[0_0_18px_rgba(236,72,153,0.4)] transition-all"
-          >
-            <Users className="h-4 w-4" />
-            Browse Models
-          </Link>
-        </div>
-      )}
+      {/* Live grid — client component manages count + instant removal */}
+      <FavoritesGrid initialModels={orderedModels} />
     </div>
   );
 }

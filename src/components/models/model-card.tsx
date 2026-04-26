@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Heart, MapPin, Star } from "lucide-react";
 
 function formatFollowers(n: number): string {
@@ -22,7 +23,9 @@ interface ModelCardProps {
   showListButton?: boolean;
   isLoggedIn?: boolean;
   isFavorited?: boolean;
+  isOwner?: boolean;
   onAuthRequired?: () => void;
+  onFavoriteChange?: (modelId: string, isFavorited: boolean) => void;
   priority?: boolean;
 }
 
@@ -33,9 +36,12 @@ export const ModelCard = memo(function ModelCard({
   showListButton = false,
   isLoggedIn = false,
   isFavorited: initialFavorited = false,
+  isOwner = false,
   onAuthRequired,
+  onFavoriteChange,
   priority = false,
 }: ModelCardProps) {
+  const router = useRouter();
   const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const [loading, setLoading] = useState(false);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
@@ -77,17 +83,27 @@ export const ModelCard = memo(function ModelCard({
 
       const newState = !isFavorited;
       setIsFavorited(newState);
+      onFavoriteChange?.(model.id, newState);
 
       // Bounce animation
       setBouncing(true);
       setTimeout(() => setBouncing(false), 300);
 
-      // Show floating tooltip + toast fallback
-      const msg = newState ? "Added to favorites" : "Removed from favorites";
-      setShowTooltip(msg);
-      if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
-      tooltipTimeout.current = setTimeout(() => setShowTooltip(null), 1500);
-      toast.success(msg);
+      if (newState) {
+        const msg = "Added to favorites";
+        setShowTooltip(msg);
+        if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
+        tooltipTimeout.current = setTimeout(() => setShowTooltip(null), 1500);
+        toast.success(msg, {
+          action: { label: "View Favs", onClick: () => router.push("/favorites") },
+        });
+      } else {
+        const msg = "Removed from favorites";
+        setShowTooltip(msg);
+        if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
+        tooltipTimeout.current = setTimeout(() => setShowTooltip(null), 1500);
+        toast.success(msg);
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update");
     } finally {
@@ -164,7 +180,7 @@ export const ModelCard = memo(function ModelCard({
           )}
 
           {/* Favorite Button */}
-          {showFavorite && (
+          {showFavorite && !isOwner && (
             <div
               className="absolute top-3 right-3 z-10 group/fav"
               onMouseEnter={() => {

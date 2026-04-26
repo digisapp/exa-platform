@@ -380,6 +380,7 @@ export default async function ModelsPage({
             isLoggedIn={!!user}
             favoriteModelIds={favoriteModelIds}
             actorType={actorType}
+            currentModelId={actorType === "model" ? actor?.id : undefined}
           />
 
           {/* Pagination — uses Next.js Link for client-side navigation */}

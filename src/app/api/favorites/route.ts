@@ -24,23 +24,14 @@ export async function GET() {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
 
-    // Get favorites with model details
-    // Note: as any needed because follows FK points to actors, not models directly
-    const { data: favorites, error } = await (supabase
+    // Get follows with actor user_ids (following_id refs actors, not models directly)
+    const { data: follows, error } = await (supabase
       .from("follows") as any)
       .select(`
         created_at,
         following_id,
-        models!follows_following_id_fkey (
-          id,
-          username,
-          first_name,
-          last_name,
-          profile_photo_url,
-          city,
-          state,
-          points_cached,
-          is_approved
+        actors!follows_following_id_fkey (
+          user_id
         )
       `)
       .eq("follower_id", actor.id)
@@ -51,16 +42,38 @@ export async function GET() {
       throw error;
     }
 
-    // Filter to only approved models and format response
-    const favoriteModels = (favorites || [])
-      .filter((f: any) => f.models?.is_approved)
-      .map((f: any) => ({
-        ...f.models,
-        favorited_at: f.created_at,
-      }));
+    // Resolve actor user_ids to model profiles
+    const userIds = (follows || [])
+      .map((f: any) => f.actors?.user_id)
+      .filter(Boolean);
+
+    if (userIds.length === 0) {
+      return NextResponse.json({ favorites: [] }, {
+        headers: { "Cache-Control": "private, no-store" },
+      });
+    }
+
+    const { data: models } = await supabase
+      .from("models")
+      .select("id, username, first_name, last_name, profile_photo_url, city, state, points_cached, is_approved")
+      .in("user_id", userIds)
+      .eq("is_approved", true);
+
+    // Preserve follow order and attach favorited_at timestamp
+    const modelsByUserId = new Map((models || []).map((m: any) => [m.user_id, m]));
+    const followedUserIdsByActorUserId = new Map(
+      (follows || []).map((f: any) => [f.actors?.user_id, f.created_at])
+    );
+    const favoriteModels = userIds
+      .map((userId: string) => {
+        const model = modelsByUserId.get(userId);
+        if (!model) return null;
+        return { ...model, favorited_at: followedUserIdsByActorUserId.get(userId) };
+      })
+      .filter(Boolean);
 
     return NextResponse.json({ favorites: favoriteModels }, {
-      headers: { "Cache-Control": "private, s-maxage=60, stale-while-revalidate=120" },
+      headers: { "Cache-Control": "private, no-store" },
     });
   } catch (error) {
     logger.error("Get favorites error", error);
@@ -135,10 +148,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if already favorited (as any needed: follows has no "id" column in types)
+    // Check if already favorited (select follower_id since follows has no id column)
     const { data: existingFavorite } = await (supabase
       .from("follows") as any)
-      .select("id")
+      .select("follower_id")
       .eq("follower_id", actor.id)
       .eq("following_id", modelActor.id)
       .single();

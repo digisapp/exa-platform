@@ -688,7 +688,7 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
           <div className="p-5">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {favoriteModels.slice(0, 4).map((model: any) => (
-                <ModelCard key={model.id} model={model} showFavorite={true} isFavorited={true} />
+                <ModelCard key={model.id} model={model} showFavorite={true} isFavorited={true} isLoggedIn={true} />
               ))}
             </div>
           </div>
