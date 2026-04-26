@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -71,8 +72,9 @@ export default async function DashboardLayout({
       profileData = data;
       coinBalance = data?.coin_balance ?? 0;
     } else {
-      // Brand record doesn't exist - create it
-      const { data: newBrand } = await (supabase
+      // Brand record doesn't exist - create it using service role to bypass RLS
+      const serviceClient = createServiceRoleClient();
+      const { data: newBrand } = await (serviceClient
         .from("brands") as any)
         .insert({
           id: actor.id,
@@ -147,18 +149,23 @@ export default async function DashboardLayout({
             (offers.count || 0) + (bookings.count || 0) + (auctions.count || 0);
         }
       } else if (actor.type === "brand") {
-        // Brands: recent offer_responses that aren't yet viewed (accepted/declined)
-        // + upcoming bookings in next 7 days
+        // Brands: accepted offer responses not yet confirmed + upcoming bookings in 7 days
         const in7Days = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        const [upcoming] = await Promise.all([
+        const [upcoming, acceptedResponses] = await Promise.all([
           (supabase.from("bookings") as any)
             .select("id", { count: "exact", head: true })
             .eq("client_id", actor.id)
             .in("status", ["accepted", "confirmed"])
             .gte("event_date", new Date().toISOString().split("T")[0])
             .lte("event_date", in7Days.split("T")[0]),
+          // Count accepted offer responses awaiting brand confirmation
+          (supabase.from("offers") as any)
+            .select("offer_responses!inner(id)", { count: "exact", head: true })
+            .eq("brand_id", actor.id)
+            .eq("status", "open")
+            .eq("offer_responses.status", "accepted"),
         ]);
-        notificationCount = upcoming.count || 0;
+        notificationCount = (upcoming.count || 0) + (acceptedResponses.count || 0);
       } else if (actor.type === "fan") {
         // Fans: outbid auctions (action needed)
         const { count } = await (supabase.from("auction_bids") as any)

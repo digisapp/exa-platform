@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
@@ -32,9 +33,8 @@ export async function POST(request: NextRequest) {
 
     const { companyName, contactName, bio } = validationResult.data;
 
+    // Use session client only for auth verification
     const supabase = await createClient();
-
-    // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
@@ -44,8 +44,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Use service role client for all DB writes — bypasses RLS so the brand
+    // profile can be created even before the INSERT policy is applied.
+    const adminClient = createServiceRoleClient();
+
     // Check if user already has an actor record
-    const { data: existingActor } = await supabase
+    const { data: existingActor } = await adminClient
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
@@ -53,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     if (existingActor) {
       // Check if brand profile exists
-      const { data: existingBrand } = await supabase
+      const { data: existingBrand } = await adminClient
         .from("brands")
         .select("id")
         .eq("id", existingActor.id)
@@ -68,7 +72,6 @@ export async function POST(request: NextRequest) {
       }
 
       // Actor exists but no brand - create brand profile
-      // Generate username from company name
       let baseUsername = companyName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
       if (baseUsername.length < 3) {
         baseUsername = baseUsername + "brand";
@@ -77,9 +80,8 @@ export async function POST(request: NextRequest) {
       let finalUsername = baseUsername;
       let suffix = 1;
 
-      // Check for username conflicts
       while (suffix < 100) {
-        const { data: conflict } = await supabase
+        const { data: conflict } = await adminClient
           .from("brands")
           .select("id")
           .eq("username", finalUsername)
@@ -90,7 +92,7 @@ export async function POST(request: NextRequest) {
         suffix++;
       }
 
-      const { error: brandError } = await supabase
+      const { error: brandError } = await adminClient
         .from("brands")
         .upsert({
           id: existingActor.id,
@@ -119,7 +121,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create actor record with type "brand"
-    const { data: actor, error: actorError } = await supabase
+    const { data: actor, error: actorError } = await adminClient
       .from("actors")
       .upsert({
         user_id: user.id,
@@ -147,9 +149,8 @@ export async function POST(request: NextRequest) {
     let finalUsername = baseUsername;
     let suffix = 1;
 
-    // Check for username conflicts
     while (suffix < 100) {
-      const { data: conflict } = await supabase
+      const { data: conflict } = await adminClient
         .from("brands")
         .select("id")
         .eq("username", finalUsername)
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create brand profile
-    const { error: brandError } = await supabase
+    const { error: brandError } = await adminClient
       .from("brands")
       .upsert({
         id: actorId,

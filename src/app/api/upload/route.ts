@@ -119,10 +119,11 @@ export async function POST(request: NextRequest) {
     if (isProcessableImage(file.type) && file.type !== "image/gif") {
       // Don't process GIFs as they may lose animation
       try {
+        const isAvatarLike = uploadType === "avatar" || uploadType === "brand-logo";
         const processed = await processImage(inputBuffer, {
-          maxWidth: uploadType === "avatar" ? 1200 : 2048,
-          maxHeight: uploadType === "avatar" ? 1200 : 2048,
-          quality: uploadType === "avatar" ? 90 : 85,
+          maxWidth: isAvatarLike ? 1200 : 2048,
+          maxHeight: isAvatarLike ? 1200 : 2048,
+          quality: isAvatarLike ? 90 : 85,
         });
         processedBuffer = processed.buffer;
         finalContentType = processed.contentType;
@@ -135,7 +136,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine bucket based on upload type
-    const bucket = uploadType === "avatar" ? "avatars" : "portfolio";
+    const bucket = (uploadType === "avatar" || uploadType === "brand-logo") ? "avatars" : "portfolio";
 
     // Use service role client for all storage uploads — the user is already authenticated
     // and validated above, and there are no RLS policies on storage.objects
@@ -204,6 +205,14 @@ export async function POST(request: NextRequest) {
           profile_photo_height: finalHeight,
         })
         .eq("id", modelId);
+    }
+
+    // If brand-logo upload, update the brand's logo_url
+    if (uploadType === "brand-logo" && actor.type === "brand") {
+      await adminDb
+        .from("brands")
+        .update({ logo_url: publicUrl, updated_at: new Date().toISOString() })
+        .eq("id", actor.id);
     }
 
     // Also write to content_items (single source of truth for portfolio)

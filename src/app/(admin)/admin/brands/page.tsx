@@ -80,7 +80,8 @@ const PAGE_SIZE = 25;
 
 const tierColors: Record<string, string> = {
   free: "bg-muted text-muted-foreground",
-  basic: "bg-blue-500/20 text-blue-400",
+  discovery: "bg-cyan-500/20 text-cyan-400",
+  starter: "bg-blue-500/20 text-blue-400",
   pro: "bg-violet-500/20 text-violet-400",
   enterprise: "bg-amber-500/20 text-amber-400",
 };
@@ -201,7 +202,8 @@ function AccountsTab() {
               <SelectContent>
                 <SelectItem value="all">All Tiers</SelectItem>
                 <SelectItem value="free">Free</SelectItem>
-                <SelectItem value="basic">Basic</SelectItem>
+                <SelectItem value="discovery">Discovery</SelectItem>
+                <SelectItem value="starter">Starter</SelectItem>
                 <SelectItem value="pro">Pro</SelectItem>
                 <SelectItem value="enterprise">Enterprise</SelectItem>
               </SelectContent>

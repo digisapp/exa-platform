@@ -74,11 +74,15 @@ export default function ProfilePage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoCropperOpen, setLogoCropperOpen] = useState(false);
+  const [logoToCrop, setLogoToCrop] = useState<string | null>(null);
   const [followers, setFollowers] = useState<any[]>([]);
   const [followersLoading, setFollowersLoading] = useState(false);
   const [pageViews, setPageViews] = useState<number>(0);
   const [followerCount, setFollowerCount] = useState<number>(0);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
   const { t, locale, setLocale } = useTranslation();
@@ -203,6 +207,57 @@ export default function ProfilePage() {
       setImageToCrop(null);
     }
     if (avatarInputRef.current) avatarInputRef.current.value = "";
+  };
+
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Please select a valid image (JPEG, PNG, or WebP)");
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Image must be less than 15MB");
+      return;
+    }
+    const imageUrl = URL.createObjectURL(file);
+    setLogoToCrop(imageUrl);
+    setLogoCropperOpen(true);
+  };
+
+  const handleLogoCropComplete = async (croppedBlob: Blob) => {
+    setLogoCropperOpen(false);
+    if (logoToCrop) {
+      URL.revokeObjectURL(logoToCrop);
+      setLogoToCrop(null);
+    }
+    setUploadingLogo(true);
+    try {
+      const file = new File([croppedBlob], "brand-logo.jpg", { type: "image/jpeg" });
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "brand-logo");
+      const response = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Upload failed");
+      setBrand((prev) => prev ? { ...prev, logo_url: data.url } : prev);
+      toast.success("Logo updated!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  };
+
+  const handleLogoCropperClose = () => {
+    setLogoCropperOpen(false);
+    if (logoToCrop) {
+      URL.revokeObjectURL(logoToCrop);
+      setLogoToCrop(null);
+    }
+    if (logoInputRef.current) logoInputRef.current.value = "";
   };
 
   useEffect(() => {
@@ -900,6 +955,41 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* Logo Upload */}
+        <div className="flex items-center gap-5 p-5 rounded-xl border border-white/10 bg-white/[0.02]">
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleLogoSelect}
+            className="hidden"
+          />
+          <button
+            onClick={() => logoInputRef.current?.click()}
+            disabled={uploadingLogo}
+            className="relative group shrink-0"
+          >
+            <div className="w-20 h-20 rounded-xl overflow-hidden bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center">
+              {brand.logo_url ? (
+                <img src={brand.logo_url} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <Building2 className="h-8 w-8 text-cyan-400/60" />
+              )}
+            </div>
+            <div className="absolute inset-0 rounded-xl bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              {uploadingLogo ? (
+                <Loader2 className="h-5 w-5 text-white animate-spin" />
+              ) : (
+                <Camera className="h-5 w-5 text-white" />
+              )}
+            </div>
+          </button>
+          <div>
+            <p className="font-medium">Brand Logo</p>
+            <p className="text-sm text-muted-foreground">Click to upload · Square recommended</p>
+          </div>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -1104,8 +1194,19 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
+      {/* Logo Cropper Modal */}
+      {logoToCrop && (
+        <ImageCropper
+          open={logoCropperOpen}
+          onClose={handleLogoCropperClose}
+          imageSrc={logoToCrop}
+          onCropComplete={handleLogoCropComplete}
+          aspectRatio={1}
+          circularCrop={false}
+        />
+      )}
+    </div>
+  );
   }
 
   // If brand user but brand data is missing

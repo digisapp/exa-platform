@@ -41,6 +41,7 @@ import {
   CircleDollarSign,
   Bell,
   Loader2,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -127,6 +128,7 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
     { href: "/favorites", label: t.nav.favorites, icon: Heart },
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
     { href: "/campaigns", label: t.nav.campaigns, icon: Megaphone },
+    { href: "/brands/offers", label: "Offers", icon: Gift },
     { href: "/brands/content", label: t.nav.content, icon: FolderDown },
   ];
 
@@ -343,6 +345,14 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                             examodels.com/{user.username}
                             <ArrowUpRight className="h-3 w-3 shrink-0" />
                           </Link>
+                        ) : user.username && actorType === "brand" ? (
+                          <Link
+                            href={`/brand/${user.username}`}
+                            className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 truncate"
+                          >
+                            examodels.com/brand/{user.username}
+                            <ArrowUpRight className="h-3 w-3 shrink-0" />
+                          </Link>
                         ) : user.username ? (
                           <p className="text-[11px] text-white/50 truncate">
                             @{user.username}
@@ -505,6 +515,12 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                           <span className="ml-auto text-xs text-white/50">
                             {coinBalance.toLocaleString()}
                           </span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
+                        <Link href="/brands/offers" className="w-full">
+                          <Gift className="mr-2 h-4 w-4 text-cyan-400" />
+                          Offers
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
