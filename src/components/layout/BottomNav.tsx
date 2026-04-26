@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home, MessageCircle, Coins, Users, Images, Megaphone } from "lucide-react";
+import { Home, MessageCircle, Coins, Users, Images, Megaphone, Gavel } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 import { useTranslation } from "@/i18n";
@@ -16,6 +16,7 @@ interface BottomNavProps {
   };
   actorType: "model" | "brand" | "admin" | "fan" | null;
   unreadCount?: number;
+  notificationCount?: number;
 }
 
 // Shared class helper for each bottom-nav item
@@ -45,7 +46,7 @@ function NavItem({
   );
 }
 
-export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) {
+export function BottomNav({ user, actorType, unreadCount = 0, notificationCount = 0 }: BottomNavProps) {
   const pathname = usePathname();
   const coinBalanceContext = useCoinBalanceOptional();
   const coinBalance = coinBalanceContext?.balance ?? 0;
@@ -99,18 +100,23 @@ export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) 
           <span className="text-[10px] font-medium">{t.nav.chats}</span>
         </NavItem>
 
-        {/* Wallet/Coins (for creators: earnings; for fans: spend; for brands: campaigns) */}
-        {actorType === "brand" ? (
+        {/* Wallet/Coins/Bids (fans: bids with badge; brands: campaigns; creators: wallet) */}
+        {actorType === "fan" ? (
+          <NavItem href="/bids" active={isActive("/bids")}>
+            <div className="relative">
+              <Gavel className={cn("h-5 w-5", isActive("/bids") && "text-amber-400")} />
+              {notificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-amber-500 text-white rounded-full shadow-[0_0_8px_rgba(245,158,11,0.7)]">
+                  {notificationCount > 9 ? "9+" : notificationCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] font-medium">{t.nav.bids}</span>
+          </NavItem>
+        ) : actorType === "brand" ? (
           <NavItem href="/campaigns" active={isActive("/campaigns")}>
             <Megaphone className={cn("h-5 w-5", isActive("/campaigns") && "text-pink-400")} />
             <span className="text-[10px] font-medium">{t.nav.campaigns}</span>
-          </NavItem>
-        ) : isCreator ? (
-          <NavItem href="/wallet" active={isActive("/wallet")}>
-            <Coins className={cn("h-5 w-5", isActive("/wallet") && "text-pink-400")} />
-            <span className="text-[10px] font-medium tabular-nums">
-              {coinBalance.toLocaleString()}
-            </span>
           </NavItem>
         ) : (
           <NavItem href="/wallet" active={isActive("/wallet")}>

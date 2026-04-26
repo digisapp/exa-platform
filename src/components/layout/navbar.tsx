@@ -192,6 +192,11 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
+                  {link.href === "/bids" && notificationCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-amber-500 text-white rounded-full shadow-[0_0_8px_rgba(245,158,11,0.7)]">
+                      {notificationCount > 9 ? "9+" : notificationCount}
+                    </span>
+                  )}
                 </div>
                 <span>{link.label}</span>
                 {/* Active glow underbar */}
@@ -284,8 +289,8 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                 </Link>
               )}
 
-              {/* ───────── Notification bell ───────── */}
-              {actorType !== "admin" && (
+              {/* ───────── Notification bell (models + brands only — fans use nav badges) ───────── */}
+              {actorType !== "admin" && actorType !== "fan" && (
                 <Link
                   href={notificationHref}
                   aria-label={`${t.nav.notifications}${notificationCount > 0 ? ` (${notificationCount})` : ""}`}

@@ -208,6 +208,7 @@ export default async function DashboardLayout({
           }}
           actorType={actor?.type || null}
           unreadCount={unreadCount}
+          notificationCount={notificationCount}
         />
       </div>
     </CoinBalanceProvider>
