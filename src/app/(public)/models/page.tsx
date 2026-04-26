@@ -137,8 +137,8 @@ export default async function ModelsPage({
     supabase.from("models").select(MODEL_CARD_FIELDS).eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
   );
 
-  // Sort — always prioritize live models (active in last 5 min) at the top
-  modelsQuery = modelsQuery.order("last_active_at", { ascending: false, nullsFirst: true });
+  // Sort — always prioritize recently-active models at the top; nulls (never active) go last
+  modelsQuery = modelsQuery.order("last_active_at", { ascending: false, nullsFirst: false });
 
   switch (params.sort) {
     case "followers":

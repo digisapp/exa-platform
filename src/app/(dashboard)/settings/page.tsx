@@ -13,8 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Trash2, AlertTriangle, Building2, Globe, Users, LogOut, Handshake } from "lucide-react";
-import { LogoutButton } from "@/components/auth/logout-button";
+import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Trash2, AlertTriangle, Building2, Globe, Users, Handshake } from "lucide-react";
 import Image from "next/image";
 import type { Model, Fan, Actor, Brand } from "@/types/database";
 import { ImageCropper } from "@/components/upload/ImageCropper";
@@ -846,27 +845,6 @@ export default function ProfilePage() {
           </TabsContent>
 
           <TabsContent value="account" className="space-y-6">
-            {/* Sign Out */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <LogOut className="h-5 w-5" />
-                  Session
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Sign Out</p>
-                    <p className="text-sm text-muted-foreground">
-                      Sign out of your account on this device
-                    </p>
-                  </div>
-                  <LogoutButton />
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Danger Zone */}
             <Card className="border-red-500/20">
               <CardHeader>

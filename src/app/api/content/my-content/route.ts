@@ -14,11 +14,32 @@ function extractStoragePath(url: string | null | undefined): string | null {
   return match ? match[1] : null;
 }
 
+// How many seconds of remaining validity to consider a signed URL still fresh.
+const RESIGN_THRESHOLD_SECS = 300;
+
+function isSignedUrlFresh(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const token = u.searchParams.get("token");
+    if (!token) return false;
+    // JWT payload is the second segment (base64url encoded)
+    const payload = JSON.parse(
+      Buffer.from(token.split(".")[1], "base64url").toString()
+    );
+    return typeof payload.exp === "number" &&
+      payload.exp - Date.now() / 1000 > RESIGN_THRESHOLD_SECS;
+  } catch {
+    return false;
+  }
+}
+
 async function resignUrl(
   rawUrl: string | null | undefined,
   service: ReturnType<typeof createServiceRoleClient>
 ): Promise<string | null> {
   if (!rawUrl) return null;
+  // Skip re-signing if the URL is already a fresh signed URL
+  if (rawUrl.startsWith("http") && isSignedUrlFresh(rawUrl)) return rawUrl;
   const path = extractStoragePath(rawUrl);
   if (!path) return rawUrl; // not a storage path we can re-sign; pass through
   const { data } = await service.storage

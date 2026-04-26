@@ -54,6 +54,7 @@ export default function MyContentPage() {
   const [filter, setFilter] = useState<"all" | "image" | "video">("all");
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [showViewer, setShowViewer] = useState(false);
+  const [isAuthed, setIsAuthed] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -64,16 +65,17 @@ export default function MyContentPage() {
         router.push("/signin?redirect=/my-content");
         return;
       }
-      fetchMyContent();
+      setIsAuthed(true);
     }
     checkAuth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
+    if (!isAuthed) return;
     fetchMyContent();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+  }, [isAuthed, filter]);
 
   async function fetchMyContent() {
     try {
