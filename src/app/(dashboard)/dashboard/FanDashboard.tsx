@@ -274,7 +274,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* ──────────────────────────────────────────────
-          Low Coin CTA
+          Low Coin CTA — full width
          ────────────────────────────────────────────── */}
       {coinBalance < 20 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent shadow-[0_0_20px_rgba(245,158,11,0.15)]">
@@ -298,7 +298,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       )}
 
       {/* ──────────────────────────────────────────────
-          Favorites strip
+          Favorites strip — full width
          ────────────────────────────────────────────── */}
       {favoriteModels.length > 0 && (
         <div>
@@ -348,54 +348,59 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       )}
 
       {/* ──────────────────────────────────────────────
-          EXA Live Wall
+          Two-column layout: feed left, sidebar right
          ────────────────────────────────────────────── */}
-      <LiveWallServer actorId={actorId} actorType="fan" />
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
 
-      {/* ──────────────────────────────────────────────
-          For You Feed
-         ────────────────────────────────────────────── */}
-      <ForYouFeed items={sortedFeed} coinBalance={coinBalance} />
+        {/* ── Left: For You Feed (65%) ── */}
+        <ForYouFeed items={sortedFeed} coinBalance={coinBalance} />
 
-      {/* ──────────────────────────────────────────────
-          Discover Models
-         ────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
-        <header className="flex items-center justify-between p-5 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-cyan-400" />
-            <h2 className="text-base font-semibold text-white">Discover models</h2>
-          </div>
-          <Link
-            href="/models"
-            className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold"
-          >
-            Browse all
-            <ArrowRight className="h-3 w-3" />
-          </Link>
-        </header>
-        <div className="p-5">
-          {featuredModels.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {featuredModels.map((model: any) => (
-                <ModelCard key={model.id} model={model} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-10">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/5 ring-1 ring-white/10 mb-3">
-                <Users className="h-6 w-6 text-white/40" />
+        {/* ── Right: Live Wall + Discover Models (35%) ── */}
+        <div className="space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto scrollbar-hide">
+
+          {/* EXA Live Wall */}
+          <LiveWallServer actorId={actorId} actorType="fan" />
+
+          {/* Discover Models */}
+          <div className="rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
+            <header className="flex items-center justify-between p-4 border-b border-white/5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-cyan-400" />
+                <h2 className="text-sm font-semibold text-white">Discover Models</h2>
               </div>
-              <p className="text-sm text-white/60">No models yet</p>
               <Link
                 href="/models"
-                className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-sm font-semibold text-white shadow-[0_0_18px_rgba(236,72,153,0.4)] transition-all"
+                className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold"
               >
-                Browse Models
-                <ArrowRight className="h-4 w-4" />
+                Browse all
+                <ArrowRight className="h-3 w-3" />
               </Link>
+            </header>
+            <div className="p-4">
+              {featuredModels.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {featuredModels.slice(0, 6).map((model: any) => (
+                    <ModelCard key={model.id} model={model} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 ring-1 ring-white/10 mb-3">
+                    <Users className="h-5 w-5 text-white/40" />
+                  </div>
+                  <p className="text-sm text-white/60 mb-4">No models yet</p>
+                  <Link
+                    href="/models"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-xs font-semibold text-white shadow-[0_0_18px_rgba(236,72,153,0.4)] transition-all"
+                  >
+                    Browse Models
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
         </div>
       </div>
     </div>
