@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/layout/navbar";
-import { Users } from "lucide-react";
+import { Heart, Users } from "lucide-react";
 import { ModelCard } from "@/components/models/model-card";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -66,50 +65,51 @@ export default async function FavoritesPage() {
     .filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      <main className="container px-8 md:px-16 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3">
-            <Users className="h-8 w-8 text-pink-500" />
-            <h1 className="text-3xl font-bold">Favorites</h1>
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+            <Heart className="h-6 w-6 text-pink-500 fill-pink-500" />
           </div>
-          <p className="text-muted-foreground mt-2">
-            {orderedModels.length} favorite {orderedModels.length === 1 ? "model" : "models"}
-          </p>
+          <h1 className="text-3xl font-bold">Favs</h1>
         </div>
+        <p className="text-sm text-white/50 ml-[52px]">
+          {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"}
+        </p>
+      </div>
 
-        {/* Grid */}
-        {orderedModels.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {orderedModels.map((model: any) => (
-              <ModelCard
-                key={model.id}
-                model={model}
-                showFavorite={true}
-                isLoggedIn={true}
-                isFavorited={true}
-              />
-            ))}
+      {/* Grid */}
+      {orderedModels.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {orderedModels.map((model: any) => (
+            <ModelCard
+              key={model.id}
+              model={model}
+              showFavorite={true}
+              isLoggedIn={true}
+              isFavorited={true}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-20">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-pink-500/10 ring-1 ring-pink-500/20 mb-4">
+            <Heart className="h-8 w-8 text-pink-500/50" />
           </div>
-        ) : (
-          <div className="text-center py-16">
-            <Users className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No favorites yet</h2>
-            <p className="text-muted-foreground mb-6">
-              Discover models and click the heart icon to add them to your favorites.
-            </p>
-            <Link
-              href="/models"
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-            >
-              Browse Models
-            </Link>
-          </div>
-        )}
-      </main>
+          <h2 className="text-xl font-semibold mb-2">No favorites yet</h2>
+          <p className="text-white/50 text-sm mb-6">
+            Browse models and tap the heart icon to save them here.
+          </p>
+          <Link
+            href="/models"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-sm font-semibold text-white shadow-[0_0_18px_rgba(236,72,153,0.4)] transition-all"
+          >
+            <Users className="h-4 w-4" />
+            Browse Models
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

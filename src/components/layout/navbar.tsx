@@ -119,9 +119,9 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
   const translatedFanLinks = [
     { href: "/dashboard", label: t.nav.home, icon: Home },
     { href: "/models", label: t.nav.explore, icon: Users },
-    { href: "/favorites", label: "Favs", icon: Heart },
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
     { href: "/bids", label: t.nav.bids, icon: Gavel },
+    { href: "/favorites", label: "Favs", icon: Heart },
   ];
   const translatedBrandLinks = [
     { href: "/dashboard", label: t.nav.home, icon: Home },

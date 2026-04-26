@@ -13,6 +13,7 @@ import {
 import { ModelCard } from "@/components/models/model-card";
 import { ForYouFeed, type FeedItem } from "./ForYouFeed";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
+import { LiveBidsPanel } from "./LiveBidsPanel";
 
 // Re-sign a storage path or expired signed URL to get a fresh 1-hour signed URL
 function extractStoragePath(url: string): string | null {
@@ -254,21 +255,26 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
 
   // Interleave: followed content first, then alternate auction/trending
   // Sort followed content by date, keep auctions interspersed
+  // Content-only feed — auctions live in the sidebar LiveBidsPanel
   const followedItems = feedItems.filter(i => i.type === "content" && i.isFollowed);
-  const auctionItems = feedItems.filter(i => i.type === "auction");
   const discoverItems = feedItems.filter(i => i.type === "content" && !i.isFollowed);
+  const sortedFeed: FeedItem[] = [...followedItems, ...discoverItems];
 
-  const sortedFeed: FeedItem[] = [];
-  // Start with followed content
-  sortedFeed.push(...followedItems);
-  // Insert auctions after every 2 followed items, or at the start if no followed content
-  let insertIdx = Math.min(2, sortedFeed.length);
-  for (const auction of auctionItems) {
-    sortedFeed.splice(insertIdx, 0, auction);
-    insertIdx += 3;
-  }
-  // Append discover content at the end
-  sortedFeed.push(...discoverItems);
+  // Sidebar auctions: attach myBidStatus from the fan's bid map
+  const sidebarAuctions = (liveAuctions || [])
+    .filter((a: any) => a.model)
+    .map((a: any) => ({
+      id: a.id,
+      title: a.title,
+      category: a.category,
+      cover_image_url: a.cover_image_url,
+      current_bid: a.current_bid,
+      starting_price: a.starting_price,
+      bid_count: a.bid_count || 0,
+      ends_at: a.ends_at,
+      model: a.model,
+      myBidStatus: myBidMap.get(a.id)?.status || null,
+    }));
 
 
   return (
@@ -360,6 +366,9 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
 
           {/* EXA Live Wall */}
           <LiveWallServer actorId={actorId} actorType="fan" />
+
+          {/* Live Bids */}
+          <LiveBidsPanel auctions={sidebarAuctions} />
 
           {/* Discover Models */}
           <div className="rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
