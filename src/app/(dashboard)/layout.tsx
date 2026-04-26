@@ -115,6 +115,7 @@ export default async function DashboardLayout({
   // Compute notification count per actor type (fed to navbar bell).
   // All queries wrapped in try/catch and non-blocking — bell just shows 0 on failure.
   let notificationCount = 0;
+  let bellCount = 0;
   if (actor) {
     try {
       if (actor.type === "model") {
@@ -129,7 +130,7 @@ export default async function DashboardLayout({
 
         if (modelRow?.id) {
           const endsBefore = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-          const [offers, bookings, auctions] = await Promise.all([
+          const [offers, bookings, auctions, unreadNotifications] = await Promise.all([
             (supabase.from("offer_responses") as any)
               .select("id", { count: "exact", head: true })
               .eq("model_id", modelRow.id)
@@ -144,7 +145,12 @@ export default async function DashboardLayout({
               .eq("status", "active")
               .gt("ends_at", new Date().toISOString())
               .lt("ends_at", endsBefore),
+            (supabase.from("notifications") as any)
+              .select("id", { count: "exact", head: true })
+              .eq("user_id", user.id)
+              .is("read_at", null),
           ]);
+          bellCount = unreadNotifications.count || 0;
           notificationCount =
             (offers.count || 0) + (bookings.count || 0) + (auctions.count || 0);
         }
@@ -196,6 +202,7 @@ export default async function DashboardLayout({
           actorType={actor?.type || null}
           unreadCount={unreadCount}
           notificationCount={notificationCount}
+          bellCount={bellCount}
         />
         <DashboardClientWrapper actorId={actor?.id || null} actorType={actor?.type || null}>
           <main className="container px-4 md:px-8 py-8 pb-24 md:pb-8">{children}</main>

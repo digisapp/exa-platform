@@ -42,6 +42,7 @@ import {
   Loader2,
   Gift,
 } from "lucide-react";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
@@ -60,6 +61,7 @@ interface NavbarProps {
   actorType?: "model" | "brand" | "admin" | "fan" | null;
   unreadCount?: number;
   notificationCount?: number;
+  bellCount?: number;
 }
 
 const publicLinks: { href: string; label: string; icon: any }[] = [];
@@ -76,7 +78,7 @@ const DROPDOWN_GLASS_CLASS =
 const DROPDOWN_ITEM_CLASS =
   "cursor-pointer rounded-lg px-2.5 py-2 text-sm text-white/80 focus:bg-white/10 focus:text-white data-[highlighted]:bg-white/10 data-[highlighted]:text-white";
 
-export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0 }: NavbarProps) {
+export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0, bellCount = 0 }: NavbarProps) {
   const pathname = usePathname();
   const coinBalanceContext = useCoinBalanceOptional();
   const coinBalance = coinBalanceContext?.balance ?? 0;
@@ -279,6 +281,11 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                     {coinBalance.toLocaleString()}
                   </span>
                 </Link>
+              )}
+
+              {/* ───────── Notification Bell (models only) ───────── */}
+              {actorType === "model" && (
+                <NotificationBell initialUnreadCount={bellCount} />
               )}
 
               {/* ───────── Profile dropdown ───────── */}
