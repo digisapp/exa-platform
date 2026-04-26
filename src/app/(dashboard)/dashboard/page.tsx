@@ -804,13 +804,13 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Live Pulse + Top Tippers */}
+        {/* Activity + Top Tippers */}
         <div className="space-y-4">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm">
             <header className="flex items-center justify-between p-4 border-b border-white/5">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-pink-400" />
-                <h3 className="text-sm font-semibold">Live pulse</h3>
+                <h3 className="text-sm font-semibold">Activity</h3>
               </div>
             </header>
             <div className="p-2 space-y-1">
