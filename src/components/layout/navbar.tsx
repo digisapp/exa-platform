@@ -595,17 +595,12 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
               </DropdownMenu>
             </>
           ) : (
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" asChild>
-                <Link href="/signin">{t.nav.signIn}</Link>
-              </Button>
-              <Button
-                asChild
-                className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 shadow-[0_0_16px_rgba(236,72,153,0.4)]"
-              >
-                <Link href="/signup">{t.nav.signUp}</Link>
-              </Button>
-            </div>
+            <Button
+              asChild
+              className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 shadow-[0_0_16px_rgba(236,72,153,0.4)]"
+            >
+              <Link href="/signin">{t.nav.signIn}</Link>
+            </Button>
           )}
         </div>
       </div>
