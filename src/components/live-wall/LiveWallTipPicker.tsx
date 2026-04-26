@@ -81,7 +81,7 @@ export function LiveWallTipPicker({
         ))}
       </div>
 
-      {/* Balance + Get Coins CTA */}
+      {/* CTA */}
       <div className="px-3 pb-2 text-center">
         {coinBalance < SUPER_TIP_AMOUNTS[0] ? (
           <Link
@@ -91,8 +91,8 @@ export function LiveWallTipPicker({
             <span>💰</span> Get Coins to Super Tip
           </Link>
         ) : (
-          <span className="text-[9px] text-white/25">
-            Balance: {coinBalance.toLocaleString()} coins
+          <span className="text-[9px] text-amber-400/60">
+            ✨ The model gets notified when you Super Tip
           </span>
         )}
       </div>
