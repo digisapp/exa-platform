@@ -105,6 +105,25 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
       return;
     }
 
+    // Catch emails entered in the Instagram field
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(instagram.trim())) {
+      toast.error("That looks like an email address — please enter your Instagram username (e.g. @yourhandle)");
+      return;
+    }
+
+    // Strip instagram.com URLs down to just the handle
+    const igUrlMatch = instagram.trim().match(/instagram\.com\/([a-zA-Z0-9._]+)/);
+    if (igUrlMatch) {
+      setInstagram(igUrlMatch[1]);
+      return;
+    }
+
+    // Catch other URLs / domains
+    if (/\.[a-z]{2,}(\/|$)/i.test(instagram.trim().replace(/^@/, ""))) {
+      toast.error("Please enter your Instagram username only (e.g. @yourhandle), not a URL");
+      return;
+    }
+
     if (!email.trim()) {
       toast.error("Please enter your email");
       return;

@@ -96,6 +96,30 @@ export function ModelSignupDialogES({ children }: ModelSignupDialogESProps) {
       return;
     }
 
+    if (/\s/.test(instagram.trim().replace(/^@/, ""))) {
+      toast.error("Los usuarios de Instagram no tienen espacios — ¿ingresaste tu nombre?");
+      return;
+    }
+
+    // Catch emails entered in the Instagram field
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(instagram.trim())) {
+      toast.error("Eso parece un correo electrónico — ingresa tu usuario de Instagram (ej. @tuusuario)");
+      return;
+    }
+
+    // Strip instagram.com URLs down to just the handle
+    const igUrlMatch = instagram.trim().match(/instagram\.com\/([a-zA-Z0-9._]+)/);
+    if (igUrlMatch) {
+      setInstagram(igUrlMatch[1]);
+      return;
+    }
+
+    // Catch other URLs / domains
+    if (/\.[a-z]{2,}(\/|$)/i.test(instagram.trim().replace(/^@/, ""))) {
+      toast.error("Ingresa solo tu usuario de Instagram (ej. @tuusuario), no una URL");
+      return;
+    }
+
     if (!email.trim()) {
       toast.error("Por favor ingresa tu correo electrónico");
       return;
