@@ -526,11 +526,6 @@ export function TicketPageContent({
                             <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">
                               Sale Not Active
                             </span>
-                          ) : tier.available !== null &&
-                            tier.available <= 20 ? (
-                            <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-                              Only {tier.available} left
-                            </span>
                           ) : null}
                         </div>
                       </div>
