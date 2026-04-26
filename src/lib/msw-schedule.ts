@@ -83,7 +83,7 @@ export const MSW_2026_SCHEDULE: MSWScheduleEntry[] = [
     dayShort: "Sat",
     date: "May 30",
     dateNum: "30",
-    title: "Early Evening Show",
+    title: "Afternoon Show + Night Show",
     description: "Show 4PM",
     highlight: true,
     badge: null,
