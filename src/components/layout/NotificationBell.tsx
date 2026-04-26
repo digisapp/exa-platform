@@ -132,11 +132,11 @@ export function NotificationBell({ initialUnreadCount = 0 }: Props) {
     fetchFeed();
   }, [fetchFeed]);
 
-  const handleOpenChange = async (next: boolean) => {
+  const handleOpenChange = (next: boolean) => {
     setOpen(next);
     if (next) {
       // Refresh feed when opening
-      fetchFeed();
+      fetchFeed().catch(() => {});
       // Mark all read (fire-and-forget) and clear badge immediately
       if (unreadCount > 0) {
         setUnreadCount(0);
@@ -164,7 +164,7 @@ export function NotificationBell({ initialUnreadCount = 0 }: Props) {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-80 p-0 bg-[#120a24]/97 backdrop-blur-xl border-violet-500/30 shadow-2xl shadow-violet-500/15 rounded-2xl overflow-hidden"
+        className="relative w-80 p-0 bg-[#120a24]/97 backdrop-blur-xl border-violet-500/30 shadow-2xl shadow-violet-500/15 rounded-2xl overflow-hidden"
       >
         {/* Top shimmer */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
