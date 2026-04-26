@@ -92,7 +92,7 @@ export function LiveWallTipPicker({
           </Link>
         ) : (
           <span className="text-[9px] text-amber-400/60">
-            ✨ The model gets notified when you Super Tip
+            💰 The model gets notified when you Super Tip
           </span>
         )}
       </div>
