@@ -155,6 +155,48 @@ export default async function EventsPage() {
           <ArrowRight className="h-4 w-4 text-white/40 ml-auto transition-all group-hover:text-pink-300 group-hover:translate-x-1" />
         </Link>
 
+        {/* Digis Live Shows Banner */}
+        <div className="mb-8 relative overflow-hidden rounded-2xl border border-pink-500/20 bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-cyan-500/10">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(236,72,153,0.15),transparent_60%)]" />
+          <div className="relative flex flex-col md:flex-row md:items-center gap-5 p-6 md:p-8">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-[0_0_12px_rgba(236,72,153,0.4)]">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+                  </span>
+                  Live on Digis
+                </span>
+              </div>
+              <h2 className="text-xl md:text-2xl font-bold text-white mb-1.5">
+                Watch Live Shows &amp; Events
+              </h2>
+              <p className="text-sm text-white/60 max-w-lg">
+                Live streams, exclusive shows, and ticketed events — happening now on Digis. EXA models go live every week.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <a
+                href="https://digis.cc/shows"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 text-white font-bold text-sm shadow-[0_0_20px_rgba(236,72,153,0.4)] hover:shadow-[0_0_30px_rgba(236,72,153,0.6)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                <Tv className="h-4 w-4" />
+                Watch on Digis
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* EXA Events heading */}
+        <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <Ticket className="h-4 w-4 text-pink-400" />
+          EXA Runway Events
+        </h2>
+
         {/* Events List */}
         {events && events.length > 0 ? (
           <div className="space-y-4">

@@ -1649,6 +1649,19 @@ export default function ProfilePage() {
                     placeholder="username"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="digis_username" className="flex items-center gap-2">
+                    Digis
+                    <span className="text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20 border border-pink-500/30 text-pink-400">Earn 20% commission</span>
+                  </Label>
+                  <Input
+                    id="digis_username"
+                    value={model.digis_username || ""}
+                    onChange={(e) => setModel({ ...model, digis_username: e.target.value.replace("@", "") })}
+                    placeholder="username"
+                  />
+                  <p className="text-xs text-muted-foreground">Your Digis.cc username. Fans who visit Digis from your EXA profile earn you 20% commission on ticket and show sales.</p>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -660,6 +660,17 @@ export default async function ModelProfilePage({ params }: Props) {
                           <Mail className="h-3.5 w-3.5 text-white" />
                         </a>
                       )}
+                      {model.digis_username && (
+                        <a
+                          href={`/go/shows/${model.username}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Watch on Digis"
+                          className="inline-flex items-center gap-1 h-8 px-2.5 rounded-full bg-gradient-to-r from-pink-500/25 to-violet-500/25 backdrop-blur-md border border-pink-400/40 text-white text-[11px] font-semibold transition-all hover:scale-105 active:scale-95 hover:from-pink-500/40 hover:to-violet-500/40 hover:border-pink-400/60 hover:shadow-[0_0_14px_rgba(236,72,153,0.55)] whitespace-nowrap"
+                        >
+                          🎬 Digis
+                        </a>
+                      )}
                     </div>
                   )}
 
@@ -840,6 +851,23 @@ export default async function ModelProfilePage({ params }: Props) {
                   </div>
                   <span className="text-[10px] text-white/50 group-hover:text-white/80 transition-colors leading-none font-medium">
                     Email
+                  </span>
+                </a>
+              )}
+              {/* Digis CTA */}
+              {model.digis_username && (
+                <a
+                  href={`/go/shows/${model.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-1 group"
+                  title="Watch on Digis"
+                >
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 border border-pink-500/30 flex items-center justify-center transition-all group-hover:scale-110 active:scale-95 group-hover:from-pink-500/35 group-hover:to-violet-500/35 group-hover:border-pink-400/60 group-hover:shadow-[0_0_16px_rgba(236,72,153,0.5)]">
+                    <span className="text-sm leading-none">🎬</span>
+                  </div>
+                  <span className="text-[10px] text-white/50 group-hover:text-white/80 transition-colors leading-none font-medium">
+                    Digis
                   </span>
                 </a>
               )}
