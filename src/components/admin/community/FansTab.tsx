@@ -29,6 +29,10 @@ import {
   ChevronRight,
   Calendar,
   AlertTriangle,
+  MessageCircle,
+  Sparkles,
+  Clock,
+  ShoppingBag,
 } from "lucide-react";
 import { FanActionsDropdown } from "@/components/admin/AdminActions";
 
@@ -37,6 +41,22 @@ function SortIndicator({ active, direction }: { active: boolean; direction: "asc
   return direction === "asc"
     ? <ArrowUp className="h-4 w-4 ml-1 text-pink-500" />
     : <ArrowDown className="h-4 w-4 ml-1 text-pink-500" />;
+}
+
+function formatRelativeTime(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 30) return `${diffDays}d ago`;
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) return `${diffMonths}mo ago`;
+  return `${Math.floor(diffMonths / 12)}y ago`;
 }
 
 interface Fan {
@@ -52,13 +72,18 @@ interface Fan {
   state: string | null;
   is_suspended: boolean;
   created_at: string;
+  updated_at?: string;
   coins_spent?: number;
+  tips_spent?: number;
+  messages_spent?: number;
+  content_spent?: number;
+  live_wall_spent?: number;
   following_count?: number;
   report_count?: number;
   has_pending_model_app?: boolean;
 }
 
-type FanSortField = "coins_spent" | "following_count" | "coin_balance" | "created_at" | "report_count";
+type FanSortField = "coins_spent" | "following_count" | "coin_balance" | "created_at" | "report_count" | "total_coins_purchased" | "updated_at";
 type SortDirection = "asc" | "desc";
 
 const US_STATES: { abbr: string; name: string }[] = [
@@ -101,13 +126,13 @@ export default function FansTab() {
     setFansLoading(true);
 
     let query = (supabase.from("fans") as any)
-      .select(`id, user_id, display_name, username, email, avatar_url, coin_balance, total_coins_purchased, state, is_suspended, created_at`, { count: "exact" });
+      .select(`id, user_id, display_name, username, email, avatar_url, coin_balance, total_coins_purchased, state, is_suspended, created_at, updated_at`, { count: "exact" });
 
     if (fansSearch) query = query.or(`display_name.ilike.%${escapeIlike(fansSearch)}%,email.ilike.%${escapeIlike(fansSearch)}%`);
     if (fansStateFilter !== "all") query = query.eq("state", fansStateFilter);
     if (fansStatusFilter !== "all") query = query.eq("is_suspended", fansStatusFilter === "suspended");
 
-    if (fansSortField === "coin_balance" || fansSortField === "created_at") {
+    if (fansSortField === "coin_balance" || fansSortField === "created_at" || fansSortField === "total_coins_purchased" || fansSortField === "updated_at") {
       query = query.order(fansSortField, { ascending: fansSortDirection === "asc", nullsFirst: false });
     } else {
       query = query.order("created_at", { ascending: false });
@@ -133,13 +158,28 @@ export default function FansTab() {
 
       const actorIds = actors?.map((a: any) => a.id) || [];
 
-      // Get coins spent
+      // Get coins spent, broken down by action type
       const { data: transactions } = await (supabase.from("coin_transactions") as any)
-        .select("actor_id, amount").in("actor_id", actorIds).lt("amount", 0);
+        .select("actor_id, amount, action").in("actor_id", actorIds).lt("amount", 0);
 
       const spentMap = new Map<string, number>();
+      const tipsMap = new Map<string, number>();
+      const messagesMap = new Map<string, number>();
+      const contentMap = new Map<string, number>();
+      const liveWallMap = new Map<string, number>();
+
       transactions?.forEach((tx: any) => {
-        spentMap.set(tx.actor_id, (spentMap.get(tx.actor_id) || 0) + Math.abs(tx.amount));
+        const abs = Math.abs(tx.amount);
+        spentMap.set(tx.actor_id, (spentMap.get(tx.actor_id) || 0) + abs);
+        if (tx.action === "tip_sent") {
+          tipsMap.set(tx.actor_id, (tipsMap.get(tx.actor_id) || 0) + abs);
+        } else if (tx.action === "message_sent") {
+          messagesMap.set(tx.actor_id, (messagesMap.get(tx.actor_id) || 0) + abs);
+        } else if (tx.action === "ppv_unlock" || tx.action === "content_unlock") {
+          contentMap.set(tx.actor_id, (contentMap.get(tx.actor_id) || 0) + abs);
+        } else if (tx.action === "live_wall_tip_sent") {
+          liveWallMap.set(tx.actor_id, (liveWallMap.get(tx.actor_id) || 0) + abs);
+        }
       });
 
       // Get following count
@@ -173,6 +213,10 @@ export default function FansTab() {
 
       data.forEach((fan: any) => {
         fan.coins_spent = fan.actor_id ? (spentMap.get(fan.actor_id) || 0) : 0;
+        fan.tips_spent = fan.actor_id ? (tipsMap.get(fan.actor_id) || 0) : 0;
+        fan.messages_spent = fan.actor_id ? (messagesMap.get(fan.actor_id) || 0) : 0;
+        fan.content_spent = fan.actor_id ? (contentMap.get(fan.actor_id) || 0) : 0;
+        fan.live_wall_spent = fan.actor_id ? (liveWallMap.get(fan.actor_id) || 0) : 0;
         fan.following_count = fan.actor_id ? (followMap.get(fan.actor_id) || 0) : 0;
         fan.report_count = fan.actor_id ? (reportMap.get(fan.actor_id) || 0) : 0;
         fan.has_pending_model_app = pendingModelAppSet.has(fan.user_id);
@@ -185,7 +229,7 @@ export default function FansTab() {
       }
 
       // Sort computed fields
-      if (fansSortField === "coins_spent" || fansSortField === "following_count" || fansSortField === "report_count") {
+      if (["coins_spent", "following_count", "report_count"].includes(fansSortField)) {
         filteredData.sort((a: any, b: any) => {
           const aVal = a[fansSortField] || 0;
           const bVal = b[fansSortField] || 0;
@@ -292,14 +336,20 @@ export default function FansTab() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[250px]">Fan</TableHead>
+                    <TableHead className="w-[220px]">Fan</TableHead>
                     <TableHead>State</TableHead>
                     <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleFanSort("created_at")}>
                       <div className="flex items-center"><Calendar className="h-4 w-4 mr-1" />Joined<SortIndicator active={fansSortField === "created_at"} direction={fansSortDirection} /></div>
                     </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleFanSort("updated_at")}>
+                      <div className="flex items-center"><Clock className="h-4 w-4 mr-1" />Last Active<SortIndicator active={fansSortField === "updated_at"} direction={fansSortDirection} /></div>
+                    </TableHead>
                     <TableHead>Actions</TableHead>
                     <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleFanSort("report_count")}>
                       <div className="flex items-center"><AlertTriangle className="h-4 w-4 mr-1" />Reports<SortIndicator active={fansSortField === "report_count"} direction={fansSortDirection} /></div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleFanSort("total_coins_purchased")}>
+                      <div className="flex items-center"><ShoppingBag className="h-4 w-4 mr-1" />Purchased<SortIndicator active={fansSortField === "total_coins_purchased"} direction={fansSortDirection} /></div>
                     </TableHead>
                     <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleFanSort("coins_spent")}>
                       <div className="flex items-center"><Coins className="h-4 w-4 mr-1" />Spent<SortIndicator active={fansSortField === "coins_spent"} direction={fansSortDirection} /></div>
@@ -339,13 +389,61 @@ export default function FansTab() {
                       </TableCell>
                       <TableCell><span className="text-sm text-muted-foreground">{fan.state || "-"}</span></TableCell>
                       <TableCell><span className="text-sm text-muted-foreground">{new Date(fan.created_at).toLocaleDateString()}</span></TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {fan.updated_at ? formatRelativeTime(fan.updated_at) : "-"}
+                        </span>
+                      </TableCell>
                       <TableCell><FanActionsDropdown id={fan.id} fanName={fan.display_name || fan.email || "Fan"} fanUsername={fan.username} isSuspended={fan.is_suspended || false} onAction={loadFans} /></TableCell>
                       <TableCell>
                         {(fan.report_count || 0) > 0 ? (
                           <span className="inline-flex items-center gap-1 text-red-500 font-medium"><AlertTriangle className="h-4 w-4" />{fan.report_count}</span>
                         ) : <span className="text-muted-foreground">0</span>}
                       </TableCell>
-                      <TableCell><span className={`font-medium ${(fan.coins_spent || 0) > 0 ? "text-yellow-500" : ""}`}>{(fan.coins_spent || 0).toLocaleString()}</span></TableCell>
+                      <TableCell>
+                        <span className={`font-medium ${(fan.total_coins_purchased || 0) > 0 ? "text-violet-400" : "text-muted-foreground"}`}>
+                          {(fan.total_coins_purchased || 0).toLocaleString()}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {(fan.coins_spent || 0) > 0 ? (
+                          <div
+                            className="cursor-default space-y-0.5"
+                            title={[
+                              `Tips: ${(fan.tips_spent || 0).toLocaleString()} coins`,
+                              `Live Wall: ${(fan.live_wall_spent || 0).toLocaleString()} coins`,
+                              `Messages: ${(fan.messages_spent || 0).toLocaleString()} coins`,
+                              `Content/PPV: ${(fan.content_spent || 0).toLocaleString()} coins`,
+                            ].join("\n")}
+                          >
+                            <span className="font-medium text-yellow-500">{(fan.coins_spent || 0).toLocaleString()}</span>
+                            <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-xs">
+                              {(fan.tips_spent || 0) > 0 && (
+                                <span className="flex items-center gap-0.5 text-pink-400">
+                                  <Heart className="h-2.5 w-2.5" />{fan.tips_spent!.toLocaleString()}
+                                </span>
+                              )}
+                              {(fan.live_wall_spent || 0) > 0 && (
+                                <span className="flex items-center gap-0.5 text-violet-400">
+                                  <Sparkles className="h-2.5 w-2.5" />{fan.live_wall_spent!.toLocaleString()}
+                                </span>
+                              )}
+                              {(fan.messages_spent || 0) > 0 && (
+                                <span className="flex items-center gap-0.5 text-blue-400">
+                                  <MessageCircle className="h-2.5 w-2.5" />{fan.messages_spent!.toLocaleString()}
+                                </span>
+                              )}
+                              {(fan.content_spent || 0) > 0 && (
+                                <span className="flex items-center gap-0.5 text-green-400">
+                                  <Coins className="h-2.5 w-2.5" />{fan.content_spent!.toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">0</span>
+                        )}
+                      </TableCell>
                       <TableCell><span className={`font-medium ${(fan.following_count || 0) > 0 ? "text-pink-500" : ""}`}>{(fan.following_count || 0).toLocaleString()}</span></TableCell>
                       <TableCell><span className={`font-medium ${fan.coin_balance > 0 ? "text-green-500" : ""}`}>{(fan.coin_balance || 0).toLocaleString()}</span></TableCell>
                     </TableRow>
