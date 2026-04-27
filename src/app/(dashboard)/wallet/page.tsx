@@ -34,6 +34,7 @@ import Link from "next/link";
 import EarningsTab from "@/components/wallet/EarningsTab";
 import PayoutsTab from "@/components/wallet/PayoutsTab";
 import BrandWalletSection from "@/components/wallet/BrandWalletSection";
+import AffiliateTab from "@/components/wallet/AffiliateTab";
 
 export interface Transaction {
   id: string;
@@ -714,10 +715,10 @@ export default function WalletPage() {
         </Card>
       )}
 
-      {/* Model Tabs - Earnings & Payouts */}
+      {/* Model Tabs - Earnings, Payouts & Affiliate */}
       {(actorType === "model" || actorType === "admin") && (
         <Tabs defaultValue="earnings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="earnings" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Earnings
@@ -725,6 +726,10 @@ export default function WalletPage() {
             <TabsTrigger value="payouts" className="flex items-center gap-2">
               <Banknote className="h-4 w-4" />
               Payouts
+            </TabsTrigger>
+            <TabsTrigger value="affiliate" className="flex items-center gap-2">
+              <ArrowUpRight className="h-4 w-4" />
+              Affiliate
             </TabsTrigger>
           </TabsList>
 
@@ -779,6 +784,10 @@ export default function WalletPage() {
               loadingMoreWithdrawals={loadingMoreWithdrawals}
               onLoadMoreWithdrawals={loadMoreWithdrawals}
             />
+          </TabsContent>
+
+          <TabsContent value="affiliate">
+            {modelId && <AffiliateTab modelId={modelId} />}
           </TabsContent>
         </Tabs>
       )}

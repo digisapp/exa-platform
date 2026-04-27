@@ -9,6 +9,9 @@ import {
   Coins,
   Sparkles,
   Plus,
+  Ticket,
+  MapPin,
+  CalendarDays,
 } from "lucide-react";
 import { ModelCard } from "@/components/models/model-card";
 import { ForYouFeed, type FeedItem } from "./ForYouFeed";
@@ -82,7 +85,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .not("profile_photo_url", "ilike", "%instagram%")
       .limit(100),
     (supabase.from("fans") as any)
-      .select("coin_balance")
+      .select("coin_balance, email")
       .eq("id", actorId)
       .single(),
     // All currently live auctions with model info
@@ -129,6 +132,33 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   ]);
 
   const coinBalance = fanData?.coin_balance ?? 0;
+  const fanEmail = fanData?.email ?? null;
+
+  // Fetch shows the fan has attended (by fan_id or email match)
+  let fanShows: any[] = [];
+  if (fanEmail) {
+    const { data: purchases } = await (supabase.from("ticket_purchases") as any)
+      .select(`
+        id, quantity, total_price_cents, completed_at,
+        events (
+          id, name, slug, short_name, cover_image_url,
+          start_date, location_city, location_state
+        )
+      `)
+      .or(`fan_id.eq.${actorId},buyer_email.eq.${fanEmail}`)
+      .eq("status", "completed")
+      .order("completed_at", { ascending: false })
+      .limit(20);
+
+    // Deduplicate by event id (fan may have bought multiple tiers for same event)
+    const seen = new Set<string>();
+    fanShows = (purchases || []).filter((p: any) => {
+      const eid = p.events?.id;
+      if (!eid || seen.has(eid)) return false;
+      seen.add(eid);
+      return true;
+    });
+  }
 
   // Map auction_id → fan's bid info for quick lookup
   const myBidMap = new Map<string, { amount: number; status: string }>(
@@ -401,6 +431,87 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
                 </span>
               </Link>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────
+          Your Shows — events the fan has attended
+         ────────────────────────────────────────────── */}
+      {fanShows.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="flex items-center gap-2 text-base font-semibold text-white">
+              <Ticket className="h-5 w-5 text-violet-400" />
+              Your Shows
+              <span className="ml-1 px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 text-xs font-bold ring-1 ring-violet-500/30">
+                {fanShows.length}
+              </span>
+            </h3>
+            <Link
+              href="/shows"
+              className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1 font-semibold"
+            >
+              Browse shows <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+            {fanShows.map((p: any) => {
+              const event = p.events;
+              if (!event) return null;
+              const coinsEarned = 10 * (p.quantity ?? 1);
+              const date = event.start_date
+                ? new Date(event.start_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+                : null;
+              const location = [event.location_city, event.location_state].filter(Boolean).join(", ");
+              return (
+                <Link
+                  key={p.id}
+                  href={`/shows/${event.slug}`}
+                  className="flex-shrink-0 w-44 group"
+                >
+                  <div className="relative rounded-xl overflow-hidden ring-1 ring-violet-500/30 group-hover:ring-violet-500/70 transition-all shadow-[0_0_16px_rgba(139,92,246,0.15)] group-hover:shadow-[0_0_24px_rgba(139,92,246,0.35)]">
+                    {event.cover_image_url ? (
+                      <Image
+                        src={event.cover_image_url}
+                        alt={event.name}
+                        width={176}
+                        height={100}
+                        className="w-full h-24 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-24 bg-gradient-to-br from-violet-500/30 to-pink-500/20 flex items-center justify-center">
+                        <Ticket className="h-8 w-8 text-violet-400/60" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                      <p className="text-white text-xs font-bold leading-tight truncate">{event.short_name || event.name}</p>
+                      {date && (
+                        <p className="text-white/50 text-[10px] mt-0.5 flex items-center gap-1">
+                          <CalendarDays className="h-2.5 w-2.5" />
+                          {date}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between px-0.5">
+                    {location ? (
+                      <span className="text-[10px] text-white/40 flex items-center gap-1 truncate">
+                        <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
+                        {location}
+                      </span>
+                    ) : (
+                      <span />
+                    )}
+                    <span className="text-[10px] font-semibold text-amber-400 flex items-center gap-0.5 flex-shrink-0">
+                      <Coins className="h-2.5 w-2.5" />
+                      +{coinsEarned}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}

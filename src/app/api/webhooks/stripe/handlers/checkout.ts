@@ -363,6 +363,44 @@ async function handleTicketPurchase(session: Stripe.Checkout.Session, supabaseAd
     );
   }
 
+  // Award coins to fan and link their account (non-blocking, best-effort)
+  if (buyerEmail) {
+    const { data: fan } = await supabaseAdmin
+      .from("fans")
+      .select("id")
+      .eq("email", buyerEmail)
+      .maybeSingle();
+
+    if (fan?.id) {
+      const coinsToAward = 10 * quantity;
+      const purchaseId = purchase?.id;
+
+      await supabaseAdmin.rpc("add_coins", {
+        p_actor_id: fan.id,
+        p_amount: coinsToAward,
+        p_action: "ticket_purchase",
+        p_metadata: {
+          event_id: eventId,
+          purchase_id: purchaseId,
+          quantity,
+          coins_per_ticket: 10,
+        },
+      }).then(({ error }) => {
+        if (error) logger.error("Error awarding fan ticket coins", error);
+      });
+
+      if (purchaseId) {
+        await supabaseAdmin
+          .from("ticket_purchases")
+          .update({ fan_id: fan.id })
+          .eq("id", purchaseId)
+          .then(({ error }) => {
+            if (error) logger.error("Error linking fan_id to purchase", error);
+          });
+      }
+    }
+  }
+
   // Send purchase confirmation email (non-blocking)
   if (buyerEmail) {
     const buyerName = session.metadata?.buyer_name || "there";
