@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 
@@ -29,8 +30,11 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Use service role client for all mutations to bypass RLS
+    const adminClient = createServiceRoleClient();
+
     // Get the fan record
-    const { data: fan, error: fanError } = await supabase
+    const { data: fan, error: fanError } = await adminClient
       .from("fans")
       .select("id, user_id, email, display_name, coin_balance")
       .eq("id", fanId)
@@ -42,12 +46,24 @@ export async function POST(
 
     const fanUserId = fan.user_id;
 
-    // Update the actor type from 'fan' to 'model'
-    const { error: actorError } = await supabase
+    // Fetch the actor record to get the canonical actor ID (fans.id may differ from actors.id)
+    const { data: actor, error: actorFetchError } = await adminClient
+      .from("actors")
+      .select("id, type")
+      .eq("user_id", fanUserId)
+      .single();
+
+    if (actorFetchError || !actor) {
+      return NextResponse.json({ error: "Actor record not found for this fan" }, { status: 404 });
+    }
+
+    const actorId = actor.id;
+
+    // Update the actor type to 'model' (regardless of current type, to handle re-attempts)
+    const { error: actorError } = await adminClient
       .from("actors")
       .update({ type: "model" })
-      .eq("user_id", fanUserId)
-      .eq("type", "fan");
+      .eq("user_id", fanUserId);
 
     if (actorError) {
       console.error("Error updating actor:", actorError);
@@ -60,37 +76,37 @@ export async function POST(
       .replace(/[^a-z0-9]/g, "")
       .slice(0, 20) + Math.random().toString(36).slice(2, 6);
 
-    // Check if a model record already exists (e.g. from a previous failed conversion or onboarding flow)
-    const { data: existingModel } = await supabase
+    // Check if a model record already exists (e.g. from a previous failed conversion attempt)
+    const { data: existingModel } = await adminClient
       .from("models")
       .select("id")
       .eq("user_id", fanUserId)
       .maybeSingle();
 
     const { error: modelError } = existingModel
-      ? await supabase.from("models")
+      ? await adminClient.from("models")
           .update({
             email: fan.email ?? "",
             is_approved: true,
             coin_balance: fan.coin_balance || 0,
           })
           .eq("user_id", fanUserId)
-      : await supabase.from("models")
+      : await adminClient.from("models")
           .insert({
-            id: fanId, // Use actor ID so models.id = actors.id
+            id: actorId, // Must use actors.id — models.id is a FK to actors(id)
             user_id: fanUserId as string,
             email: fan.email ?? "",
             username: username,
             first_name: fan.display_name || "New",
             last_name: "Model",
-            is_approved: true, // Auto-approve since admin initiated conversion
+            is_approved: true,
             coin_balance: fan.coin_balance || 0,
           });
 
     if (modelError) {
       console.error("Error creating model:", modelError);
       // Try to rollback actor change
-      await supabase
+      await adminClient
         .from("actors")
         .update({ type: "fan" })
         .eq("user_id", fanUserId);
@@ -98,7 +114,7 @@ export async function POST(
     }
 
     // Delete the fan record
-    await supabase
+    await adminClient
       .from("fans")
       .delete()
       .eq("id", fanId);
