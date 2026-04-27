@@ -35,6 +35,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { FanActionsDropdown } from "@/components/admin/AdminActions";
+import FanDetailSheet from "@/components/admin/community/FanDetailSheet";
 
 function SortIndicator({ active, direction }: { active: boolean; direction: "asc" | "desc" }) {
   if (!active) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
@@ -121,6 +122,7 @@ export default function FansTab() {
   const [fansReportsFilter, setFansReportsFilter] = useState<string>("all");
   const [fansSortField, setFansSortField] = useState<FanSortField>("created_at");
   const [fansSortDirection, setFansSortDirection] = useState<SortDirection>("desc");
+  const [selectedFan, setSelectedFan] = useState<Fan | null>(null);
 
   const loadFans = useCallback(async () => {
     setFansLoading(true);
@@ -376,7 +378,12 @@ export default function FansTab() {
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="font-medium truncate">{fan.display_name || "Fan"}</p>
+                              <button
+                                onClick={() => setSelectedFan(fan)}
+                                className="font-medium truncate text-left hover:text-blue-400 transition-colors"
+                              >
+                                {fan.display_name || "Fan"}
+                              </button>
                               {fan.has_pending_model_app && (
                                 <span className="flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-pink-500/15 text-pink-400 border border-pink-500/25">
                                   Model Applicant
@@ -450,6 +457,12 @@ export default function FansTab() {
           )}
         </CardContent>
       </Card>
+
+      <FanDetailSheet
+        fan={selectedFan}
+        open={selectedFan !== null}
+        onClose={() => setSelectedFan(null)}
+      />
     </div>
   );
 }
