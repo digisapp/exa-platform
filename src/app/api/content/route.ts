@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     // Get exclusive content from content_items (unified table)
     const { data: content, error } = await supabase
       .from("content_items")
-      .select("id, title, description, media_type, preview_url, coin_price, unlock_count, created_at")
+      .select("id, title, description, media_type, preview_url, media_url, coin_price, unlock_count, created_at")
       .eq("model_id", modelId)
       .eq("status", "exclusive")
       .gt("coin_price", 0)
@@ -127,6 +127,7 @@ export async function GET(request: NextRequest) {
       description: string | null;
       media_type: string;
       preview_url: string | null;
+      media_url: string | null;
       coin_price: number;
       unlock_count: number | null;
       created_at: string | null;
@@ -136,14 +137,17 @@ export async function GET(request: NextRequest) {
       const isFree = item.coin_price === 0;
       const isUnlocked = isFree || unlockedIds.includes(item.id) || isOwner;
 
+      // Fall back to media_url as preview source if no dedicated preview (old content)
+      const previewSource = item.preview_url || item.media_url;
+
       const [freshPreviewUrl, freshMediaUrl] = await Promise.all([
-        toSignedUrl(item.preview_url),
+        toSignedUrl(previewSource),
         isUnlocked ? toSignedUrl(mediaUrlMap.get(item.id) ?? null) : Promise.resolve(null),
       ]);
 
       return {
         ...item,
-        preview_url: freshPreviewUrl ?? item.preview_url,
+        preview_url: freshPreviewUrl ?? previewSource,
         isUnlocked,
         mediaUrl: freshMediaUrl,
       };

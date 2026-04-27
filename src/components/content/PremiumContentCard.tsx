@@ -160,7 +160,7 @@ export function PremiumContentCard({
                   preload="metadata"
                   className={cn(
                     "absolute inset-0 w-full h-full object-cover transition-all duration-300",
-                    !isUnlocked && !isFree && !isOwner && "blur-[3px] scale-105 brightness-[0.55]",
+                    !isUnlocked && !isFree && !isOwner && "blur-[14px] scale-110 brightness-[0.85]",
                     isUnlocked && "group-hover:scale-105"
                   )}
                   onError={() => setImageError(true)}
@@ -181,7 +181,7 @@ export function PremiumContentCard({
                 fill
                 className={cn(
                   "object-cover transition-all duration-300",
-                  !isUnlocked && !isFree && !isOwner && "blur-[3px] scale-105 brightness-[0.55]",
+                  !isUnlocked && !isFree && !isOwner && "blur-[14px] scale-110 brightness-[0.85]",
                   isUnlocked && "group-hover:scale-105"
                 )}
                 onError={() => setImageError(true)}
@@ -189,7 +189,7 @@ export function PremiumContentCard({
             )}
             {/* Subtle gradient overlay for locked content */}
             {!isUnlocked && !isFree && !isOwner && (
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
             )}
           </>
         ) : (
@@ -259,7 +259,7 @@ export function PremiumContentCard({
                   src={content.preview_url}
                   alt="Preview"
                   fill
-                  className="object-cover blur-[3px] brightness-[0.55]"
+                  className="object-cover blur-[14px] brightness-[0.85]"
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-pink-500/20 to-violet-500/20">
