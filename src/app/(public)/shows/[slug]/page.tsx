@@ -117,7 +117,8 @@ export default async function EventPage({ params, searchParams }: Props) {
     });
   }
 
-  const hasInternalTickets = event.tickets_enabled && ticketTiers.length > 0;
+  // MSW 2026 tickets are on Digis — never use EXA internal ticket flow for this event
+  const hasInternalTickets = event.slug !== "miami-swim-week-2026" && event.tickets_enabled && ticketTiers.length > 0;
 
   // Get confirmed models via event badge
   // Each event has a linked badge - models with that badge are confirmed
@@ -235,11 +236,19 @@ export default async function EventPage({ params, searchParams }: Props) {
       ? format(startDate, "MMMM d, yyyy")
       : "TBA";
 
+  // Miami Swim Week 2026 tickets are sold on Digis
+  const MSW_DIGIS_TICKET_URL = "https://digis.cc/events/dfd628e3-b2c7-4844-92e0-fa04ff93f64c";
+
   // Build ticket URL with affiliate tracking
-  const ticketUrl = event.ticket_url
+  // MSW 2026 always uses Digis for ticketing regardless of event.ticket_url / tickets_enabled
+  const rawTicketUrl = event.slug === "miami-swim-week-2026"
+    ? MSW_DIGIS_TICKET_URL
+    : (event.ticket_url ?? null);
+
+  const ticketUrl = rawTicketUrl
     ? ref
-      ? `${event.ticket_url}${event.ticket_url.includes("?") ? "&" : "?"}ref=${ref}`
-      : event.ticket_url
+      ? `${rawTicketUrl}${rawTicketUrl.includes("?") ? "&" : "?"}ref=${ref}`
+      : rawTicketUrl
     : null;
 
   const eventJsonLd = {
@@ -520,7 +529,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                   {MSW_2026_SCHEDULE.map((s) => (
                     <Link
                       key={s.id}
-                      href={`/shows/${event.slug}/tickets?day=may-${s.dateNum}${ref ? `&ref=${ref}` : ""}`}
+                      href={`${MSW_DIGIS_TICKET_URL}${ref ? `?ref=${ref}` : ""}`}
                       className={`flex items-start gap-4 p-3.5 rounded-xl transition-all cursor-pointer group ${
                         s.highlight
                           ? "border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-violet-500/5 to-transparent shadow-[0_0_14px_rgba(236,72,153,0.12)] hover:border-pink-400/50 hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
