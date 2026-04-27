@@ -406,41 +406,37 @@ export default function FansTab() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        {(fan.coins_spent || 0) > 0 ? (
-                          <div
-                            className="cursor-default space-y-0.5"
-                            title={[
-                              `Tips: ${(fan.tips_spent || 0).toLocaleString()} coins`,
-                              `Live Wall: ${(fan.live_wall_spent || 0).toLocaleString()} coins`,
-                              `Messages: ${(fan.messages_spent || 0).toLocaleString()} coins`,
-                              `Content/PPV: ${(fan.content_spent || 0).toLocaleString()} coins`,
-                            ].join("\n")}
-                          >
-                            <span className="font-medium text-yellow-500">{(fan.coins_spent || 0).toLocaleString()}</span>
-                            <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-xs">
-                              {(fan.tips_spent || 0) > 0 && (
-                                <span className="flex items-center gap-0.5 text-pink-400">
-                                  <Heart className="h-2.5 w-2.5" />{fan.tips_spent!.toLocaleString()}
-                                </span>
+                        {(fan.coins_spent || 0) > 0 ? (() => {
+                          const categories = [
+                            { val: fan.tips_spent || 0, label: "Tips", icon: <Heart className="h-2.5 w-2.5" />, color: "text-pink-400" },
+                            { val: fan.live_wall_spent || 0, label: "Live Wall", icon: <Sparkles className="h-2.5 w-2.5" />, color: "text-violet-400" },
+                            { val: fan.messages_spent || 0, label: "Messages", icon: <MessageCircle className="h-2.5 w-2.5" />, color: "text-blue-400" },
+                            { val: fan.content_spent || 0, label: "Content/PPV", icon: <Coins className="h-2.5 w-2.5" />, color: "text-green-400" },
+                          ].filter(c => c.val > 0);
+                          const hasMultiple = categories.length > 1;
+                          return (
+                            <div
+                              className="cursor-default space-y-0.5"
+                              title={categories.map(c => `${c.label}: ${c.val.toLocaleString()} coins`).join("\n")}
+                            >
+                              <span className="font-medium text-yellow-500">{(fan.coins_spent || 0).toLocaleString()}</span>
+                              {hasMultiple && (
+                                <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-xs">
+                                  {categories.map(c => (
+                                    <span key={c.label} className={`flex items-center gap-0.5 ${c.color}`}>
+                                      {c.icon}{c.val.toLocaleString()}
+                                    </span>
+                                  ))}
+                                </div>
                               )}
-                              {(fan.live_wall_spent || 0) > 0 && (
-                                <span className="flex items-center gap-0.5 text-violet-400">
-                                  <Sparkles className="h-2.5 w-2.5" />{fan.live_wall_spent!.toLocaleString()}
-                                </span>
-                              )}
-                              {(fan.messages_spent || 0) > 0 && (
-                                <span className="flex items-center gap-0.5 text-blue-400">
-                                  <MessageCircle className="h-2.5 w-2.5" />{fan.messages_spent!.toLocaleString()}
-                                </span>
-                              )}
-                              {(fan.content_spent || 0) > 0 && (
-                                <span className="flex items-center gap-0.5 text-green-400">
-                                  <Coins className="h-2.5 w-2.5" />{fan.content_spent!.toLocaleString()}
-                                </span>
+                              {!hasMultiple && categories.length === 1 && (
+                                <div className={`flex items-center gap-0.5 text-xs ${categories[0].color}`}>
+                                  {categories[0].icon}<span>{categories[0].label}</span>
+                                </div>
                               )}
                             </div>
-                          </div>
-                        ) : (
+                          );
+                        })() : (
                           <span className="text-muted-foreground">0</span>
                         )}
                       </TableCell>
