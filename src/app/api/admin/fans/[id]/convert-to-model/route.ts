@@ -60,17 +60,32 @@ export async function POST(
       .replace(/[^a-z0-9]/g, "")
       .slice(0, 20) + Math.random().toString(36).slice(2, 6);
 
-    const { error: modelError } = await supabase.from("models")
-      .insert({
-        id: fanId, // Use actor ID so models.id = actors.id
-        user_id: fanUserId as string,
-        email: fan.email ?? "",
-        username: username,
-        first_name: fan.display_name || "New",
-        last_name: "Model",
-        is_approved: true, // Auto-approve since admin initiated conversion
-        coin_balance: fan.coin_balance || 0,
-      });
+    // Check if a model record already exists (e.g. from a previous failed conversion or onboarding flow)
+    const { data: existingModel } = await supabase
+      .from("models")
+      .select("id")
+      .eq("user_id", fanUserId)
+      .maybeSingle();
+
+    const { error: modelError } = existingModel
+      ? await supabase.from("models")
+          .update({
+            email: fan.email ?? "",
+            is_approved: true,
+            coin_balance: fan.coin_balance || 0,
+          })
+          .eq("user_id", fanUserId)
+      : await supabase.from("models")
+          .insert({
+            id: fanId, // Use actor ID so models.id = actors.id
+            user_id: fanUserId as string,
+            email: fan.email ?? "",
+            username: username,
+            first_name: fan.display_name || "New",
+            last_name: "Model",
+            is_approved: true, // Auto-approve since admin initiated conversion
+            coin_balance: fan.coin_balance || 0,
+          });
 
     if (modelError) {
       console.error("Error creating model:", modelError);
