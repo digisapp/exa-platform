@@ -114,8 +114,9 @@ export function ModelSignupDialogES({ children }: ModelSignupDialogESProps) {
       return;
     }
 
-    // Catch other URLs / domains
-    if (/\.[a-z]{2,}(\/|$)/i.test(instagram.trim().replace(/^@/, ""))) {
+    // Catch other URLs / domains (require protocol or www. or a slash — avoid false-positives on handles like camille.woods)
+    const igClean = instagram.trim().replace(/^@/, "");
+    if (/^(https?:\/\/|www\.)/i.test(igClean) || /\.[a-z]{2,}\//i.test(igClean)) {
       toast.error("Ingresa solo tu usuario de Instagram (ej. @tuusuario), no una URL");
       return;
     }
