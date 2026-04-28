@@ -83,6 +83,21 @@ export async function POST(
       .eq("user_id", fanUserId)
       .maybeSingle();
 
+    // If another model row holds this email (e.g. an orphaned import), remap it
+    if (fan.email) {
+      const { data: emailConflict } = await adminClient
+        .from("models")
+        .select("id, user_id")
+        .eq("email", fan.email)
+        .maybeSingle();
+      if (emailConflict && emailConflict.user_id !== fanUserId) {
+        await adminClient
+          .from("models")
+          .update({ email: `orphan+${emailConflict.id}@placeholder.invalid` })
+          .eq("id", emailConflict.id);
+      }
+    }
+
     const { error: modelError } = existingModel
       ? await adminClient.from("models")
           .update({
