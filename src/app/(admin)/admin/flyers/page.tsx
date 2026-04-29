@@ -204,9 +204,7 @@ export default function AdminFlyersPage() {
     params.delete("overlays");
     params.delete("texts");
     if (sampleModel) {
-      const name = [sampleModel.first_name, sampleModel.last_name]
-        .filter(Boolean)
-        .join(" ") || sampleModel.username;
+      const name = sampleModel.first_name || sampleModel.username;
       if (name) params.set("name", name);
     }
     if (sampleModel?.profile_photo_url)
@@ -879,9 +877,7 @@ export default function AdminFlyersPage() {
           {flyers.map((flyer) => {
             const model = models.get(flyer.model_id);
             const name = model
-              ? [model.first_name, model.last_name]
-                  .filter(Boolean)
-                  .join(" ") || model.username
+              ? model.first_name || model.username
               : "Unknown";
             const isSelected = selectedFlyers.has(flyer.id);
 
