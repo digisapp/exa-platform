@@ -241,7 +241,7 @@ export default async function HomePage() {
 
               <div className="relative z-10">
                 <h2 className="text-lg md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4">
-                  Call, Chat,
+                  Chat, Call
                   <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Connect with Models.</span>
                 </h2>
