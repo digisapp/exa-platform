@@ -38,6 +38,7 @@ import { ViewTracker } from "@/components/profile/ViewTracker";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 import { AdminProfileToolbar } from "@/components/admin/AdminProfileToolbar";
 import { ProfileQRCode } from "@/components/profile/ProfileQRCode";
+import { FavoriteButton } from "@/components/profile/FavoriteButton";
 import QRCode from "qrcode";
 
 // Use ISR - revalidate every 60 seconds for fresh content without regenerating on every request
@@ -272,6 +273,8 @@ export default async function ModelProfilePage({ params }: Props) {
   // Get current user's actor info
   let coinBalance = 0;
   let isBrand = false;
+  let isFan = false;
+  let currentActorId: string | null = null;
 
   if (user) {
     const { data: actor } = await supabase
@@ -282,6 +285,8 @@ export default async function ModelProfilePage({ params }: Props) {
 
     if (actor) {
       isBrand = actor.type === "brand";
+      isFan = actor.type === "fan";
+      currentActorId = actor.id;
 
       if (actor.type === "fan") {
         const { data: fan } = await supabase
@@ -317,6 +322,16 @@ export default async function ModelProfilePage({ params }: Props) {
 
   const modelActorId = modelActor?.id || null;
 
+  // Check if current fan has already favorited this model
+  let isModelFavorited = false;
+  if (isFan && currentActorId && modelActorId) {
+    const { data: followRow } = await (supabase.from("follows") as any)
+      .select("follower_id")
+      .eq("follower_id", currentActorId)
+      .eq("following_id", modelActorId)
+      .maybeSingle();
+    isModelFavorited = !!followRow;
+  }
 
   // Display name - show first_name + last_name, or fallback to username
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
@@ -461,6 +476,13 @@ export default async function ModelProfilePage({ params }: Props) {
                   />
                 </>
               )}
+              {!isOwner && !isBrand && !isAdmin && (
+                <FavoriteButton
+                  modelId={model.id}
+                  initialFavorited={isModelFavorited}
+                  isLoggedIn={!!user}
+                />
+              )}
               <ShareButton title={displayName} />
             </div>
           </div>
@@ -582,6 +604,15 @@ export default async function ModelProfilePage({ params }: Props) {
                           </div>
                         </>
                       )}
+                      {!isOwner && !isBrand && !isAdmin && (
+                        <div className="rounded-full bg-black/45 backdrop-blur-md border border-white/15 shadow-[0_4px_12px_rgba(0,0,0,0.35)]">
+                          <FavoriteButton
+                            modelId={model.id}
+                            initialFavorited={isModelFavorited}
+                            isLoggedIn={!!user}
+                          />
+                        </div>
+                      )}
                       <div className="rounded-full bg-black/45 backdrop-blur-md border border-white/15 shadow-[0_4px_12px_rgba(0,0,0,0.35)]">
                         <ShareButton title={displayName} />
                       </div>
@@ -590,14 +621,14 @@ export default async function ModelProfilePage({ params }: Props) {
                       <Link
                         key={idx}
                         href={`/shows/${eb.badges.events.slug}?ref=${model.affiliate_code}`}
-                        title={`Confirmed ${eb.badges.events.name} Model`}
-                        className="group/badge relative overflow-hidden bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-amber-950 text-sm font-extrabold px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-[0_2px_12px_rgba(255,200,50,0.35),0_4px_16px_rgba(0,0,0,0.4)] border border-amber-200/80 hover:shadow-[0_2px_20px_rgba(255,200,50,0.5),0_4px_20px_rgba(0,0,0,0.4)] hover:scale-105 transition-all duration-300"
+                        title={`Get tickets — ${eb.badges.events.name}`}
+                        className="group/badge relative overflow-hidden bg-gradient-to-r from-cyan-500 via-sky-400 to-violet-500 text-white text-sm font-extrabold px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-[0_2px_12px_rgba(34,211,238,0.4),0_4px_16px_rgba(0,0,0,0.4)] border border-cyan-300/40 hover:shadow-[0_2px_20px_rgba(34,211,238,0.6),0_4px_20px_rgba(0,0,0,0.4)] hover:scale-105 transition-all duration-300"
                       >
                         {/* Shine sweep */}
-                        <span className="absolute inset-0 -translate-x-full group-hover/badge:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+                        <span className="absolute inset-0 -translate-x-full group-hover/badge:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
                         <span className="text-base">🌊</span>
-                        <span className="tracking-wide uppercase text-[11px]">{eb.badges.events.name.replace(/\s+\d{4}$/, '')}</span>
-                        <span className="text-amber-700/60 text-[10px]">✦</span>
+                        <span className="tracking-wide text-[11px]">Catch me on the Runway · {eb.badges.events.name.replace(/\s+\d{4}$/, '')}</span>
+                        <span className="text-white/70 text-[10px] font-bold group-hover/badge:text-white transition-colors">— Get Tickets →</span>
                       </Link>
                     ))}
                   </div>
@@ -697,47 +728,49 @@ export default async function ModelProfilePage({ params }: Props) {
               {/* Profile Image (default circle layout) */}
               <div className="flex justify-center mb-4">
                 <div className="relative group">
-                  {/* Event badge wrapper - makes profile pic clickable if has event badge */}
+                  {/* Event badge wrapper - profile pic + clickable ticket badges */}
                   {eventBadges && eventBadges.length > 0 ? (
-                    <Link
-                      href={`/shows/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
-                      className="block relative"
-                      title={`Confirmed ${eventBadges[0].badges.events.name} Model`}
-                    >
-                      <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ring-[4px] ring-amber-400 ${isOwner ? 'profile-pic-breathing' : ''}`}>
-                        {profilePhotoUrl ? (
-                          <Image
-                            src={profilePhotoUrl}
-                            alt={displayName}
-                            width={224}
-                            height={224}
-                            className="w-full h-full object-cover"
-                            priority
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
-                            <span className="text-4xl font-bold text-white/60">
-                              {displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      {/* Event badges on the ring - show all */}
-                      <div className="absolute -top-2 right-0 flex flex-col gap-1 items-end">
+                    <>
+                      <Link
+                        href={`/shows/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
+                        className="block"
+                        title={`${eventBadges[0].badges.events.name} Model`}
+                      >
+                        <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ring-[4px] ring-cyan-400 shadow-[0_0_24px_rgba(34,211,238,0.3)] ${isOwner ? 'profile-pic-breathing' : ''}`}>
+                          {profilePhotoUrl ? (
+                            <Image
+                              src={profilePhotoUrl}
+                              alt={displayName}
+                              width={224}
+                              height={224}
+                              className="w-full h-full object-cover"
+                              priority
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
+                              <span className="text-4xl font-bold text-white/60">
+                                {displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                      {/* Ticket badges — each is its own link, positioned outside the photo link */}
+                      <div className="absolute -top-2 right-0 flex flex-col gap-1.5 items-end z-10">
                         {eventBadges.map((eb: any, idx: number) => (
-                          <div key={idx} className="relative overflow-hidden bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-amber-950 text-[10px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-[0_2px_10px_rgba(255,200,50,0.3),0_3px_12px_rgba(0,0,0,0.35)] border border-amber-200/80 tracking-wide uppercase">
+                          <Link
+                            key={idx}
+                            href={`/shows/${eb.badges.events.slug}?ref=${model.affiliate_code}`}
+                            className="group/badge relative overflow-hidden bg-gradient-to-r from-cyan-500 via-sky-400 to-violet-500 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-[0_2px_10px_rgba(34,211,238,0.35),0_3px_12px_rgba(0,0,0,0.35)] border border-cyan-300/40 tracking-wide uppercase hover:scale-105 hover:shadow-[0_2px_16px_rgba(34,211,238,0.55)] transition-all duration-200"
+                          >
+                            <span className="absolute inset-0 -translate-x-full group-hover/badge:translate-x-full transition-transform duration-500 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
                             <span className="text-xs">🌊</span>
-                            <span>{eb.badges.events.name.replace(/\s+\d{4}$/, '')}</span>
-                          </div>
+                            <span>Catch me on the Runway · {eb.badges.events.name.replace(/\s+\d{4}$/, '')}</span>
+                            <span className="text-white/60 group-hover/badge:text-white transition-colors">— Get Tickets →</span>
+                          </Link>
                         ))}
                       </div>
-                      {/* Hover tooltip - above the badge */}
-                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                        <div className="bg-black/90 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
-                          {eventBadges.map((eb: any) => eb.badges.events.name.replace(/\s+\d{4}$/, '')).join(', ')} {eventBadges[0].badges.events.year} Model
-                        </div>
-                      </div>
-                    </Link>
+                    </>
                   ) : (
                     <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
                       {profilePhotoUrl ? (
