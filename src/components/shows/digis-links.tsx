@@ -54,39 +54,22 @@ function DigisDialog({
             />
           </div>
           <DialogTitle className="text-lg font-bold text-white">
-            Continuing to Digis
+            Continue to Digis
           </DialogTitle>
           <DialogDescription className="text-white/60 text-sm leading-relaxed mt-2">
-            You&apos;re heading to{" "}
-            <span className="text-white font-semibold">Digis.cc</span> —
-            EXA&apos;s official ticket provider and live streaming platform for
-            all EXA shows.
+            <span className="text-white font-semibold">Digis</span> is the
+            official ticket provider and live streaming platform for all EXA
+            shows.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-3 px-4 rounded-xl bg-white/[0.04] border border-white/10 text-center">
-          <p className="text-[11px] text-white/40 leading-relaxed">
-            🔒 Digis is a trusted EXA partner. Ticket purchases are handled
-            securely on their platform.
-          </p>
-        </div>
-
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="flex-1 border-white/10 bg-transparent text-white/60 hover:bg-white/5 hover:text-white"
-            onClick={() => onOpenChange(false)}
-          >
-            Stay on EXA
-          </Button>
-          <Button
-            className="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white shadow-[0_0_16px_rgba(236,72,153,0.3)]"
-            onClick={handleContinue}
-          >
-            <ExternalLink className="h-3.5 w-3.5 mr-2" />
-            Go to Digis
-          </Button>
-        </div>
+        <Button
+          className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white shadow-[0_0_16px_rgba(236,72,153,0.3)]"
+          onClick={handleContinue}
+        >
+          <ExternalLink className="h-3.5 w-3.5 mr-2" />
+          Continue
+        </Button>
       </DialogContent>
     </Dialog>
   );
