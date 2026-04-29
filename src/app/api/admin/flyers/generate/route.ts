@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
 
   async function generateOne(model: any) {
     const modelName =
-      [model.first_name, model.last_name].filter(Boolean).join(" ") ||
+      model.first_name ||
       model.username ||
       "Model";
 
