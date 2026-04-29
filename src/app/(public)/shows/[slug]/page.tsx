@@ -15,7 +15,6 @@ import {
   Calendar,
   Users,
   Ticket,
-  ExternalLink,
   Sparkles,
   ArrowRight,
   Instagram,
@@ -23,7 +22,11 @@ import {
 import { format } from "date-fns";
 import type { Metadata } from "next";
 import { HotelFloorPlan } from "@/components/shows/hotel-floor-plan";
-import { MSW_2026_SCHEDULE } from "@/lib/msw-schedule";
+import {
+  DigisTicketButton,
+  DigisScheduleSection,
+  DigisSponsorCard,
+} from "@/components/shows/digis-links";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -415,17 +418,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                     </Link>
                   </Button>
                 ) : ticketUrl ? (
-                  <Button
-                    asChild
-                    size="lg"
-                    className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-lg py-6 rounded-xl shadow-lg shadow-pink-500/25"
-                  >
-                    <a href={ticketUrl} target="_blank" rel="noopener noreferrer">
-                      <Ticket className="h-6 w-6 mr-2" />
-                      Get Tickets
-                      <ExternalLink className="h-4 w-4 ml-2" />
-                    </a>
-                  </Button>
+                  <DigisTicketButton href={ticketUrl} />
                 ) : (
                   <Button
                     disabled
@@ -486,21 +479,7 @@ export default async function EventPage({ params, searchParams }: Props) {
               {/* Sponsor Card */}
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5">
                 <h3 className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold mb-3">Sponsored By</h3>
-                <a
-                  href="https://digis.cc"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-white/10 hover:border-pink-500/40 transition-all hover:shadow-[0_0_16px_rgba(236,72,153,0.25)]"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-black flex items-center justify-center flex-shrink-0 p-1.5 ring-1 ring-white/10">
-                    <Image src="/digis-logo-white.png" alt="Digis" width={40} height={40} className="w-full h-full object-contain" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">Digis</p>
-                    <p className="text-xs text-white/50">digis.cc</p>
-                  </div>
-                  <ExternalLink className="h-3.5 w-3.5 text-white/40 group-hover:text-pink-300 ml-auto transition-colors" />
-                </a>
+                <DigisSponsorCard />
               </div>
             </div>
           </div>
@@ -525,32 +504,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                   </h2>
                 </div>
 
-                <div className="space-y-2">
-                  {MSW_2026_SCHEDULE.map((s) => (
-                    <Link
-                      key={s.id}
-                      href={`${MSW_DIGIS_TICKET_URL}${ref ? `?ref=${ref}` : ""}`}
-                      className={`flex items-start gap-4 p-3.5 rounded-xl transition-all cursor-pointer group ${
-                        s.highlight
-                          ? "border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-violet-500/5 to-transparent shadow-[0_0_14px_rgba(236,72,153,0.12)] hover:border-pink-400/50 hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
-                          : "bg-white/[0.03] border border-white/5 hover:border-violet-500/30 hover:bg-violet-500/5"
-                      }`}
-                    >
-                      <div className="text-center flex-shrink-0 w-14">
-                        <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{s.dayShort}</p>
-                        <p className={`text-xl font-bold leading-none ${s.highlight ? "text-pink-300" : "text-white"}`}>
-                          {s.dateNum}
-                        </p>
-                      </div>
-                      <div className="h-10 w-px bg-white/10 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-white group-hover:text-pink-200 transition-colors mb-0.5">{s.title}</p>
-                        <p className="text-xs text-white/55 leading-relaxed">{s.description}</p>
-                      </div>
-                      <Ticket className="h-4 w-4 text-white/20 group-hover:text-pink-300 flex-shrink-0 mt-1 transition-colors" />
-                    </Link>
-                  ))}
-                </div>
+                <DigisScheduleSection affiliateRef={ref} />
               </div>
             </div>
           )}

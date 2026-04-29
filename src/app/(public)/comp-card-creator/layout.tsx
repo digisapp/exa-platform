@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { DigisMarqueeBanner } from "@/components/shows/digis-links";
 
 export const metadata: Metadata = {
   title: "Free Comp Card Maker | EXA Models",
@@ -33,29 +33,7 @@ export default function FreeCompCardLayout({
   return (
     <>
       {/* Scrolling Digis Banner */}
-      <a
-        href="https://digis.cc"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block bg-gradient-to-r from-violet-600 via-pink-500 to-violet-600 bg-[length:200%_100%] animate-gradient py-3.5 hover:opacity-90 transition-opacity cursor-pointer"
-      >
-        <div className="overflow-hidden whitespace-nowrap">
-          <div className="inline-block animate-marquee">
-            <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
-              ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Calls, Chats + Virtual Gifts ✨
-            </span>
-            <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
-              🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Calls, Chats + Virtual Gifts 🎁
-            </span>
-            <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
-              ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Calls, Chats + Virtual Gifts ✨
-            </span>
-            <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
-              🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Calls, Chats + Virtual Gifts 🎁
-            </span>
-          </div>
-        </div>
-      </a>
+      <DigisMarqueeBanner />
       {children}
     </>
   );

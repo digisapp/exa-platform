@@ -23,6 +23,7 @@ import {
   Home,
 } from "lucide-react";
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
+import { DigisMarqueeBanner } from "@/components/shows/digis-links";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
 import { LiveWall } from "@/components/live-wall/LiveWall";
 import { enrichLiveWallAvatars } from "@/lib/live-wall-avatars";
@@ -175,29 +176,7 @@ export default async function HomePage() {
       {/* Content */}
       <div className="relative z-10">
         {/* Scrolling Digis Banner */}
-        <a
-          href="https://digis.cc"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block bg-gradient-to-r from-violet-600 via-pink-500 to-violet-600 bg-[length:200%_100%] animate-gradient py-3.5 hover:opacity-90 transition-opacity cursor-pointer"
-        >
-          <div className="overflow-hidden whitespace-nowrap">
-            <div className="inline-block animate-marquee">
-              <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
-                ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Calls, Chats + Virtual Gifts ✨
-              </span>
-              <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
-                🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Calls, Chats + Virtual Gifts 🎁
-              </span>
-              <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
-                ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Calls, Chats + Virtual Gifts ✨
-              </span>
-              <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
-                🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Calls, Chats + Virtual Gifts 🎁
-              </span>
-            </div>
-          </div>
-        </a>
+        <DigisMarqueeBanner />
 
         {/* Navigation */}
         <nav className="container px-8 md:px-16 py-6">

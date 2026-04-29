@@ -1657,10 +1657,22 @@ export default function ProfilePage() {
                   <Input
                     id="digis_username"
                     value={model.digis_username || ""}
-                    onChange={(e) => setModel({ ...model, digis_username: e.target.value.replace("@", "") })}
-                    placeholder="username"
+                    onChange={(e) => {
+                      // Strip @ prefix, spaces, and normalize to lowercase
+                      const cleaned = e.target.value
+                        .replace(/^@/, "")
+                        .replace(/\s/g, "")
+                        .toLowerCase();
+                      setModel({ ...model, digis_username: cleaned });
+                    }}
+                    placeholder="your-digis-username"
+                    autoComplete="off"
+                    autoCapitalize="none"
                   />
-                  <p className="text-xs text-muted-foreground">Your Digis.cc username. Fans who visit Digis from your EXA profile earn you 20% commission on ticket and show sales.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Your Digis.cc username (no @). Fans redirected to Digis from your EXA profile will earn you{" "}
+                    <span className="text-pink-400 font-semibold">20% commission</span> on every ticket sale.
+                  </p>
                 </div>
               </div>
             </CardContent>

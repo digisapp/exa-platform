@@ -10,9 +10,13 @@ import {
   Ticket,
   TrendingUp,
   ExternalLink,
+  Copy,
+  Check,
+  Link2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 interface AffiliateCommission {
@@ -50,26 +54,54 @@ const STATUS_META: Record<string, { label: string; icon: React.ComponentType<{ c
 export default function AffiliateTab({ modelId }: Props) {
   const [commissions, setCommissions] = useState<AffiliateCommission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
     async function load() {
-      const { data } = await (supabase
-        .from("affiliate_commissions") as any)
-        .select(`
-          id, event_id, sale_amount_cents, commission_amount_cents,
-          commission_rate, status, created_at, paid_at,
-          events ( name, short_name, slug, start_date )
-        `)
-        .eq("model_id", modelId)
-        .order("created_at", { ascending: false })
-        .limit(50);
+      try {
+        // Fetch model username and commissions in parallel
+        const [{ data: model }, { data: commissionData }] = await Promise.all([
+          supabase
+            .from("models")
+            .select("username")
+            .eq("id", modelId)
+            .single() as unknown as Promise<{ data: { username: string } | null }>,
+          (supabase
+            .from("affiliate_commissions") as any)
+            .select(`
+              id, event_id, sale_amount_cents, commission_amount_cents,
+              commission_rate, status, created_at, paid_at,
+              events ( name, short_name, slug, start_date )
+            `)
+            .eq("model_id", modelId)
+            .order("created_at", { ascending: false })
+            .limit(50) as Promise<{ data: AffiliateCommission[] | null }>,
+        ]);
 
-      setCommissions(data || []);
-      setLoading(false);
+        setUsername(model?.username ?? null);
+        setCommissions(commissionData ?? []);
+      } catch {
+        setFetchError(true);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, [modelId, supabase]);
+
+  const affiliateLink = username
+    ? `https://www.examodels.com/go/shows/${username}`
+    : null;
+
+  const handleCopy = async () => {
+    if (!affiliateLink) return;
+    await navigator.clipboard.writeText(affiliateLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const totalEarned = commissions.reduce((s, c) => s + c.commission_amount_cents, 0);
   const totalPending = commissions
@@ -85,6 +117,12 @@ export default function AffiliateTab({ modelId }: Props) {
   if (loading) {
     return (
       <div className="space-y-3">
+        <div className="h-32 rounded-2xl bg-white/5 animate-pulse" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-20 rounded-xl bg-white/5 animate-pulse" />
+          ))}
+        </div>
         {[1, 2, 3].map(i => (
           <div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse" />
         ))}
@@ -92,28 +130,78 @@ export default function AffiliateTab({ modelId }: Props) {
     );
   }
 
-  if (commissions.length === 0) {
+  if (fetchError) {
     return (
-      <div className="text-center py-12 rounded-2xl border border-white/10 bg-white/5">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-violet-500/10 ring-1 ring-violet-500/20 mb-4">
-          <Ticket className="h-6 w-6 text-violet-400" />
-        </div>
-        <p className="font-semibold text-white mb-1">No affiliate earnings yet</p>
-        <p className="text-sm text-white/50 max-w-xs mx-auto">
-          Share your referral link for upcoming shows and earn 20% on every ticket sold.
-        </p>
-        <Link
-          href="/shows"
-          className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-gradient-to-r from-violet-500 to-pink-500 text-xs font-semibold text-white"
+      <div className="text-center py-12 rounded-2xl border border-red-500/20 bg-red-500/5">
+        <p className="font-semibold text-white mb-1">Could not load affiliate data</p>
+        <p className="text-sm text-white/50 mb-4">Please refresh the page to try again.</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-white/10 text-white/60 hover:bg-white/5"
+          onClick={() => window.location.reload()}
         >
-          Browse Shows <ExternalLink className="h-3 w-3" />
-        </Link>
+          Refresh
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+
+      {/* Affiliate Link Card */}
+      <div className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-transparent p-5 shadow-[0_0_24px_rgba(167,139,250,0.1)]">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="p-1.5 rounded-lg bg-violet-500/15 ring-1 ring-violet-500/30">
+            <Link2 className="h-4 w-4 text-violet-300" />
+          </div>
+          <h3 className="font-semibold text-white text-sm">Your Affiliate Link</h3>
+          <Badge className="ml-auto bg-gradient-to-r from-violet-500/20 to-pink-500/20 border border-violet-500/30 text-violet-300 text-[10px] font-bold px-2">
+            20% Commission
+          </Badge>
+        </div>
+        <p className="text-xs text-white/50 mb-3 leading-relaxed">
+          Share this link with fans. Anyone who clicks it and buys tickets on Digis earns you <span className="text-violet-300 font-semibold">20% commission</span> on every sale — automatically tracked.
+        </p>
+
+        {affiliateLink ? (
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/10 font-mono text-xs text-white/70 truncate select-all">
+              {affiliateLink}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0 border-violet-500/40 bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 hover:text-violet-200 gap-1.5"
+              onClick={handleCopy}
+            >
+              {copied ? (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy
+                </>
+              )}
+            </Button>
+          </div>
+        ) : (
+          <div className="px-3 py-2 rounded-lg bg-white/[0.03] border border-white/10 text-xs text-white/30 italic">
+            No username set — add your EXA username to generate your affiliate link.
+          </div>
+        )}
+
+        <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-white/40">
+          <span>• 7-day attribution window</span>
+          <span>• 14-day hold before payout</span>
+          <span>• Tracked automatically</span>
+        </div>
+      </div>
+
       {/* Stats row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
@@ -139,51 +227,69 @@ export default function AffiliateTab({ modelId }: Props) {
       </p>
 
       {/* Commission list */}
-      <div className="space-y-2">
-        {commissions.map((c) => {
-          const meta = STATUS_META[c.status] ?? STATUS_META.pending;
-          const StatusIcon = meta.icon;
-          const eventName = c.events?.short_name || c.events?.name || "Unknown Event";
-          const date = c.created_at
-            ? new Date(c.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-            : "";
+      {commissions.length === 0 ? (
+        <div className="text-center py-12 rounded-2xl border border-white/10 bg-white/5">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-violet-500/10 ring-1 ring-violet-500/20 mb-4">
+            <Ticket className="h-6 w-6 text-violet-400" />
+          </div>
+          <p className="font-semibold text-white mb-1">No affiliate earnings yet</p>
+          <p className="text-sm text-white/50 max-w-xs mx-auto">
+            Share your referral link for upcoming shows and earn 20% on every ticket sold.
+          </p>
+          <Link
+            href="/shows"
+            className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-gradient-to-r from-violet-500 to-pink-500 text-xs font-semibold text-white"
+          >
+            Browse Shows <ExternalLink className="h-3 w-3" />
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {commissions.map((c) => {
+            const meta = STATUS_META[c.status] ?? STATUS_META.pending;
+            const StatusIcon = meta.icon;
+            const eventName = c.events?.short_name || c.events?.name || "Unknown Event";
+            const date = c.created_at
+              ? new Date(c.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+              : "";
 
-          return (
-            <div
-              key={c.id}
-              className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2 rounded-lg bg-violet-500/10 flex-shrink-0">
-                  <Ticket className="h-4 w-4 text-violet-400" />
+            return (
+              <div
+                key={c.id}
+                className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2 rounded-lg bg-violet-500/10 flex-shrink-0">
+                    <Ticket className="h-4 w-4 text-violet-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-white truncate">
+                      {c.events?.slug ? (
+                        <Link href={`/shows/${c.events.slug}`} className="hover:text-violet-300 transition-colors">
+                          {eventName}
+                        </Link>
+                      ) : eventName}
+                    </p>
+                    <p className="text-[11px] text-white/40">{date} · Sale: {formatUsd(c.sale_amount_cents)}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-white truncate">
-                    {c.events?.slug ? (
-                      <Link href={`/shows/${c.events.slug}`} className="hover:text-violet-300 transition-colors">
-                        {eventName}
-                      </Link>
-                    ) : eventName}
-                  </p>
-                  <p className="text-[11px] text-white/40">{date} · Sale: {formatUsd(c.sale_amount_cents)}</p>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <span className="text-sm font-bold text-white">
+                    +{formatUsd(c.commission_amount_cents)}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] px-2 py-0.5 border-current flex items-center gap-1 ${meta.color}`}
+                  >
+                    <StatusIcon className="h-2.5 w-2.5" />
+                    {meta.label}
+                  </Badge>
                 </div>
               </div>
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <span className="text-sm font-bold text-white">
-                  +{formatUsd(c.commission_amount_cents)}
-                </span>
-                <Badge
-                  variant="outline"
-                  className={`text-[10px] px-2 py-0.5 border-current flex items-center gap-1 ${meta.color}`}
-                >
-                  <StatusIcon className="h-2.5 w-2.5" />
-                  {meta.label}
-                </Badge>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

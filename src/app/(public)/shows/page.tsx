@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
+import { DigisWatchButton } from "@/components/shows/digis-links";
 
 // Cache page for 5 minutes - events don't change frequently
 export const revalidate = 300;
@@ -177,16 +178,7 @@ export default async function EventsPage() {
               </p>
             </div>
             <div className="shrink-0">
-              <a
-                href="https://digis.cc/shows"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 text-white font-bold text-sm shadow-[0_0_20px_rgba(236,72,153,0.4)] hover:shadow-[0_0_30px_rgba(236,72,153,0.6)] hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                <Tv className="h-4 w-4" />
-                Watch on Digis
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </a>
+              <DigisWatchButton />
             </div>
           </div>
         </div>
