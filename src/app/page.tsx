@@ -220,7 +220,7 @@ export default async function HomePage() {
 
               <div className="relative z-10">
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
-                  Gigs. Bookings.
+                  Swim Week. Bookings.
                   <br />
                   <span className="exa-gradient-text">Get Discovered.</span>
                 </h2>
