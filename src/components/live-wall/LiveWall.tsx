@@ -32,6 +32,7 @@ import Link from "next/link";
 import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
 import { ModelSignupDialog } from "@/components/auth/ModelSignupDialog";
 import { LiveWallTipPicker } from "./LiveWallTipPicker";
+import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
 
 interface CurrentUser {
   actorId: string;
@@ -82,6 +83,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
   const [coinBalance, setCoinBalance] = useState(currentUser?.coinBalance ?? 0);
   const [isMicroTipping, setIsMicroTipping] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const supabaseRef = useRef(createClient());
@@ -664,18 +666,19 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
               </ul>
 
               <div className="mt-4 pt-3.5 border-t border-white/[0.08]">
-                <Link
-                  href="/coins"
-                  onClick={() => setShowInfo(false)}
+                <button
+                  type="button"
+                  onClick={() => { setShowInfo(false); setBuyCoinsOpen(true); }}
                   className="flex items-center justify-center gap-2.5 w-full rounded-full py-3 px-5 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white text-sm font-bold shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all"
                 >
                   <Coins className="h-5 w-5 text-amber-300" /> Buy Coins
-                </Link>
+                </button>
               </div>
             </div>
           </div>
         )}
         </div>
+        <BuyCoinsModal isOpen={buyCoinsOpen} onClose={() => setBuyCoinsOpen(false)} />
 
         {/* Messages + Input (collapsible) */}
         {(isExpanded || compact) && (

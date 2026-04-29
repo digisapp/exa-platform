@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +44,7 @@ export function VideoCallButton({
   onBalanceChange,
 }: VideoCallButtonProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [callSession, setCallSession] = useState<{
     sessionId: string;
@@ -186,10 +187,17 @@ export function VideoCallButton({
               <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
                 <p className="text-sm text-destructive">
                   You need at least {MIN_CALL_BALANCE} coins to start a call.{" "}
-                  <Link href="/coins" className="underline font-medium">Buy coins</Link>
+                  <button
+                    type="button"
+                    onClick={() => setBuyCoinsOpen(true)}
+                    className="underline font-medium"
+                  >
+                    Buy coins
+                  </button>
                 </p>
               </div>
             )}
+            <BuyCoinsModal isOpen={buyCoinsOpen} onClose={() => setBuyCoinsOpen(false)} />
 
             {/* Action Buttons */}
             <div className="flex gap-3">

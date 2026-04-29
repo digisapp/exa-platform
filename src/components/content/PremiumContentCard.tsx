@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
 import { Coins, Play, Loader2, ImageOff, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +43,7 @@ export function PremiumContentCard({
   const [showPreview, setShowPreview] = useState(false);
   const [showFull, setShowFull] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -317,11 +318,16 @@ export function PremiumContentCard({
             {!canAfford && (
               <p className="text-center text-sm text-muted-foreground">
                 Need {content.coin_price - coinBalance} more coins.{" "}
-                <Link href="/coins" className="text-pink-500 hover:underline">
+                <button
+                  type="button"
+                  onClick={() => setBuyCoinsOpen(true)}
+                  className="text-pink-500 hover:underline font-medium"
+                >
                   Buy coins
-                </Link>
+                </button>
               </p>
             )}
+            <BuyCoinsModal isOpen={buyCoinsOpen} onClose={() => setBuyCoinsOpen(false)} />
           </div>
         </DialogContent>
       </Dialog>

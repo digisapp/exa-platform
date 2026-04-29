@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Link from "next/link";
+import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { hapticFeedback } from "@/hooks/useHapticFeedback";
@@ -76,6 +77,7 @@ export function ProfileActionButtons({
   allowTips = true,
 }: ProfileActionButtonsProps) {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
   const [showTipDialog, setShowTipDialog] = useState(false);
   const [showVideoConfirm, setShowVideoConfirm] = useState(false);
   const [showVoiceConfirm, setShowVoiceConfirm] = useState(false);
@@ -570,9 +572,16 @@ export function ProfileActionButtons({
             {coinBalance < 100 && (
               <p className="text-center text-sm text-muted-foreground">
                 Need more coins?{" "}
-                <Link href="/coins" className="text-pink-500 hover:underline">Buy coins</Link>
+                <button
+                  type="button"
+                  onClick={() => setBuyCoinsOpen(true)}
+                  className="text-pink-500 hover:underline font-medium"
+                >
+                  Buy coins
+                </button>
               </p>
             )}
+            <BuyCoinsModal isOpen={buyCoinsOpen} onClose={() => setBuyCoinsOpen(false)} />
           </div>
         </DialogContent>
       </Dialog>

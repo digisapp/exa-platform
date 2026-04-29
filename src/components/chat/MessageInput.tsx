@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
-import Link from "next/link";
+import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +48,7 @@ export function MessageInput({
 }: MessageInputProps) {
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
+  const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
@@ -399,10 +400,15 @@ export function MessageInput({
               : `Not enough coins — need ${coinCost}, you have ${coinBalance}`}
           </span>
           {!hasEnoughCoins && (
-            <Link href="/coins" className="ml-auto text-xs font-semibold text-pink-300 hover:text-pink-200 whitespace-nowrap">
+            <button
+              type="button"
+              onClick={() => setBuyCoinsOpen(true)}
+              className="ml-auto text-xs font-semibold text-pink-300 hover:text-pink-200 whitespace-nowrap"
+            >
               Get coins →
-            </Link>
+            </button>
           )}
+          <BuyCoinsModal isOpen={buyCoinsOpen} onClose={() => setBuyCoinsOpen(false)} />
         </div>
       )}
 

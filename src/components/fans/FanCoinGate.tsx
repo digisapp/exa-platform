@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Coins, Check, Sparkles } from "lucide-react";
+import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
 
 const MIN_COINS_REQUIRED = 50;
 
@@ -12,6 +13,7 @@ interface FanCoinGateProps {
 }
 
 export function FanCoinGate({ currentBalance = 0 }: FanCoinGateProps) {
+  const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
   const coinsNeeded = MIN_COINS_REQUIRED - currentBalance;
 
   return (
@@ -62,16 +64,22 @@ export function FanCoinGate({ currentBalance = 0 }: FanCoinGateProps) {
             <p className="text-xs text-muted-foreground mt-1">for 50 coins</p>
           </div>
 
-          <Button asChild className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 h-12">
-            <Link href="/coins">
-              <Sparkles className="mr-2 h-4 w-4" />
-              Get Coins
-            </Link>
+          <Button
+            onClick={() => setBuyCoinsOpen(true)}
+            className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 h-12"
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            Get Coins
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
             Coins are used to message and call models. No subscription required.
           </p>
+
+          <BuyCoinsModal
+            isOpen={buyCoinsOpen}
+            onClose={() => setBuyCoinsOpen(false)}
+          />
         </CardContent>
       </Card>
     </div>

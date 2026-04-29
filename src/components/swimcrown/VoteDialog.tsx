@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +56,7 @@ export function VoteDialog({
   const [customAmount, setCustomAmount] = useState("");
   const [isCustom, setIsCustom] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
 
   if (!contestant) return null;
 
@@ -261,14 +263,16 @@ export function VoteDialog({
         </div>
 
         {balance < effectiveAmount && isLoggedIn && (
-          <Link
-            href="/coins"
+          <button
+            type="button"
+            onClick={() => setBuyCoinsOpen(true)}
             className="flex items-center justify-center gap-2 text-sm text-pink-400 hover:text-pink-300 transition-colors"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             Buy more coins
-          </Link>
+          </button>
         )}
+        <BuyCoinsModal isOpen={buyCoinsOpen} onClose={() => setBuyCoinsOpen(false)} />
 
         {/* Submit */}
         <Button

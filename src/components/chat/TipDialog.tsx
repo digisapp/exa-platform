@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   Dialog,
   DialogContent,
@@ -10,11 +9,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Gift, Loader2, Coins } from "lucide-react";
+import { Gift, Loader2, Coins, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { hapticFeedback } from "@/hooks/useHapticFeedback";
 import { showTipSuccessToast } from "@/lib/tip-toast";
+import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
+import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 
 const TIP_AMOUNTS = [5, 10, 25, 50, 100, 500];
 
@@ -39,6 +40,10 @@ export function TipDialog({
   onOpenChange: externalOnOpenChange,
 }: TipDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
+  const balanceCtx = useCoinBalanceOptional();
+  // Use live balance from context if available, fall back to prop
+  const liveBalance = balanceCtx?.balance ?? coinBalance;
   const isControlled = externalOnOpenChange !== undefined;
   const open = isControlled ? (externalOpen ?? false) : internalOpen;
   const setOpen = isControlled ? externalOnOpenChange : setInternalOpen;
@@ -117,14 +122,14 @@ export function TipDialog({
             <span className="text-sm text-muted-foreground">Your balance</span>
             <span className="flex items-center gap-1.5 font-semibold">
               <Coins className="h-4 w-4 text-yellow-500" />
-              {coinBalance} coins
+              {liveBalance} coins
             </span>
           </div>
 
           {/* Tip amounts */}
           <div className="grid grid-cols-3 gap-3">
             {TIP_AMOUNTS.map((amount) => {
-              const canAfford = coinBalance >= amount;
+              const canAfford = liveBalance >= amount;
               const isSelected = selectedAmount === amount;
 
               return (
@@ -175,14 +180,21 @@ export function TipDialog({
           </Button>
 
           {/* Need more coins? */}
-          {coinBalance < 100 && (
-            <p className="text-center text-sm text-muted-foreground">
-              Need more coins?{" "}
-              <Link href="/coins" className="text-pink-500 font-medium hover:underline">
-                Get coins
-              </Link>
-            </p>
+          {liveBalance < 100 && (
+            <button
+              type="button"
+              onClick={() => setBuyCoinsOpen(true)}
+              className="w-full flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-pink-500 transition-colors py-1"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Need more coins? Buy now
+            </button>
           )}
+
+          <BuyCoinsModal
+            isOpen={buyCoinsOpen}
+            onClose={() => setBuyCoinsOpen(false)}
+          />
         </div>
       </DialogContent>
     </Dialog>
