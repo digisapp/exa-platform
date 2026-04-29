@@ -313,9 +313,6 @@ export default async function HomePage() {
         {/* Upcoming Shows Section */}
         <section className="py-8">
           <div className="container px-8 md:px-16 mb-8">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
-              Calendar
-            </p>
             <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text">
               Upcoming Shows
             </h2>
@@ -326,9 +323,6 @@ export default async function HomePage() {
         {/* Book Top Models Section */}
         <section className="py-8">
           <div className="container px-8 md:px-16 mb-8">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
-              Directory
-            </p>
             <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text">
               Book Top Models
             </h2>
