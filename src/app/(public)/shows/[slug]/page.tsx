@@ -418,7 +418,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                     </Link>
                   </Button>
                 ) : ticketUrl ? (
-                  <DigisTicketButton href={ticketUrl} />
+                  <DigisTicketButton href={ticketUrl} affiliateCode={ref} />
                 ) : (
                   <Button
                     disabled
@@ -563,7 +563,9 @@ export default async function EventPage({ params, searchParams }: Props) {
         </p>
       </footer>
 
-      {/* Affiliate Tracking Script - ref is sanitized at top of component to alphanumeric/underscore/hyphen only */}
+      {/* Affiliate Tracking Script - ref is sanitized at top of component to alphanumeric/underscore/hyphen only.
+          Stores the returned clickId in sessionStorage so the ticket buttons can append ?aff_sid= to the Digis URL,
+          which lets the Digis Stripe webhook call back to examodels.com and record the model's commission. */}
       {ref && (
         <script
           dangerouslySetInnerHTML={{
@@ -578,7 +580,11 @@ export default async function EventPage({ params, searchParams }: Props) {
                     eventId: ${JSON.stringify(event.id)},
                     source: 'event_page'
                   })
-                });
+                }).then(function(r){ return r.json(); }).then(function(data){
+                  if (data.clickId) {
+                    try { sessionStorage.setItem('exa_click_id', data.clickId); } catch(e) {}
+                  }
+                }).catch(function(){});
               })();
             `,
           }}

@@ -7,9 +7,14 @@ import { logger } from "@/lib/logger";
 const postSchema = z.object({
   orderId: z.string().min(1),
   eventId: z.string().min(1),
-  affiliateCode: z.string().min(1),
+  // Either affiliateCode (model's unique code) or clickId (examodels click UUID) must be provided.
+  // clickId is what digis.cc passes via the aff_sid query param.
+  affiliateCode: z.string().min(1).optional(),
+  clickId: z.string().uuid().optional(),
   saleAmountCents: z.number().int().min(1),
   commissionRate: z.number().min(0).max(1).default(0.20),
+}).refine((d) => d.affiliateCode || d.clickId, {
+  message: 'Either affiliateCode or clickId must be provided',
 });
 
 const patchSchema = z.object({
@@ -55,20 +60,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { orderId, eventId, affiliateCode, saleAmountCents, commissionRate } = parsed.data;
+    const { orderId, eventId, affiliateCode, clickId, saleAmountCents, commissionRate } = parsed.data;
 
     // Use admin client
     const adminClient = createServiceRoleClient();
 
-    // Find the model by affiliate code
-    const { data: model } = await adminClient
-      .from("models")
-      .select("id")
-      .eq("affiliate_code", affiliateCode)
-      .single();
+    let modelId: string;
+    let resolvedClickId: string | null = null;
 
-    if (!model) {
-      return NextResponse.json({ error: "Invalid affiliate code" }, { status: 404 });
+    if (clickId) {
+      // Resolve model from the click record (used when digis.cc passes aff_sid)
+      const { data: click } = await adminClient
+        .from("affiliate_clicks")
+        .select("id, model_id")
+        .eq("id", clickId)
+        .single();
+
+      if (!click) {
+        return NextResponse.json({ error: "Invalid clickId — click not found" }, { status: 404 });
+      }
+
+      modelId = click.model_id;
+      resolvedClickId = click.id;
+    } else {
+      // Resolve model from affiliate code
+      const { data: model } = await adminClient
+        .from("models")
+        .select("id")
+        .eq("affiliate_code", affiliateCode!)
+        .single();
+
+      if (!model) {
+        return NextResponse.json({ error: "Invalid affiliate code" }, { status: 404 });
+      }
+
+      modelId = model.id;
+
+      // Find the most recent click from this model for this event (best-effort attribution)
+      const { data: recentClick } = await adminClient
+        .from("affiliate_clicks")
+        .select("id")
+        .eq("model_id", modelId)
+        .eq("event_id", eventId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      resolvedClickId = recentClick?.id ?? null;
     }
 
     // Verify the event exists
@@ -96,16 +134,6 @@ export async function POST(request: NextRequest) {
       }, { status: 409 });
     }
 
-    // Find the most recent click from this model for this event (for attribution)
-    const { data: recentClick } = await adminClient
-      .from("affiliate_clicks")
-      .select("id")
-      .eq("model_id", model.id)
-      .eq("event_id", eventId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
     // Calculate commission
     const commissionAmountCents = Math.round(saleAmountCents * commissionRate);
 
@@ -113,9 +141,9 @@ export async function POST(request: NextRequest) {
     const { data: commission, error } = await adminClient
       .from("affiliate_commissions")
       .insert({
-        model_id: model.id,
+        model_id: modelId,
         event_id: eventId,
-        click_id: recentClick?.id || null,
+        click_id: resolvedClickId,
         order_id: orderId,
         sale_amount_cents: saleAmountCents,
         commission_rate: commissionRate,
@@ -134,7 +162,7 @@ export async function POST(request: NextRequest) {
       success: true,
       commission: {
         id: commission.id,
-        modelId: model.id,
+        modelId,
         saleAmountCents,
         commissionAmountCents,
         commissionRate,

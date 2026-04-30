@@ -79,20 +79,45 @@ function DigisDialog({
 // Main "Get Tickets" button — shows/[slug] page
 // ---------------------------------------------------------------------------
 
-export function DigisTicketButton({ href }: { href: string }) {
+export function DigisTicketButton({
+  href,
+  affiliateCode,
+}: {
+  href: string;
+  affiliateCode?: string;
+}) {
   const [open, setOpen] = useState(false);
+  const [dialogHref, setDialogHref] = useState(href);
+
+  const handleClick = () => {
+    // If there's an affiliate session, append the click ID so Digis can fire
+    // the examodels.com commission webhook after a successful ticket purchase.
+    if (affiliateCode) {
+      try {
+        const clickId = sessionStorage.getItem("exa_click_id");
+        if (clickId) {
+          const sep = href.includes("?") ? "&" : "?";
+          setDialogHref(`${href}${sep}aff_sid=${encodeURIComponent(clickId)}`);
+        }
+      } catch {
+        // sessionStorage unavailable — proceed without aff_sid
+      }
+    }
+    setOpen(true);
+  };
+
   return (
     <>
       <Button
         size="lg"
         className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-lg py-6 rounded-xl shadow-lg shadow-pink-500/25"
-        onClick={() => setOpen(true)}
+        onClick={handleClick}
       >
         <Ticket className="h-6 w-6 mr-2" />
         Get Tickets
         <ExternalLink className="h-4 w-4 ml-2" />
       </Button>
-      <DigisDialog href={href} open={open} onOpenChange={setOpen} />
+      <DigisDialog href={dialogHref} open={open} onOpenChange={setOpen} />
     </>
   );
 }
@@ -107,9 +132,27 @@ export function DigisScheduleSection({
   affiliateRef?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const ticketUrl = affiliateRef
+  const [dialogHref, setDialogHref] = useState(MSW_DIGIS_TICKET_URL);
+
+  const baseTicketUrl = affiliateRef
     ? `${MSW_DIGIS_TICKET_URL}?ref=${affiliateRef}`
     : MSW_DIGIS_TICKET_URL;
+
+  const handleScheduleClick = () => {
+    // Append the examodels click ID so Digis can fire the commission webhook
+    let url = baseTicketUrl;
+    try {
+      const clickId = sessionStorage.getItem("exa_click_id");
+      if (clickId) {
+        const sep = url.includes("?") ? "&" : "?";
+        url = `${url}${sep}aff_sid=${encodeURIComponent(clickId)}`;
+      }
+    } catch {
+      // sessionStorage unavailable — proceed without aff_sid
+    }
+    setDialogHref(url);
+    setOpen(true);
+  };
 
   return (
     <>
@@ -118,7 +161,7 @@ export function DigisScheduleSection({
           <button
             key={s.id}
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={handleScheduleClick}
             className={`w-full flex items-start gap-4 p-3.5 rounded-xl transition-all cursor-pointer group text-left ${
               s.highlight
                 ? "border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-violet-500/5 to-transparent shadow-[0_0_14px_rgba(236,72,153,0.12)] hover:border-pink-400/50 hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
@@ -150,7 +193,7 @@ export function DigisScheduleSection({
           </button>
         ))}
       </div>
-      <DigisDialog href={ticketUrl} open={open} onOpenChange={setOpen} />
+      <DigisDialog href={dialogHref} open={open} onOpenChange={setOpen} />
     </>
   );
 }
