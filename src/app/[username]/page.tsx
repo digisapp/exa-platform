@@ -617,22 +617,24 @@ export default async function ModelProfilePage({ params }: Props) {
                         <ShareButton title={displayName} />
                       </div>
                     </div>
-                    {eventBadges && eventBadges.length > 0 && eventBadges.map((eb: any, idx: number) => (
-                      <Link
-                        key={idx}
-                        href={`/shows/${eb.badges.events.slug}?ref=${model.affiliate_code}`}
-                        title={`Get tickets — ${eb.badges.events.name}`}
-                        className="group/badge relative overflow-hidden bg-gradient-to-r from-cyan-500 via-sky-400 to-violet-500 text-white text-sm font-extrabold px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-[0_2px_12px_rgba(34,211,238,0.4),0_4px_16px_rgba(0,0,0,0.4)] border border-cyan-300/40 hover:shadow-[0_2px_20px_rgba(34,211,238,0.6),0_4px_20px_rgba(0,0,0,0.4)] hover:scale-105 transition-all duration-300"
-                      >
-                        {/* Shine sweep */}
-                        <span className="absolute inset-0 -translate-x-full group-hover/badge:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
-                        <span className="text-base">🌊</span>
-                        <span className="tracking-wide text-[11px]">Catch me on the Runway · {eb.badges.events.name.replace(/\s+\d{4}$/, '')}</span>
-                        <span className="text-white/70 text-[10px] font-bold group-hover/badge:text-white transition-colors">— Get Tickets →</span>
-                      </Link>
-                    ))}
                   </div>
                 </div>
+
+                {/* Event ticker strip — full-width scrolling banner over the portrait */}
+                {eventBadges && eventBadges.length > 0 && (
+                  <Link
+                    href={`/shows/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
+                    className="absolute bottom-[30%] inset-x-0 z-20 overflow-hidden h-10 flex items-center bg-gradient-to-r from-cyan-600/85 via-sky-500/85 to-violet-600/85 backdrop-blur-sm border-y border-cyan-300/30 shadow-[0_0_24px_rgba(34,211,238,0.45),inset_0_0_12px_rgba(255,255,255,0.05)]"
+                  >
+                    <div className="event-ticker-scroll">
+                      {[0, 1].map((i) => (
+                        <span key={i} className="text-white text-[11px] font-extrabold tracking-[0.14em] uppercase whitespace-nowrap px-6">
+                          🌊&nbsp;&nbsp;Catch me on the Runway&nbsp;&nbsp;·&nbsp;&nbsp;{eventBadges[0].badges.events.name.replace(/\s+\d{4}$/, '')}&nbsp;&nbsp;—&nbsp;&nbsp;Get Tickets&nbsp;&nbsp;→&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        </span>
+                      ))}
+                    </div>
+                  </Link>
+                )}
 
                 {/* BOTTOM GLASS DOCK: name, location, socials, action buttons all overlaid.
                     Bottom color is matched to the profile-card body (rgba(25,10,45)) so the photo
@@ -728,49 +730,42 @@ export default async function ModelProfilePage({ params }: Props) {
               {/* Profile Image (default circle layout) */}
               <div className="flex justify-center mb-4">
                 <div className="relative group">
-                  {/* Event badge wrapper - profile pic + clickable ticket badges */}
+                  {/* Profile pic — event ticker clipped inside circle when badge active */}
                   {eventBadges && eventBadges.length > 0 ? (
-                    <>
-                      <Link
-                        href={`/shows/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
-                        className="block"
-                        title={`${eventBadges[0].badges.events.name} Model`}
-                      >
-                        <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ring-[4px] ring-cyan-400 shadow-[0_0_24px_rgba(34,211,238,0.3)] ${isOwner ? 'profile-pic-breathing' : ''}`}>
-                          {profilePhotoUrl ? (
-                            <Image
-                              src={profilePhotoUrl}
-                              alt={displayName}
-                              width={224}
-                              height={224}
-                              className="w-full h-full object-cover"
-                              priority
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
-                              <span className="text-4xl font-bold text-white/60">
-                                {displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                    <Link
+                      href={`/shows/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
+                      className="block"
+                      title={`${eventBadges[0].badges.events.name} — Get Tickets`}
+                    >
+                      <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ring-[4px] ring-cyan-400 shadow-[0_0_28px_rgba(34,211,238,0.4)] relative ${isOwner ? 'profile-pic-breathing' : ''}`}>
+                        {profilePhotoUrl ? (
+                          <Image
+                            src={profilePhotoUrl}
+                            alt={displayName}
+                            width={224}
+                            height={224}
+                            className="w-full h-full object-cover"
+                            priority
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
+                            <span className="text-4xl font-bold text-white/60">
+                              {displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                            </span>
+                          </div>
+                        )}
+                        {/* Ticker strip — rounded-full clips it into an arc nameplate at the bottom */}
+                        <div className="absolute bottom-0 inset-x-0 h-9 overflow-hidden bg-gradient-to-r from-cyan-600/90 via-sky-500/90 to-violet-600/90 backdrop-blur-sm border-t border-cyan-300/40 shadow-[0_-2px_14px_rgba(34,211,238,0.55)] flex items-center">
+                          <div className="event-ticker-scroll">
+                            {[0, 1].map((i) => (
+                              <span key={i} className="text-white text-[9px] font-extrabold tracking-[0.12em] uppercase whitespace-nowrap px-3">
+                                🌊&nbsp;&nbsp;Catch me on the Runway&nbsp;&nbsp;·&nbsp;&nbsp;{eventBadges[0].badges.events.name.replace(/\s+\d{4}$/, '')}&nbsp;&nbsp;—&nbsp;&nbsp;Get Tickets&nbsp;&nbsp;→&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                               </span>
-                            </div>
-                          )}
+                            ))}
+                          </div>
                         </div>
-                      </Link>
-                      {/* Ticket badges — each is its own link, positioned outside the photo link */}
-                      <div className="absolute -top-2 right-0 flex flex-col gap-1.5 items-end z-10">
-                        {eventBadges.map((eb: any, idx: number) => (
-                          <Link
-                            key={idx}
-                            href={`/shows/${eb.badges.events.slug}?ref=${model.affiliate_code}`}
-                            className="group/badge relative overflow-hidden bg-gradient-to-r from-cyan-500 via-sky-400 to-violet-500 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-[0_2px_10px_rgba(34,211,238,0.35),0_3px_12px_rgba(0,0,0,0.35)] border border-cyan-300/40 tracking-wide uppercase hover:scale-105 hover:shadow-[0_2px_16px_rgba(34,211,238,0.55)] transition-all duration-200"
-                          >
-                            <span className="absolute inset-0 -translate-x-full group-hover/badge:translate-x-full transition-transform duration-500 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
-                            <span className="text-xs">🌊</span>
-                            <span>Catch me on the Runway · {eb.badges.events.name.replace(/\s+\d{4}$/, '')}</span>
-                            <span className="text-white/60 group-hover/badge:text-white transition-colors">— Get Tickets →</span>
-                          </Link>
-                        ))}
                       </div>
-                    </>
+                    </Link>
                   ) : (
                     <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
                       {profilePhotoUrl ? (

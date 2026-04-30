@@ -292,6 +292,18 @@
   animation: border-spin 4s linear infinite;
 }
 
+/* Event ticker scrolling animation */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.event-ticker-scroll {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 22s linear infinite;
+}
+
 /* Neon Border */
 .neon-border {
   border: 2px solid transparent;
