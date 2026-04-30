@@ -278,14 +278,14 @@ export async function GET(request: NextRequest) {
             zIndex: 8,
           }}>
             <div style={{
-              fontSize: px(34),
-              fontWeight: 900,
-              color: textColor,
+              fontSize: px(30),
+              fontWeight: 600,
+              color: "#FFFFFF",
               opacity: 1,
-              letterSpacing: "0.2em",
+              letterSpacing: "0.22em",
               textTransform: "uppercase",
               display: "flex",
-              textShadow: `0 0 ${px(30)} ${gc0}cc, 0 0 ${px(60)} ${gc0}66, 0 ${px(2)} ${px(8)} rgba(0,0,0,0.8)`,
+              textShadow: `1px 0 0 #FF69B4, -1px 0 0 #FF69B4, 0 1px 0 #FF69B4, 0 -1px 0 #FF69B4, 0 0 ${px(18)} #FF69B466`,
             }}>
               Catch Me on the Runway
             </div>
@@ -333,13 +333,13 @@ export async function GET(request: NextRequest) {
             zIndex: 8,
           }}>
             <div style={{
-              fontSize: px(32),
-              fontWeight: 700,
-              color: textColor,
+              fontSize: px(28),
+              fontWeight: 400,
+              color: "#FFFFFF",
               opacity: 1,
-              letterSpacing: "0.12em",
+              letterSpacing: "0.1em",
               display: "flex",
-              textShadow: `0 0 ${px(24)} ${gc0}cc, 0 0 ${px(50)} ${gc0}55, 0 ${px(2)} ${px(8)} rgba(0,0,0,0.8)`,
+              textShadow: `1px 0 0 #FF69B4, -1px 0 0 #FF69B4, 0 1px 0 #FF69B4, 0 -1px 0 #FF69B4, 0 0 ${px(14)} #FF69B455`,
             }}>
               @{igHandle}
             </div>
