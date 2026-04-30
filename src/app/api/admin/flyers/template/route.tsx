@@ -278,14 +278,14 @@ export async function GET(request: NextRequest) {
             zIndex: 8,
           }}>
             <div style={{
-              fontSize: px(28),
-              fontWeight: 600,
+              fontSize: px(34),
+              fontWeight: 900,
               color: textColor,
-              opacity: 0.85,
-              letterSpacing: "0.15em",
+              opacity: 1,
+              letterSpacing: "0.2em",
               textTransform: "uppercase",
               display: "flex",
-              textShadow: `0 ${px(1)} ${px(6)} rgba(0,0,0,0.5)`,
+              textShadow: `0 0 ${px(30)} ${gc0}cc, 0 0 ${px(60)} ${gc0}66, 0 ${px(2)} ${px(8)} rgba(0,0,0,0.8)`,
             }}>
               Catch Me on the Runway
             </div>
