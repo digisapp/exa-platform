@@ -119,11 +119,8 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
   const translatedBrandLinks = [
     { href: "/dashboard", label: t.nav.home, icon: Home },
     { href: "/models", label: t.nav.explore, icon: Users },
-    { href: "/favorites", label: t.nav.favorites, icon: Heart },
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
     { href: "/campaigns", label: t.nav.campaigns, icon: Megaphone },
-    { href: "/brands/offers", label: "Offers", icon: Gift },
-    { href: "/brands/content", label: t.nav.content, icon: FolderDown },
   ];
 
   const links =

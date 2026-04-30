@@ -8,9 +8,7 @@ import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { BRAND_SUBSCRIPTION_TIERS } from "@/lib/stripe-config";
 import {
   ArrowRight,
-  ArrowUpRight,
   Sparkles,
-  Users,
   Clock,
   Calendar,
   Search,
@@ -18,7 +16,6 @@ import {
   Crown,
   CheckCircle2,
   Megaphone,
-  BarChart3,
   Circle,
   Heart,
   Plus,
@@ -53,7 +50,6 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
     { count: campaignCount },
     { data: offersData },
     { data: upcomingBookings },
-    { data: topModels },
     { data: follows },
   ] = await Promise.all([
     (supabase.from("campaigns") as any)
@@ -75,22 +71,6 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
       .neq("status", "cancelled")
       .order("event_date", { ascending: true })
       .limit(5),
-    (supabase.from("models") as any)
-      .select(`
-        id, username, first_name, last_name, profile_photo_url,
-        city, state, show_location,
-        instagram_name, show_social_media,
-        height, show_measurements,
-        focus_tags, reliability_score,
-        is_verified, is_featured, last_active_at
-      `)
-      .eq("is_approved", true)
-      .not("profile_photo_url", "is", null)
-      .not("profile_photo_url", "ilike", "%cdninstagram.com%")
-      .not("profile_photo_url", "ilike", "%instagram%")
-      .gte("admin_rating", 4)
-      .order("admin_rating", { ascending: false })
-      .limit(8),
     (supabase.from("follows") as any)
       .select(`
         created_at,
@@ -149,14 +129,11 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
 
   const currentTier = (brand?.subscription_tier || "free") as keyof typeof BRAND_SUBSCRIPTION_TIERS;
   const tierConfig = BRAND_SUBSCRIPTION_TIERS[currentTier] || BRAND_SUBSCRIPTION_TIERS.free;
-  const monthlyCoins = tierConfig.monthlyCoins;
 
   const hasProfile = !!brand?.logo_url;
   const hasCampaign = activeCampaignCount > 0;
   const hasSentOffer = (offersData || []).length > 0;
   const completedSteps = [hasProfile, hasCampaign, hasSentOffer].filter(Boolean).length;
-
-  const discoverModels = topModels || [];
 
   const followedUserIds = follows?.map((f: any) => f.actors?.user_id).filter(Boolean) || [];
   let favoriteModels: any[] = [];
@@ -234,6 +211,13 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
                     <Clock className="h-3 w-3 text-amber-300" />
                     <span className="text-[11px] font-semibold text-amber-200">Pending</span>
                   </span>
+                )}
+                <span className="text-[11px] text-white/40">·</span>
+                <span className="text-[11px] text-white/60">{coinBalance.toLocaleString()} coins</span>
+                {currentTier !== "enterprise" && (
+                  <Link href="/brands/subscription" className="text-[11px] font-semibold text-violet-300 hover:text-violet-200 transition-colors">
+                    Upgrade
+                  </Link>
                 )}
               </div>
             </div>
@@ -383,90 +367,6 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
         </div>
       )}
 
-      {/* ──────────────────────────────────────────────
-          Subscription widget + Quick Actions
-         ────────────────────────────────────────────── */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Subscription */}
-        <div className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-xl bg-violet-500/20 ring-1 ring-violet-500/40">
-              <Crown className="h-5 w-5 text-violet-300" />
-            </div>
-            <div>
-              <p className="font-semibold text-white">{tierConfig.name} Plan</p>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                isApproved
-                  ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                  : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
-              }`}>
-                {isApproved ? "ACTIVE" : "PENDING"}
-              </span>
-            </div>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-white/60">Coin balance</span>
-                <span className="font-semibold text-white">
-                  {coinBalance.toLocaleString()}
-                  {monthlyCoins > 0 && <span className="text-white/40"> / {monthlyCoins.toLocaleString()}</span>}
-                </span>
-              </div>
-              {monthlyCoins > 0 && (
-                <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-pink-500 shadow-[0_0_10px_rgba(167,139,250,0.5)] transition-all"
-                    style={{ width: `${Math.min((coinBalance / monthlyCoins) * 100, 100)}%` }}
-                  />
-                </div>
-              )}
-            </div>
-            {currentTier !== "enterprise" && (
-              <Link
-                href="/brands/subscription"
-                className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-white/5 hover:bg-violet-500/15 border border-white/10 hover:border-violet-500/40 text-sm font-semibold text-white/80 hover:text-white transition-all"
-              >
-                Upgrade Plan
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              </Link>
-            )}
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5">
-          <p className="text-[10px] uppercase tracking-wider font-semibold text-white/60 mb-4">Quick actions</p>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { href: "/models", icon: Search, label: "Browse Models", color: "pink", rgb: "236,72,153" },
-              { href: "/campaigns", icon: Megaphone, label: "Campaigns", color: "violet", rgb: "167,139,250" },
-              { href: "/brands/offers", icon: Mail, label: "View Offers", color: "cyan", rgb: "34,211,238" },
-              { href: "/brands/analytics", icon: BarChart3, label: "Analytics", color: "emerald", rgb: "52,211,153" },
-            ].map((action) => (
-              <Link
-                key={action.href}
-                href={action.href}
-                className="group flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 transition-all"
-                style={{
-                  transition: "all 0.2s",
-                } as React.CSSProperties}
-              >
-                <div
-                  className="p-2 rounded-lg transition-all group-hover:scale-110"
-                  style={{
-                    background: `rgba(${action.rgb}, 0.15)`,
-                    boxShadow: `inset 0 0 0 1px rgba(${action.rgb}, 0.3)`,
-                  }}
-                >
-                  <action.icon className={`h-4 w-4 text-${action.color}-300`} />
-                </div>
-                <span className="font-semibold text-sm text-white group-hover:text-white">{action.label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ──────────────────────────────────────────────
           EXA Live Wall
@@ -713,43 +613,6 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
         </div>
       )}
 
-      {/* ──────────────────────────────────────────────
-          Discover Models
-         ────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
-        <header className="flex items-center justify-between p-5 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-cyan-400" />
-            <h2 className="text-base font-semibold text-white">Discover models</h2>
-          </div>
-          <Link href="/models" className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold">
-            View all <ArrowRight className="h-3 w-3" />
-          </Link>
-        </header>
-        <div className="p-5">
-          {discoverModels.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {discoverModels.slice(0, 8).map((model: any) => (
-                <ModelCard key={model.id} model={model} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-10">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/5 ring-1 ring-white/10 mb-3">
-                <Users className="h-6 w-6 text-white/40" />
-              </div>
-              <p className="text-sm text-white/60">Explore our top models</p>
-              <Link
-                href="/models"
-                className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-sm font-semibold text-white shadow-[0_0_18px_rgba(34,211,238,0.4)] transition-all"
-              >
-                <Users className="h-4 w-4" />
-                Browse All Models
-              </Link>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
