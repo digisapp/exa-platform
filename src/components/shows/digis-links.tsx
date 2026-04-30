@@ -19,8 +19,9 @@ import {
 } from "@/components/ui/dialog";
 import { MSW_2026_SCHEDULE } from "@/lib/msw-schedule";
 
+// Opening Show — flagship event, used as the default "Get Tickets" destination
 const MSW_DIGIS_TICKET_URL =
-  "https://digis.cc/events/dfd628e3-b2c7-4844-92e0-fa04ff93f64c";
+  "https://digis.cc/events/34393c83-ca92-42f2-9d3e-bfb8988c7807";
 
 // ---------------------------------------------------------------------------
 // Shared Dialog UI
@@ -134,13 +135,11 @@ export function DigisScheduleSection({
   const [open, setOpen] = useState(false);
   const [dialogHref, setDialogHref] = useState(MSW_DIGIS_TICKET_URL);
 
-  const baseTicketUrl = affiliateRef
-    ? `${MSW_DIGIS_TICKET_URL}?ref=${affiliateRef}`
-    : MSW_DIGIS_TICKET_URL;
-
-  const handleScheduleClick = () => {
-    // Append the examodels click ID so Digis can fire the commission webhook
-    let url = baseTicketUrl;
+  const handleScheduleClick = (digisEventId: string) => {
+    // Each schedule item links to its own Digis event page so affiliate
+    // tracking (aff=) lands on the exact checkout context.
+    let url = `https://digis.cc/events/${digisEventId}`;
+    if (affiliateRef) url += `?ref=${affiliateRef}`;
     try {
       const clickId = sessionStorage.getItem("exa_click_id");
       if (clickId) {
@@ -148,7 +147,7 @@ export function DigisScheduleSection({
         url = `${url}${sep}aff=${encodeURIComponent(clickId)}`;
       }
     } catch {
-      // sessionStorage unavailable — proceed without aff_sid
+      // sessionStorage unavailable — proceed without aff
     }
     setDialogHref(url);
     setOpen(true);
@@ -161,7 +160,7 @@ export function DigisScheduleSection({
           <button
             key={s.id}
             type="button"
-            onClick={handleScheduleClick}
+            onClick={() => handleScheduleClick(s.digisEventId)}
             className={`w-full flex items-start gap-4 p-3.5 rounded-xl transition-all cursor-pointer group text-left ${
               s.highlight
                 ? "border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-violet-500/5 to-transparent shadow-[0_0_14px_rgba(236,72,153,0.12)] hover:border-pink-400/50 hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]"

@@ -239,8 +239,8 @@ export default async function EventPage({ params, searchParams }: Props) {
       ? format(startDate, "MMMM d, yyyy")
       : "TBA";
 
-  // Miami Swim Week 2026 tickets are sold on Digis
-  const MSW_DIGIS_TICKET_URL = "https://digis.cc/events/dfd628e3-b2c7-4844-92e0-fa04ff93f64c";
+  // Miami Swim Week 2026 — Opening Show is the flagship "Get Tickets" destination
+  const MSW_DIGIS_TICKET_URL = "https://digis.cc/events/34393c83-ca92-42f2-9d3e-bfb8988c7807";
 
   // Build ticket URL with affiliate tracking
   // MSW 2026 always uses Digis for ticketing regardless of event.ticket_url / tickets_enabled
