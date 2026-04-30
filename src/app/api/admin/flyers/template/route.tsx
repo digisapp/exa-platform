@@ -333,13 +333,13 @@ export async function GET(request: NextRequest) {
             zIndex: 8,
           }}>
             <div style={{
-              fontSize: px(28),
-              fontWeight: 400,
+              fontSize: px(32),
+              fontWeight: 700,
               color: textColor,
-              opacity: 0.9,
-              letterSpacing: "0.02em",
+              opacity: 1,
+              letterSpacing: "0.12em",
               display: "flex",
-              textShadow: `0 ${px(1)} ${px(8)} rgba(0,0,0,0.6)`,
+              textShadow: `0 0 ${px(24)} ${gc0}cc, 0 0 ${px(50)} ${gc0}55, 0 ${px(2)} ${px(8)} rgba(0,0,0,0.8)`,
             }}>
               @{igHandle}
             </div>
