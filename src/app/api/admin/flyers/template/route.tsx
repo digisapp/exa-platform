@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
               width: px(overlay.width),
               height: px(overlay.height),
               opacity: overlay.opacity,
-              objectFit: "contain",
+              objectFit: "fill",
               zIndex: 2,
             }}
           />
@@ -258,7 +258,7 @@ export async function GET(request: NextRequest) {
               width: px(overlay.width),
               height: px(overlay.height),
               opacity: overlay.opacity,
-              objectFit: "contain",
+              objectFit: "fill",
               zIndex: 6,
             }}
           />

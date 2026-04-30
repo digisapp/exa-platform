@@ -773,7 +773,7 @@ export default function AdminFlyersPage() {
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={overlay.url} alt="overlay" draggable={false}
-                        className="w-full h-full object-contain pointer-events-none select-none" />
+                        className="w-full h-full object-fill pointer-events-none select-none" />
                     </div>
                   );
                 })}
