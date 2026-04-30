@@ -624,7 +624,7 @@ export default async function ModelProfilePage({ params }: Props) {
                 {eventBadges && eventBadges.length > 0 && (
                   <Link
                     href={`/shows/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
-                    className="absolute bottom-[30%] inset-x-0 z-20 overflow-hidden h-10 flex items-center bg-gradient-to-r from-cyan-600/85 via-sky-500/85 to-violet-600/85 backdrop-blur-sm border-y border-cyan-300/30 shadow-[0_0_24px_rgba(34,211,238,0.45),inset_0_0_12px_rgba(255,255,255,0.05)]"
+                    className="absolute top-[60px] md:top-[84px] inset-x-0 z-20 overflow-hidden h-10 flex items-center bg-gradient-to-r from-cyan-600/85 via-sky-500/85 to-violet-600/85 backdrop-blur-sm border-y border-cyan-300/30 shadow-[0_0_24px_rgba(34,211,238,0.45),inset_0_0_12px_rgba(255,255,255,0.05)]"
                   >
                     <div className="event-ticker-scroll">
                       {[0, 1].map((i) => (
