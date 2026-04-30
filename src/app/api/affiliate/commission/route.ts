@@ -67,12 +67,13 @@ export async function POST(request: NextRequest) {
 
     let modelId: string;
     let resolvedClickId: string | null = null;
+    let resolvedEventId: string = eventId;
 
     if (clickId) {
-      // Resolve model from the click record (used when digis.cc passes aff_sid)
+      // Resolve model from the click record (used when digis.cc passes aff via ?aff= param)
       const { data: click } = await adminClient
         .from("affiliate_clicks")
-        .select("id, model_id")
+        .select("id, model_id, event_id")
         .eq("id", clickId)
         .single();
 
@@ -82,6 +83,9 @@ export async function POST(request: NextRequest) {
 
       modelId = click.model_id;
       resolvedClickId = click.id;
+      // Prefer the EXA event ID from the click record — the eventId in the body is the
+      // Digis-side UUID which may differ from EXA's events table UUID.
+      if (click.event_id) resolvedEventId = click.event_id;
     } else {
       // Resolve model from affiliate code
       const { data: model } = await adminClient
@@ -101,7 +105,7 @@ export async function POST(request: NextRequest) {
         .from("affiliate_clicks")
         .select("id")
         .eq("model_id", modelId)
-        .eq("event_id", eventId)
+        .eq("event_id", resolvedEventId)
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
@@ -109,11 +113,11 @@ export async function POST(request: NextRequest) {
       resolvedClickId = recentClick?.id ?? null;
     }
 
-    // Verify the event exists
+    // Verify the resolved event exists in EXA's events table
     const { data: event } = await adminClient
       .from("events")
       .select("id")
-      .eq("id", eventId)
+      .eq("id", resolvedEventId)
       .single();
 
     if (!event) {
@@ -142,7 +146,7 @@ export async function POST(request: NextRequest) {
       .from("affiliate_commissions")
       .insert({
         model_id: modelId,
-        event_id: eventId,
+        event_id: resolvedEventId,
         click_id: resolvedClickId,
         order_id: orderId,
         sale_amount_cents: saleAmountCents,

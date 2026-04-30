@@ -97,7 +97,7 @@ export function DigisTicketButton({
         const clickId = sessionStorage.getItem("exa_click_id");
         if (clickId) {
           const sep = href.includes("?") ? "&" : "?";
-          setDialogHref(`${href}${sep}aff_sid=${encodeURIComponent(clickId)}`);
+          setDialogHref(`${href}${sep}aff=${encodeURIComponent(clickId)}`);
         }
       } catch {
         // sessionStorage unavailable — proceed without aff_sid
@@ -145,7 +145,7 @@ export function DigisScheduleSection({
       const clickId = sessionStorage.getItem("exa_click_id");
       if (clickId) {
         const sep = url.includes("?") ? "&" : "?";
-        url = `${url}${sep}aff_sid=${encodeURIComponent(clickId)}`;
+        url = `${url}${sep}aff=${encodeURIComponent(clickId)}`;
       }
     } catch {
       // sessionStorage unavailable — proceed without aff_sid
