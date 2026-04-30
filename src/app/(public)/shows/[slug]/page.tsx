@@ -564,7 +564,7 @@ export default async function EventPage({ params, searchParams }: Props) {
       </footer>
 
       {/* Affiliate Tracking Script - ref is sanitized at top of component to alphanumeric/underscore/hyphen only.
-          Stores the returned clickId in sessionStorage so the ticket buttons can append ?aff_sid= to the Digis URL,
+          Stores the returned clickId in sessionStorage so the ticket buttons can append ?aff= to the Digis URL,
           which lets the Digis Stripe webhook call back to examodels.com and record the model's commission. */}
       {ref && (
         <script
