@@ -160,6 +160,7 @@ export default function SpeedReviewModal({
               name: "IG",
               handle: `@${current.instagram_handle}`,
               followers: current.instagram_followers,
+              url: `https://www.instagram.com/${current.instagram_handle}`,
             }
           : null,
         current.model.tiktok_username
@@ -167,6 +168,7 @@ export default function SpeedReviewModal({
               name: "TT",
               handle: `@${current.model.tiktok_username}`,
               followers: current.model.tiktok_followers,
+              url: `https://www.tiktok.com/@${current.model.tiktok_username}`,
             }
           : null,
         current.model.youtube_username
@@ -174,6 +176,7 @@ export default function SpeedReviewModal({
               name: "YT",
               handle: `@${current.model.youtube_username}`,
               followers: current.model.youtube_subscribers,
+              url: `https://www.youtube.com/@${current.model.youtube_username}`,
             }
           : null,
         current.model.x_username
@@ -181,6 +184,7 @@ export default function SpeedReviewModal({
               name: "X",
               handle: `@${current.model.x_username}`,
               followers: current.model.x_followers,
+              url: `https://x.com/${current.model.x_username}`,
             }
           : null,
         current.model.snapchat_username
@@ -188,6 +192,7 @@ export default function SpeedReviewModal({
               name: "SC",
               handle: `@${current.model.snapchat_username}`,
               followers: current.model.snapchat_followers,
+              url: `https://www.snapchat.com/add/${current.model.snapchat_username}`,
             }
           : null,
       ].filter(Boolean)
@@ -434,9 +439,14 @@ export default function SpeedReviewModal({
                               <span className="text-white/30 text-xs font-mono w-5 text-right">
                                 {p.name}
                               </span>
-                              <span className="text-white/70 text-sm">
+                              <a
+                                href={p.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-white/70 text-sm hover:text-white transition-colors"
+                              >
                                 {p.handle}
-                              </span>
+                              </a>
                             </div>
                             <span className="text-white font-semibold text-sm tabular-nums">
                               {fmtNum(p.followers)}
