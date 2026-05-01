@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
         id,
         designer_name,
         designer_order,
+        brand_id,
         notes,
         models:event_show_models(
           id,
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
           walk_order,
           outfit_notes,
           status,
-          model:models(id, username, first_name, last_name, profile_photo_url, height, instagram_followers)
+          model:models(id, username, first_name, last_name, profile_photo_url, height, bust, waist, hips, dress_size, shoe_size, instagram_followers)
         )
       )
     `)

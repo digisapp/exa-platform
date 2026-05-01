@@ -25,7 +25,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   ArrowLeft, Plus, Search, X, GripVertical, Users, Calendar, Clock,
   Download, Trash2, ChevronDown, ChevronUp, Check, UserPlus, Loader2,
-  Copy, AlertTriangle, FileText, Pencil, ArrowRightLeft, Eye, Repeat,
+  Copy, AlertTriangle, FileText, Pencil, ArrowRightLeft, Eye, Repeat, Star,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -47,6 +47,11 @@ interface ModelInfo {
   last_name: string | null;
   profile_photo_url: string | null;
   height: string | null;
+  bust: string | null;
+  waist: string | null;
+  hips: string | null;
+  dress_size: string | null;
+  shoe_size: string | null;
   instagram_followers: number | null;
 }
 
@@ -63,6 +68,7 @@ interface DesignerEntry {
   id: string;
   designer_name: string;
   designer_order: number;
+  brand_id: string | null;
   notes: string | null;
   models: ShowModel[];
 }
@@ -169,14 +175,17 @@ function SortableModelCard({
 
 // ─── Model Pool Card ─────────────────────────────────────────────────────────
 
-function ModelPoolCard({ model, assignedCount, isSelected, onToggle }: {
-  model: ModelInfo; assignedCount: number; isSelected: boolean; onToggle: () => void;
+function ModelPoolCard({ model, assignedCount, isSelected, onToggle, isPick }: {
+  model: ModelInfo; assignedCount: number; isSelected: boolean; onToggle: () => void; isPick: boolean;
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const hasMeasurements = model.bust || model.waist || model.hips || model.dress_size || model.shoe_size;
   return (
     <div className="relative">
       <button onClick={onToggle} onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}
-        className={`w-full flex items-center gap-3 p-2 rounded-lg border transition-colors text-left ${isSelected ? "border-pink-500 bg-pink-500/10" : "border-border hover:border-pink-500/30"}`}>
+        className={`w-full flex items-center gap-3 p-2 rounded-lg border transition-colors text-left ${
+          isSelected ? "border-pink-500 bg-pink-500/10" : isPick ? "border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-500/70" : "border-border hover:border-pink-500/30"
+        }`}>
         <div className="relative h-10 w-10 rounded-full overflow-hidden bg-muted shrink-0">
           {model.profile_photo_url ? (
             <Image src={model.profile_photo_url} alt={model.first_name || ""} fill className="object-cover" />
@@ -186,15 +195,18 @@ function ModelPoolCard({ model, assignedCount, isSelected, onToggle }: {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{model.first_name} {model.last_name}</p>
-          <p className="text-xs text-muted-foreground truncate">@{model.username}{model.height ? ` · ${model.height}` : ""}</p>
+          <p className="text-xs text-muted-foreground truncate">
+            @{model.username}{model.height ? ` · ${model.height}` : ""}{model.dress_size ? ` · Sz ${model.dress_size}` : ""}
+          </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
+          {isPick && <span title="Designer's pick"><Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" /></span>}
           {assignedCount > 0 && <Badge variant="secondary" className="text-xs">{assignedCount}x</Badge>}
           {isSelected && <Check className="h-4 w-4 text-pink-500" />}
         </div>
       </button>
       {showTooltip && (
-        <div className="absolute left-full ml-2 top-0 z-50 w-56 bg-popover border rounded-lg shadow-lg p-3 pointer-events-none">
+        <div className="absolute left-full ml-2 top-0 z-50 w-60 bg-popover border rounded-lg shadow-lg p-3 pointer-events-none">
           <div className="flex gap-3">
             <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-muted shrink-0">
               {model.profile_photo_url ? <Image src={model.profile_photo_url} alt={model.first_name || ""} fill className="object-cover" />
@@ -203,10 +215,20 @@ function ModelPoolCard({ model, assignedCount, isSelected, onToggle }: {
             <div className="min-w-0">
               <p className="text-sm font-semibold truncate">{model.first_name} {model.last_name}</p>
               <p className="text-xs text-muted-foreground">@{model.username}</p>
+              {isPick && <p className="text-xs text-yellow-500 font-medium mt-0.5 flex items-center gap-1"><Star className="h-3 w-3 fill-yellow-400" /> Designer&apos;s pick</p>}
             </div>
           </div>
-          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-            {model.height && <><span className="text-muted-foreground">Height</span><span>{model.height}</span></>}
+          {hasMeasurements && (
+            <div className="mt-2 pt-2 border-t border-border/50 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
+              {model.height && <><span className="text-muted-foreground">Height</span><span>{model.height}</span></>}
+              {model.bust && <><span className="text-muted-foreground">Bust</span><span>{model.bust}</span></>}
+              {model.waist && <><span className="text-muted-foreground">Waist</span><span>{model.waist}</span></>}
+              {model.hips && <><span className="text-muted-foreground">Hips</span><span>{model.hips}</span></>}
+              {model.dress_size && <><span className="text-muted-foreground">Dress</span><span>{model.dress_size}</span></>}
+              {model.shoe_size && <><span className="text-muted-foreground">Shoe</span><span>{model.shoe_size}</span></>}
+            </div>
+          )}
+          <div className="mt-2 pt-2 border-t border-border/50 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
             {model.instagram_followers && <><span className="text-muted-foreground">Followers</span><span>{model.instagram_followers.toLocaleString()}</span></>}
             {assignedCount > 0 && <><span className="text-muted-foreground">Walks</span><span>{assignedCount} lineup{assignedCount > 1 ? "s" : ""}</span></>}
           </div>
@@ -437,10 +459,12 @@ export default function AdminShowsPage() {
   const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
   const [expandedShowId, setExpandedShowId] = useState<string | null>(null);
   const [activeDesignerEntryId, setActiveDesignerEntryId] = useState<string | null>(null);
-  const [filterAssigned, setFilterAssigned] = useState<"all" | "unassigned" | "assigned" | "event">("all");
+  const [filterAssigned, setFilterAssigned] = useState<"all" | "unassigned" | "assigned" | "event" | "picks">("all");
   const [eventModelIds, setEventModelIds] = useState<Set<string>>(new Set());
   const [modelMapShowId, setModelMapShowId] = useState<string | null>(null);
   const [modelMapSearch, setModelMapSearch] = useState("");
+  const [designerPickIds, setDesignerPickIds] = useState<Set<string>>(new Set());
+  const [filterDress, setFilterDress] = useState("");
 
   // Create show dialog
   const [showCreateShow, setShowCreateShow] = useState(false);
@@ -483,6 +507,12 @@ export default function AdminShowsPage() {
 
   useEffect(() => { loadModels(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
 
+  useEffect(() => {
+    loadDesignerPicks(activeDesignerEntryId);
+    if (!activeDesignerEntryId && filterAssigned === "picks") setFilterAssigned("all");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDesignerEntryId]);
+
   async function loadShows() {
     const res = await fetch(`/api/admin/lineups?event_id=${selectedEventId}`);
     if (res.ok) {
@@ -495,18 +525,45 @@ export default function AdminShowsPage() {
   async function loadModels() {
     setLoadingModels(true);
     const { data } = await supabase.from("models")
-      .select("id, username, first_name, last_name, profile_photo_url, height, instagram_followers")
+      .select("id, username, first_name, last_name, profile_photo_url, height, bust, waist, hips, dress_size, shoe_size, instagram_followers")
       .eq("is_approved", true).not("user_id", "is", null).order("first_name", { ascending: true });
-    setAllModels(data || []);
+    setAllModels((data || []) as ModelInfo[]);
     setLoadingModels(false);
   }
 
   async function loadEventModels() {
     if (!selectedEventId) return;
+    const confirmedIds = new Set<string>();
+
+    // From accepted gig applications
     const { data: gigs } = await supabase.from("gigs").select("id").eq("event_id", selectedEventId);
-    if (!gigs?.length) { setEventModelIds(new Set()); return; }
-    const { data: apps } = await supabase.from("gig_applications").select("model_id").in("gig_id", gigs.map((g) => g.id)).eq("status", "accepted");
-    setEventModelIds(new Set((apps || []).map((a) => a.model_id)));
+    if (gigs?.length) {
+      const { data: apps } = await supabase.from("gig_applications").select("model_id").in("gig_id", gigs.map((g) => g.id)).eq("status", "accepted");
+      (apps || []).forEach((a) => confirmedIds.add(a.model_id));
+    }
+
+    // From event badge holders (MSW confirmed models)
+    const { data: eventBadge } = await supabase.from("badges").select("id")
+      .eq("event_id", selectedEventId).eq("badge_type", "event").eq("is_active", true)
+      .maybeSingle() as { data: { id: string } | null };
+    if (eventBadge) {
+      const { data: holders } = await supabase.from("model_badges").select("model_id")
+        .eq("badge_id", eventBadge.id) as { data: { model_id: string }[] | null };
+      (holders || []).forEach((h) => confirmedIds.add(h.model_id));
+    }
+
+    setEventModelIds(confirmedIds);
+  }
+
+  async function loadDesignerPicks(designerEntryId: string | null) {
+    if (!designerEntryId || !selectedEventId) { setDesignerPickIds(new Set()); return; }
+    const designer = shows.flatMap((s) => s.designers).find((d) => d.id === designerEntryId);
+    if (!designer?.brand_id) { setDesignerPickIds(new Set()); return; }
+    const res = await fetch(`/api/admin/msw-casting/picks?brand_id=${designer.brand_id}&event_id=${selectedEventId}`);
+    if (res.ok) {
+      const { picks } = await res.json();
+      setDesignerPickIds(new Set(picks as string[]));
+    }
   }
 
   // ─── Computed ────────────────────────────────────────────────────────────
@@ -643,8 +700,13 @@ export default function AdminShowsPage() {
     if (filterAssigned === "unassigned") list = list.filter((m) => !modelAssignmentCounts[m.id]);
     else if (filterAssigned === "assigned") list = list.filter((m) => !!modelAssignmentCounts[m.id]);
     else if (filterAssigned === "event") list = list.filter((m) => eventModelIds.has(m.id));
+    else if (filterAssigned === "picks") list = list.filter((m) => designerPickIds.has(m.id));
+    if (filterDress) {
+      const q = filterDress.toLowerCase();
+      list = list.filter((m) => m.dress_size?.toLowerCase().includes(q));
+    }
     return list;
-  }, [allModels, modelSearch, filterAssigned, modelAssignmentCounts, eventModelIds]);
+  }, [allModels, modelSearch, filterAssigned, modelAssignmentCounts, eventModelIds, designerPickIds, filterDress]);
 
   const dayOverview = useMemo(() => {
     const days: Record<string, { shows: Show[]; totalDesigners: number; totalModels: number }> = {};
@@ -957,11 +1019,27 @@ export default function AdminShowsPage() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search models..." value={modelSearch} onChange={(e) => setModelSearch(e.target.value)} className="pl-9 h-9" />
             </div>
-            <div className="flex items-center gap-1">
-              <Button variant={filterAssigned === "all" ? "default" : "ghost"} size="sm" className="h-7 text-xs flex-1" onClick={() => setFilterAssigned("all")}>All ({allModels.length})</Button>
-              <Button variant={filterAssigned === "unassigned" ? "default" : "ghost"} size="sm" className="h-7 text-xs flex-1" onClick={() => setFilterAssigned("unassigned")}>Free</Button>
-              <Button variant={filterAssigned === "assigned" ? "default" : "ghost"} size="sm" className="h-7 text-xs flex-1" onClick={() => setFilterAssigned("assigned")}>Assigned</Button>
-              {eventModelIds.size > 0 && <Button variant={filterAssigned === "event" ? "default" : "ghost"} size="sm" className="h-7 text-xs flex-1" onClick={() => setFilterAssigned("event")}>Event ({eventModelIds.size})</Button>}
+            <div className="flex items-center gap-1 flex-wrap">
+              <Button variant={filterAssigned === "all" ? "default" : "ghost"} size="sm" className="h-7 text-xs" onClick={() => setFilterAssigned("all")}>All ({allModels.length})</Button>
+              <Button variant={filterAssigned === "unassigned" ? "default" : "ghost"} size="sm" className="h-7 text-xs" onClick={() => setFilterAssigned("unassigned")}>Free</Button>
+              <Button variant={filterAssigned === "assigned" ? "default" : "ghost"} size="sm" className="h-7 text-xs" onClick={() => setFilterAssigned("assigned")}>In Lineup</Button>
+              {eventModelIds.size > 0 && <Button variant={filterAssigned === "event" ? "default" : "ghost"} size="sm" className="h-7 text-xs" onClick={() => setFilterAssigned("event")}>Confirmed ({eventModelIds.size})</Button>}
+              {designerPickIds.size > 0 && (
+                <Button variant={filterAssigned === "picks" ? "default" : "ghost"} size="sm"
+                  className={`h-7 text-xs ${filterAssigned === "picks" ? "bg-yellow-500 hover:bg-yellow-600 border-yellow-500" : "text-yellow-600 hover:text-yellow-600"}`}
+                  onClick={() => setFilterAssigned(filterAssigned === "picks" ? "all" : "picks")}>
+                  <Star className="h-3 w-3 mr-1 fill-current" />Picks ({designerPickIds.size})
+                </Button>
+              )}
+            </div>
+            <div className="relative">
+              <Input placeholder="Filter by dress size (e.g. 4, XS)" value={filterDress}
+                onChange={(e) => setFilterDress(e.target.value)} className="h-7 text-xs pr-6" />
+              {filterDress && (
+                <button onClick={() => setFilterDress("")} className="absolute right-2 top-1.5 text-muted-foreground hover:text-foreground">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -982,7 +1060,8 @@ export default function AdminShowsPage() {
               : filteredModels.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">No models found</p>
               : filteredModels.map((model) => (
                 <ModelPoolCard key={model.id} model={model} assignedCount={modelAssignmentCounts[model.id] || 0}
-                  isSelected={selectedModelIds.has(model.id)} onToggle={() => toggleModelSelection(model.id)} />
+                  isSelected={selectedModelIds.has(model.id)} onToggle={() => toggleModelSelection(model.id)}
+                  isPick={designerPickIds.has(model.id)} />
               ))}
           </div>
         </div>
