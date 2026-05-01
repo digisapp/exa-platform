@@ -333,9 +333,18 @@ export default function SpeedReviewModal({
                     <ExternalLink className="h-4 w-4" />
                   </Link>
                 </div>
-                <p className="text-white/40 text-sm mt-1">
+                <a
+                  href={
+                    current.instagram_handle
+                      ? `https://www.instagram.com/${current.instagram_handle}`
+                      : `/${current.model.username}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/40 text-sm mt-1 hover:text-pink-400 transition-colors block"
+                >
                   @{current.model.username}
-                </p>
+                </a>
                 <p className="text-white/25 text-xs mt-1">
                   Applied{" "}
                   {new Date(current.applied_at).toLocaleDateString("en-US", {
