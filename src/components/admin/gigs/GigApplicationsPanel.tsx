@@ -30,7 +30,9 @@ import {
   AlertTriangle,
   Search,
   Mail,
+  Zap,
 } from "lucide-react";
+import SpeedReviewModal from "./SpeedReviewModal";
 
 interface Application {
   id: string;
@@ -50,6 +52,22 @@ interface Application {
     first_name: string;
     last_name: string;
     profile_photo_url: string;
+    height?: string | null;
+    bust?: string | null;
+    waist?: string | null;
+    hips?: string | null;
+    shoe_size?: string | null;
+    dress_size?: string | null;
+    eye_color?: string | null;
+    hair_color?: string | null;
+    tiktok_followers?: number | null;
+    tiktok_username?: string | null;
+    youtube_subscribers?: number | null;
+    youtube_username?: string | null;
+    x_followers?: number | null;
+    x_username?: string | null;
+    snapchat_followers?: number | null;
+    snapchat_username?: string | null;
   };
 }
 
@@ -100,6 +118,7 @@ export default function GigApplicationsPanel({
   const [tripFilter, setTripFilter] = useState<"all" | "1" | "2">("all");
   const [spotTypeFilter, setSpotTypeFilter] = useState<"all" | "paid" | "sponsored">("all");
   const [modelSearch, setModelSearch] = useState("");
+  const [showSpeedReview, setShowSpeedReview] = useState(false);
 
   // Mass email state
   const [showMassEmailDialog, setShowMassEmailDialog] = useState(false);
@@ -231,6 +250,19 @@ export default function GigApplicationsPanel({
               <span className="truncate">Applications {selectedGigId && `(${applications.length})`}</span>
             </span>
             <div className="flex items-center gap-1">
+              {/* Speed Review Button */}
+              {selectedGigId && applications.filter(a => a.status === "pending").length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowSpeedReview(true)}
+                  className="text-xs border-pink-500/40 text-pink-400 hover:bg-pink-500/10 hover:text-pink-300"
+                  title="Speed review pending applications"
+                >
+                  <Zap className="h-3 w-3 mr-1" />
+                  Speed Review ({applications.filter(a => a.status === "pending").length})
+                </Button>
+              )}
               {/* Mass Email Button */}
               {selectedGigId && applications.length > 0 && (
                 <Button
@@ -620,6 +652,15 @@ export default function GigApplicationsPanel({
           )}
         </CardContent>
       </Card>
+
+      {/* Speed Review Modal */}
+      <SpeedReviewModal
+        open={showSpeedReview}
+        onClose={() => setShowSpeedReview(false)}
+        applications={applications}
+        processingApp={processingApp}
+        onApplicationAction={onApplicationAction}
+      />
 
       {/* Mass Email Dialog */}
       <Dialog open={showMassEmailDialog} onOpenChange={setShowMassEmailDialog}>

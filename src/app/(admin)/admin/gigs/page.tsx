@@ -82,6 +82,22 @@ interface Application {
     first_name: string;
     last_name: string;
     profile_photo_url: string;
+    height?: string | null;
+    bust?: string | null;
+    waist?: string | null;
+    hips?: string | null;
+    shoe_size?: string | null;
+    dress_size?: string | null;
+    eye_color?: string | null;
+    hair_color?: string | null;
+    tiktok_followers?: number | null;
+    tiktok_username?: string | null;
+    youtube_subscribers?: number | null;
+    youtube_username?: string | null;
+    x_followers?: number | null;
+    x_username?: string | null;
+    snapchat_followers?: number | null;
+    snapchat_username?: string | null;
   };
 }
 
@@ -170,7 +186,7 @@ export default function AdminGigsPage() {
         instagram_handle,
         instagram_followers,
         digis_username,
-        model:models(id, username, first_name, last_name, profile_photo_url)
+        model:models(id, username, first_name, last_name, profile_photo_url, height, bust, waist, hips, shoe_size, dress_size, eye_color, hair_color, tiktok_followers, tiktok_username, youtube_subscribers, youtube_username, x_followers, x_username, snapchat_followers, snapchat_username)
       `)
       .eq("gig_id", gigId)
       .order("applied_at", { ascending: false });
