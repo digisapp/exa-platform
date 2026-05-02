@@ -10,6 +10,7 @@ import { ModelCard } from "@/components/models/model-card";
 import { ModelsGrid } from "@/components/models/models-grid";
 import { BrandPaywallWrapper } from "@/components/brands/BrandPaywallWrapper";
 import { FanCoinGateWrapper } from "@/components/fans/FanCoinGate";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { escapeIlike } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -321,7 +322,7 @@ export default async function ModelsPage({
       {/* Coin gate for fans without minimum balance */}
       {isFanWithoutCoins && <FanCoinGateWrapper currentBalance={coinBalance} />}
 
-      <main className={`container px-8 md:px-16 py-8 ${isFreeBrand || isFanWithoutCoins ? "blur-sm pointer-events-none select-none" : ""}`}>
+      <main className={`container px-8 md:px-16 py-8 pb-24 md:pb-8 ${isFreeBrand || isFanWithoutCoins ? "blur-sm pointer-events-none select-none" : ""}`}>
         {/* Header */}
         <div className="mb-8">
           <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
@@ -441,6 +442,17 @@ export default async function ModelsPage({
           &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
         </p>
       </footer>
+
+      {user && (
+        <BottomNav
+          user={{
+            avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || profileData?.logo_url || undefined,
+            name: displayName,
+            email: user.email || "",
+          }}
+          actorType={actorType}
+        />
+      )}
     </div>
     </CoinBalanceProvider>
   );

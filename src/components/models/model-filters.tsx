@@ -124,6 +124,7 @@ export function ModelFilters() {
     } else {
       params.delete(key);
     }
+    params.delete("page");
     router.push(`/models?${params.toString()}`);
   }, [router, searchParams]);
 
@@ -261,6 +262,7 @@ export function ModelFilters() {
           } else {
             params.set("collabs", "1");
           }
+          params.delete("page");
           router.push(`/models?${params.toString()}`);
         }}
         className={collabsOnly ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0" : ""}
