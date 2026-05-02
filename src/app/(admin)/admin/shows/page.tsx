@@ -59,6 +59,7 @@ interface ShowModel {
   walk_order: number;
   outfit_notes: string | null;
   status: string;
+  check_in_status?: string;
   model: ModelInfo;
 }
 
@@ -553,6 +554,366 @@ function SortableDesignerPanel({
   );
 }
 
+// ─── Model Map Panel ─────────────────────────────────────────────────────────
+
+const CHECK_IN_CYCLE = ["not_arrived", "arrived", "hair_makeup", "dressed", "on_deck", "done"] as const;
+type CheckInStatus = (typeof CHECK_IN_CYCLE)[number];
+
+const CI: Record<CheckInStatus, { label: string; short: string; dot: string }> = {
+  not_arrived: { label: "Not arrived", short: "—",       dot: "bg-white/20" },
+  arrived:     { label: "Arrived",     short: "In",      dot: "bg-blue-400" },
+  hair_makeup: { label: "Hair & Makeup", short: "H+M",   dot: "bg-violet-400" },
+  dressed:     { label: "Dressed",     short: "Dressed", dot: "bg-amber-400" },
+  on_deck:     { label: "On Deck",     short: "Ready",   dot: "bg-lime-400" },
+  done:        { label: "Done",        short: "Done",    dot: "bg-emerald-400" },
+};
+
+function nextCheckIn(s: string | undefined): CheckInStatus {
+  const i = CHECK_IN_CYCLE.indexOf((s || "not_arrived") as CheckInStatus);
+  return CHECK_IN_CYCLE[(i + 1) % CHECK_IN_CYCLE.length];
+}
+
+function gapBadge(gap: number, paceMin?: number) {
+  const t = paceMin ? ` · ~${gap * paceMin}m` : "";
+  if (gap === 0) return { cls: "bg-red-500/15 border-red-500/35 text-red-400",     txt: `No gap!${t}` };
+  if (gap <= 2)  return { cls: "bg-red-500/10 border-red-500/25 text-red-400",     txt: `${gap} slot gap${t}` };
+  if (gap <= 5)  return { cls: "bg-amber-500/10 border-amber-500/25 text-amber-400", txt: `${gap} slot gap${t}` };
+  return               { cls: "bg-emerald-500/8 border-emerald-500/18 text-emerald-400", txt: `${gap} slots clear${t}` };
+}
+
+function ModelMapPanel({
+  show,
+  walkMap,
+  onUpdateCheckInStatus,
+}: {
+  show: Show;
+  walkMap: Record<string, { count: number; designers: string[]; hasBackToBack: boolean; minGap: number }>;
+  onUpdateCheckInStatus: (showId: string, modelId: string, status: string) => void;
+}) {
+  const [view, setView] = useState<"sequence" | "grid" | "timeline">("sequence");
+  const [search, setSearch] = useState("");
+  const [pace, setPace] = useState(2);
+
+  const sequence = useMemo(() => {
+    const items: { slot: number; sm: ShowModel; d: DesignerEntry }[] = [];
+    let slot = 1;
+    show.designers.forEach((d) => d.models.forEach((sm) => items.push({ slot: slot++, sm, d })));
+    return items;
+  }, [show.designers]);
+
+  const modelIndices = useMemo(() => {
+    const map: Record<string, number[]> = {};
+    sequence.forEach((item, i) => {
+      if (!map[item.sm.model_id]) map[item.sm.model_id] = [];
+      map[item.sm.model_id].push(i);
+    });
+    return map;
+  }, [sequence]);
+
+  const itemGaps = useMemo(() => sequence.map((item, i) => {
+    const idxs = modelIndices[item.sm.model_id] || [];
+    const pos = idxs.indexOf(i);
+    const prevI = idxs[pos - 1] ?? null;
+    const nextI = idxs[pos + 1] ?? null;
+    return {
+      gapBefore: prevI !== null ? i - prevI - 1 : null,
+      prevDesigner: prevI !== null ? sequence[prevI].d.designer_name : null,
+    };
+  }), [sequence, modelIndices]);
+
+  const q = search.toLowerCase();
+  const matches = (m: ModelInfo) =>
+    !q || [m.first_name, m.last_name, m.username].some((v) => v?.toLowerCase().includes(q));
+
+  const totalSlots = sequence.length;
+  const multiCount = Object.values(walkMap).filter((v) => v.count > 1).length;
+  const b2bCount = Object.values(walkMap).filter((v) => v.hasBackToBack).length;
+  const checkedIn = show.designers.reduce(
+    (s, d) => s + d.models.filter((m) => m.check_in_status && m.check_in_status !== "not_arrived").length, 0
+  );
+  const showStartMin = parseTimeToMinutes(show.show_time);
+
+  // ── Sequence / Timeline ──────────────────────────────────────────────────
+
+  function renderSequence(withTime: boolean) {
+    const items = q ? sequence.filter((it) => matches(it.sm.model)) : sequence;
+    if (items.length === 0) return (
+      <p className="text-xs text-white/25 text-center py-8">No models match &ldquo;{search}&rdquo;</p>
+    );
+    return (
+      <div className="max-h-[560px] overflow-y-auto space-y-px pr-0.5">
+        {items.map((item) => {
+          const seqI = sequence.indexOf(item);
+          const gaps = itemGaps[seqI];
+          const wInfo = walkMap[item.sm.model_id];
+          const isMulti = (wInfo?.count ?? 1) > 1;
+          const isB2B = wInfo?.hasBackToBack ?? false;
+          const ciKey = (item.sm.check_in_status || "not_arrived") as CheckInStatus;
+          const ci = CI[ciKey] || CI.not_arrived;
+          const isCancelled = item.sm.status === "cancelled";
+          const isStandby = item.sm.status === "standby";
+          const estMin = withTime && showStartMin !== null ? showStartMin + (item.slot - 1) * pace : null;
+          const timeStr = estMin !== null
+            ? `${String(Math.floor(estMin / 60) % 24).padStart(2, "0")}:${String(estMin % 60).padStart(2, "0")}`
+            : null;
+          const gb = gaps.gapBefore;
+          const showBanner = gb !== null && gb <= 8;
+
+          return (
+            <div key={`${item.d.id}-${item.sm.model_id}`}>
+              {showBanner && (
+                <div className={`flex items-center justify-between mx-0.5 my-1 rounded-md px-3 py-1.5 border text-[10px] font-medium ${gapBadge(gb!).cls}`}>
+                  <span>⚡ Quick change — from {gaps.prevDesigner}</span>
+                  <span className="opacity-70">{gapBadge(gb!, withTime ? pace : undefined).txt}</span>
+                </div>
+              )}
+              <div className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg border transition-colors ${
+                isCancelled ? "opacity-25 border-transparent" :
+                isB2B && isMulti ? "bg-red-500/[0.05] border-red-500/10" :
+                isMulti ? "bg-blue-500/[0.03] border-blue-500/8" :
+                "border-transparent hover:bg-white/[0.02]"
+              }`}>
+                {withTime && (
+                  <span className="text-[10px] font-mono text-white/25 w-11 shrink-0 tabular-nums text-right">
+                    {timeStr ?? "—:—"}
+                  </span>
+                )}
+                <span className="text-[11px] font-mono text-white/18 w-5 text-right shrink-0 tabular-nums">{item.slot}</span>
+                <span className="w-[80px] shrink-0 text-[10px] uppercase tracking-wide text-white/22 truncate" title={item.d.designer_name}>
+                  {item.d.designer_name}
+                </span>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="relative h-7 w-7 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
+                    {item.sm.model.profile_photo_url
+                      ? <Image src={item.sm.model.profile_photo_url} alt="" fill className="object-cover" />
+                      : <div className="h-full w-full flex items-center justify-center text-[8px] text-white/25">
+                          {item.sm.model.first_name?.[0]}{item.sm.model.last_name?.[0]}
+                        </div>}
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-xs font-medium truncate leading-tight ${
+                      isCancelled ? "line-through text-white/30" :
+                      isStandby ? "text-amber-300/70" : "text-white/80"
+                    }`}>
+                      {item.sm.model.first_name} {item.sm.model.last_name}
+                      {isStandby && <span className="ml-1 text-[9px] text-amber-400/50 font-normal">standby</span>}
+                    </p>
+                    {item.sm.outfit_notes && (
+                      <p className="text-[10px] text-pink-400/40 truncate leading-tight">{item.sm.outfit_notes}</p>
+                    )}
+                  </div>
+                </div>
+                {isMulti && <Repeat className={`h-3 w-3 shrink-0 ${isB2B ? "text-red-400" : "text-blue-400/50"}`} />}
+                <button
+                  onClick={() => onUpdateCheckInStatus(show.id, item.sm.model_id, nextCheckIn(item.sm.check_in_status))}
+                  title={`${ci.label} — click to advance`}
+                  className="flex items-center gap-1.5 rounded-full px-2 py-0.5 border border-transparent hover:border-white/12 hover:bg-white/[0.04] transition-all shrink-0">
+                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${ci.dot}`} />
+                  <span className={`text-[10px] font-medium ${ciKey === "not_arrived" ? "text-white/15" : "text-white/50"}`}>
+                    {ci.short}
+                  </span>
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ── Grid ─────────────────────────────────────────────────────────────────
+
+  function renderGrid() {
+    type GridRow = {
+      modelId: string; model: ModelInfo;
+      byDesigner: Map<number, { pos: number; sm: ShowModel }>;
+      isMulti: boolean; isB2B: boolean; minGap: number; checkInStatus: string;
+    };
+    const seen = new Set<string>();
+    const rows: GridRow[] = [];
+    show.designers.forEach((d, dIdx) => {
+      d.models.forEach((sm) => {
+        if (!seen.has(sm.model_id)) {
+          seen.add(sm.model_id);
+          rows.push({
+            modelId: sm.model_id, model: sm.model,
+            byDesigner: new Map(),
+            isMulti: (walkMap[sm.model_id]?.count ?? 1) > 1,
+            isB2B: walkMap[sm.model_id]?.hasBackToBack ?? false,
+            minGap: walkMap[sm.model_id]?.minGap ?? Infinity,
+            checkInStatus: sm.check_in_status || "not_arrived",
+          });
+        }
+        rows.find((r) => r.modelId === sm.model_id)!.byDesigner.set(dIdx, { pos: sm.walk_order + 1, sm });
+      });
+    });
+    rows.sort((a, b) => {
+      if (a.isB2B !== b.isB2B) return a.isB2B ? -1 : 1;
+      if (a.isMulti !== b.isMulti) return a.isMulti ? -1 : 1;
+      return (a.model.first_name || "").localeCompare(b.model.first_name || "");
+    });
+    const filtered = q ? rows.filter((r) => matches(r.model)) : rows;
+    if (filtered.length === 0) return (
+      <p className="text-xs text-white/25 text-center py-8">No models match &ldquo;{search}&rdquo;</p>
+    );
+    return (
+      <div className="overflow-x-auto">
+        <div className="flex items-center gap-1 min-w-fit pl-[196px] mb-1.5 sticky top-0 bg-black/60 backdrop-blur-sm py-1 z-10">
+          {show.designers.map((d) => (
+            <div key={d.id} className="w-[62px] shrink-0 text-center text-[10px] uppercase tracking-wide text-white/20 truncate" title={d.designer_name}>
+              {d.designer_name.length > 8 ? `${d.designer_name.slice(0, 7)}…` : d.designer_name}
+            </div>
+          ))}
+        </div>
+        <div className="max-h-[500px] overflow-y-auto space-y-0.5 min-w-fit">
+          {filtered.map((row) => {
+            const ci = CI[(row.checkInStatus || "not_arrived") as CheckInStatus] || CI.not_arrived;
+            return (
+              <div key={row.modelId} className={`flex items-center gap-1 rounded-lg px-1.5 py-1.5 min-w-fit border ${
+                row.isB2B ? "bg-red-500/[0.06] border-red-500/12" :
+                row.isMulti ? "bg-blue-500/[0.03] border-blue-500/8" :
+                "border-transparent hover:bg-white/[0.02]"
+              }`}>
+                <div className="flex items-center gap-2 w-[186px] shrink-0 min-w-0">
+                  <button
+                    onClick={() => onUpdateCheckInStatus(show.id, row.modelId, nextCheckIn(row.checkInStatus))}
+                    title={`${ci.label} — click to advance`}
+                    className="shrink-0 p-0.5 rounded-full hover:bg-white/10 transition-colors">
+                    <span className={`block h-2 w-2 rounded-full ${ci.dot}`} />
+                  </button>
+                  <div className="relative h-6 w-6 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
+                    {row.model.profile_photo_url
+                      ? <Image src={row.model.profile_photo_url} alt="" fill className="object-cover" />
+                      : <div className="h-full w-full flex items-center justify-center text-[8px] text-white/25">
+                          {row.model.first_name?.[0]}{row.model.last_name?.[0]}
+                        </div>}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-white/75 truncate leading-tight">
+                      {row.model.first_name} {row.model.last_name}
+                    </p>
+                    {row.isMulti && (
+                      <p className={`text-[10px] leading-tight ${row.isB2B ? "text-red-400" : "text-blue-400/70"}`}>
+                        {row.byDesigner.size} walks{row.isB2B && row.minGap < Infinity ? ` · ${row.minGap} slot gap` : ""}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {show.designers.map((d, dIdx) => {
+                  const cell = row.byDesigner.get(dIdx);
+                  const isHot = (() => {
+                    if (!cell || !row.isB2B) return false;
+                    const prev = row.byDesigner.get(dIdx - 1);
+                    const next = row.byDesigner.get(dIdx + 1);
+                    if (prev) {
+                      const prevD = show.designers[dIdx - 1];
+                      if (prevD && (prevD.models.length - 1 - (prev.pos - 1)) + (cell.pos - 1) <= 2) return true;
+                    }
+                    if (next) {
+                      const nextD = show.designers[dIdx + 1];
+                      const nextCell = row.byDesigner.get(dIdx + 1)!;
+                      if (nextD && (d.models.length - 1 - (cell.pos - 1)) + (nextCell.pos - 1) <= 2) return true;
+                    }
+                    return false;
+                  })();
+                  return (
+                    <div key={d.id} className="w-[62px] shrink-0 text-center">
+                      {cell ? (
+                        <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold ${
+                          isHot ? "bg-red-500 text-white shadow-[0_0_8px_rgba(239,68,68,0.4)]" : "bg-pink-500 text-white"
+                        }`}>
+                          {cell.pos}
+                        </span>
+                      ) : (
+                        <span className="text-white/8">—</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border border-white/[0.08] rounded-xl bg-black/50 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] flex-wrap gap-y-2">
+        <div className="flex bg-white/[0.05] rounded-lg p-0.5 gap-px">
+          {(["sequence", "grid", "timeline"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`px-3 py-1 rounded-md text-[11px] font-medium transition-all capitalize ${
+                view === v ? "bg-white/12 text-white/90" : "text-white/30 hover:text-white/60"
+              }`}>
+              {v}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-white/22">{totalSlots} slots</span>
+          {multiCount > 0 && (
+            <span className="flex items-center gap-1 text-[10px] text-blue-400 bg-blue-400/10 border border-blue-400/20 rounded-full px-2 py-0.5">
+              <Repeat className="h-2.5 w-2.5" />{multiCount} multi
+            </span>
+          )}
+          {b2bCount > 0 && (
+            <span className="flex items-center gap-1 text-[10px] text-red-400 bg-red-400/10 border border-red-400/20 rounded-full px-2 py-0.5">
+              <AlertTriangle className="h-2.5 w-2.5" />{b2bCount} B2B
+            </span>
+          )}
+          {checkedIn > 0 && (
+            <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-2 py-0.5">
+              <Check className="h-2.5 w-2.5" />{checkedIn}/{totalSlots} in
+            </span>
+          )}
+        </div>
+        {view === "timeline" && (
+          <div className="flex items-center gap-1.5 text-[11px] text-white/30">
+            <Clock className="h-3 w-3" />
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={pace}
+              onChange={(e) => setPace(Math.max(1, Number(e.target.value) || 2))}
+              className="w-10 bg-white/[0.05] border border-white/[0.08] rounded px-1.5 py-0.5 text-white/60 text-center text-[11px] tabular-nums focus:outline-none focus:border-white/20"
+            />
+            <span>min/walk</span>
+          </div>
+        )}
+        <div className="relative ml-auto">
+          <Search className="absolute left-2.5 top-1.5 h-3.5 w-3.5 text-white/20" />
+          <Input
+            placeholder="Find model..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-7 text-xs pl-7 w-[155px] bg-white/[0.04] border-white/[0.08] text-white/70 placeholder:text-white/20"
+          />
+        </div>
+      </div>
+      {/* Body */}
+      <div className="p-3">
+        {view === "grid" ? renderGrid() : renderSequence(view === "timeline")}
+      </div>
+      {/* Legend */}
+      <div className="px-4 py-2 border-t border-white/[0.05] flex items-center gap-4 flex-wrap">
+        <span className="text-[9px] uppercase tracking-widest text-white/15 font-semibold">Status</span>
+        {CHECK_IN_CYCLE.map((s) => (
+          <span key={s} className="flex items-center gap-1 text-[10px] text-white/25">
+            <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${CI[s].dot}`} />
+            {CI[s].label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function AdminShowsPage() {
@@ -571,7 +932,6 @@ export default function AdminShowsPage() {
   const [filterAssigned, setFilterAssigned] = useState<"all" | "unassigned" | "assigned" | "event" | "picks">("all");
   const [eventModelIds, setEventModelIds] = useState<Set<string>>(new Set());
   const [modelMapShowId, setModelMapShowId] = useState<string | null>(null);
-  const [modelMapSearch, setModelMapSearch] = useState("");
   const [designerPickIds, setDesignerPickIds] = useState<Set<string>>(new Set());
   const [filterDress, setFilterDress] = useState("");
 
@@ -736,7 +1096,7 @@ export default function AdminShowsPage() {
   }, [shows]);
 
   const showModelWalkMaps = useMemo(() => {
-    const maps: Record<string, Record<string, { count: number; designers: string[]; hasBackToBack: boolean }>> = {};
+    const maps: Record<string, Record<string, { count: number; designers: string[]; hasBackToBack: boolean; minGap: number }>> = {};
     shows.forEach((show) => {
       const walkMap: Record<string, { count: number; designers: string[]; designerIndices: number[] }> = {};
       show.designers.forEach((d, dIdx) => {
@@ -747,25 +1107,24 @@ export default function AdminShowsPage() {
           walkMap[m.model_id].designerIndices.push(dIdx);
         });
       });
-      const result: Record<string, { count: number; designers: string[]; hasBackToBack: boolean }> = {};
+      const result: Record<string, { count: number; designers: string[]; hasBackToBack: boolean; minGap: number }> = {};
       for (const [modelId, info] of Object.entries(walkMap)) {
-        let hasBackToBack = false;
+        let minGap = Infinity;
         if (info.designerIndices.length > 1) {
           const sorted = [...info.designerIndices].sort((a, b) => a - b);
           for (let i = 0; i < sorted.length - 1; i++) {
+            if (sorted[i + 1] - sorted[i] !== 1) continue; // only care about adjacent designers
             const currDesigner = show.designers[sorted[i]];
             const nextDesigner = show.designers[sorted[i + 1]];
             if (!currDesigner || !nextDesigner) continue;
             const posInCurr = currDesigner.models.findIndex((m) => m.model_id === modelId);
             const posInNext = nextDesigner.models.findIndex((m) => m.model_id === modelId);
-            const totalInCurr = currDesigner.models.length;
-            if (sorted[i + 1] - sorted[i] === 1) {
-              const fromEnd = totalInCurr - 1 - posInCurr;
-              if (fromEnd <= 2 && posInNext <= 2) { hasBackToBack = true; break; }
-            }
+            // Gap = models walking after this model in curr designer + models walking before in next designer
+            const gap = (currDesigner.models.length - 1 - posInCurr) + posInNext;
+            if (gap < minGap) minGap = gap;
           }
         }
-        result[modelId] = { count: info.count, designers: info.designers, hasBackToBack };
+        result[modelId] = { count: info.count, designers: info.designers, hasBackToBack: minGap <= 2, minGap };
       }
       maps[show.id] = result;
     });
@@ -1061,6 +1420,21 @@ export default function AdminShowsPage() {
     } else toast.error("Export failed");
   }
 
+  async function updateCheckInStatus(showId: string, modelId: string, status: string) {
+    setShows((prev) => prev.map((s) => s.id !== showId ? s : {
+      ...s,
+      designers: s.designers.map((d) => ({
+        ...d,
+        models: d.models.map((m) => m.model_id !== modelId ? m : { ...m, check_in_status: status }),
+      })),
+    }));
+    await fetch(`/api/admin/lineups/${showId}/models/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model_id: modelId, check_in_status: status }),
+    });
+  }
+
   function toggleModelSelection(modelId: string) {
     setSelectedModelIds((prev) => {
       const next = new Set(prev);
@@ -1122,12 +1496,10 @@ export default function AdminShowsPage() {
 
         {selectedEvent && (
           <div className="flex items-center gap-2 ml-auto flex-wrap">
-            {selectedEvent.start_date && selectedEvent.end_date && (
+            {selectedEvent.start_date && (
               <span className="flex items-center gap-1.5 text-[11px] text-white/35 bg-white/[0.04] border border-white/[0.07] rounded-full px-3 py-1">
                 <Calendar className="h-3 w-3" />
-                {new Date(selectedEvent.start_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                {" – "}
-                {new Date(selectedEvent.end_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                {new Date(selectedEvent.start_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
               </span>
             )}
             {[
@@ -1390,7 +1762,7 @@ export default function AdminShowsPage() {
                           <Trash2 className="h-3 w-3" /> Delete
                         </button>
                         <button
-                          onClick={() => { setModelMapShowId(modelMapShowId === show.id ? null : show.id); setModelMapSearch(""); }}
+                          onClick={() => setModelMapShowId(modelMapShowId === show.id ? null : show.id)}
                           className={`ml-auto flex items-center gap-1.5 text-xs rounded-lg px-2.5 py-1.5 border transition-all ${
                             modelMapShowId === show.id
                               ? "bg-pink-500 border-pink-500 text-white shadow-[0_0_12px_rgba(236,72,153,0.3)]"
@@ -1401,121 +1773,13 @@ export default function AdminShowsPage() {
                       </div>
 
                       {/* Model Map Panel */}
-                      {modelMapShowId === show.id && show.designers.length > 0 && (() => {
-                        const walkMap = showModelWalkMaps[show.id] || {};
-                        const modelDetails: { modelId: string; model: ModelInfo; walks: { designerName: string; designerIdx: number; walkPosition: number }[]; hasBackToBack: boolean }[] = [];
-                        const seen = new Set<string>();
-                        show.designers.forEach((d, dIdx) => {
-                          d.models.forEach((sm, mIdx) => {
-                            if (seen.has(sm.model_id)) {
-                              const existing = modelDetails.find((x) => x.modelId === sm.model_id);
-                              if (existing) existing.walks.push({ designerName: d.designer_name, designerIdx: dIdx, walkPosition: mIdx + 1 });
-                              return;
-                            }
-                            seen.add(sm.model_id);
-                            modelDetails.push({
-                              modelId: sm.model_id, model: sm.model,
-                              walks: [{ designerName: d.designer_name, designerIdx: dIdx, walkPosition: mIdx + 1 }],
-                              hasBackToBack: walkMap[sm.model_id]?.hasBackToBack || false,
-                            });
-                          });
-                        });
-                        modelDetails.sort((a, b) => {
-                          if (a.hasBackToBack !== b.hasBackToBack) return a.hasBackToBack ? -1 : 1;
-                          if (a.walks.length !== b.walks.length) return b.walks.length - a.walks.length;
-                          return (a.model.first_name || "").localeCompare(b.model.first_name || "");
-                        });
-                        const q = modelMapSearch.toLowerCase();
-                        const filtered = q ? modelDetails.filter((x) =>
-                          x.model.first_name?.toLowerCase().includes(q) || x.model.last_name?.toLowerCase().includes(q) || x.model.username?.toLowerCase().includes(q)
-                        ) : modelDetails;
-                        const multiWalkCount = modelDetails.filter((x) => x.walks.length > 1).length;
-                        const backToBackCount = modelDetails.filter((x) => x.hasBackToBack).length;
-
-                        return (
-                          <div className="border border-white/[0.07] rounded-xl bg-white/[0.02] p-3.5 space-y-3">
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <div className="flex items-center gap-3">
-                                <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-white/30">Model Map</p>
-                                <span className="text-[11px] text-white/25">{modelDetails.length} models</span>
-                                {multiWalkCount > 0 && (
-                                  <span className="flex items-center gap-1 text-[10px] text-blue-400 bg-blue-400/10 border border-blue-400/20 rounded-full px-2 py-0.5">
-                                    <Repeat className="h-2.5 w-2.5" />{multiWalkCount} multi-walk
-                                  </span>
-                                )}
-                                {backToBackCount > 0 && (
-                                  <span className="flex items-center gap-1 text-[10px] text-red-400 bg-red-400/10 border border-red-400/20 rounded-full px-2 py-0.5">
-                                    <AlertTriangle className="h-2.5 w-2.5" />{backToBackCount} B2B
-                                  </span>
-                                )}
-                              </div>
-                              <div className="relative w-[180px]">
-                                <Search className="absolute left-2.5 top-1.5 h-3.5 w-3.5 text-white/20" />
-                                <Input
-                                  placeholder="Find model..."
-                                  value={modelMapSearch}
-                                  onChange={(e) => setModelMapSearch(e.target.value)}
-                                  className="h-7 text-xs pl-7 bg-white/[0.04] border-white/[0.08] text-white/70 placeholder:text-white/20"
-                                />
-                              </div>
-                            </div>
-                            <div className="overflow-x-auto">
-                              <div className="flex items-center gap-1 text-[10px] text-white/20 uppercase tracking-wider pl-[140px] min-w-fit mb-1">
-                                {show.designers.map((d) => (
-                                  <div key={d.id} className="w-[60px] shrink-0 truncate text-center" title={d.designer_name}>
-                                    {d.designer_name.length > 8 ? d.designer_name.slice(0, 6) + "…" : d.designer_name}
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="max-h-[400px] overflow-y-auto space-y-0.5">
-                                {filtered.map((entry) => {
-                                  const walkByDesigner = new Map(entry.walks.map((w) => [w.designerIdx, w]));
-                                  return (
-                                    <div
-                                      key={entry.modelId}
-                                      className={`flex items-center gap-1 rounded-lg px-1.5 py-1 text-xs min-w-fit ${
-                                        entry.hasBackToBack
-                                          ? "bg-red-500/[0.08] border border-red-500/15"
-                                          : entry.walks.length > 1
-                                            ? "bg-blue-500/[0.05] border border-blue-500/10"
-                                            : "hover:bg-white/[0.03] border border-transparent"
-                                      }`}>
-                                      <div className="flex items-center gap-2 w-[130px] shrink-0 min-w-0">
-                                        <div className="relative h-6 w-6 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
-                                          {entry.model.profile_photo_url
-                                            ? <Image src={entry.model.profile_photo_url} alt="" fill className="object-cover" />
-                                            : <div className="h-full w-full flex items-center justify-center text-[8px] text-white/25">{entry.model.first_name?.[0]}{entry.model.last_name?.[0]}</div>}
-                                        </div>
-                                        <div className="min-w-0">
-                                          <p className="truncate font-medium text-white/75 leading-tight">{entry.model.first_name} {entry.model.last_name}</p>
-                                          {entry.walks.length > 1 && (
-                                            <p className="text-[10px] text-white/30 leading-tight">{entry.walks.length} walks{entry.hasBackToBack ? " · B2B" : ""}</p>
-                                          )}
-                                        </div>
-                                      </div>
-                                      {show.designers.map((d, dIdx) => {
-                                        const walk = walkByDesigner.get(dIdx);
-                                        const isB2bColumn = walk && entry.hasBackToBack && entry.walks.some((ow) => ow.designerIdx !== dIdx && Math.abs(ow.designerIdx - dIdx) === 1);
-                                        return (
-                                          <div key={d.id} className="w-[60px] shrink-0 text-center">
-                                            {walk ? (
-                                              <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold ${isB2bColumn ? "bg-red-500 text-white" : "bg-pink-500 text-white"}`}>
-                                                {walk.walkPosition}
-                                              </span>
-                                            ) : (
-                                              <span className="text-white/10">—</span>
-                                            )}
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })()}
+                      {modelMapShowId === show.id && show.designers.length > 0 && (
+                        <ModelMapPanel
+                          show={show}
+                          walkMap={showModelWalkMaps[show.id] || {}}
+                          onUpdateCheckInStatus={updateCheckInStatus}
+                        />
+                      )}
 
                       {/* Designers section */}
                       <div className="space-y-2.5">

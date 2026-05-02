@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
           walk_order,
           outfit_notes,
           status,
+          check_in_status,
           model:models(id, username, first_name, last_name, profile_photo_url, height, bust, waist, hips, dress_size, shoe_size, instagram_followers)
         )
       )
