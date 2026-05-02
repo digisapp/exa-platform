@@ -31,8 +31,34 @@ import {
   Search,
   Mail,
   Zap,
+  LayoutGrid,
 } from "lucide-react";
 import SpeedReviewModal from "./SpeedReviewModal";
+import GigApplicationsFullscreen from "./GigApplicationsFullscreen";
+
+function parseHeightToInches(height: string | null | undefined): number | null {
+  if (!height) return null;
+  const match = height.match(/(\d+)['''`]?\s*(\d+)/);
+  if (match) return parseInt(match[1]) * 12 + parseInt(match[2]);
+  const inches = parseInt(height);
+  if (!isNaN(inches) && inches > 24 && inches < 120) return inches;
+  return null;
+}
+
+const IG_PRESETS = [
+  { label: "All", value: 0 },
+  { label: "10K+", value: 10_000 },
+  { label: "50K+", value: 50_000 },
+  { label: "100K+", value: 100_000 },
+  { label: "500K+", value: 500_000 },
+  { label: "1M+", value: 1_000_000 },
+];
+
+const HEIGHT_OPTIONS = [
+  "5'0\"", "5'1\"", "5'2\"", "5'3\"", "5'4\"", "5'5\"",
+  "5'6\"", "5'7\"", "5'8\"", "5'9\"", "5'10\"", "5'11\"",
+  "6'0\"", "6'1\"", "6'2\"",
+];
 
 interface Application {
   id: string;
@@ -118,7 +144,10 @@ export default function GigApplicationsPanel({
   const [tripFilter, setTripFilter] = useState<"all" | "1" | "2">("all");
   const [spotTypeFilter, setSpotTypeFilter] = useState<"all" | "paid" | "sponsored">("all");
   const [modelSearch, setModelSearch] = useState("");
+  const [igMinFollowers, setIgMinFollowers] = useState(0);
+  const [minHeightFilter, setMinHeightFilter] = useState("");
   const [showSpeedReview, setShowSpeedReview] = useState(false);
+  const [showFullscreen, setShowFullscreen] = useState(false);
 
   // Mass email state
   const [showMassEmailDialog, setShowMassEmailDialog] = useState(false);
@@ -235,6 +264,14 @@ export default function GigApplicationsPanel({
         return false;
       }
     }
+    // Instagram followers filter
+    if (igMinFollowers > 0 && (app.instagram_followers ?? 0) < igMinFollowers) return false;
+    // Height filter
+    if (minHeightFilter) {
+      const modelIn = parseHeightToInches(app.model?.height);
+      const threshIn = parseHeightToInches(minHeightFilter);
+      if (modelIn === null || threshIn === null || modelIn < threshIn) return false;
+    }
     return true;
   };
 
@@ -250,6 +287,19 @@ export default function GigApplicationsPanel({
               <span className="truncate">Applications {selectedGigId && `(${applications.length})`}</span>
             </span>
             <div className="flex items-center gap-1">
+              {/* Grid View Button */}
+              {selectedGigId && applications.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowFullscreen(true)}
+                  className="text-xs border-violet-500/40 text-violet-400 hover:bg-violet-500/10 hover:text-violet-300"
+                  title="Full-screen grid view"
+                >
+                  <LayoutGrid className="h-3 w-3 mr-1" />
+                  Grid
+                </Button>
+              )}
               {/* Speed Review Button */}
               {selectedGigId && applications.filter(a => a.status === "pending").length > 0 && (
                 <Button
@@ -449,6 +499,45 @@ export default function GigApplicationsPanel({
               />
             </div>
           )}
+          {/* IG Followers & Height Filters */}
+          {selectedGigId && applications.length > 0 && (
+            <div className="flex flex-wrap gap-4 mt-2">
+              {/* Instagram Followers */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">IG:</span>
+                <div className="flex gap-1 p-0.5 bg-muted rounded-md">
+                  {IG_PRESETS.map(({ label, value }) => (
+                    <button
+                      key={value}
+                      onClick={() => setIgMinFollowers(value)}
+                      className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                        igMinFollowers === value
+                          ? "bg-background shadow-sm"
+                          : "hover:bg-background/50 text-muted-foreground"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Min Height */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Height:</span>
+                <Select value={minHeightFilter} onValueChange={setMinHeightFilter}>
+                  <SelectTrigger className="h-7 text-xs w-[90px]">
+                    <SelectValue placeholder="Any" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Any</SelectItem>
+                    {HEIGHT_OPTIONS.map((h) => (
+                      <SelectItem key={h} value={h}>{h}+</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
           {!selectedGigId ? (
@@ -559,16 +648,23 @@ export default function GigApplicationsPanel({
                         </Badge>
                       </div>
                     )}
-                    {app.instagram_handle && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        IG: @{app.instagram_handle} ({app.instagram_followers?.toLocaleString()} followers)
-                      </p>
-                    )}
-                    {app.digis_username && (
-                      <p className="text-xs text-muted-foreground">
-                        Digis: {app.digis_username}
-                      </p>
-                    )}
+                    <div className="flex flex-wrap gap-x-3 mt-1">
+                      {app.instagram_handle && (
+                        <p className="text-xs text-muted-foreground">
+                          IG: @{app.instagram_handle}{app.instagram_followers ? ` (${app.instagram_followers >= 1_000_000 ? `${(app.instagram_followers / 1_000_000).toFixed(1)}M` : app.instagram_followers >= 1_000 ? `${Math.round(app.instagram_followers / 1_000)}K` : app.instagram_followers})` : ""}
+                        </p>
+                      )}
+                      {app.model?.height && (
+                        <p className="text-xs text-muted-foreground">
+                          {app.model.height}
+                        </p>
+                      )}
+                      {app.digis_username && (
+                        <p className="text-xs text-muted-foreground">
+                          Digis: {app.digis_username}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -652,6 +748,16 @@ export default function GigApplicationsPanel({
           )}
         </CardContent>
       </Card>
+
+      {/* Fullscreen Grid Modal */}
+      <GigApplicationsFullscreen
+        open={showFullscreen}
+        onClose={() => setShowFullscreen(false)}
+        applications={applications}
+        selectedGig={selectedGig}
+        processingApp={processingApp}
+        onApplicationAction={onApplicationAction}
+      />
 
       {/* Speed Review Modal */}
       <SpeedReviewModal
