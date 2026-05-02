@@ -46,6 +46,27 @@ import { toast } from "sonner";
 import { ModelActionsDropdown } from "@/components/admin/AdminActions";
 import { SMSBroadcastModal } from "@/components/admin/SMSBroadcastModal";
 
+function ModelAvatar({ url, name }: { url: string | null; name: string }) {
+  const [error, setError] = useState(false);
+  if (url && !error) {
+    return (
+      <Image
+        src={url}
+        alt={name}
+        width={80}
+        height={80}
+        className="w-full h-full object-cover"
+        onError={() => setError(true)}
+      />
+    );
+  }
+  return (
+    <div className="w-full h-full flex items-center justify-center text-sm font-bold">
+      {name?.charAt(0)?.toUpperCase() || "?"}
+    </div>
+  );
+}
+
 function formatFollowers(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
@@ -648,11 +669,10 @@ export default function AdminModelsPage() {
                       <TableCell>
                         <Link href={`/admin/models/${model.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                           <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex-shrink-0">
-                            {model.profile_photo_url ? (
-                              <Image src={model.profile_photo_url} alt={model.username} width={80} height={80} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-sm font-bold">{model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}</div>
-                            )}
+                            <ModelAvatar
+                              url={model.profile_photo_url}
+                              name={model.first_name || model.username}
+                            />
                           </div>
                           <div className="min-w-0">
                             <p className={`font-medium truncate ${model.deleted_at ? "text-red-500 line-through" : "text-pink-500 hover:text-pink-400"}`}>{model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}</p>
