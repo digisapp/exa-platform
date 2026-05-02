@@ -85,6 +85,22 @@ export async function POST(request: NextRequest) {
       year: "numeric",
     });
 
+    // For installment plans, create/retrieve Stripe customer so off-session charges work later
+    let stripeCustomerId: string | undefined;
+    if (isInstallment) {
+      const existing = await stripe.customers.list({ email: buyerEmail, limit: 1 });
+      if (existing.data.length > 0) {
+        stripeCustomerId = existing.data[0].id;
+      } else {
+        const customer = await stripe.customers.create({
+          email: buyerEmail,
+          name: buyerName,
+          metadata: { type: "workshop_installment" },
+        });
+        stripeCustomerId = customer.id;
+      }
+    }
+
     // Build Stripe checkout session config
     const checkoutConfig: any = {
       payment_method_types: ["card"],
@@ -109,7 +125,7 @@ export async function POST(request: NextRequest) {
       mode: "payment",
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL}/workshops/${workshop.slug}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL}/workshops/${workshop.slug}?cancelled=true`,
-      customer_email: buyerEmail,
+      ...(stripeCustomerId ? { customer: stripeCustomerId } : { customer_email: buyerEmail }),
       metadata: {
         type: "workshop_registration",
         workshop_id: workshopId,
@@ -123,6 +139,7 @@ export async function POST(request: NextRequest) {
           installment_number: "1",
           installments_total: "3",
           installment_amount: installmentAmountCents.toString(),
+          stripe_customer_id: stripeCustomerId || "",
         }),
       },
       payment_intent_data: {
@@ -152,6 +169,7 @@ export async function POST(request: NextRequest) {
         buyer_name: buyerName,
         buyer_phone: buyerPhone || null,
         stripe_checkout_session_id: session.id,
+        stripe_customer_id: stripeCustomerId || null,
         quantity: quantity,
         unit_price_cents: isInstallment ? installmentAmountCents : unitPriceCents,
         total_price_cents: totalPriceCents,

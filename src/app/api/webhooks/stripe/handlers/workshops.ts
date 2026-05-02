@@ -21,11 +21,17 @@ export async function handleWorkshopRegistration(session: Stripe.Checkout.Sessio
     : session.payment_intent?.id;
 
   // Get Stripe customer ID for installment plans (needed for future charges)
+  // Primary: session.customer (set when checkout used customer: id)
+  // Fallback: metadata.stripe_customer_id (stored during checkout creation)
   let stripeCustomerId: string | null = null;
-  if (isInstallment && session.customer) {
-    stripeCustomerId = typeof session.customer === "string"
-      ? session.customer
-      : session.customer.id;
+  if (isInstallment) {
+    if (session.customer) {
+      stripeCustomerId = typeof session.customer === "string"
+        ? session.customer
+        : session.customer.id;
+    } else if (session.metadata?.stripe_customer_id) {
+      stripeCustomerId = session.metadata.stripe_customer_id;
+    }
   }
 
   // Update workshop registration to completed
