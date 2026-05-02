@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -23,7 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  ArrowLeft, Plus, Search, X, GripVertical, Users, Calendar, Clock,
+  ArrowLeft, Plus, Search, X, GripVertical, Calendar, Clock,
   Download, Trash2, ChevronDown, ChevronUp, Check, UserPlus, Loader2,
   Copy, AlertTriangle, FileText, Pencil, ArrowRightLeft, Eye, Repeat, Star,
 } from "lucide-react";
@@ -108,64 +106,99 @@ function SortableModelCard({
   const [notesValue, setNotesValue] = useState(showModel.outfit_notes || "");
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: showModel.model_id });
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 };
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1 };
   const m = showModel.model;
 
   function saveNotes() { onUpdateNotes(notesValue); setEditingNotes(false); }
 
   return (
-    <div ref={setNodeRef} style={style} className={`rounded-lg bg-card border transition-colors group ${isBulkSelected ? "border-pink-500 bg-pink-500/5" : "hover:border-pink-500/30"}`}>
-      <div className="flex items-center gap-3 p-2">
-        <input type="checkbox" checked={isBulkSelected} onChange={onBulkToggle}
+    <div ref={setNodeRef} style={style}
+      className={`rounded-lg border transition-all duration-150 group ${
+        isBulkSelected
+          ? "border-pink-500/50 bg-pink-500/10 shadow-[inset_0_0_20px_rgba(236,72,153,0.06)]"
+          : "border-white/[0.06] bg-white/[0.02] hover:border-pink-500/25 hover:bg-pink-500/[0.02]"
+      }`}>
+      <div className="flex items-center gap-3 p-2.5">
+        <input
+          type="checkbox"
+          checked={isBulkSelected}
+          onChange={onBulkToggle}
           onClick={(e) => e.stopPropagation()}
-          className="h-3.5 w-3.5 rounded border-gray-300 text-pink-500 focus:ring-pink-500 shrink-0 cursor-pointer" />
-        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground shrink-0">
+          className="h-3.5 w-3.5 rounded border-white/20 bg-transparent accent-pink-500 shrink-0 cursor-pointer"
+        />
+        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-white/20 hover:text-white/50 shrink-0 transition-colors">
           <GripVertical className="h-4 w-4" />
         </button>
-        <span className="text-xs font-mono text-muted-foreground w-6 text-center shrink-0">#{walkNumber}</span>
-        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-muted shrink-0">
+        <span className="text-[10px] font-mono text-white/25 w-6 text-center shrink-0">#{walkNumber}</span>
+        <div className="relative h-9 w-9 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
           {m.profile_photo_url ? (
             <Image src={m.profile_photo_url} alt={m.first_name || ""} fill className="object-cover" />
           ) : (
-            <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">{m.first_name?.[0]}{m.last_name?.[0]}</div>
+            <div className="h-full w-full flex items-center justify-center text-[10px] text-white/30">
+              {m.first_name?.[0]}{m.last_name?.[0]}
+            </div>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{m.first_name} {m.last_name}</p>
-          <p className="text-xs text-muted-foreground truncate">@{m.username}{m.height ? ` · ${m.height}` : ""}</p>
+          <p className="text-sm font-medium truncate text-white/85">{m.first_name} {m.last_name}</p>
+          <p className="text-[11px] text-white/30 truncate">@{m.username}{m.height ? ` · ${m.height}` : ""}</p>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {multiWalkInfo && multiWalkInfo.count > 1 && (
-            <span title={`${multiWalkInfo.count} walks: ${multiWalkInfo.designers.join(", ")}${multiWalkInfo.hasBackToBack ? " ⚠ BACK-TO-BACK — may not have time to change" : ""}`}
-              className={multiWalkInfo.hasBackToBack ? "text-red-500" : "text-blue-500"}>
+            <span
+              title={`${multiWalkInfo.count} walks: ${multiWalkInfo.designers.join(", ")}${multiWalkInfo.hasBackToBack ? " ⚠ BACK-TO-BACK — may not have time to change" : ""}`}
+              className={multiWalkInfo.hasBackToBack ? "text-red-400" : "text-blue-400"}>
               <Repeat className="h-3.5 w-3.5" />
             </span>
           )}
-          {conflictWarning && <span title={conflictWarning} className="text-amber-500"><AlertTriangle className="h-3.5 w-3.5" /></span>}
-          <button onClick={() => { setEditingNotes(!editingNotes); setNotesValue(showModel.outfit_notes || ""); }}
-            className={`text-muted-foreground hover:text-foreground transition-all shrink-0 ${showModel.outfit_notes ? "opacity-100 text-pink-500" : "opacity-0 group-hover:opacity-100"}`} title="Outfit notes">
+          {conflictWarning && (
+            <span title={conflictWarning} className="text-amber-400">
+              <AlertTriangle className="h-3.5 w-3.5" />
+            </span>
+          )}
+          <button
+            onClick={() => { setEditingNotes(!editingNotes); setNotesValue(showModel.outfit_notes || ""); }}
+            className={`transition-all shrink-0 ${
+              showModel.outfit_notes
+                ? "opacity-100 text-pink-400"
+                : "opacity-0 group-hover:opacity-60 text-white/40 hover:text-white/80"
+            }`}
+            title="Outfit notes">
             <Pencil className="h-3.5 w-3.5" />
           </button>
-          <button onClick={onRemove} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0">
+          <button
+            onClick={onRemove}
+            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 text-white/30 hover:text-red-400 transition-all shrink-0">
             <X className="h-4 w-4" />
           </button>
         </div>
       </div>
       {(editingNotes || showModel.outfit_notes) && (
-        <div className="px-2 pb-2 pl-[88px]">
+        <div className="px-2.5 pb-2.5 pl-[88px]">
           {editingNotes ? (
-            <div className="flex gap-1">
-              <Textarea value={notesValue} onChange={(e) => setNotesValue(e.target.value)} placeholder="Outfit description, look number, etc."
-                className="text-xs min-h-[52px] resize-none" autoFocus
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveNotes(); } if (e.key === "Escape") setEditingNotes(false); }} />
+            <div className="flex gap-1.5">
+              <Textarea
+                value={notesValue}
+                onChange={(e) => setNotesValue(e.target.value)}
+                placeholder="Outfit description, look number, etc."
+                className="text-xs min-h-[52px] resize-none bg-white/5 border-white/10 text-white/80 placeholder:text-white/25"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveNotes(); }
+                  if (e.key === "Escape") setEditingNotes(false);
+                }}
+              />
               <div className="flex flex-col gap-1">
-                <Button size="sm" className="h-6 text-xs px-2" onClick={saveNotes}>Save</Button>
-                <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setEditingNotes(false)}>Cancel</Button>
+                <Button size="sm" className="h-6 text-xs px-2 bg-pink-500 hover:bg-pink-600 border-0" onClick={saveNotes}>Save</Button>
+                <Button size="sm" variant="ghost" className="h-6 text-xs px-2 text-white/40 hover:text-white/70" onClick={() => setEditingNotes(false)}>Cancel</Button>
               </div>
             </div>
           ) : (
-            <button onClick={() => { setEditingNotes(true); setNotesValue(showModel.outfit_notes || ""); }}
-              className="text-xs text-muted-foreground italic hover:text-foreground transition-colors">{showModel.outfit_notes}</button>
+            <button
+              onClick={() => { setEditingNotes(true); setNotesValue(showModel.outfit_notes || ""); }}
+              className="text-xs text-pink-400/70 italic hover:text-pink-400 transition-colors">
+              {showModel.outfit_notes}
+            </button>
           )}
         </div>
       )}
@@ -182,55 +215,77 @@ function ModelPoolCard({ model, assignedCount, isSelected, onToggle, isPick }: {
   const hasMeasurements = model.bust || model.waist || model.hips || model.dress_size || model.shoe_size;
   return (
     <div className="relative">
-      <button onClick={onToggle} onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}
-        className={`w-full flex items-center gap-3 p-2 rounded-lg border transition-colors text-left ${
-          isSelected ? "border-pink-500 bg-pink-500/10" : isPick ? "border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-500/70" : "border-border hover:border-pink-500/30"
+      <button
+        onClick={onToggle}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        className={`w-full flex items-center gap-3 p-2.5 rounded-lg border transition-all duration-150 text-left ${
+          isSelected
+            ? "border-pink-500/60 bg-pink-500/12 shadow-[inset_0_0_20px_rgba(236,72,153,0.07)]"
+            : isPick
+              ? "border-amber-400/30 bg-amber-500/[0.04] hover:border-amber-400/60"
+              : "border-white/[0.05] bg-white/[0.01] hover:border-pink-500/25 hover:bg-pink-500/[0.02]"
         }`}>
-        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-muted shrink-0">
+        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
           {model.profile_photo_url ? (
             <Image src={model.profile_photo_url} alt={model.first_name || ""} fill className="object-cover" />
           ) : (
-            <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">{model.first_name?.[0]}{model.last_name?.[0]}</div>
+            <div className="h-full w-full flex items-center justify-center text-xs text-white/30">
+              {model.first_name?.[0]}{model.last_name?.[0]}
+            </div>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{model.first_name} {model.last_name}</p>
-          <p className="text-xs text-muted-foreground truncate">
+          <p className="text-sm font-medium truncate text-white/85">{model.first_name} {model.last_name}</p>
+          <p className="text-[11px] text-white/30 truncate">
             @{model.username}{model.height ? ` · ${model.height}` : ""}{model.dress_size ? ` · Sz ${model.dress_size}` : ""}
           </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          {isPick && <span title="Designer's pick"><Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" /></span>}
-          {assignedCount > 0 && <Badge variant="secondary" className="text-xs">{assignedCount}x</Badge>}
-          {isSelected && <Check className="h-4 w-4 text-pink-500" />}
+          {isPick && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />}
+          {assignedCount > 0 && (
+            <span className="text-[10px] font-semibold bg-pink-500/20 text-pink-300 rounded-full px-1.5 py-0.5 leading-none tabular-nums">
+              {assignedCount}×
+            </span>
+          )}
+          {isSelected && <Check className="h-4 w-4 text-pink-400" />}
         </div>
       </button>
       {showTooltip && (
-        <div className="absolute left-full ml-2 top-0 z-50 w-60 bg-popover border rounded-lg shadow-lg p-3 pointer-events-none">
+        <div className="absolute left-full ml-2 top-0 z-50 w-64 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl shadow-black/60 p-3.5 pointer-events-none">
           <div className="flex gap-3">
-            <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-muted shrink-0">
-              {model.profile_photo_url ? <Image src={model.profile_photo_url} alt={model.first_name || ""} fill className="object-cover" />
-                : <div className="h-full w-full flex items-center justify-center text-lg text-muted-foreground">{model.first_name?.[0]}{model.last_name?.[0]}</div>}
+            <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
+              {model.profile_photo_url
+                ? <Image src={model.profile_photo_url} alt={model.first_name || ""} fill className="object-cover" />
+                : <div className="h-full w-full flex items-center justify-center text-lg text-white/25">{model.first_name?.[0]}{model.last_name?.[0]}</div>}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold truncate">{model.first_name} {model.last_name}</p>
-              <p className="text-xs text-muted-foreground">@{model.username}</p>
-              {isPick && <p className="text-xs text-yellow-500 font-medium mt-0.5 flex items-center gap-1"><Star className="h-3 w-3 fill-yellow-400" /> Designer&apos;s pick</p>}
+              <p className="text-sm font-semibold text-white/90 truncate">{model.first_name} {model.last_name}</p>
+              <p className="text-xs text-white/35">@{model.username}</p>
+              {isPick && (
+                <p className="text-xs text-amber-400 font-medium mt-1 flex items-center gap-1">
+                  <Star className="h-3 w-3 fill-amber-400" /> Designer&apos;s pick
+                </p>
+              )}
             </div>
           </div>
           {hasMeasurements && (
-            <div className="mt-2 pt-2 border-t border-border/50 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
-              {model.height && <><span className="text-muted-foreground">Height</span><span>{model.height}</span></>}
-              {model.bust && <><span className="text-muted-foreground">Bust</span><span>{model.bust}</span></>}
-              {model.waist && <><span className="text-muted-foreground">Waist</span><span>{model.waist}</span></>}
-              {model.hips && <><span className="text-muted-foreground">Hips</span><span>{model.hips}</span></>}
-              {model.dress_size && <><span className="text-muted-foreground">Dress</span><span>{model.dress_size}</span></>}
-              {model.shoe_size && <><span className="text-muted-foreground">Shoe</span><span>{model.shoe_size}</span></>}
+            <div className="mt-3 pt-2.5 border-t border-white/[0.07] grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+              {model.height && <><span className="text-white/30">Height</span><span className="text-white/70">{model.height}</span></>}
+              {model.bust && <><span className="text-white/30">Bust</span><span className="text-white/70">{model.bust}</span></>}
+              {model.waist && <><span className="text-white/30">Waist</span><span className="text-white/70">{model.waist}</span></>}
+              {model.hips && <><span className="text-white/30">Hips</span><span className="text-white/70">{model.hips}</span></>}
+              {model.dress_size && <><span className="text-white/30">Dress</span><span className="text-white/70">{model.dress_size}</span></>}
+              {model.shoe_size && <><span className="text-white/30">Shoe</span><span className="text-white/70">{model.shoe_size}</span></>}
             </div>
           )}
-          <div className="mt-2 pt-2 border-t border-border/50 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
-            {model.instagram_followers && <><span className="text-muted-foreground">Followers</span><span>{model.instagram_followers.toLocaleString()}</span></>}
-            {assignedCount > 0 && <><span className="text-muted-foreground">Walks</span><span>{assignedCount} lineup{assignedCount > 1 ? "s" : ""}</span></>}
+          <div className="mt-2.5 pt-2.5 border-t border-white/[0.07] grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+            {model.instagram_followers && (
+              <><span className="text-white/30">Followers</span><span className="text-white/70">{model.instagram_followers.toLocaleString()}</span></>
+            )}
+            {assignedCount > 0 && (
+              <><span className="text-white/30">Walks</span><span className="text-white/70">{assignedCount} lineup{assignedCount > 1 ? "s" : ""}</span></>
+            )}
           </div>
         </div>
       )}
@@ -272,11 +327,7 @@ function SortableDesignerPanel({
     setNodeRef, transform, transition, isDragging,
   } = useSortable({ id: designer.id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-  };
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1 };
 
   const modelSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -303,7 +354,7 @@ function SortableDesignerPanel({
   function toggleBulkSelect(modelId: string) {
     setBulkSelected((prev) => {
       const next = new Set(prev);
-      next.has(modelId) ? next.delete(modelId) : next.add(modelId);
+      if (next.has(modelId)) { next.delete(modelId); } else { next.add(modelId); }
       return next;
     });
   }
@@ -325,114 +376,172 @@ function SortableDesignerPanel({
   const moveTargetDesigners = allDesigners.filter((d) => d.id !== designer.id);
 
   return (
-    <div ref={setNodeRef} style={style} className={`border rounded-lg ${isActive ? "border-pink-500/50 bg-pink-500/5" : "border-border"}`}>
-      <div className="flex items-center justify-between p-2 cursor-pointer group" onClick={onActivate}>
-        <div className="flex items-center gap-2 min-w-0">
-          <button {...sortableAttributes} {...sortableListeners}
+    <div ref={setNodeRef} style={style}
+      className={`border rounded-xl overflow-hidden transition-all duration-200 ${
+        isActive
+          ? "border-pink-500/40 shadow-[0_0_24px_rgba(236,72,153,0.08)]"
+          : "border-white/[0.07] hover:border-white/[0.12]"
+      }`}>
+      {/* Designer header */}
+      <div
+        className={`flex items-center justify-between px-3 py-2.5 cursor-pointer group transition-colors ${
+          isActive ? "bg-pink-500/[0.06]" : "hover:bg-white/[0.02]"
+        }`}
+        onClick={onActivate}>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button
+            {...sortableAttributes}
+            {...sortableListeners}
             onClick={(e) => e.stopPropagation()}
-            className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground shrink-0">
+            className="cursor-grab active:cursor-grabbing text-white/20 hover:text-white/50 shrink-0 transition-colors">
             <GripVertical className="h-4 w-4" />
           </button>
           {editingName ? (
-            <Input value={nameValue} onChange={(e) => setNameValue(e.target.value)}
-              className="h-7 text-sm font-semibold w-[200px]" autoFocus
+            <Input
+              value={nameValue}
+              onChange={(e) => setNameValue(e.target.value)}
+              className="h-7 text-sm font-semibold w-[200px] bg-white/5 border-white/20 text-white/90"
+              autoFocus
               onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") { setEditingName(false); setNameValue(designer.designer_name); } }}
-              onBlur={saveName} />
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveName();
+                if (e.key === "Escape") { setEditingName(false); setNameValue(designer.designer_name); }
+              }}
+              onBlur={saveName}
+            />
           ) : (
-            <span className="text-sm font-semibold truncate">{designer.designer_name}</span>
+            <span className="text-sm font-semibold uppercase tracking-wide text-white/80 truncate">
+              {designer.designer_name}
+            </span>
           )}
-          <Badge variant="outline" className="text-xs shrink-0">{designer.models.length}</Badge>
+          <span className="text-[10px] font-mono bg-white/[0.07] border border-white/10 rounded-full px-2 py-0.5 text-white/35 shrink-0 tabular-nums">
+            {designer.models.length}
+          </span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {!editingName && (
-            <button onClick={(e) => { e.stopPropagation(); setNameValue(designer.designer_name); setEditingName(true); }}
-              className="opacity-0 group-hover:opacity-100 hover:opacity-100 text-muted-foreground hover:text-foreground transition-all" title="Rename designer">
+            <button
+              onClick={(e) => { e.stopPropagation(); setNameValue(designer.designer_name); setEditingName(true); }}
+              className="opacity-0 group-hover:opacity-60 hover:!opacity-100 text-white/30 hover:text-white/70 transition-all"
+              title="Rename designer">
               <Pencil className="h-3.5 w-3.5" />
             </button>
           )}
           {otherShows.length > 0 && (
             <div className="relative">
-              <button onClick={(e) => { e.stopPropagation(); setShowMoveMenu(!showMoveMenu); }}
-                className="text-muted-foreground hover:text-foreground transition-all" title="Move to another show">
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowMoveMenu(!showMoveMenu); }}
+                className="text-white/30 hover:text-white/70 transition-colors"
+                title="Move to another show">
                 <ArrowRightLeft className="h-3.5 w-3.5" />
               </button>
               {showMoveMenu && (
-                <div className="absolute right-0 top-full mt-1 z-50 bg-popover border rounded-lg shadow-lg py-1 min-w-[180px]"
+                <div
+                  className="absolute right-0 top-full mt-1 z-50 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl shadow-black/60 py-1.5 min-w-[200px]"
                   onClick={(e) => e.stopPropagation()}>
-                  <p className="text-xs text-muted-foreground px-3 py-1">Move to:</p>
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-white/25 px-3 py-1.5 font-semibold">Move to show</p>
                   {otherShows.map((s) => (
-                    <button key={s.id} onClick={() => { onMoveDesigner(designer.id, showId, s.id); setShowMoveMenu(false); }}
-                      className="w-full text-left text-xs px-3 py-1.5 hover:bg-accent transition-colors">
+                    <button
+                      key={s.id}
+                      onClick={() => { onMoveDesigner(designer.id, showId, s.id); setShowMoveMenu(false); }}
+                      className="w-full text-left text-xs px-3 py-2 text-white/60 hover:text-white/90 hover:bg-white/[0.05] transition-colors">
                       {s.name}
-                      {s.show_date && <span className="text-muted-foreground ml-1">({new Date(s.show_date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })})</span>}
+                      {s.show_date && (
+                        <span className="text-white/30 ml-1.5">
+                          ({new Date(s.show_date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })})
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
               )}
             </div>
           )}
-          <button onClick={(e) => { e.stopPropagation(); if (confirm(`Remove ${designer.designer_name}?`)) onDeleteDesigner(designer.id); }}
-            className="opacity-0 group-hover:opacity-100 hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
+          <button
+            onClick={(e) => { e.stopPropagation(); if (confirm(`Remove ${designer.designer_name}?`)) onDeleteDesigner(designer.id); }}
+            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 text-white/30 hover:text-red-400 transition-all">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
+
       {isActive && (
-        <div className="px-2 pb-2 space-y-1">
+        <div className="px-2.5 pb-2.5 space-y-1.5 border-t border-white/[0.06]">
           {/* Bulk action bar */}
           {bulkSelected.size > 0 && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-pink-500/10 border border-pink-500/20 mb-1">
-              <span className="text-xs font-medium">{bulkSelected.size} selected</span>
-              <Button size="sm" variant="destructive" className="h-6 text-xs px-2" onClick={handleBulkRemove}>
-                <Trash2 className="h-3 w-3 mr-1" />Remove
-              </Button>
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-pink-500/[0.08] border border-pink-500/20 mt-2">
+              <span className="text-xs font-medium text-white/60">{bulkSelected.size} selected</span>
+              <button
+                onClick={handleBulkRemove}
+                className="flex items-center gap-1 text-xs bg-red-500/20 text-red-400 border border-red-500/20 hover:bg-red-500/30 rounded-md px-2 py-1 transition-colors">
+                <Trash2 className="h-3 w-3" />Remove
+              </button>
               <div className="relative">
-                <Button size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => setShowBulkMoveMenu(!showBulkMoveMenu)}>
-                  <ArrowRightLeft className="h-3 w-3 mr-1" />Move to...
-                </Button>
+                <button
+                  onClick={() => setShowBulkMoveMenu(!showBulkMoveMenu)}
+                  className="flex items-center gap-1 text-xs bg-white/5 text-white/50 border border-white/10 hover:border-white/20 rounded-md px-2 py-1 transition-colors">
+                  <ArrowRightLeft className="h-3 w-3" />Move to...
+                </button>
                 {showBulkMoveMenu && (
-                  <div className="absolute left-0 top-full mt-1 z-50 bg-popover border rounded-lg shadow-lg py-1 min-w-[220px] max-h-[200px] overflow-y-auto">
+                  <div className="absolute left-0 top-full mt-1 z-50 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl shadow-black/60 py-1.5 min-w-[240px] max-h-[200px] overflow-y-auto">
                     {moveTargetDesigners.length === 0 ? (
-                      <p className="text-xs text-muted-foreground px-3 py-2">No other designers to move to</p>
+                      <p className="text-xs text-white/30 px-3 py-2">No other designers</p>
                     ) : moveTargetDesigners.map((d) => (
-                      <button key={d.id} onClick={() => handleBulkMove(d.id)}
-                        className="w-full text-left text-xs px-3 py-1.5 hover:bg-accent transition-colors">
-                        {d.designerName} <span className="text-muted-foreground">({d.showName})</span>
+                      <button
+                        key={d.id}
+                        onClick={() => handleBulkMove(d.id)}
+                        className="w-full text-left text-xs px-3 py-2 text-white/60 hover:text-white/90 hover:bg-white/[0.05] transition-colors">
+                        {d.designerName} <span className="text-white/30">({d.showName})</span>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-              <Button size="sm" variant="ghost" className="h-6 text-xs px-2 ml-auto" onClick={() => setBulkSelected(new Set())}>Clear</Button>
+              <button
+                onClick={() => setBulkSelected(new Set())}
+                className="ml-auto text-xs text-white/30 hover:text-white/60 transition-colors">
+                Clear
+              </button>
             </div>
           )}
 
           {designer.models.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-3">Select models from the pool and click &quot;Add to Lineup&quot;</p>
+            <p className="text-xs text-white/25 text-center py-4 mt-2">
+              Select models from the pool and click &quot;Add to Lineup&quot;
+            </p>
           ) : (
-            <DndContext sensors={modelSensors} collisionDetection={closestCenter}
-              onDragStart={(e: DragStartEvent) => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
+            <DndContext
+              sensors={modelSensors}
+              collisionDetection={closestCenter}
+              onDragStart={(e: DragStartEvent) => setActiveId(e.active.id as string)}
+              onDragEnd={handleDragEnd}>
               <SortableContext items={modelIds} strategy={verticalListSortingStrategy}>
-                {designer.models.map((sm, i) => (
-                  <SortableModelCard key={sm.model_id} showModel={sm} walkNumber={i + 1}
-                    onRemove={() => onRemoveModel(designer.id, sm.model_id)}
-                    onUpdateNotes={(notes) => onUpdateOutfitNotes(designer.id, sm.model_id, notes)}
-                    conflictWarning={modelConflicts[sm.model_id] || null}
-                    isBulkSelected={bulkSelected.has(sm.model_id)}
-                    onBulkToggle={() => toggleBulkSelect(sm.model_id)}
-                    multiWalkInfo={showModelWalkMap[sm.model_id]} />
-                ))}
+                <div className="space-y-1 pt-1.5">
+                  {designer.models.map((sm, i) => (
+                    <SortableModelCard
+                      key={sm.model_id}
+                      showModel={sm}
+                      walkNumber={i + 1}
+                      onRemove={() => onRemoveModel(designer.id, sm.model_id)}
+                      onUpdateNotes={(notes) => onUpdateOutfitNotes(designer.id, sm.model_id, notes)}
+                      conflictWarning={modelConflicts[sm.model_id] || null}
+                      isBulkSelected={bulkSelected.has(sm.model_id)}
+                      onBulkToggle={() => toggleBulkSelect(sm.model_id)}
+                      multiWalkInfo={showModelWalkMap[sm.model_id]}
+                    />
+                  ))}
+                </div>
               </SortableContext>
               <DragOverlay>
                 {activeModel ? (
-                  <div className="flex items-center gap-3 p-2 rounded-lg bg-card border border-pink-500 shadow-lg">
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-muted shrink-0">
-                      {activeModel.model.profile_photo_url ? <Image src={activeModel.model.profile_photo_url} alt={activeModel.model.first_name || ""} fill className="object-cover" />
-                        : <div className="h-full w-full flex items-center justify-center text-xs">{activeModel.model.first_name?.[0]}{activeModel.model.last_name?.[0]}</div>}
+                  <div className="flex items-center gap-3 p-2.5 rounded-lg bg-zinc-900 border border-pink-500/60 shadow-[0_0_20px_rgba(236,72,153,0.2)]">
+                    <GripVertical className="h-4 w-4 text-white/30" />
+                    <div className="relative h-9 w-9 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
+                      {activeModel.model.profile_photo_url
+                        ? <Image src={activeModel.model.profile_photo_url} alt={activeModel.model.first_name || ""} fill className="object-cover" />
+                        : <div className="h-full w-full flex items-center justify-center text-xs text-white/30">{activeModel.model.first_name?.[0]}{activeModel.model.last_name?.[0]}</div>}
                     </div>
-                    <p className="text-sm font-medium">{activeModel.model.first_name} {activeModel.model.last_name}</p>
+                    <p className="text-sm font-medium text-white/90">{activeModel.model.first_name} {activeModel.model.last_name}</p>
                   </div>
                 ) : null}
               </DragOverlay>
@@ -473,13 +582,16 @@ export default function AdminShowsPage() {
   const [newShowTime, setNewShowTime] = useState("");
   const [savingShow, setSavingShow] = useState(false);
 
+  // Rename show
+  const [renamingShowId, setRenamingShowId] = useState<string | null>(null);
+  const [renameShowValue, setRenameShowValue] = useState("");
+
   // Add designer input
   const [addDesignerShowId, setAddDesignerShowId] = useState<string | null>(null);
   const [newDesignerName, setNewDesignerName] = useState("");
 
   const supabase = createClient();
 
-  // Designer DnD sensors (separate from model sensors)
   const designerSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -505,7 +617,8 @@ export default function AdminShowsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEventId]);
 
-  useEffect(() => { loadModels(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadModels(); }, []);
 
   useEffect(() => {
     loadDesignerPicks(activeDesignerEntryId);
@@ -534,15 +647,11 @@ export default function AdminShowsPage() {
   async function loadEventModels() {
     if (!selectedEventId) return;
     const confirmedIds = new Set<string>();
-
-    // From accepted gig applications
     const { data: gigs } = await supabase.from("gigs").select("id").eq("event_id", selectedEventId);
     if (gigs?.length) {
       const { data: apps } = await supabase.from("gig_applications").select("model_id").in("gig_id", gigs.map((g) => g.id)).eq("status", "accepted");
       (apps || []).forEach((a) => confirmedIds.add(a.model_id));
     }
-
-    // From event badge holders (MSW confirmed models)
     const { data: eventBadge } = await supabase.from("badges").select("id")
       .eq("event_id", selectedEventId).eq("badge_type", "event").eq("is_active", true)
       .maybeSingle() as { data: { id: string } | null };
@@ -551,7 +660,6 @@ export default function AdminShowsPage() {
         .eq("badge_id", eventBadge.id) as { data: { model_id: string }[] | null };
       (holders || []).forEach((h) => confirmedIds.add(h.model_id));
     }
-
     setEventModelIds(confirmedIds);
   }
 
@@ -574,9 +682,7 @@ export default function AdminShowsPage() {
     return counts;
   }, [shows]);
 
-  // Enhanced conflict detection: overlapping/back-to-back shows + 4+ walks/day
   const modelConflictsByDesigner = useMemo(() => {
-    // Build a map: modelId -> [{showId, showName, showDate, showTime, designerName}]
     const modelAssignments: Record<string, { showId: string; showName: string; showDate: string | null; showTime: string | null; designerName: string }[]> = {};
     shows.forEach((s) => {
       s.designers.forEach((d) => d.models.forEach((m) => {
@@ -584,7 +690,6 @@ export default function AdminShowsPage() {
         modelAssignments[m.model_id].push({ showId: s.id, showName: s.name, showDate: s.show_date, showTime: s.show_time, designerName: d.designer_name });
       }));
     });
-
     const result: Record<string, Record<string, string>> = {};
     shows.forEach((s) => {
       s.designers.forEach((d) => {
@@ -592,21 +697,14 @@ export default function AdminShowsPage() {
         d.models.forEach((m) => {
           const assignments = modelAssignments[m.model_id] || [];
           const warnings: string[] = [];
-
-          // Group by date
           const byDate: Record<string, typeof assignments> = {};
           assignments.forEach((a) => { const key = a.showDate || "unscheduled"; if (!byDate[key]) byDate[key] = []; byDate[key].push(a); });
-
           for (const [date, dateAssignments] of Object.entries(byDate)) {
             if (dateAssignments.length < 2) continue;
-
-            // 4+ walks same day
             if (dateAssignments.length >= 4) {
               const dateLabel = date === "unscheduled" ? "unscheduled" : new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
               warnings.push(`${dateAssignments.length} walks on ${dateLabel}`);
             }
-
-            // Time overlap / back-to-back detection
             const withTimes = dateAssignments.filter((a) => a.showTime).map((a) => ({ ...a, minutes: parseTimeToMinutes(a.showTime)! }));
             if (withTimes.length >= 2) {
               withTimes.sort((a, b) => a.minutes - b.minutes);
@@ -614,26 +712,18 @@ export default function AdminShowsPage() {
                 for (let j = i + 1; j < withTimes.length; j++) {
                   if (withTimes[i].showId === withTimes[j].showId) continue;
                   const diff = withTimes[j].minutes - withTimes[i].minutes;
-                  if (diff === 0) {
-                    warnings.push(`Time conflict: ${withTimes[i].showName} and ${withTimes[j].showName} at same time`);
-                  } else if (diff <= 60) {
-                    warnings.push(`Back-to-back: ${withTimes[i].showName} (${withTimes[i].showTime}) → ${withTimes[j].showName} (${withTimes[j].showTime})`);
-                  }
+                  if (diff === 0) warnings.push(`Time conflict: ${withTimes[i].showName} and ${withTimes[j].showName} at same time`);
+                  else if (diff <= 60) warnings.push(`Back-to-back: ${withTimes[i].showName} (${withTimes[i].showTime}) → ${withTimes[j].showName} (${withTimes[j].showTime})`);
                 }
               }
             }
-
-            // Multiple shows same day, no times set
             const withoutTimes = dateAssignments.filter((a) => !a.showTime);
             const uniqueShowsNoTime = new Set(withoutTimes.map((a) => a.showId));
             if (uniqueShowsNoTime.size >= 2 && withTimes.length === 0) {
               warnings.push(`${dateAssignments.length} shows on same day (no times set)`);
             }
           }
-
-          if (warnings.length > 0) {
-            conflicts[m.model_id] = [...new Set(warnings)].join(" · ");
-          }
+          if (warnings.length > 0) conflicts[m.model_id] = [...new Set(warnings)].join(" · ");
         });
         result[d.id] = conflicts;
       });
@@ -641,12 +731,10 @@ export default function AdminShowsPage() {
     return result;
   }, [shows]);
 
-  // All designers across all shows (for bulk move targets)
   const allDesignersList = useMemo(() => {
     return shows.flatMap((s) => s.designers.map((d) => ({ id: d.id, designerName: d.designer_name, showName: s.name })));
   }, [shows]);
 
-  // Per-show model walk map: modelId -> { count, designers[], hasBackToBack }
   const showModelWalkMaps = useMemo(() => {
     const maps: Record<string, Record<string, { count: number; designers: string[]; hasBackToBack: boolean }>> = {};
     shows.forEach((show) => {
@@ -659,28 +747,21 @@ export default function AdminShowsPage() {
           walkMap[m.model_id].designerIndices.push(dIdx);
         });
       });
-      // Detect back-to-back: model appears in consecutive designer slots
       const result: Record<string, { count: number; designers: string[]; hasBackToBack: boolean }> = {};
       for (const [modelId, info] of Object.entries(walkMap)) {
         let hasBackToBack = false;
         if (info.designerIndices.length > 1) {
           const sorted = [...info.designerIndices].sort((a, b) => a - b);
           for (let i = 0; i < sorted.length - 1; i++) {
-            // Check if this model is near the end of one designer and near the start of the next
             const currDesigner = show.designers[sorted[i]];
             const nextDesigner = show.designers[sorted[i + 1]];
             if (!currDesigner || !nextDesigner) continue;
             const posInCurr = currDesigner.models.findIndex((m) => m.model_id === modelId);
             const posInNext = nextDesigner.models.findIndex((m) => m.model_id === modelId);
             const totalInCurr = currDesigner.models.length;
-            // Back-to-back if in last 3 of current designer AND first 3 of next designer
-            // OR consecutive designer slots (any position)
             if (sorted[i + 1] - sorted[i] === 1) {
-              // Consecutive designers — always a concern
               const fromEnd = totalInCurr - 1 - posInCurr;
-              if (fromEnd <= 2 && posInNext <= 2) {
-                hasBackToBack = true; break;
-              }
+              if (fromEnd <= 2 && posInNext <= 2) { hasBackToBack = true; break; }
             }
           }
         }
@@ -757,6 +838,20 @@ export default function AdminShowsPage() {
       if (expandedShowId === showId) setExpandedShowId(null);
       toast.success("Show deleted");
     }
+  }
+
+  async function renameShow(showId: string, newName: string) {
+    const current = shows.find((s) => s.id === showId);
+    if (!newName.trim() || newName.trim() === current?.name) { setRenamingShowId(null); return; }
+    const res = await fetch(`/api/admin/lineups/${showId}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newName.trim() }),
+    });
+    if (res.ok) {
+      setShows((prev) => prev.map((s) => s.id === showId ? { ...s, name: newName.trim() } : s));
+      toast.success("Show renamed");
+    } else { toast.error("Failed to rename show"); }
+    setRenamingShowId(null);
   }
 
   async function updateShowStatus(showId: string, status: string) {
@@ -897,14 +992,11 @@ export default function AdminShowsPage() {
   }
 
   async function bulkMoveModels(fromDesignerEntryId: string, toDesignerEntryId: string, modelIds: string[]) {
-    // Remove from source
     const delRes = await fetch(`/api/admin/lineups/${fromDesignerEntryId}/models`, {
       method: "DELETE", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ model_ids: modelIds }),
     });
     if (!delRes.ok) { toast.error("Failed to remove models"); return; }
-
-    // Add to target
     const addRes = await fetch(`/api/admin/lineups/${toDesignerEntryId}/models`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ model_ids: modelIds }),
@@ -943,21 +1035,40 @@ export default function AdminShowsPage() {
 
   async function exportShowPdf(showId: string) {
     const res = await fetch(`/api/admin/lineups/${showId}/pdf`);
-    if (res.ok) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; const show = shows.find((s) => s.id === showId); a.download = `show-${show?.name?.replace(/\s+/g, "-").toLowerCase() || showId}.html`; a.click(); URL.revokeObjectURL(url); }
-    else toast.error("Export failed");
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const show = shows.find((s) => s.id === showId);
+      a.download = `show-${show?.name?.replace(/\s+/g, "-").toLowerCase() || showId}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else toast.error("Export failed");
   }
 
   async function exportFullSchedule() {
     const res = await fetch(`/api/admin/lineups/day-sheet?event_id=${selectedEventId}`);
-    if (res.ok) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; const ev = events.find((e) => e.id === selectedEventId); a.download = `schedule-${ev?.name?.replace(/\s+/g, "-").toLowerCase() || "event"}.html`; a.click(); URL.revokeObjectURL(url); }
-    else toast.error("Export failed");
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const ev = events.find((e) => e.id === selectedEventId);
+      a.download = `schedule-${ev?.name?.replace(/\s+/g, "-").toLowerCase() || "event"}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else toast.error("Export failed");
   }
 
   function toggleModelSelection(modelId: string) {
-    setSelectedModelIds((prev) => { const next = new Set(prev); next.has(modelId) ? next.delete(modelId) : next.add(modelId); return next; });
+    setSelectedModelIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(modelId)) { next.delete(modelId); } else { next.add(modelId); }
+      return next;
+    });
   }
 
-  // Designer drag within a show
   function handleDesignerDragEnd(showId: string) {
     return (event: DragEndEvent) => {
       const { active, over } = event;
@@ -973,70 +1084,129 @@ export default function AdminShowsPage() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
 
-  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-6 w-6 animate-spin text-white/20" />
+      </div>
+    );
+  }
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
   const totalModelsAssigned = new Set(shows.flatMap((s) => s.designers.flatMap((d) => d.models.map((m) => m.model_id)))).size;
   const totalDesigners = shows.reduce((sum, s) => sum + s.designers.length, 0);
-
-  // Find which show the active designer belongs to
   const activeDesignerShow = activeDesignerEntryId ? shows.find((s) => s.designers.some((d) => d.id === activeDesignerEntryId)) : null;
   const activeDesigner = activeDesignerShow?.designers.find((d) => d.id === activeDesignerEntryId);
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col">
-      {/* Top Bar */}
-      <div className="border-b px-4 py-3 flex items-center gap-4 flex-wrap bg-background z-10">
-        <Button variant="ghost" size="sm" asChild><Link href="/admin"><ArrowLeft className="h-4 w-4 mr-1" /> Admin</Link></Button>
-        <h1 className="text-lg font-bold">Show Lineup Builder</h1>
+
+      {/* ── Command Bar ─────────────────────────────────────────────────── */}
+      <div className="border-b border-white/[0.06] px-4 py-2.5 flex items-center gap-3 flex-wrap bg-black/30 backdrop-blur-sm z-10 shrink-0">
+        <Button variant="ghost" size="sm" asChild className="text-white/35 hover:text-white/70 hover:bg-white/5 h-8 px-2.5">
+          <Link href="/admin"><ArrowLeft className="h-3.5 w-3.5 mr-1.5" />Admin</Link>
+        </Button>
+        <div className="h-4 w-px bg-white/10" />
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/40 hidden sm:block">Show Builder</p>
+
         <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-          <SelectTrigger className="w-[260px]"><SelectValue placeholder="Select event" /></SelectTrigger>
-          <SelectContent>{events.map((e) => <SelectItem key={e.id} value={e.id}>{e.name} ({e.year})</SelectItem>)}</SelectContent>
+          <SelectTrigger className="w-[240px] h-8 border-white/10 bg-white/[0.04] text-white/75 text-sm hover:border-white/20 transition-colors">
+            <SelectValue placeholder="Select event" />
+          </SelectTrigger>
+          <SelectContent>
+            {events.map((e) => (
+              <SelectItem key={e.id} value={e.id}>{e.name} ({e.year})</SelectItem>
+            ))}
+          </SelectContent>
         </Select>
+
         {selectedEvent && (
-          <div className="flex items-center gap-4 text-sm text-muted-foreground ml-auto">
+          <div className="flex items-center gap-2 ml-auto flex-wrap">
             {selectedEvent.start_date && selectedEvent.end_date && (
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5" />
+              <span className="flex items-center gap-1.5 text-[11px] text-white/35 bg-white/[0.04] border border-white/[0.07] rounded-full px-3 py-1">
+                <Calendar className="h-3 w-3" />
                 {new Date(selectedEvent.start_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                {" – "}{new Date(selectedEvent.end_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                {" – "}
+                {new Date(selectedEvent.end_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
               </span>
             )}
-            <span>{shows.length} shows</span>
-            <span>{totalDesigners} designers</span>
-            <span>{totalModelsAssigned} models</span>
-            {shows.length > 0 && <Button variant="outline" size="sm" className="h-7 text-xs" onClick={exportFullSchedule}><FileText className="h-3 w-3 mr-1" /> Full Schedule</Button>}
+            {[
+              { v: shows.length, label: "shows" },
+              { v: totalDesigners, label: "designers" },
+              { v: totalModelsAssigned, label: "models" },
+            ].map(({ v, label }) => (
+              <span key={label} className="text-[11px] text-white/35 bg-white/[0.04] border border-white/[0.07] rounded-full px-2.5 py-1 tabular-nums">
+                <span className="text-white/60 font-semibold">{v}</span> {label}
+              </span>
+            ))}
+            {shows.length > 0 && (
+              <button
+                onClick={exportFullSchedule}
+                className="flex items-center gap-1.5 text-[11px] text-white/35 bg-white/[0.04] border border-white/[0.07] hover:border-white/20 hover:text-white/60 rounded-full px-3 py-1 transition-all">
+                <FileText className="h-3 w-3" /> Full Schedule
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      {/* 3-Panel Layout */}
+      {/* ── 3-Panel Layout ──────────────────────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden">
+
         {/* Left — Model Pool */}
-        <div className="w-[320px] border-r flex flex-col bg-background">
-          <div className="p-3 border-b space-y-2">
+        <div className="w-[300px] border-r border-white/[0.06] flex flex-col bg-black/20 shrink-0">
+          <div className="px-4 pt-4 pb-3 border-b border-white/[0.06] space-y-3">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-white/25">Model Pool</p>
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search models..." value={modelSearch} onChange={(e) => setModelSearch(e.target.value)} className="pl-9 h-9" />
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-white/20" />
+              <Input
+                placeholder="Search models..."
+                value={modelSearch}
+                onChange={(e) => setModelSearch(e.target.value)}
+                className="pl-9 h-9 bg-white/[0.04] border-white/10 text-white/80 placeholder:text-white/20 text-sm focus:border-pink-500/40"
+              />
             </div>
-            <div className="flex items-center gap-1 flex-wrap">
-              <Button variant={filterAssigned === "all" ? "default" : "ghost"} size="sm" className="h-7 text-xs" onClick={() => setFilterAssigned("all")}>All ({allModels.length})</Button>
-              <Button variant={filterAssigned === "unassigned" ? "default" : "ghost"} size="sm" className="h-7 text-xs" onClick={() => setFilterAssigned("unassigned")}>Free</Button>
-              <Button variant={filterAssigned === "assigned" ? "default" : "ghost"} size="sm" className="h-7 text-xs" onClick={() => setFilterAssigned("assigned")}>In Lineup</Button>
-              {eventModelIds.size > 0 && <Button variant={filterAssigned === "event" ? "default" : "ghost"} size="sm" className="h-7 text-xs" onClick={() => setFilterAssigned("event")}>Confirmed ({eventModelIds.size})</Button>}
+            <div className="flex flex-wrap gap-1">
+              {(
+                [
+                  { key: "all" as const, label: `All · ${allModels.length}` },
+                  { key: "unassigned" as const, label: "Free" },
+                  { key: "assigned" as const, label: "In Lineup" },
+                  ...(eventModelIds.size > 0 ? [{ key: "event" as const, label: `Confirmed · ${eventModelIds.size}` }] : []),
+                ] as { key: typeof filterAssigned; label: string }[]
+              ).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilterAssigned(key)}
+                  className={`text-[10px] uppercase tracking-wide font-medium px-2.5 py-1 rounded-full border transition-all ${
+                    filterAssigned === key
+                      ? "bg-pink-500 border-pink-500 text-white shadow-[0_0_12px_rgba(236,72,153,0.35)]"
+                      : "border-white/[0.08] text-white/30 hover:border-white/20 hover:text-white/55"
+                  }`}>
+                  {label}
+                </button>
+              ))}
               {designerPickIds.size > 0 && (
-                <Button variant={filterAssigned === "picks" ? "default" : "ghost"} size="sm"
-                  className={`h-7 text-xs ${filterAssigned === "picks" ? "bg-yellow-500 hover:bg-yellow-600 border-yellow-500" : "text-yellow-600 hover:text-yellow-600"}`}
-                  onClick={() => setFilterAssigned(filterAssigned === "picks" ? "all" : "picks")}>
-                  <Star className="h-3 w-3 mr-1 fill-current" />Picks ({designerPickIds.size})
-                </Button>
+                <button
+                  onClick={() => setFilterAssigned(filterAssigned === "picks" ? "all" : "picks")}
+                  className={`text-[10px] uppercase tracking-wide font-medium px-2.5 py-1 rounded-full border transition-all flex items-center gap-1 ${
+                    filterAssigned === "picks"
+                      ? "bg-amber-400 border-amber-400 text-black shadow-[0_0_12px_rgba(251,191,36,0.35)]"
+                      : "border-amber-400/20 text-amber-400/60 hover:border-amber-400/50 hover:text-amber-400"
+                  }`}>
+                  <Star className="h-2.5 w-2.5 fill-current" />Picks · {designerPickIds.size}
+                </button>
               )}
             </div>
             <div className="relative">
-              <Input placeholder="Filter by dress size (e.g. 4, XS)" value={filterDress}
-                onChange={(e) => setFilterDress(e.target.value)} className="h-7 text-xs pr-6" />
+              <Input
+                placeholder="Filter by dress size (e.g. 4, XS)"
+                value={filterDress}
+                onChange={(e) => setFilterDress(e.target.value)}
+                className="h-7 text-xs pr-7 bg-white/[0.03] border-white/[0.07] text-white/65 placeholder:text-white/20"
+              />
               {filterDress && (
-                <button onClick={() => setFilterDress("")} className="absolute right-2 top-1.5 text-muted-foreground hover:text-foreground">
+                <button onClick={() => setFilterDress("")} className="absolute right-2 top-1.5 text-white/25 hover:text-white/55 transition-colors">
                   <X className="h-3.5 w-3.5" />
                 </button>
               )}
@@ -1044,112 +1214,195 @@ export default function AdminShowsPage() {
           </div>
 
           {selectedModelIds.size > 0 && activeDesignerEntryId && (
-            <div className="p-2 border-b bg-pink-500/5 flex items-center gap-2">
-              <Button size="sm" className="flex-1 h-8 text-xs bg-pink-500 hover:bg-pink-600" onClick={addModelsToDesigner}>
-                <UserPlus className="h-3 w-3 mr-1" />Add {selectedModelIds.size} to {activeDesigner?.designer_name || "Lineup"}
+            <div className="px-3 py-2 border-b border-white/[0.06] bg-pink-500/[0.05] flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={addModelsToDesigner}
+                className="flex-1 h-8 text-xs bg-pink-500 hover:bg-pink-600 border-0 shadow-[0_0_16px_rgba(236,72,153,0.3)]">
+                <UserPlus className="h-3 w-3 mr-1.5" />
+                Add {selectedModelIds.size} to {activeDesigner?.designer_name || "Lineup"}
               </Button>
-              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setSelectedModelIds(new Set())}>Clear</Button>
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-white/35 hover:text-white/65 px-2" onClick={() => setSelectedModelIds(new Set())}>
+                Clear
+              </Button>
             </div>
           )}
           {selectedModelIds.size > 0 && !activeDesignerEntryId && (
-            <div className="p-2 border-b bg-yellow-500/5"><p className="text-xs text-yellow-600 text-center">Click a designer to add models</p></div>
+            <div className="px-3 py-2.5 border-b border-white/[0.06] bg-amber-500/[0.04]">
+              <p className="text-xs text-amber-400/75 text-center">Click a designer to assign models</p>
+            </div>
           )}
 
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
-            {loadingModels ? <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-              : filteredModels.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">No models found</p>
-              : filteredModels.map((model) => (
-                <ModelPoolCard key={model.id} model={model} assignedCount={modelAssignmentCounts[model.id] || 0}
-                  isSelected={selectedModelIds.has(model.id)} onToggle={() => toggleModelSelection(model.id)}
-                  isPick={designerPickIds.has(model.id)} />
-              ))}
+          <div className="flex-1 overflow-y-auto p-2.5 space-y-1">
+            {loadingModels ? (
+              <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-white/15" /></div>
+            ) : filteredModels.length === 0 ? (
+              <p className="text-sm text-white/20 text-center py-10">No models found</p>
+            ) : filteredModels.map((model) => (
+              <ModelPoolCard
+                key={model.id}
+                model={model}
+                assignedCount={modelAssignmentCounts[model.id] || 0}
+                isSelected={selectedModelIds.has(model.id)}
+                onToggle={() => toggleModelSelection(model.id)}
+                isPick={designerPickIds.has(model.id)}
+              />
+            ))}
           </div>
         </div>
 
         {/* Center — Shows & Designers */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="p-3 border-b flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Shows ({shows.length})</h2>
+          <div className="px-5 py-3 border-b border-white/[0.06] flex items-center justify-between shrink-0">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-white/25">
+              Shows <span className="text-white/15">({shows.length})</span>
+            </p>
             <div className="flex items-center gap-2">
               {shows.length > 1 && (
-                <Button variant="ghost" size="sm" className="h-8 text-xs"
-                  onClick={() => setExpandedShowId(expandedShowId ? null : shows[0]?.id || null)}>
+                <button
+                  onClick={() => setExpandedShowId(expandedShowId ? null : shows[0]?.id || null)}
+                  className="text-[11px] text-white/30 hover:text-white/60 border border-white/[0.07] hover:border-white/15 rounded-full px-3 py-1 transition-all">
                   {expandedShowId ? "Collapse" : "Expand"}
-                </Button>
+                </button>
               )}
-              <Button size="sm" className="h-8 text-xs" onClick={() => setShowCreateShow(true)}><Plus className="h-3 w-3 mr-1" /> Create Show</Button>
+              <button
+                onClick={() => setShowCreateShow(true)}
+                className="flex items-center gap-1.5 text-[11px] font-medium text-white bg-pink-500 hover:bg-pink-600 border-0 rounded-full px-3 py-1.5 transition-all shadow-[0_0_14px_rgba(236,72,153,0.3)]">
+                <Plus className="h-3 w-3" /> New Show
+              </button>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {shows.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">No shows yet.</p>
-                <p className="text-xs mt-1">Click &quot;Create Show&quot; to get started.</p>
+              <div className="text-center py-16">
+                <Calendar className="h-10 w-10 mx-auto mb-3 text-white/10" />
+                <p className="text-sm text-white/25">No shows yet</p>
+                <p className="text-xs text-white/15 mt-1">Click &quot;New Show&quot; to get started</p>
               </div>
             ) : shows.map((show) => {
               const isExpanded = expandedShowId === show.id;
-              const statusColor = show.status === "confirmed" ? "bg-green-500/10 text-green-500" : show.status === "completed" ? "bg-blue-500/10 text-blue-500" : "bg-yellow-500/10 text-yellow-500";
+              const statusBorder = show.status === "confirmed"
+                ? "border-l-emerald-400/60"
+                : show.status === "completed"
+                  ? "border-l-blue-400/50"
+                  : "border-l-amber-400/40";
+              const statusPill = show.status === "confirmed"
+                ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/20"
+                : show.status === "completed"
+                  ? "text-blue-400 bg-blue-400/10 border-blue-400/20"
+                  : "text-amber-400 bg-amber-400/10 border-amber-400/20";
               const showModelCount = show.designers.reduce((s, d) => s + d.models.length, 0);
               const designerIds = show.designers.map((d) => d.id);
 
               return (
-                <Card key={show.id} className="border-border">
-                  <CardHeader className="cursor-pointer py-3 px-4" onClick={() => setExpandedShowId(isExpanded ? null : show.id)}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {isExpanded ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />}
-                        <div className="min-w-0">
-                          <CardTitle className="text-base truncate">{show.name}</CardTitle>
-                          <p className="text-xs text-muted-foreground">
-                            {show.show_date ? new Date(show.show_date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "No date"}
-                            {show.show_time ? ` · ${show.show_time}` : ""}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Badge className={statusColor}>{show.status}</Badge>
-                        <Badge variant="outline"><Users className="h-3 w-3 mr-1" />{show.designers.length} designers · {showModelCount} models</Badge>
+                <div
+                  key={show.id}
+                  className={`border-l-[3px] border border-white/[0.07] rounded-xl overflow-hidden transition-all duration-200 ${statusBorder} ${isExpanded ? "shadow-[0_4px_32px_rgba(0,0,0,0.4)]" : "hover:border-white/[0.12]"}`}>
+
+                  {/* Show header */}
+                  <div
+                    className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${isExpanded ? "bg-white/[0.03]" : "hover:bg-white/[0.02]"}`}
+                    onClick={() => setExpandedShowId(isExpanded ? null : show.id)}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-white/20 shrink-0">
+                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </span>
+                      <div className="min-w-0">
+                        {renamingShowId === show.id ? (
+                          <Input
+                            value={renameShowValue}
+                            onChange={(e) => setRenameShowValue(e.target.value)}
+                            className="h-7 text-sm font-semibold w-[220px] bg-white/5 border-pink-500/40 text-white/90"
+                            autoFocus
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") { e.stopPropagation(); renameShow(show.id, renameShowValue); }
+                              if (e.key === "Escape") { e.stopPropagation(); setRenamingShowId(null); }
+                            }}
+                            onBlur={() => renameShow(show.id, renameShowValue)}
+                          />
+                        ) : (
+                          <p className="text-sm font-semibold uppercase tracking-wide text-white/85 truncate">{show.name}</p>
+                        )}
+                        <p className="text-[11px] text-white/28 mt-0.5">
+                          {show.show_date
+                            ? new Date(show.show_date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+                            : "No date"}
+                          {show.show_time ? ` · ${show.show_time}` : ""}
+                        </p>
                       </div>
                     </div>
-                  </CardHeader>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-[10px] font-medium uppercase tracking-wide border rounded-full px-2.5 py-0.5 ${statusPill}`}>
+                        {show.status}
+                      </span>
+                      <span className="text-[10px] text-white/25 bg-white/[0.04] border border-white/[0.06] rounded-full px-2.5 py-0.5 tabular-nums">
+                        {show.designers.length}d · {showModelCount}m
+                      </span>
+                    </div>
+                  </div>
 
                   {isExpanded && (
-                    <CardContent className="pt-0 px-4 pb-4 space-y-3">
-                      {/* Show actions */}
-                      <div className="flex items-center gap-2 flex-wrap">
+                    <div className="border-t border-white/[0.06] px-4 pb-4 space-y-4">
+                      {/* Show toolbar */}
+                      <div className="flex items-center gap-1.5 flex-wrap pt-3">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setRenamingShowId(show.id); setRenameShowValue(show.name); }}
+                          className="flex items-center gap-1.5 text-xs text-white/35 hover:text-white/70 border border-white/[0.07] hover:border-white/18 rounded-lg px-2.5 py-1.5 transition-all">
+                          <Pencil className="h-3 w-3" /> Rename
+                        </button>
                         <Select value={show.status} onValueChange={(v) => updateShowStatus(show.id, v)}>
-                          <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="w-[120px] h-8 text-xs bg-white/[0.04] border-white/[0.08] text-white/65 hover:border-white/18">
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="draft">Draft</SelectItem>
                             <SelectItem value="confirmed">Confirmed</SelectItem>
                             <SelectItem value="completed">Completed</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Input type="date" value={show.show_date || ""} className="h-8 text-xs w-[150px]"
-                          onChange={(e) => updateShowDateTime(show.id, "show_date", e.target.value)} />
-                        <Input type="time" value={show.show_time || ""} className="h-8 text-xs w-[120px]"
-                          onChange={(e) => updateShowDateTime(show.id, "show_time", e.target.value)} />
-                        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => duplicateShow(show.id)}>
-                          <Copy className="h-3 w-3 mr-1" /> Duplicate
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => exportShowPdf(show.id)}>
-                          <Download className="h-3 w-3 mr-1" /> PDF
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-8 text-xs text-destructive hover:text-destructive"
-                          onClick={() => { if (confirm(`Delete "${show.name}"?`)) deleteShow(show.id); }}>
-                          <Trash2 className="h-3 w-3 mr-1" /> Delete Show
-                        </Button>
-                        <Button variant={modelMapShowId === show.id ? "default" : "outline"} size="sm" className="h-8 text-xs ml-auto"
-                          onClick={() => { setModelMapShowId(modelMapShowId === show.id ? null : show.id); setModelMapSearch(""); }}>
-                          <Eye className="h-3 w-3 mr-1" /> Model Map
-                        </Button>
+                        <Input
+                          type="date"
+                          value={show.show_date || ""}
+                          className="h-8 text-xs w-[145px] bg-white/[0.04] border-white/[0.08] text-white/65"
+                          onChange={(e) => updateShowDateTime(show.id, "show_date", e.target.value)}
+                        />
+                        <Input
+                          type="time"
+                          value={show.show_time || ""}
+                          className="h-8 text-xs w-[110px] bg-white/[0.04] border-white/[0.08] text-white/65"
+                          onChange={(e) => updateShowDateTime(show.id, "show_time", e.target.value)}
+                        />
+                        <button
+                          onClick={() => duplicateShow(show.id)}
+                          className="flex items-center gap-1.5 text-xs text-white/35 hover:text-white/70 border border-white/[0.07] hover:border-white/18 rounded-lg px-2.5 py-1.5 transition-all">
+                          <Copy className="h-3 w-3" /> Duplicate
+                        </button>
+                        <button
+                          onClick={() => exportShowPdf(show.id)}
+                          className="flex items-center gap-1.5 text-xs text-white/35 hover:text-white/70 border border-white/[0.07] hover:border-white/18 rounded-lg px-2.5 py-1.5 transition-all">
+                          <Download className="h-3 w-3" /> PDF
+                        </button>
+                        <button
+                          onClick={() => { if (confirm(`Delete "${show.name}"?`)) deleteShow(show.id); }}
+                          className="flex items-center gap-1.5 text-xs text-red-500/50 hover:text-red-400 border border-white/[0.07] hover:border-red-500/25 rounded-lg px-2.5 py-1.5 transition-all">
+                          <Trash2 className="h-3 w-3" /> Delete
+                        </button>
+                        <button
+                          onClick={() => { setModelMapShowId(modelMapShowId === show.id ? null : show.id); setModelMapSearch(""); }}
+                          className={`ml-auto flex items-center gap-1.5 text-xs rounded-lg px-2.5 py-1.5 border transition-all ${
+                            modelMapShowId === show.id
+                              ? "bg-pink-500 border-pink-500 text-white shadow-[0_0_12px_rgba(236,72,153,0.3)]"
+                              : "text-white/35 hover:text-white/70 border-white/[0.07] hover:border-white/18"
+                          }`}>
+                          <Eye className="h-3 w-3" /> Model Map
+                        </button>
                       </div>
 
                       {/* Model Map Panel */}
                       {modelMapShowId === show.id && show.designers.length > 0 && (() => {
                         const walkMap = showModelWalkMaps[show.id] || {};
-                        // Build full model list with details
                         const modelDetails: { modelId: string; model: ModelInfo; walks: { designerName: string; designerIdx: number; walkPosition: number }[]; hasBackToBack: boolean }[] = [];
                         const seen = new Set<string>();
                         show.designers.forEach((d, dIdx) => {
@@ -1167,7 +1420,6 @@ export default function AdminShowsPage() {
                             });
                           });
                         });
-                        // Sort: back-to-back first, then multi-walk, then single
                         modelDetails.sort((a, b) => {
                           if (a.hasBackToBack !== b.hasBackToBack) return a.hasBackToBack ? -1 : 1;
                           if (a.walks.length !== b.walks.length) return b.walks.length - a.walks.length;
@@ -1181,161 +1433,231 @@ export default function AdminShowsPage() {
                         const backToBackCount = modelDetails.filter((x) => x.hasBackToBack).length;
 
                         return (
-                          <div className="border rounded-lg bg-muted/30 p-3 space-y-2">
-                            <div className="flex items-center justify-between gap-2">
+                          <div className="border border-white/[0.07] rounded-xl bg-white/[0.02] p-3.5 space-y-3">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
                               <div className="flex items-center gap-3">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Model Map</p>
-                                <span className="text-xs text-muted-foreground">{modelDetails.length} models</span>
-                                {multiWalkCount > 0 && <Badge variant="secondary" className="text-xs"><Repeat className="h-2.5 w-2.5 mr-1" />{multiWalkCount} multi-walk</Badge>}
-                                {backToBackCount > 0 && <Badge variant="destructive" className="text-xs"><AlertTriangle className="h-2.5 w-2.5 mr-1" />{backToBackCount} back-to-back</Badge>}
+                                <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-white/30">Model Map</p>
+                                <span className="text-[11px] text-white/25">{modelDetails.length} models</span>
+                                {multiWalkCount > 0 && (
+                                  <span className="flex items-center gap-1 text-[10px] text-blue-400 bg-blue-400/10 border border-blue-400/20 rounded-full px-2 py-0.5">
+                                    <Repeat className="h-2.5 w-2.5" />{multiWalkCount} multi-walk
+                                  </span>
+                                )}
+                                {backToBackCount > 0 && (
+                                  <span className="flex items-center gap-1 text-[10px] text-red-400 bg-red-400/10 border border-red-400/20 rounded-full px-2 py-0.5">
+                                    <AlertTriangle className="h-2.5 w-2.5" />{backToBackCount} B2B
+                                  </span>
+                                )}
                               </div>
                               <div className="relative w-[180px]">
-                                <Search className="absolute left-2 top-1.5 h-3.5 w-3.5 text-muted-foreground" />
-                                <Input placeholder="Find model..." value={modelMapSearch} onChange={(e) => setModelMapSearch(e.target.value)} className="h-7 text-xs pl-7" />
+                                <Search className="absolute left-2.5 top-1.5 h-3.5 w-3.5 text-white/20" />
+                                <Input
+                                  placeholder="Find model..."
+                                  value={modelMapSearch}
+                                  onChange={(e) => setModelMapSearch(e.target.value)}
+                                  className="h-7 text-xs pl-7 bg-white/[0.04] border-white/[0.08] text-white/70 placeholder:text-white/20"
+                                />
                               </div>
                             </div>
-                            {/* Designer column headers + model rows — horizontally scrollable for many designers */}
                             <div className="overflow-x-auto">
-                              <div className="flex items-center gap-1 text-[10px] text-muted-foreground uppercase tracking-wider pl-[140px] min-w-fit">
+                              <div className="flex items-center gap-1 text-[10px] text-white/20 uppercase tracking-wider pl-[140px] min-w-fit mb-1">
                                 {show.designers.map((d) => (
                                   <div key={d.id} className="w-[60px] shrink-0 truncate text-center" title={d.designer_name}>
                                     {d.designer_name.length > 8 ? d.designer_name.slice(0, 6) + "…" : d.designer_name}
                                   </div>
                                 ))}
                               </div>
-                              {/* Model rows */}
                               <div className="max-h-[400px] overflow-y-auto space-y-0.5">
                                 {filtered.map((entry) => {
                                   const walkByDesigner = new Map(entry.walks.map((w) => [w.designerIdx, w]));
                                   return (
-                                    <div key={entry.modelId} className={`flex items-center gap-1 rounded px-1.5 py-1 text-xs min-w-fit ${entry.hasBackToBack ? "bg-red-500/10 border border-red-500/20" : entry.walks.length > 1 ? "bg-blue-500/5 border border-blue-500/10" : "hover:bg-muted/50"}`}>
-                                    <div className="flex items-center gap-2 w-[130px] shrink-0 min-w-0">
-                                      <div className="relative h-6 w-6 rounded-full overflow-hidden bg-muted shrink-0">
-                                        {entry.model.profile_photo_url ? <Image src={entry.model.profile_photo_url} alt="" fill className="object-cover" />
-                                          : <div className="h-full w-full flex items-center justify-center text-[8px] text-muted-foreground">{entry.model.first_name?.[0]}{entry.model.last_name?.[0]}</div>}
-                                      </div>
-                                      <div className="min-w-0">
-                                        <p className="truncate font-medium leading-tight">{entry.model.first_name} {entry.model.last_name}</p>
-                                        {entry.walks.length > 1 && (
-                                          <p className="text-[10px] text-muted-foreground leading-tight">{entry.walks.length} walks{entry.hasBackToBack ? " · B2B" : ""}</p>
-                                        )}
-                                      </div>
-                                    </div>
-                                    {show.designers.map((d, dIdx) => {
-                                      const walk = walkByDesigner.get(dIdx);
-                                      const isB2bColumn = walk && entry.hasBackToBack && entry.walks.some((ow) => ow.designerIdx !== dIdx && Math.abs(ow.designerIdx - dIdx) === 1);
-                                      return (
-                                        <div key={d.id} className="w-[60px] shrink-0 text-center">
-                                          {walk ? (
-                                            <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold ${isB2bColumn ? "bg-red-500 text-white" : "bg-pink-500 text-white"}`}>
-                                              {walk.walkPosition}
-                                            </span>
-                                          ) : (
-                                            <span className="text-muted-foreground/30">—</span>
+                                    <div
+                                      key={entry.modelId}
+                                      className={`flex items-center gap-1 rounded-lg px-1.5 py-1 text-xs min-w-fit ${
+                                        entry.hasBackToBack
+                                          ? "bg-red-500/[0.08] border border-red-500/15"
+                                          : entry.walks.length > 1
+                                            ? "bg-blue-500/[0.05] border border-blue-500/10"
+                                            : "hover:bg-white/[0.03] border border-transparent"
+                                      }`}>
+                                      <div className="flex items-center gap-2 w-[130px] shrink-0 min-w-0">
+                                        <div className="relative h-6 w-6 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
+                                          {entry.model.profile_photo_url
+                                            ? <Image src={entry.model.profile_photo_url} alt="" fill className="object-cover" />
+                                            : <div className="h-full w-full flex items-center justify-center text-[8px] text-white/25">{entry.model.first_name?.[0]}{entry.model.last_name?.[0]}</div>}
+                                        </div>
+                                        <div className="min-w-0">
+                                          <p className="truncate font-medium text-white/75 leading-tight">{entry.model.first_name} {entry.model.last_name}</p>
+                                          {entry.walks.length > 1 && (
+                                            <p className="text-[10px] text-white/30 leading-tight">{entry.walks.length} walks{entry.hasBackToBack ? " · B2B" : ""}</p>
                                           )}
                                         </div>
-                                      );
-                                    })}
-                                  </div>
-                                );
-                              })}
+                                      </div>
+                                      {show.designers.map((d, dIdx) => {
+                                        const walk = walkByDesigner.get(dIdx);
+                                        const isB2bColumn = walk && entry.hasBackToBack && entry.walks.some((ow) => ow.designerIdx !== dIdx && Math.abs(ow.designerIdx - dIdx) === 1);
+                                        return (
+                                          <div key={d.id} className="w-[60px] shrink-0 text-center">
+                                            {walk ? (
+                                              <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold ${isB2bColumn ? "bg-red-500 text-white" : "bg-pink-500 text-white"}`}>
+                                                {walk.walkPosition}
+                                              </span>
+                                            ) : (
+                                              <span className="text-white/10">—</span>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           </div>
                         );
                       })()}
 
-                      {/* Designers list */}
-                      <div className="space-y-2">
+                      {/* Designers section */}
+                      <div className="space-y-2.5">
                         <div className="flex items-center justify-between">
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Designers ({show.designers.length})</p>
+                          <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-white/25">
+                            Designers <span className="text-white/15">({show.designers.length})</span>
+                          </p>
                           {addDesignerShowId === show.id ? (
-                            <div className="flex items-center gap-1">
-                              <Input placeholder="Designer / Brand name" value={newDesignerName} onChange={(e) => setNewDesignerName(e.target.value)}
-                                className="h-7 text-xs w-[200px]" autoFocus
-                                onKeyDown={(e) => { if (e.key === "Enter") addDesigner(show.id); if (e.key === "Escape") { setAddDesignerShowId(null); setNewDesignerName(""); } }} />
-                              <Button size="sm" className="h-7 text-xs" onClick={() => addDesigner(show.id)} disabled={!newDesignerName.trim()}>Add</Button>
-                              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setAddDesignerShowId(null); setNewDesignerName(""); }}>
-                                <X className="h-3 w-3" />
-                              </Button>
+                            <div className="flex items-center gap-1.5">
+                              <Input
+                                placeholder="Designer / Brand name"
+                                value={newDesignerName}
+                                onChange={(e) => setNewDesignerName(e.target.value)}
+                                className="h-7 text-xs w-[200px] bg-white/[0.04] border-white/[0.08] text-white/80 placeholder:text-white/20"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") addDesigner(show.id);
+                                  if (e.key === "Escape") { setAddDesignerShowId(null); setNewDesignerName(""); }
+                                }}
+                              />
+                              <Button size="sm" className="h-7 text-xs bg-pink-500 hover:bg-pink-600 border-0" onClick={() => addDesigner(show.id)} disabled={!newDesignerName.trim()}>Add</Button>
+                              <button
+                                className="text-white/30 hover:text-white/60 transition-colors"
+                                onClick={() => { setAddDesignerShowId(null); setNewDesignerName(""); }}>
+                                <X className="h-4 w-4" />
+                              </button>
                             </div>
                           ) : (
-                            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setAddDesignerShowId(show.id)}>
-                              <Plus className="h-3 w-3 mr-1" /> Add Designer
-                            </Button>
+                            <button
+                              onClick={() => setAddDesignerShowId(show.id)}
+                              className="flex items-center gap-1 text-[10px] uppercase tracking-wide font-medium text-white/30 hover:text-pink-400 border border-white/[0.07] hover:border-pink-500/25 rounded-full px-3 py-1 transition-all">
+                              <Plus className="h-3 w-3" /> Add Designer
+                            </button>
                           )}
                         </div>
 
                         {show.designers.length === 0 ? (
-                          <p className="text-xs text-muted-foreground text-center py-4">No designers yet. Click &quot;Add Designer&quot; above.</p>
+                          <p className="text-xs text-white/20 text-center py-5">No designers yet. Click &quot;Add Designer&quot; above.</p>
                         ) : (
-                          <DndContext sensors={designerSensors} collisionDetection={closestCenter}
+                          <DndContext
+                            sensors={designerSensors}
+                            collisionDetection={closestCenter}
                             onDragEnd={handleDesignerDragEnd(show.id)}>
                             <SortableContext items={designerIds} strategy={verticalListSortingStrategy}>
                               <div className="space-y-1.5">
                                 {show.designers.map((d) => (
-                                  <SortableDesignerPanel key={d.id} designer={d} showId={show.id}
+                                  <SortableDesignerPanel
+                                    key={d.id}
+                                    designer={d}
+                                    showId={show.id}
                                     isActive={activeDesignerEntryId === d.id}
                                     onActivate={() => setActiveDesignerEntryId(activeDesignerEntryId === d.id ? null : d.id)}
-                                    onRemoveModel={removeModel} onReorder={reorderModels} onDeleteDesigner={deleteDesigner}
-                                    onRenameDesigner={renameDesigner} onMoveDesigner={moveDesigner}
-                                    onBulkRemove={bulkRemoveModels} onBulkMove={bulkMoveModels}
-                                    onUpdateOutfitNotes={updateOutfitNotes} modelConflicts={modelConflictsByDesigner[d.id] || {}}
+                                    onRemoveModel={removeModel}
+                                    onReorder={reorderModels}
+                                    onDeleteDesigner={deleteDesigner}
+                                    onRenameDesigner={renameDesigner}
+                                    onMoveDesigner={moveDesigner}
+                                    onBulkRemove={bulkRemoveModels}
+                                    onBulkMove={bulkMoveModels}
+                                    onUpdateOutfitNotes={updateOutfitNotes}
+                                    modelConflicts={modelConflictsByDesigner[d.id] || {}}
                                     otherShows={shows.filter((s) => s.id !== show.id).map((s) => ({ id: s.id, name: s.name, show_date: s.show_date }))}
                                     allDesigners={allDesignersList}
-                                    showModelWalkMap={showModelWalkMaps[show.id] || {}} />
+                                    showModelWalkMap={showModelWalkMaps[show.id] || {}}
+                                  />
                                 ))}
                               </div>
                             </SortableContext>
                           </DndContext>
                         )}
                       </div>
-                    </CardContent>
+                    </div>
                   )}
-                </Card>
+                </div>
               );
             })}
           </div>
         </div>
 
-        {/* Right — Day Overview */}
-        <div className="w-[260px] border-l flex flex-col bg-background">
-          <div className="p-3 border-b"><h2 className="text-sm font-semibold">Day Overview</h2></div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {/* Right — Schedule Overview */}
+        <div className="w-[232px] border-l border-white/[0.06] flex flex-col bg-black/20 shrink-0">
+          <div className="px-4 pt-4 pb-3 border-b border-white/[0.06]">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-white/25">Schedule</p>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-4">
             {Object.keys(dayOverview).length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-8">No shows to display</p>
+              <p className="text-xs text-white/18 text-center py-10">No shows</p>
             ) : Object.entries(dayOverview).sort(([a], [b]) => a.localeCompare(b)).map(([date, info]) => (
-              <Card key={date} className="border-border">
-                <CardContent className="p-3">
-                  <p className="text-sm font-medium mb-2">
-                    {date === "Unscheduled" ? "Unscheduled" : <><Calendar className="h-3.5 w-3.5 inline mr-1" />{new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</>}
-                  </p>
-                  <div className="space-y-1.5">
-                    {info.shows.sort((a, b) => a.show_order - b.show_order).map((s) => {
-                      const statusDot = s.status === "confirmed" ? "bg-green-500" : s.status === "completed" ? "bg-blue-500" : "bg-yellow-500";
-                      return (
-                        <button key={s.id} onClick={() => setExpandedShowId(s.id)}
-                          className={`w-full text-left text-xs p-2 rounded border transition-colors ${expandedShowId === s.id ? "border-pink-500 bg-pink-500/5" : "border-border hover:border-pink-500/30"}`}>
-                          <div className="flex items-center gap-2">
-                            <span className={`h-2 w-2 rounded-full ${statusDot} shrink-0`} />
-                            <span className="truncate font-medium">{s.name}</span>
-                            <span className="ml-auto text-muted-foreground shrink-0">{s.designers.length}d · {s.designers.reduce((sum, d) => sum + d.models.length, 0)}m</span>
-                          </div>
-                          {s.show_time && <span className="text-muted-foreground flex items-center gap-1 mt-0.5 ml-4"><Clock className="h-2.5 w-2.5" />{s.show_time}</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">{info.shows.length} shows · {info.totalDesigners} designers · {info.totalModels} models</p>
-                </CardContent>
-              </Card>
+              <div key={date} className="space-y-1.5">
+                <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-white/22 px-0.5 flex items-center gap-1.5">
+                  <Calendar className="h-3 w-3 shrink-0" />
+                  {date === "Unscheduled"
+                    ? "Unscheduled"
+                    : new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                </p>
+                {info.shows.sort((a, b) => a.show_order - b.show_order).map((s) => {
+                  const dot = s.status === "confirmed" ? "bg-emerald-400" : s.status === "completed" ? "bg-blue-400" : "bg-amber-400";
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => setExpandedShowId(s.id)}
+                      className={`w-full text-left rounded-lg border px-2.5 py-2 transition-all ${
+                        expandedShowId === s.id
+                          ? "border-pink-500/40 bg-pink-500/[0.06]"
+                          : "border-white/[0.06] bg-white/[0.01] hover:border-white/14 hover:bg-white/[0.03]"
+                      }`}>
+                      <div className="flex items-center gap-2">
+                        <span className={`h-1.5 w-1.5 rounded-full ${dot} shrink-0`} />
+                        <span className="truncate text-[11px] font-medium text-white/65 uppercase tracking-wide">{s.name}</span>
+                      </div>
+                      {s.show_time && (
+                        <span className="flex items-center gap-1 mt-1 ml-[18px] text-[10px] text-white/25">
+                          <Clock className="h-2.5 w-2.5" />{s.show_time}
+                        </span>
+                      )}
+                      <div className="flex items-center gap-2 mt-0.5 ml-[18px] text-[10px] text-white/20 tabular-nums">
+                        <span>{s.designers.length}d</span>
+                        <span>·</span>
+                        <span>{s.designers.reduce((sum, d) => sum + d.models.length, 0)}m</span>
+                      </div>
+                    </button>
+                  );
+                })}
+                <p className="text-[10px] text-white/18 px-0.5 tabular-nums">
+                  {info.shows.length} show{info.shows.length !== 1 ? "s" : ""} · {info.totalDesigners}d · {info.totalModels}m
+                </p>
+              </div>
             ))}
+
             {shows.length > 0 && (
-              <div className="border-t pt-3 mt-3 space-y-1">
-                <p className="text-xs text-muted-foreground"><strong>{shows.length}</strong> total shows</p>
-                <p className="text-xs text-muted-foreground"><strong>{totalDesigners}</strong> total designers</p>
-                <p className="text-xs text-muted-foreground"><strong>{totalModelsAssigned}</strong> unique models</p>
-                <p className="text-xs text-muted-foreground"><strong>{shows.reduce((s, sh) => s + sh.designers.reduce((d, de) => d + de.models.length, 0), 0)}</strong> total walk slots</p>
+              <div className="border-t border-white/[0.06] pt-4 space-y-2">
+                {[
+                  { label: "Total Shows", value: shows.length },
+                  { label: "Designers", value: totalDesigners },
+                  { label: "Models", value: totalModelsAssigned },
+                  { label: "Walk Slots", value: shows.reduce((s, sh) => s + sh.designers.reduce((d, de) => d + de.models.length, 0), 0) },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex items-center justify-between px-0.5">
+                    <span className="text-[10px] text-white/22 uppercase tracking-wide">{label}</span>
+                    <span className="text-xs font-semibold text-white/45 tabular-nums">{value}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -1344,18 +1666,45 @@ export default function AdminShowsPage() {
 
       {/* Create Show Dialog */}
       <Dialog open={showCreateShow} onOpenChange={setShowCreateShow}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Create Show</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-md bg-zinc-950 border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-white/85 uppercase tracking-wide text-sm">New Show</DialogTitle>
+          </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Show Name</Label>
-              <Input placeholder="e.g. Opening Night, Daytime Show, Emerging Designers" value={newShowName} onChange={(e) => setNewShowName(e.target.value)} />
+              <Label className="text-[10px] uppercase tracking-[0.15em] text-white/35 font-semibold">Show Name</Label>
+              <Input
+                placeholder="e.g. Opening Night, Daytime Show, Emerging Designers"
+                value={newShowName}
+                onChange={(e) => setNewShowName(e.target.value)}
+                className="bg-white/[0.04] border-white/[0.08] text-white/85 placeholder:text-white/20 focus:border-pink-500/40"
+                onKeyDown={(e) => { if (e.key === "Enter" && newShowName && !savingShow) createShow(); }}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2"><Label>Date</Label><Input type="date" value={newShowDate} onChange={(e) => setNewShowDate(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Time</Label><Input type="time" value={newShowTime} onChange={(e) => setNewShowTime(e.target.value)} /></div>
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-[0.15em] text-white/35 font-semibold">Date</Label>
+                <Input
+                  type="date"
+                  value={newShowDate}
+                  onChange={(e) => setNewShowDate(e.target.value)}
+                  className="bg-white/[0.04] border-white/[0.08] text-white/75"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-[0.15em] text-white/35 font-semibold">Time</Label>
+                <Input
+                  type="time"
+                  value={newShowTime}
+                  onChange={(e) => setNewShowTime(e.target.value)}
+                  className="bg-white/[0.04] border-white/[0.08] text-white/75"
+                />
+              </div>
             </div>
-            <Button onClick={createShow} disabled={!newShowName || savingShow} className="w-full">
+            <Button
+              onClick={createShow}
+              disabled={!newShowName || savingShow}
+              className="w-full bg-pink-500 hover:bg-pink-600 border-0 shadow-[0_0_20px_rgba(236,72,153,0.25)] disabled:opacity-40">
               {savingShow ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
               Create Show
             </Button>
