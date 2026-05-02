@@ -23,8 +23,8 @@ export async function GET(
     .eq("username", modelSlug)
     .single() as { data: { id: string; affiliate_code: string | null; digis_username: string | null } | null };
 
-  // Build destination URL — always go to Digis shows
-  const dest = new URL(`${DIGIS_BASE_URL}/shows`);
+  // Build destination URL — go to model's Digis profile if available, else homepage
+  const dest = new URL(model?.digis_username ? `${DIGIS_BASE_URL}/${model.digis_username}` : DIGIS_BASE_URL);
 
   if (model?.affiliate_code) {
     dest.searchParams.set("ref", model.affiliate_code);

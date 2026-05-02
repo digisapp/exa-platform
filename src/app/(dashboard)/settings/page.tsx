@@ -1658,11 +1658,12 @@ export default function ProfilePage() {
                     id="digis_username"
                     value={model.digis_username || ""}
                     onChange={(e) => {
-                      // Strip @ prefix, spaces, and normalize to lowercase
-                      const cleaned = e.target.value
-                        .replace(/^@/, "")
-                        .replace(/\s/g, "")
-                        .toLowerCase();
+                      // Accept full digis.cc URLs or bare usernames
+                      let cleaned = e.target.value.trim().toLowerCase();
+                      if (cleaned.includes("digis.cc/")) {
+                        cleaned = cleaned.split("digis.cc/").pop() || cleaned;
+                      }
+                      cleaned = cleaned.replace(/^@/, "").replace(/\s/g, "").replace(/\/$/, "");
                       setModel({ ...model, digis_username: cleaned });
                     }}
                     placeholder="your-digis-username"
