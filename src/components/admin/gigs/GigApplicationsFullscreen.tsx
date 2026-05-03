@@ -391,12 +391,12 @@ export default function GigApplicationsFullscreen({
 
           <div className="flex items-center gap-2">
             <span className="text-xs text-white/50">Height:</span>
-            <Select value={minHeightFilter} onValueChange={setMinHeightFilter}>
+            <Select value={minHeightFilter || "any"} onValueChange={(v) => setMinHeightFilter(v === "any" ? "" : v)}>
               <SelectTrigger className="h-7 text-xs w-[90px] bg-white/5 border-white/10 text-white rounded-xl">
                 <SelectValue placeholder="Any" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any</SelectItem>
+                <SelectItem value="any">Any</SelectItem>
                 {HEIGHT_OPTIONS.map((h) => (
                   <SelectItem key={h} value={h}>{h}+</SelectItem>
                 ))}

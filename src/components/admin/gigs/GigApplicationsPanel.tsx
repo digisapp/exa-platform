@@ -524,12 +524,12 @@ export default function GigApplicationsPanel({
               {/* Min Height */}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">Height:</span>
-                <Select value={minHeightFilter} onValueChange={setMinHeightFilter}>
+                <Select value={minHeightFilter || "any"} onValueChange={(v) => setMinHeightFilter(v === "any" ? "" : v)}>
                   <SelectTrigger className="h-7 text-xs w-[90px]">
                     <SelectValue placeholder="Any" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
+                    <SelectItem value="any">Any</SelectItem>
                     {HEIGHT_OPTIONS.map((h) => (
                       <SelectItem key={h} value={h}>{h}+</SelectItem>
                     ))}
