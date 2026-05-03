@@ -292,55 +292,49 @@ export default function GigApplicationsPanel({
               {/* Grid View Button */}
               {selectedGigId && applications.length > 0 && (
                 <Button
-                  size="sm"
                   variant="outline"
                   onClick={() => setShowFullscreen(true)}
-                  className="text-xs border-violet-500/40 text-violet-400 hover:bg-violet-500/10 hover:text-violet-300"
+                  className="border-violet-500/40 text-violet-400 hover:bg-violet-500/10 hover:text-violet-300"
                   title="Full-screen grid view"
                 >
-                  <LayoutGrid className="h-3 w-3 mr-1" />
+                  <LayoutGrid className="h-4 w-4 mr-2" />
                   Grid
                 </Button>
               )}
               {/* Speed Review Button */}
               {selectedGigId && applications.filter(a => a.status === "pending").length > 0 && (
                 <Button
-                  size="sm"
                   variant="outline"
                   onClick={() => setShowSpeedReview(true)}
-                  className="text-xs border-pink-500/40 text-pink-400 hover:bg-pink-500/10 hover:text-pink-300"
+                  className="border-pink-500/40 text-pink-400 hover:bg-pink-500/10 hover:text-pink-300"
                   title="Speed review pending applications"
                 >
-                  <Zap className="h-3 w-3 mr-1" />
+                  <Zap className="h-4 w-4 mr-2" />
                   Speed Review ({applications.filter(a => a.status === "pending").length})
                 </Button>
               )}
               {/* Mass Email Button */}
               {selectedGigId && applications.length > 0 && (
                 <Button
-                  size="sm"
                   variant="outline"
                   onClick={() => setShowMassEmailDialog(true)}
-                  className="text-xs"
                   title="Send mass email to applicants"
                 >
-                  <Mail className="h-3 w-3 mr-1" />
+                  <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
               )}
               {/* Badge Sync Button - only show for event-linked gigs */}
               {selectedGigId && selectedGig?.event_id && (
                 <Button
-                  size="sm"
                   variant="outline"
                   onClick={onSyncBadges}
                   disabled={syncingBadges}
-                  className="text-xs"
                 >
                   {syncingBadges ? (
-                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : (
-                    <RefreshCw className="h-3 w-3 mr-1" />
+                    <RefreshCw className="h-4 w-4 mr-2" />
                   )}
                   Sync Badges
                 </Button>
