@@ -77,6 +77,24 @@ interface TicketStats {
   total_commissions: number;
 }
 
+interface TicketPurchase {
+  id: string;
+  ticket_tier_id: string;
+  buyer_email: string;
+  buyer_name: string | null;
+  buyer_phone: string | null;
+  quantity: number;
+  unit_price_cents: number;
+  total_price_cents: number;
+  status: "pending" | "completed" | "refunded" | "cancelled";
+  completed_at: string | null;
+  created_at: string;
+  affiliate_model_id: string | null;
+  stripe_payment_intent_id: string | null;
+  tier?: { name: string };
+  affiliate_model?: { username: string; first_name: string | null; last_name: string | null } | null;
+}
+
 interface AffiliateCommission {
   id: string;
   model_id: string;
@@ -119,6 +137,8 @@ export default function AdminEventsPage() {
   const [referralSummaries, setReferralSummaries] = useState<ModelReferralSummary[]>([]);
   const [commissions, setCommissions] = useState<AffiliateCommission[]>([]);
   const [showCommissions, setShowCommissions] = useState(false);
+  const [ticketPurchases, setTicketPurchases] = useState<TicketPurchase[]>([]);
+  const [showSales, setShowSales] = useState(false);
 
   // Tier form state
   const [tierForm, setTierForm] = useState({
@@ -253,6 +273,15 @@ export default function AdminEventsPage() {
     setReferralSummaries(summaries);
   }, [supabase]);
 
+  const fetchTicketPurchases = useCallback(async (eventId: string) => {
+    const { data } = await (supabase as any)
+      .from("ticket_purchases")
+      .select("*, tier:ticket_tiers(name), affiliate_model:models!affiliate_model_id(username, first_name, last_name)")
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: false }) as { data: TicketPurchase[] | null };
+    setTicketPurchases(data || []);
+  }, [supabase]);
+
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
@@ -262,8 +291,9 @@ export default function AdminEventsPage() {
       fetchTiers(selectedEvent.id);
       fetchStats(selectedEvent.id);
       fetchReferrals(selectedEvent.id);
+      fetchTicketPurchases(selectedEvent.id);
     }
-  }, [selectedEvent, fetchTiers, fetchStats, fetchReferrals]);
+  }, [selectedEvent, fetchTiers, fetchStats, fetchReferrals, fetchTicketPurchases]);
 
   async function toggleTicketsEnabled(event: Event) {
     const { error } = await (supabase as any)
@@ -517,6 +547,80 @@ export default function AdminEventsPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Ticket Sales */}
+              {selectedEvent.tickets_enabled && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <Ticket className="h-5 w-5" />
+                          Ticket Sales
+                        </CardTitle>
+                        <CardDescription>
+                          {ticketPurchases.filter(p => p.status === "completed").length} completed purchases
+                        </CardDescription>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => setShowSales(!showSales)}>
+                        {showSales ? "Hide" : "View All"}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  {showSales && (
+                    <CardContent>
+                      {ticketPurchases.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">No ticket purchases yet.</p>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Buyer</TableHead>
+                              <TableHead>Tier</TableHead>
+                              <TableHead className="text-center">Qty</TableHead>
+                              <TableHead className="text-right">Amount</TableHead>
+                              <TableHead>Referred By</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Date</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {ticketPurchases.map((p) => (
+                              <TableRow key={p.id}>
+                                <TableCell>
+                                  <p className="font-medium text-sm">{p.buyer_name || "—"}</p>
+                                  <p className="text-xs text-muted-foreground">{p.buyer_email}</p>
+                                </TableCell>
+                                <TableCell className="text-sm">{(p.tier as any)?.name || "—"}</TableCell>
+                                <TableCell className="text-center">{p.quantity}</TableCell>
+                                <TableCell className="text-right">${(p.total_price_cents / 100).toFixed(2)}</TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {p.affiliate_model
+                                    ? `@${(p.affiliate_model as any).username}`
+                                    : <span className="text-xs opacity-50">Direct</span>}
+                                </TableCell>
+                                <TableCell>
+                                  <span className={`px-2 py-1 rounded-full text-xs ${
+                                    p.status === "completed" ? "bg-green-500/10 text-green-500" :
+                                    p.status === "refunded" ? "bg-red-500/10 text-red-500" :
+                                    p.status === "cancelled" ? "bg-red-500/10 text-red-500" :
+                                    "bg-amber-500/10 text-amber-500"
+                                  }`}>
+                                    {p.status}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-xs text-muted-foreground">
+                                  {format(new Date(p.created_at), "MMM d, yyyy")}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </CardContent>
+                  )}
+                </Card>
+              )}
 
               {/* Ticket Tiers */}
               {selectedEvent.tickets_enabled && (
