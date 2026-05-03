@@ -110,6 +110,12 @@ interface ModelStats {
   last_post: string | null;
 }
 
+function resolveMediaUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
+}
+
 function CopyButton({ text, label }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -1084,7 +1090,7 @@ export default function AdminModelDetailPage() {
                     className="relative aspect-square rounded-lg overflow-hidden group border-2 border-transparent hover:border-pink-500 focus-visible:border-pink-500 transition-all outline-none disabled:opacity-50"
                   >
                     <Image
-                      src={img.media_url}
+                      src={resolveMediaUrl(img.media_url)}
                       alt={img.title || "Portfolio image"}
                       fill
                       className="object-cover"
