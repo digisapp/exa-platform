@@ -155,12 +155,7 @@ export const ModelCard = memo(function ModelCard({
   };
 
   // Prefer the high-res portrait (portfolio photo) for the card, fall back to
-  // the square profile_photo_url. The helper at /models/page.tsx attaches
-  // hero_portrait_url per model using the same criteria as the profile-page
-  // hero (>=1500px, portrait orientation). This fixes the pre-existing crop
-  // issue where a square face photo was forced into a 3:4 card and lost
-  // composition.
-  const cardImageUrl = resolveMediaUrl(model.hero_portrait_url || model.profile_photo_url);
+  const cardImageUrl = resolveMediaUrl(model.profile_photo_url);
 
   return (
     <Link href={`/${model.username}`} target="_blank" rel="noopener noreferrer">
