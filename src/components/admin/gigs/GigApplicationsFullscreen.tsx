@@ -126,7 +126,7 @@ function ApplicationCard({
         {app.model?.profile_photo_url ? (
           <Image
             src={app.model.profile_photo_url}
-            alt={displayName}
+            alt={displayName ?? ""}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover object-top group-hover:scale-110 transition-transform duration-300"
