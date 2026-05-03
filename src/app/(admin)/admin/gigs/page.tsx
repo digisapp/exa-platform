@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -786,7 +785,7 @@ export default function AdminGigsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-white/30" />
       </div>
     );
   }
@@ -803,13 +802,16 @@ export default function AdminGigsPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-3xl font-bold exa-gradient-text">
               {activeTab === "gigs" ? "Manage Gigs" : "Manage Workshops"}
             </h1>
+            <p className="text-xs text-white/40 mt-1">
+              {activeTab === "gigs" ? `${gigs.length} gig${gigs.length !== 1 ? "s" : ""} total` : "Training workshops"}
+            </p>
           </div>
         </div>
         {activeTab === "gigs" && (
-          <Button onClick={() => { resetForm(); setShowForm(true); }}>
+          <Button onClick={() => { resetForm(); setShowForm(true); }} className="exa-gradient-button border-0">
             <Plus className="h-4 w-4 mr-2" />
             Create Gig
           </Button>
@@ -817,13 +819,13 @@ export default function AdminGigsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
+      <div className="flex gap-1 p-1 rounded-xl w-fit bg-black/40 border border-white/[0.07]">
         <button
           onClick={() => setActiveTab("gigs")}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${
             activeTab === "gigs"
-              ? "bg-background shadow-sm"
-              : "hover:bg-background/50 text-muted-foreground"
+              ? "bg-pink-500/20 text-pink-300 border border-pink-500/30"
+              : "text-white/40 hover:text-white/70 hover:bg-white/[0.05]"
           }`}
         >
           <Sparkles className="h-4 w-4" />
@@ -831,10 +833,10 @@ export default function AdminGigsPage() {
         </button>
         <button
           onClick={() => setActiveTab("workshops")}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${
             activeTab === "workshops"
-              ? "bg-background shadow-sm"
-              : "hover:bg-background/50 text-muted-foreground"
+              ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
+              : "text-white/40 hover:text-white/70 hover:bg-white/[0.05]"
           }`}
         >
           <GraduationCap className="h-4 w-4" />
@@ -847,14 +849,14 @@ export default function AdminGigsPage() {
         <>
           {/* Create/Edit Form */}
           {showForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{editingGig ? "Edit Gig" : "Create New Gig"}</CardTitle>
-            <CardDescription>
+        <div className="glass-card rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/[0.06]">
+            <h2 className="font-semibold text-white/85">{editingGig ? "Edit Gig" : "Create New Gig"}</h2>
+            <p className="text-sm text-white/40 mt-0.5">
               {editingGig ? "Update the details for this gig" : "Fill in the details for the new gig"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="p-6">
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -1149,24 +1151,22 @@ export default function AdminGigsPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Gigs List with Applications */}
       <div className="space-y-6">
         {/* Gigs — full width */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-pink-500" />
-              All Gigs ({gigs.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="max-h-[500px] overflow-y-auto">
+        <div className="glass-card rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/[0.06] flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-pink-400" />
+            <h2 className="font-semibold text-white/85">All Gigs <span className="text-white/40 font-normal text-sm">({gigs.length})</span></h2>
+          </div>
+          <div className="p-4 max-h-[500px] overflow-y-auto">
             {gigs.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <div className="text-center py-12 text-white/35">
+                <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-25" />
                 <p>No gigs created yet</p>
               </div>
             ) : (
@@ -1174,56 +1174,63 @@ export default function AdminGigsPage() {
               {gigs.map((gig) => (
                 <div
                   key={gig.id}
-                  className={`p-4 rounded-lg border transition-colors ${
+                  className={`p-4 rounded-xl border transition-all ${
                     selectedGig === gig.id
-                      ? "border-pink-500 bg-pink-500/10"
-                      : "hover:border-muted-foreground/50"
+                      ? "border-pink-500/60 bg-pink-500/[0.08] shadow-[0_0_20px_rgba(236,72,153,0.12)]"
+                      : "border-white/[0.06] bg-white/[0.02] hover:border-pink-500/30 hover:bg-pink-500/[0.04]"
                   }`}
                 >
                   <div
                     className="cursor-pointer"
                     onClick={() => setSelectedGig(gig.id)}
                   >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-medium">{gig.title}</h3>
-                        <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-muted-foreground">
-                          <Badge variant="outline" className="capitalize">{gig.type}</Badge>
-                          <Badge
-                            variant={gig.status === "open" ? "default" : "secondary"}
-                            className={
-                              gig.status === "open" ? "bg-green-500" :
-                              gig.status === "draft" ? "bg-amber-500/10 text-amber-500 border-amber-500/30" :
-                              ""
-                            }
-                          >
-                            {gig.status === "draft" ? "Draft" : gig.status}
-                          </Badge>
-                          {gig.event_id && (
-                            <Badge variant="outline" className="bg-pink-500/10 text-pink-500 border-pink-500/30">
-                              {events.find(e => e.id === gig.event_id)?.short_name || "Event"}
+                    <div className="flex items-start gap-3 justify-between">
+                      <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                        {gig.cover_image_url && (
+                          <div className="relative w-10 h-14 rounded-lg overflow-hidden flex-shrink-0 mt-0.5 ring-1 ring-white/10">
+                            <Image src={gig.cover_image_url} alt={gig.title} fill className="object-cover" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-white/85 truncate">{gig.title}</h3>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                            <Badge variant="outline" className="capitalize border-white/15 text-white/55 text-[11px]">{gig.type}</Badge>
+                            <Badge
+                              variant="outline"
+                              className={
+                                gig.status === "open" ? "bg-green-500/15 text-green-400 border-green-500/25 text-[11px]" :
+                                gig.status === "draft" ? "bg-amber-500/10 text-amber-400 border-amber-500/25 text-[11px]" :
+                                "bg-white/5 text-white/45 border-white/10 text-[11px]"
+                              }
+                            >
+                              {gig.status === "draft" ? "Draft" : gig.status}
                             </Badge>
-                          )}
+                            {gig.event_id && (
+                              <Badge variant="outline" className="bg-pink-500/10 text-pink-400 border-pink-500/25 text-[11px]">
+                                {events.find(e => e.id === gig.event_id)?.short_name || "Event"}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right text-sm">
-                        <p className="font-medium">{gig.spots_filled || 0}/{gig.spots} spots</p>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-semibold text-white/70">{gig.spots_filled || 0}/{gig.spots} spots</p>
                         {gig.start_at && (
-                          <p className="text-muted-foreground">
+                          <p className="text-[11px] text-white/40 mt-0.5">
                             {new Date(gig.start_at).toLocaleDateString()}
                           </p>
                         )}
                       </div>
                     </div>
                     {(gig.location_city || gig.location_state) && (
-                      <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
-                        <MapPin className="h-3 w-3" />
+                      <div className="flex items-center gap-1 mt-2 text-xs text-white/40">
+                        <MapPin className="h-3 w-3 text-pink-400/50" />
                         {gig.location_city}, {gig.location_state}
                       </div>
                     )}
                   </div>
                   {/* Action buttons */}
-                  <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t">
+                  <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-white/[0.06]">
                     <Button
                       variant="outline"
                       onClick={(e) => { e.stopPropagation(); openEditForm(gig); }}
@@ -1303,8 +1310,8 @@ export default function AdminGigsPage() {
               ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Applications — full width */}
         <GigApplicationsPanel

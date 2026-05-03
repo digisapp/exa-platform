@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -281,12 +280,12 @@ export default function GigApplicationsPanel({
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between gap-2">
+      <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 space-y-3 border-b border-white/[0.06]">
+          <div className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-2 min-w-0">
-              <Users className="h-5 w-5 text-blue-500 flex-shrink-0" />
-              <span className="truncate">Applications {selectedGigId && `(${applications.length})`}</span>
+              <Users className="h-5 w-5 text-blue-400 flex-shrink-0" />
+              <span className="text-lg font-semibold text-white/85 truncate">Applications {selectedGigId && `(${applications.length})`}</span>
             </span>
             <div className="flex items-center gap-1">
               {/* Grid View Button */}
@@ -340,12 +339,12 @@ export default function GigApplicationsPanel({
                 </Button>
               )}
             </div>
-          </CardTitle>
-          <CardDescription>
+          </div>
+          <p className="text-sm text-white/40 -mt-1">
             {selectedGigId
               ? `Showing applications for: ${selectedGig?.title}`
               : "Select a gig to view applications"}
-          </CardDescription>
+          </p>
           {/* Badge Warning - show if approved models are missing badges */}
           {selectedGigId && selectedGig?.event_id && (() => {
             const approvedWithoutBadge = applications.filter(
@@ -353,7 +352,7 @@ export default function GigApplicationsPanel({
             );
             if (approvedWithoutBadge.length > 0) {
               return (
-                <div className="flex items-center gap-2 mt-2 p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-600 text-sm">
+                <div className="flex items-center gap-2 mt-2 p-2 bg-amber-500/[0.08] border border-amber-500/30 rounded-lg text-amber-400 text-sm">
                   <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                   <span>{approvedWithoutBadge.length} approved model(s) missing event badge</span>
                 </div>
@@ -363,13 +362,13 @@ export default function GigApplicationsPanel({
           })()}
           {/* Filter Tabs */}
           {selectedGigId && applications.length > 0 && (
-            <div className="flex gap-1 mt-3 p-1 bg-muted rounded-lg">
+            <div className="flex gap-1 mt-3 p-1 bg-black/40 border border-white/[0.07] rounded-xl">
               <button
                 onClick={() => setApplicationFilter("all")}
                 className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                   applicationFilter === "all"
-                    ? "bg-background shadow-sm"
-                    : "hover:bg-background/50 text-muted-foreground"
+                    ? "bg-white/[0.1] text-white shadow-sm"
+                    : "text-white/40 hover:text-white/70 hover:bg-white/[0.05]"
                 }`}
               >
                 All ({applications.length})
@@ -378,8 +377,8 @@ export default function GigApplicationsPanel({
                 onClick={() => setApplicationFilter("pending")}
                 className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                   applicationFilter === "pending"
-                    ? "bg-background shadow-sm"
-                    : "hover:bg-background/50 text-muted-foreground"
+                    ? "bg-white/[0.1] text-white shadow-sm"
+                    : "text-white/40 hover:text-white/70 hover:bg-white/[0.05]"
                 }`}
               >
                 Pending ({applications.filter(a => a.status === "pending").length})
@@ -388,8 +387,8 @@ export default function GigApplicationsPanel({
                 onClick={() => setApplicationFilter("approved")}
                 className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                   applicationFilter === "approved"
-                    ? "bg-background shadow-sm"
-                    : "hover:bg-background/50 text-muted-foreground"
+                    ? "bg-white/[0.1] text-white shadow-sm"
+                    : "text-white/40 hover:text-white/70 hover:bg-white/[0.05]"
                 }`}
               >
                 Approved ({applications.filter(a => a.status === "accepted" || a.status === "approved").length})
@@ -398,8 +397,8 @@ export default function GigApplicationsPanel({
                 onClick={() => setApplicationFilter("declined")}
                 className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                   applicationFilter === "declined"
-                    ? "bg-background shadow-sm"
-                    : "hover:bg-background/50 text-muted-foreground"
+                    ? "bg-white/[0.1] text-white shadow-sm"
+                    : "text-white/40 hover:text-white/70 hover:bg-white/[0.05]"
                 }`}
               >
                 Declined ({applications.filter(a => a.status === "rejected" || a.status === "cancelled").length})
@@ -411,8 +410,8 @@ export default function GigApplicationsPanel({
             <div className="flex gap-4 mt-2">
               {/* Trip Number Filter */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Trip:</span>
-                <div className="flex gap-1 p-0.5 bg-muted rounded-md">
+                <span className="text-xs text-white/40">Trip:</span>
+                <div className="flex gap-1 p-0.5 bg-black/40 border border-white/[0.07] rounded-lg">
                   <button
                     onClick={() => setTripFilter("all")}
                     className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
@@ -447,8 +446,8 @@ export default function GigApplicationsPanel({
               </div>
               {/* Spot Type Filter */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Type:</span>
-                <div className="flex gap-1 p-0.5 bg-muted rounded-md">
+                <span className="text-xs text-white/40">Type:</span>
+                <div className="flex gap-1 p-0.5 bg-black/40 border border-white/[0.07] rounded-lg">
                   <button
                     onClick={() => setSpotTypeFilter("all")}
                     className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
@@ -500,8 +499,8 @@ export default function GigApplicationsPanel({
             <div className="flex flex-wrap gap-4 mt-2">
               {/* Instagram Followers */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">IG:</span>
-                <div className="flex gap-1 p-0.5 bg-muted rounded-md">
+                <span className="text-xs text-white/40">IG:</span>
+                <div className="flex gap-1 p-0.5 bg-black/40 border border-white/[0.07] rounded-lg">
                   {IG_PRESETS.map(({ label, value }) => (
                     <button
                       key={value}
@@ -519,7 +518,7 @@ export default function GigApplicationsPanel({
               </div>
               {/* Min Height */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Height:</span>
+                <span className="text-xs text-white/40">Height:</span>
                 <Select value={minHeightFilter || "any"} onValueChange={(v) => setMinHeightFilter(v === "any" ? "" : v)}>
                   <SelectTrigger className="h-7 text-xs w-[90px]">
                     <SelectValue placeholder="Any" />
@@ -534,20 +533,20 @@ export default function GigApplicationsPanel({
               </div>
             </div>
           )}
-        </CardHeader>
-        <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
+        </div>
+        <div className="space-y-2 max-h-[680px] overflow-y-auto p-4">
           {!selectedGigId ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-12 text-white/35">
               <Eye className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Select a gig to view applications</p>
             </div>
           ) : applications.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-12 text-white/35">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No applications yet</p>
             </div>
           ) : filteredApplications.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-12 text-white/35">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No matching applications</p>
             </div>
@@ -555,10 +554,10 @@ export default function GigApplicationsPanel({
             filteredApplications.map((app) => (
               <div
                 key={app.id}
-                className="p-4 rounded-lg border flex items-center justify-between"
+                className="p-3.5 rounded-xl border border-white/[0.06] bg-white/[0.01] flex items-center justify-between hover:border-pink-500/25 hover:bg-pink-500/[0.02] transition-all"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex-shrink-0 ring-1 ring-white/10">
                     {app.model?.profile_photo_url ? (
                       <Image
                         src={app.model.profile_photo_url}
@@ -578,18 +577,18 @@ export default function GigApplicationsPanel({
                       href={`/${app.model?.username}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-medium hover:text-pink-500"
+                      className="font-medium text-white/85 hover:text-pink-400"
                     >
                       {app.model?.first_name || app.model?.last_name
                         ? `${app.model?.first_name || ''} ${app.model?.last_name || ''}`.trim()
                         : `@${app.model?.username}`}
                     </Link>
                     {(app.model?.first_name || app.model?.last_name) && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-white/40">
                         @{app.model?.username}
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-white/30">
                       Applied {new Date(app.applied_at).toLocaleDateString()}
                     </p>
                     {/* Badge status for event-linked gigs */}
@@ -644,21 +643,21 @@ export default function GigApplicationsPanel({
                         </Badge>
                       </div>
                     )}
-                    <div className="flex flex-wrap gap-x-3 mt-1">
+                    <div className="flex flex-wrap gap-1 mt-1.5">
                       {app.instagram_handle && (
-                        <p className="text-xs text-muted-foreground">
-                          IG: @{app.instagram_handle}{app.instagram_followers ? ` (${app.instagram_followers >= 1_000_000 ? `${(app.instagram_followers / 1_000_000).toFixed(1)}M` : app.instagram_followers >= 1_000 ? `${Math.round(app.instagram_followers / 1_000)}K` : app.instagram_followers})` : ""}
-                        </p>
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-pink-500/10 text-pink-300 text-[11px] font-medium border border-pink-500/20">
+                          IG @{app.instagram_handle}{app.instagram_followers ? ` · ${app.instagram_followers >= 1_000_000 ? `${(app.instagram_followers / 1_000_000).toFixed(1)}M` : app.instagram_followers >= 1_000 ? `${Math.round(app.instagram_followers / 1_000)}K` : app.instagram_followers}` : ""}
+                        </span>
                       )}
                       {app.model?.height && (
-                        <p className="text-xs text-muted-foreground">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white/[0.05] text-white/50 text-[11px] border border-white/10">
                           {app.model.height}
-                        </p>
+                        </span>
                       )}
                       {app.digis_username && (
-                        <p className="text-xs text-muted-foreground">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-violet-500/10 text-violet-300 text-[11px] border border-violet-500/20">
                           Digis: {app.digis_username}
-                        </p>
+                        </span>
                       )}
                     </div>
                   </div>
@@ -742,8 +741,8 @@ export default function GigApplicationsPanel({
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Fullscreen Grid Modal */}
       <GigApplicationsFullscreen
