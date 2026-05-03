@@ -134,10 +134,14 @@ export async function POST(
     if (type === "avatar") {
       const oldUrl = model.profile_photo_url;
 
+      const resolvedAvatarUrl = item.media_url.startsWith("http")
+        ? item.media_url
+        : adminDb.storage.from("portfolio").getPublicUrl(item.media_url).data.publicUrl;
+
       const { error: updateError } = await (adminDb as any)
         .from("models")
         .update({
-          profile_photo_url: item.media_url,
+          profile_photo_url: resolvedAvatarUrl,
           updated_at: new Date().toISOString(),
         })
         .eq("id", modelId);
@@ -157,10 +161,10 @@ export async function POST(
         targetType: "model",
         targetId: modelId,
         oldValues: { profile_photo_url: oldUrl },
-        newValues: { profile_photo_url: item.media_url, source: "content-portfolio" },
+        newValues: { profile_photo_url: resolvedAvatarUrl, source: "content-portfolio" },
       });
 
-      return NextResponse.json({ success: true, url: item.media_url });
+      return NextResponse.json({ success: true, url: resolvedAvatarUrl });
     }
 
     // type === "portrait" — set is_primary on the content item

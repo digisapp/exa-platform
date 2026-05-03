@@ -10,6 +10,12 @@ function formatFollowers(n: number): string {
   if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
   return n.toLocaleString();
 }
+
+function resolveMediaUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("http")) return url;
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
+}
 import { cn } from "@/lib/utils";
 import { useState, useRef, memo } from "react";
 import { toast } from "sonner";
@@ -117,9 +123,9 @@ export const ModelCard = memo(function ModelCard({
         <div className="glass-card rounded-xl p-4 hover:scale-105 transition-transform group">
           <div className="flex items-center gap-3">
             <div className="profile-image-container !p-[2px]">
-              {model.profile_photo_url ? (
+              {resolveMediaUrl(model.profile_photo_url) ? (
                 <Image
-                  src={model.profile_photo_url}
+                  src={resolveMediaUrl(model.profile_photo_url)!}
                   alt={displayName}
                   width={48}
                   height={48}
@@ -154,7 +160,7 @@ export const ModelCard = memo(function ModelCard({
   // hero (>=1500px, portrait orientation). This fixes the pre-existing crop
   // issue where a square face photo was forced into a 3:4 card and lost
   // composition.
-  const cardImageUrl = model.hero_portrait_url || model.profile_photo_url;
+  const cardImageUrl = resolveMediaUrl(model.hero_portrait_url || model.profile_photo_url);
 
   return (
     <Link href={`/${model.username}`} target="_blank" rel="noopener noreferrer">
