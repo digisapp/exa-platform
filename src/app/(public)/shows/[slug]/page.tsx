@@ -150,21 +150,21 @@ export default async function EventPage({ params, searchParams }: Props) {
 
       const fetchedModels = fullModels || [];
 
-      // Attach hero_portrait_url (same logic as /models listing page)
+      // Attach hero_portrait_url: prefer is_primary portrait, fall back to tallest portrait
       const { data: heroPhotos } = await (supabase as any)
         .from("content_items")
-        .select("model_id, media_url, width, height")
+        .select("model_id, media_url, width, height, is_primary")
         .in("model_id", modelIds)
         .eq("media_type", "image")
         .eq("status", "portfolio")
         .not("width", "is", null)
-        .gte("height", 1500)
+        .order("is_primary", { ascending: false })
         .order("height", { ascending: false })
         .limit(500);
 
       const heroByModel = new Map<string, string>();
       for (const photo of heroPhotos || []) {
-        if (photo.height >= photo.width && !heroByModel.has(photo.model_id)) {
+        if (!heroByModel.has(photo.model_id) && photo.height >= photo.width) {
           const url = photo.media_url.startsWith("http")
             ? photo.media_url
             : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${photo.media_url}`;
