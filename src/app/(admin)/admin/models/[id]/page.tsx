@@ -365,7 +365,7 @@ export default function AdminModelDetailPage() {
     ? `${model.first_name} ${model.last_name || ""}`.trim()
     : model.username;
 
-  const profilePhoto = model.profile_photo_url;
+  const profilePhoto = resolveMediaUrl(model.profile_photo_url);
 
   const formatDate = (date: string | null) => {
     if (!date) return null;
@@ -450,7 +450,7 @@ export default function AdminModelDetailPage() {
         throw new Error(err.error || "Failed");
       }
       if (contentPickerMode === "avatar") {
-        setModel((prev) => prev ? { ...prev, profile_photo_url: img.media_url } : prev);
+        setModel((prev) => prev ? { ...prev, profile_photo_url: resolveMediaUrl(img.media_url) } : prev);
         toast.success("Avatar updated");
       } else {
         setPortraitItem({ id: img.id, media_url: img.media_url });
@@ -711,7 +711,7 @@ export default function AdminModelDetailPage() {
               <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
                 {portraitItem ? (
                   <Image
-                    src={portraitItem.media_url}
+                    src={resolveMediaUrl(portraitItem.media_url)}
                     alt="Portrait"
                     fill
                     className="object-cover"
