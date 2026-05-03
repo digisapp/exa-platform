@@ -186,7 +186,7 @@ export default function AdminGigsPage() {
         instagram_handle,
         instagram_followers,
         digis_username,
-        model:models(id, username, first_name, last_name, profile_photo_url, height, bust, waist, hips, shoe_size, dress_size, eye_color, hair_color, tiktok_followers, tiktok_username, youtube_subscribers, youtube_username, x_followers, x_username, snapchat_followers, snapchat_username)
+        model:models(id, username, first_name, last_name, profile_photo_url, height, bust, waist, hips, shoe_size, dress_size, eye_color, hair_color, instagram_followers, tiktok_followers, tiktok_username, youtube_subscribers, youtube_username, x_followers, x_username, snapchat_followers, snapchat_username)
       `)
       .eq("gig_id", gigId)
       .order("applied_at", { ascending: false });

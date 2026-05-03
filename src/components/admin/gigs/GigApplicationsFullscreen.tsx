@@ -64,6 +64,7 @@ interface Application {
     dress_size?: string | null;
     eye_color?: string | null;
     hair_color?: string | null;
+    instagram_followers?: number | null;
     tiktok_followers?: number | null;
     tiktok_username?: string | null;
   };
@@ -180,16 +181,19 @@ function ApplicationCard({
               </p>
             )}
 
-            {((app.instagram_followers ?? 0) > 0 || (app.model?.tiktok_followers ?? 0) > 0) && (
+            {(() => {
+              const igF = app.instagram_followers ?? app.model?.instagram_followers ?? 0;
+              return (igF > 0 || (app.model?.tiktok_followers ?? 0) > 0) && (
               <div className="flex gap-3 text-xs pt-0.5">
-                {(app.instagram_followers ?? 0) > 0 && (
-                  <span className="text-pink-300">IG {formatFollowers(app.instagram_followers!)}</span>
+                {igF > 0 && (
+                  <span className="text-pink-300">IG {formatFollowers(igF)}</span>
                 )}
                 {(app.model?.tiktok_followers ?? 0) > 0 && (
                   <span className="text-blue-300">TT {formatFollowers(app.model.tiktok_followers!)}</span>
                 )}
               </div>
-            )}
+              );
+            })()}
 
             {(app.model?.eye_color || app.model?.hair_color) && (
               <p className="text-xs text-white/50">
@@ -293,7 +297,8 @@ export default function GigApplicationsFullscreen({
         const un = app.model?.username?.toLowerCase() || "";
         if (!fn.includes(s) && !ln.includes(s) && !un.includes(s) && !`${fn} ${ln}`.trim().includes(s)) return false;
       }
-      if (igMinFollowers > 0 && (app.instagram_followers ?? 0) < igMinFollowers) return false;
+      const igFollowers = app.instagram_followers ?? app.model?.instagram_followers ?? 0;
+      if (igMinFollowers > 0 && igFollowers < igMinFollowers) return false;
       if (minHeightFilter) {
         const modelIn = parseHeightToInches(app.model?.height);
         const threshIn = parseHeightToInches(minHeightFilter);

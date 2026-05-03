@@ -86,6 +86,7 @@ interface Application {
     dress_size?: string | null;
     eye_color?: string | null;
     hair_color?: string | null;
+    instagram_followers?: number | null;
     tiktok_followers?: number | null;
     tiktok_username?: string | null;
     youtube_subscribers?: number | null;
@@ -264,8 +265,9 @@ export default function GigApplicationsPanel({
         return false;
       }
     }
-    // Instagram followers filter
-    if (igMinFollowers > 0 && (app.instagram_followers ?? 0) < igMinFollowers) return false;
+    // Instagram followers filter — prefer application-level count, fall back to model profile
+    const igFollowers = app.instagram_followers ?? app.model?.instagram_followers ?? 0;
+    if (igMinFollowers > 0 && igFollowers < igMinFollowers) return false;
     // Height filter
     if (minHeightFilter) {
       const modelIn = parseHeightToInches(app.model?.height);
