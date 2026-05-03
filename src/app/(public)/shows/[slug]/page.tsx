@@ -146,9 +146,36 @@ export default async function EventPage({ params, searchParams }: Props) {
       const { data: fullModels } = await supabase
         .from("models")
         .select("*")
-        .in("id", modelIds)
-        .not("profile_photo_url", "is", null);
-      eventModels = fullModels || [];
+        .in("id", modelIds);
+
+      const fetchedModels = fullModels || [];
+
+      // Attach hero_portrait_url (same logic as /models listing page)
+      const { data: heroPhotos } = await (supabase as any)
+        .from("content_items")
+        .select("model_id, media_url, width, height")
+        .in("model_id", modelIds)
+        .eq("media_type", "image")
+        .eq("status", "portfolio")
+        .not("width", "is", null)
+        .gte("height", 1500)
+        .order("height", { ascending: false })
+        .limit(500);
+
+      const heroByModel = new Map<string, string>();
+      for (const photo of heroPhotos || []) {
+        if (photo.height >= photo.width && !heroByModel.has(photo.model_id)) {
+          const url = photo.media_url.startsWith("http")
+            ? photo.media_url
+            : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${photo.media_url}`;
+          heroByModel.set(photo.model_id, url);
+        }
+      }
+
+      eventModels = fetchedModels.map((m: any) => ({
+        ...m,
+        hero_portrait_url: heroByModel.get(m.id) || null,
+      }));
     }
   }
 
