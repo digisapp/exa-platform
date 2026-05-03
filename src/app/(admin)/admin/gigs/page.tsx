@@ -1154,8 +1154,8 @@ export default function AdminGigsPage() {
       )}
 
       {/* Gigs List with Applications */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Gigs Column */}
+      <div className="space-y-6">
+        {/* Gigs — full width */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -1163,14 +1163,15 @@ export default function AdminGigsPage() {
               All Gigs ({gigs.length})
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
+          <CardContent className="max-h-[500px] overflow-y-auto">
             {gigs.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No gigs created yet</p>
               </div>
             ) : (
-              gigs.map((gig) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {gigs.map((gig) => (
                 <div
                   key={gig.id}
                   className={`p-4 rounded-lg border transition-colors ${
@@ -1303,12 +1304,13 @@ export default function AdminGigsPage() {
                     </Button>
                   </div>
                 </div>
-              ))
+              ))}
+              </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Applications Column */}
+        {/* Applications — full width */}
         <GigApplicationsPanel
           applications={applications}
           selectedGig={selectedGigObj}
