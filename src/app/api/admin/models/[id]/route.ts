@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendModelApprovalEmail } from "@/lib/email";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
@@ -75,7 +76,7 @@ export async function PATCH(
     // Get current model data before update
     const { data: model } = await (supabase
       .from("models")
-      .select("email, first_name, last_name, username, is_approved, user_id, preferred_language") as any)
+      .select("email, first_name, last_name, username, is_approved, user_id, preferred_language, profile_photo_url") as any)
       .eq("id", id)
       .single();
 
@@ -111,6 +112,35 @@ export async function PATCH(
 
       if (actorError) {
         console.error("Error updating actor type:", actorError);
+      }
+    }
+
+    // Auto-set profile_photo_url from first portfolio image on first approval
+    if (statusChanged && is_approved && !model.profile_photo_url && !updatePayload.profile_photo_url) {
+      try {
+        const adminDb = createServiceRoleClient();
+        const { data: firstImage } = await (adminDb as any)
+          .from("content_items")
+          .select("media_url")
+          .eq("model_id", id)
+          .eq("status", "portfolio")
+          .eq("media_type", "image")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .single();
+
+        if (firstImage?.media_url) {
+          const resolvedUrl = firstImage.media_url.startsWith("http")
+            ? firstImage.media_url
+            : adminDb.storage.from("portfolio").getPublicUrl(firstImage.media_url).data.publicUrl;
+
+          await (adminDb as any)
+            .from("models")
+            .update({ profile_photo_url: resolvedUrl })
+            .eq("id", id);
+        }
+      } catch (photoError) {
+        console.error("Failed to auto-set profile photo on approval:", photoError);
       }
     }
 

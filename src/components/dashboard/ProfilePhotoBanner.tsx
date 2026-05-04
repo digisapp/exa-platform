@@ -183,9 +183,16 @@ export function ProfilePhotoBanner({
         <div className="p-5 sm:p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-semibold text-white/60 uppercase tracking-wider">
-              Profile Pictures
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-semibold text-white/60 uppercase tracking-wider">
+                Profile Pictures
+              </h2>
+              {!profilePhotoUrl && (
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 uppercase tracking-wide">
+                  Setup needed
+                </span>
+              )}
+            </div>
             <Link
               href={`/${username}`}
               className="text-[11px] text-pink-400 hover:text-pink-300 flex items-center gap-1 transition-colors"
@@ -249,7 +256,7 @@ export function ProfilePhotoBanner({
                     className="w-[96px] h-[96px] rounded-full object-cover ring-2 ring-pink-500/40 group-hover:ring-pink-500 transition-all"
                   />
                 ) : (
-                  <div className="w-[96px] h-[96px] rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-xl font-bold ring-2 ring-white/10">
+                  <div className="w-[96px] h-[96px] rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-xl font-bold ring-2 ring-amber-400/60">
                     {initials}
                   </div>
                 )}
@@ -261,8 +268,8 @@ export function ProfilePhotoBanner({
                   )}
                 </div>
               </button>
-              <span className="text-[10px] text-white/40 font-medium">
-                Avatar
+              <span className={`text-[10px] font-medium ${profilePhotoUrl ? "text-white/40" : "text-amber-400"}`}>
+                {profilePhotoUrl ? "Avatar" : "Tap to add"}
               </span>
             </div>
           </div>
