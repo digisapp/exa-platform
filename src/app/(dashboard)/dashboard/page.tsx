@@ -625,97 +625,94 @@ export default async function DashboardPage() {
       </section>
 
       {/* ──────────────────────────────────────────────────────
-          MAIN GRID — Priority Inbox (2/3) + Right rail (1/3)
+          GIGS FOR YOU — full-width, prominent placement
          ────────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Priority Inbox */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
-          <header className="flex items-center justify-between p-5 border-b border-white/5">
-            <div className="flex items-center gap-2">
-              <Flame className="h-5 w-5 text-rose-400" />
-              <h2 className="text-base font-semibold">Priority inbox</h2>
-              {inboxItems.length > 0 && (
-                <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                  {inboxItems.length}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-1 text-xs text-white/50">
-              <Clock className="h-3.5 w-3.5" /> sorted by urgency
-            </div>
-          </header>
-          <div className="p-3 space-y-2">
-            {inboxItems.length === 0 ? (
-              <div className="text-center py-10">
-                <div className="p-4 rounded-full bg-white/5 inline-block mb-3">
-                  <Sparkles className="h-7 w-7 text-white/30" />
-                </div>
-                <p className="text-sm text-white/60">All caught up — no urgent items.</p>
-                <p className="text-xs text-white/40 mt-1">New offers, bookings, and ending auctions will appear here.</p>
-              </div>
-            ) : (
-              inboxItems.map((item) => {
-                const tagMap = { offer: "Offer", booking: "Booking", auction: "Auction" } as const;
-                const iconMap = {
-                  offer: <DollarSign className="h-5 w-5 text-emerald-400" />,
-                  booking: <Calendar className="h-5 w-5 text-cyan-400" />,
-                  auction: <Gavel className="h-5 w-5 text-violet-400" />,
-                } as const;
-                const dotMap = {
-                  hot: "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.8)]",
-                  warm: "bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.6)]",
-                  normal: "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]",
-                } as const;
-                return (
-                  <Link
-                    key={item.id}
-                    href={item.href}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 transition-all group"
-                  >
-                    <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${dotMap[item.urgency]}`} />
-                    {item.avatarUrl ? (
-                      <Image
-                        src={item.avatarUrl}
-                        alt=""
-                        width={40}
-                        height={40}
-                        className="w-10 h-10 rounded-full object-cover ring-1 ring-white/10 shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center shrink-0">
-                        {iconMap[item.kind]}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] uppercase tracking-wider font-semibold text-white/50">
-                        {tagMap[item.kind]}
-                      </p>
-                      <p className="text-sm font-medium text-white truncate">{item.title}</p>
-                      <p className="text-xs text-white/50 truncate">{item.sub}</p>
-                    </div>
-                    {item.amount && (
-                      <span className="hidden sm:inline text-sm font-bold text-emerald-400 shrink-0">
-                        {item.amount}
-                      </span>
-                    )}
-                    <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-white/80 group-hover:translate-x-0.5 transition-all shrink-0" />
-                  </Link>
-                );
-              })
+      <section className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
+        <GigsFeed
+          gigs={gigs || []}
+          modelApplications={modelApplications || []}
+          isApproved={model.is_approved}
+        />
+      </section>
+
+      {/* ──────────────────────────────────────────────────────
+          PRIORITY INBOX — full-width
+         ────────────────────────────────────────────────────── */}
+      <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+        <header className="flex items-center justify-between p-5 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <Flame className="h-5 w-5 text-rose-400" />
+            <h2 className="text-base font-semibold">Priority inbox</h2>
+            {inboxItems.length > 0 && (
+              <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                {inboxItems.length}
+              </span>
             )}
           </div>
-        </div>
-
-        {/* Right rail: Gigs for you */}
-        <aside>
-          <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
-            <GigsFeed
-              gigs={gigs || []}
-              modelApplications={modelApplications || []}
-              isApproved={model.is_approved}
-            />
+          <div className="flex items-center gap-1 text-xs text-white/50">
+            <Clock className="h-3.5 w-3.5" /> sorted by urgency
           </div>
-        </aside>
+        </header>
+        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+          {inboxItems.length === 0 ? (
+            <div className="col-span-full text-center py-10">
+              <div className="p-4 rounded-full bg-white/5 inline-block mb-3">
+                <Sparkles className="h-7 w-7 text-white/30" />
+              </div>
+              <p className="text-sm text-white/60">All caught up — no urgent items.</p>
+              <p className="text-xs text-white/40 mt-1">New offers, bookings, and ending auctions will appear here.</p>
+            </div>
+          ) : (
+            inboxItems.map((item) => {
+              const tagMap = { offer: "Offer", booking: "Booking", auction: "Auction" } as const;
+              const iconMap = {
+                offer: <DollarSign className="h-5 w-5 text-emerald-400" />,
+                booking: <Calendar className="h-5 w-5 text-cyan-400" />,
+                auction: <Gavel className="h-5 w-5 text-violet-400" />,
+              } as const;
+              const dotMap = {
+                hot: "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.8)]",
+                warm: "bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.6)]",
+                normal: "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]",
+              } as const;
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 transition-all group"
+                >
+                  <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${dotMap[item.urgency]}`} />
+                  {item.avatarUrl ? (
+                    <Image
+                      src={item.avatarUrl}
+                      alt=""
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-full object-cover ring-1 ring-white/10 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center shrink-0">
+                      {iconMap[item.kind]}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-white/50">
+                      {tagMap[item.kind]}
+                    </p>
+                    <p className="text-sm font-medium text-white truncate">{item.title}</p>
+                    <p className="text-xs text-white/50 truncate">{item.sub}</p>
+                  </div>
+                  {item.amount && (
+                    <span className="hidden sm:inline text-sm font-bold text-emerald-400 shrink-0">
+                      {item.amount}
+                    </span>
+                  )}
+                  <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-white/80 group-hover:translate-x-0.5 transition-all shrink-0" />
+                </Link>
+              );
+            })
+          )}
+        </div>
       </section>
 
       {/* Mobile-only: EXA Live Wall appears here after gigs */}
@@ -724,195 +721,190 @@ export default async function DashboardPage() {
       </div>
 
       {/* ──────────────────────────────────────────────────────
-          BIDS + GIGS — side by side
+          EXA BIDS — full-width
          ────────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Bids */}
-        <div className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-transparent overflow-hidden">
-          <header className="flex items-center justify-between p-5 border-b border-white/5">
-            <div className="flex items-center gap-2">
-              <Gavel className="h-5 w-5 text-violet-400" />
-              <h2 className="text-base font-semibold">Your EXA Bids</h2>
-              {(modelAuctions?.length || 0) > 0 && (
-                <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                  {modelAuctions?.length}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Link href="/bids/manage" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
-                Manage <ArrowUpRight className="h-3 w-3" />
-              </Link>
-            </div>
-          </header>
-          <div className="p-3">
-            {(modelAuctions?.length || 0) > 0 ? (
-              <div className="space-y-2">
-                {modelAuctions?.map((auction: any) => (
-                  <Link
-                    key={auction.id}
-                    href={auction.status === "draft" ? `/bids/${auction.id}/edit` : `/bids/${auction.id}`}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] hover:border-violet-500/40 transition-all"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500/30 to-pink-500/30 flex items-center justify-center shrink-0">
-                      <Gavel className="h-5 w-5 text-violet-300" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{auction.title}</p>
-                      <p className="text-xs text-white/50">
-                        {auction.bid_count || 0} bids
-                        {auction.status === "active" && auction.ends_at && (
-                          <> · ends {new Date(auction.ends_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</>
-                        )}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-amber-400">
-                        {(auction.current_bid || auction.starting_price || 0).toLocaleString()}c
-                      </p>
-                      <Badge
-                        variant="outline"
-                        className={
-                          auction.status === "active"
-                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 text-[10px] px-1.5 py-0"
-                            : "bg-amber-500/10 text-amber-300 border-amber-500/30 text-[10px] px-1.5 py-0"
-                        }
-                      >
-                        {auction.status === "active" ? "Live" : "Draft"}
-                      </Badge>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="p-4 rounded-full bg-violet-500/10 inline-block mb-3">
-                  <Gavel className="h-7 w-7 text-violet-400" />
-                </div>
-                <p className="text-sm text-white/70">No EXA Bids yet</p>
-                <p className="text-xs text-white/40 mt-1 max-w-xs mx-auto">
-                  Let fans and brands compete in real-time bids for your exclusive content & experiences.
-                </p>
-                <Button asChild size="sm" className="mt-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
-                  <Link href="/bids/new">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Create EXA Bid
-                  </Link>
-                </Button>
-              </div>
+      <section className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-transparent overflow-hidden">
+        <header className="flex items-center justify-between p-5 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <Gavel className="h-5 w-5 text-violet-400" />
+            <h2 className="text-base font-semibold">Your EXA Bids</h2>
+            {(modelAuctions?.length || 0) > 0 && (
+              <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                {modelAuctions?.length}
+              </span>
             )}
           </div>
-        </div>
-
-        {/* Activity + Top Tippers */}
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm">
-            <header className="flex items-center justify-between p-4 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-pink-400" />
-                <h3 className="text-sm font-semibold">Activity</h3>
-              </div>
-            </header>
-            <div className="p-2 space-y-1">
-              {activityFeed.length === 0 ? (
-                <p className="text-xs text-white/40 text-center py-4">No activity this week.</p>
-              ) : (
-                activityFeed.slice(0, 6).map((item) => {
-                  const timeAgo = getTimeAgo(item.createdAt);
-                  const href =
-                    item.type === "message" && item.conversationId
-                      ? `/chats/${item.conversationId}`
-                      : item.type === "follower" && item.actor?.username
-                        ? `/${item.actor.username}`
-                        : item.type === "tip"
-                          ? "/wallet"
-                          : "/followers";
-                  return (
-                    <Link
-                      key={item.id}
-                      href={href}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
-                    >
-                      {item.actor?.avatar ? (
-                        <Image
-                          src={item.actor.avatar}
-                          alt=""
-                          width={32}
-                          height={32}
-                          className="w-8 h-8 rounded-full object-cover shrink-0"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                          {item.type === "tip" ? (
-                            <Coins className="h-4 w-4 text-amber-400" />
-                          ) : item.type === "follower" ? (
-                            <UserPlus className="h-4 w-4 text-pink-400" />
-                          ) : (
-                            <MessageCircle className="h-4 w-4 text-blue-400" />
-                          )}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-white truncate">
-                          <span className="font-semibold">{item.actor?.name || "Someone"}</span>{" "}
-                          {item.type === "tip" && (
-                            <span className="text-white/60">
-                              tipped <span className="text-amber-400 font-semibold">{item.amount}c</span>
-                            </span>
-                          )}
-                          {item.type === "follower" && <span className="text-white/60">followed you</span>}
-                          {item.type === "message" && <span className="text-white/60">sent a message</span>}
-                        </p>
-                        {item.type === "message" && item.messagePreview && (
-                          <p className="text-[11px] text-white/40 truncate">&ldquo;{item.messagePreview}&rdquo;</p>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-white/40 shrink-0">{timeAgo}</span>
-                    </Link>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {topTippers.length > 0 && (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm">
-              <header className="flex items-center justify-between p-4 border-b border-white/5">
-                <div className="flex items-center gap-2">
-                  <Heart className="h-4 w-4 text-rose-400 fill-rose-400" />
-                  <h3 className="text-sm font-semibold">Top tippers · 7d</h3>
-                </div>
-              </header>
-              <div className="p-3 space-y-2">
-                {topTippers.map((t, i) => (
-                  <div key={`${t.actor?.name || "anon"}-${i}`} className="flex items-center gap-3">
-                    <span className={`w-5 text-center text-xs font-bold ${
-                      i === 0 ? "text-amber-400" : i === 1 ? "text-white/70" : "text-amber-700"
-                    }`}>
-                      {i + 1}
-                    </span>
-                    {t.actor?.avatar ? (
-                      <Image
-                        src={t.actor.avatar}
-                        alt=""
-                        width={32}
-                        height={32}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-                        <UserPlus className="h-4 w-4 text-white/40" />
-                      </div>
-                    )}
-                    <span className="flex-1 text-xs font-medium truncate">{t.actor?.name || "Someone"}</span>
-                    <span className="text-xs font-bold text-amber-400">{t.amount}c</span>
+          <Link href="/bids/manage" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+            Manage <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        </header>
+        <div className="p-3">
+          {(modelAuctions?.length || 0) > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+              {modelAuctions?.map((auction: any) => (
+                <Link
+                  key={auction.id}
+                  href={auction.status === "draft" ? `/bids/${auction.id}/edit` : `/bids/${auction.id}`}
+                  className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] hover:border-violet-500/40 transition-all"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500/30 to-pink-500/30 flex items-center justify-center shrink-0">
+                    <Gavel className="h-5 w-5 text-violet-300" />
                   </div>
-                ))}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{auction.title}</p>
+                    <p className="text-xs text-white/50">
+                      {auction.bid_count || 0} bids
+                      {auction.status === "active" && auction.ends_at && (
+                        <> · ends {new Date(auction.ends_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</>
+                      )}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold text-amber-400">
+                      {(auction.current_bid || auction.starting_price || 0).toLocaleString()}c
+                    </p>
+                    <Badge
+                      variant="outline"
+                      className={
+                        auction.status === "active"
+                          ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 text-[10px] px-1.5 py-0"
+                          : "bg-amber-500/10 text-amber-300 border-amber-500/30 text-[10px] px-1.5 py-0"
+                      }
+                    >
+                      {auction.status === "active" ? "Live" : "Draft"}
+                    </Badge>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="p-4 rounded-full bg-violet-500/10 inline-block mb-3">
+                <Gavel className="h-7 w-7 text-violet-400" />
               </div>
+              <p className="text-sm text-white/70">No EXA Bids yet</p>
+              <p className="text-xs text-white/40 mt-1 max-w-xs mx-auto">
+                Let fans and brands compete in real-time bids for your exclusive content & experiences.
+              </p>
+              <Button asChild size="sm" className="mt-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
+                <Link href="/bids/new">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Create EXA Bid
+                </Link>
+              </Button>
             </div>
           )}
         </div>
       </section>
+
+      {/* ──────────────────────────────────────────────────────
+          ACTIVITY — full-width
+         ────────────────────────────────────────────────────── */}
+      <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+        <header className="flex items-center justify-between p-4 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-pink-400" />
+            <h3 className="text-sm font-semibold">Activity</h3>
+          </div>
+        </header>
+        <div className="p-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-1">
+          {activityFeed.length === 0 ? (
+            <p className="col-span-full text-xs text-white/40 text-center py-4">No activity this week.</p>
+          ) : (
+            activityFeed.slice(0, 6).map((item) => {
+              const timeAgo = getTimeAgo(item.createdAt);
+              const href =
+                item.type === "message" && item.conversationId
+                  ? `/chats/${item.conversationId}`
+                  : item.type === "follower" && item.actor?.username
+                    ? `/${item.actor.username}`
+                    : item.type === "tip"
+                      ? "/wallet"
+                      : "/followers";
+              return (
+                <Link
+                  key={item.id}
+                  href={href}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
+                >
+                  {item.actor?.avatar ? (
+                    <Image
+                      src={item.actor.avatar}
+                      alt=""
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
+                      {item.type === "tip" ? (
+                        <Coins className="h-4 w-4 text-amber-400" />
+                      ) : item.type === "follower" ? (
+                        <UserPlus className="h-4 w-4 text-pink-400" />
+                      ) : (
+                        <MessageCircle className="h-4 w-4 text-blue-400" />
+                      )}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-white truncate">
+                      <span className="font-semibold">{item.actor?.name || "Someone"}</span>{" "}
+                      {item.type === "tip" && (
+                        <span className="text-white/60">
+                          tipped <span className="text-amber-400 font-semibold">{item.amount}c</span>
+                        </span>
+                      )}
+                      {item.type === "follower" && <span className="text-white/60">followed you</span>}
+                      {item.type === "message" && <span className="text-white/60">sent a message</span>}
+                    </p>
+                    {item.type === "message" && item.messagePreview && (
+                      <p className="text-[11px] text-white/40 truncate">&ldquo;{item.messagePreview}&rdquo;</p>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-white/40 shrink-0">{timeAgo}</span>
+                </Link>
+              );
+            })
+          )}
+        </div>
+      </section>
+
+      {topTippers.length > 0 && (
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+          <header className="flex items-center justify-between p-4 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <Heart className="h-4 w-4 text-rose-400 fill-rose-400" />
+              <h3 className="text-sm font-semibold">Top tippers · 7d</h3>
+            </div>
+          </header>
+          <div className="p-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {topTippers.map((t, i) => (
+              <div key={`${t.actor?.name || "anon"}-${i}`} className="flex items-center gap-3 p-2 rounded-xl bg-white/[0.03]">
+                <span className={`w-5 text-center text-xs font-bold ${
+                  i === 0 ? "text-amber-400" : i === 1 ? "text-white/70" : "text-amber-700"
+                }`}>
+                  {i + 1}
+                </span>
+                {t.actor?.avatar ? (
+                  <Image
+                    src={t.actor.avatar}
+                    alt=""
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+                    <UserPlus className="h-4 w-4 text-white/40" />
+                  </div>
+                )}
+                <span className="flex-1 text-xs font-medium truncate">{t.actor?.name || "Someone"}</span>
+                <span className="text-xs font-bold text-amber-400">{t.amount}c</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Tiny footer pad to clear bottom nav */}
       <div className="h-2" />

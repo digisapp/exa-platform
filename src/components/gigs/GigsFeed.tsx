@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
@@ -11,6 +10,7 @@ import {
   Calendar,
   MapPin,
   ArrowRight,
+  ArrowUpRight,
   Loader2,
   CheckCircle,
   Clock,
@@ -67,60 +67,51 @@ export function GigsFeed({ gigs, modelApplications, isApproved }: GigsFeedProps)
         return;
       }
 
-      setAppliedGigs((prev) => ({
-        ...prev,
-        [gigId]: "pending",
-      }));
-
+      setAppliedGigs((prev) => ({ ...prev, [gigId]: "pending" }));
       toast.success("Application submitted! You'll hear back soon.");
-    } catch (error) {
-      console.error("Error applying:", error);
+    } catch {
       toast.error("Failed to apply");
     } finally {
       setApplying(null);
     }
   };
 
-  const getApplicationButton = (gig: Gig) => {
+  const getApplicationBadge = (gig: Gig) => {
     const status = appliedGigs[gig.id];
 
     if (status === "accepted") {
       return (
-        <Badge className="bg-green-500">
-          <CheckCircle className="h-3 w-3 mr-1" />
-          Accepted
+        <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 gap-1">
+          <CheckCircle className="h-3 w-3" /> Accepted
         </Badge>
       );
     }
-
     if (status === "pending") {
       return (
-        <Badge variant="secondary">
-          <Clock className="h-3 w-3 mr-1" />
-          Applied
+        <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 gap-1">
+          <Clock className="h-3 w-3" /> Applied
         </Badge>
       );
     }
-
     if (status === "rejected") {
       return (
-        <Badge variant="outline" className="text-muted-foreground">
+        <Badge variant="outline" className="text-white/40 border-white/10">
           Not Selected
         </Badge>
       );
     }
+    return null;
+  };
 
-    // For travel gigs, show "View Details" since there's a cost involved
+  const getActionButton = (gig: Gig) => {
+    const status = appliedGigs[gig.id];
+    if (status) return null;
+
     if (gig.type === "travel") {
       return (
-        <Button
-          size="sm"
-          variant="outline"
-          asChild
-        >
+        <Button size="sm" variant="outline" className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10 shrink-0" asChild>
           <Link href={`/gigs/${gig.slug}`}>
-            View Details
-            <ArrowRight className="ml-1 h-3 w-3" />
+            Details <ArrowRight className="ml-1 h-3 w-3" />
           </Link>
         </Button>
       );
@@ -131,86 +122,105 @@ export function GigsFeed({ gigs, modelApplications, isApproved }: GigsFeedProps)
         size="sm"
         onClick={() => handleApply(gig.id)}
         disabled={applying === gig.id || !isApproved}
-        className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+        className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white shrink-0"
       >
-        {applying === gig.id ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          "Apply"
-        )}
+        {applying === gig.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
       </Button>
     );
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-pink-500" />
-          Gigs For You
-        </CardTitle>
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/gigs" className="text-pink-500">
-            View All
-            <ArrowRight className="ml-1 h-4 w-4" />
-          </Link>
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {gigs && gigs.length > 0 ? (
-          <div className="space-y-3">
-            {gigs.map((gig) => (
-              <div
-                key={gig.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-              >
-                <Link
-                  href={`/gigs/${gig.slug}`}
-                  className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+    <>
+      <header className="flex items-center justify-between p-5 border-b border-white/5">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-cyan-400" />
+          <h2 className="text-base font-semibold">Gigs For You</h2>
+          {gigs.length > 0 && (
+            <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+              {gigs.length}
+            </span>
+          )}
+        </div>
+        <Link href="/gigs" className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+          View All <ArrowUpRight className="h-3 w-3" />
+        </Link>
+      </header>
+
+      <div className="p-3">
+        {gigs.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+            {gigs.map((gig) => {
+              const badge = getApplicationBadge(gig);
+              const actionBtn = getActionButton(gig);
+              const spotsLeft = gig.spots != null && gig.spots_filled != null
+                ? gig.spots - gig.spots_filled
+                : null;
+
+              return (
+                <div
+                  key={gig.id}
+                  className="flex flex-col gap-3 p-4 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.07] hover:border-cyan-500/30 transition-all"
                 >
-                  <div className="p-2 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex-shrink-0">
-                    <Sparkles className="h-4 w-4 text-pink-500" />
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 shrink-0">
+                      <Sparkles className="h-4 w-4 text-cyan-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/gigs/${gig.slug}`} className="block">
+                        <p className="font-semibold text-sm text-white hover:text-cyan-300 transition-colors leading-snug">
+                          {gig.title}
+                        </p>
+                      </Link>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                        <Badge variant="outline" className="capitalize text-[10px] px-1.5 py-0 border-white/10 text-white/50">
+                          {gig.type}
+                        </Badge>
+                        {gig.start_at && (
+                          <span className="flex items-center gap-1 text-xs text-white/50">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(gig.start_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </span>
+                        )}
+                        {(gig.location_city || gig.location_state) && (
+                          <span className="flex items-center gap-1 text-xs text-white/50">
+                            <MapPin className="h-3 w-3" />
+                            {[gig.location_city, gig.location_state].filter(Boolean).join(", ")}
+                          </span>
+                        )}
+                        {spotsLeft != null && spotsLeft <= 5 && (
+                          <span className="text-[10px] text-rose-400 font-medium">
+                            {spotsLeft} spot{spotsLeft !== 1 ? "s" : ""} left
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
+
+                  <div className="flex items-center justify-between gap-2 mt-auto">
+                    {gig.compensation_type === "paid" && gig.compensation_amount ? (
+                      <span className="text-sm font-bold text-emerald-400">${gig.compensation_amount}</span>
+                    ) : (
+                      <span />
+                    )}
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm truncate hover:text-pink-500 transition-colors">{gig.title}</p>
-                      <Badge variant="outline" className="capitalize text-xs flex-shrink-0">
-                        {gig.type}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                      {gig.start_at && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(gig.start_at).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </span>
-                      )}
-                      {(gig.location_city || gig.location_state) && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {gig.location_city}, {gig.location_state}
-                        </span>
-                      )}
+                      {badge}
+                      {actionBtn}
                     </div>
                   </div>
-                </Link>
-                <div className="flex-shrink-0 ml-3">
-                  {getApplicationButton(gig)}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">No gigs available right now</p>
-            <p className="text-sm text-muted-foreground">Check back soon!</p>
+          <div className="text-center py-10">
+            <div className="p-4 rounded-full bg-cyan-500/10 inline-block mb-3">
+              <Sparkles className="h-7 w-7 text-cyan-400/50" />
+            </div>
+            <p className="text-sm text-white/60">No gigs available right now</p>
+            <p className="text-xs text-white/40 mt-1">Check back soon!</p>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </>
   );
 }
