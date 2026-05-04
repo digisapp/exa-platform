@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import { ImageCropper } from "@/components/upload/ImageCropper";
+import { getHeroPortrait } from "@/lib/hero-portrait";
 import { toast } from "sonner";
 
 interface ModelDetails {
@@ -213,7 +214,7 @@ export default function AdminModelDetailPage() {
 
   // Portrait & content picker state
   const [portraitItem, setPortraitItem] = useState<{ id: string; media_url: string } | null>(null);
-  const [contentImages, setContentImages] = useState<Array<{ id: string; media_url: string; title: string | null; is_primary: boolean }>>([]);
+  const [contentImages, setContentImages] = useState<Array<{ id: string; media_url: string; title: string | null; is_primary: boolean; width: number | null; height: number | null }>>([]);
   const [contentPickerOpen, setContentPickerOpen] = useState(false);
   const [contentPickerMode, setContentPickerMode] = useState<"avatar" | "portrait">("avatar");
   const [contentPickerSaving, setContentPickerSaving] = useState(false);
@@ -251,7 +252,7 @@ export default function AdminModelDetailPage() {
       // Fetch portfolio images for content picker
       const { data: images } = await (supabase as any)
         .from("content_items")
-        .select("id, media_url, title, is_primary")
+        .select("id, media_url, title, is_primary, width, height")
         .eq("model_id", modelId)
         .eq("media_type", "image")
         .order("created_at", { ascending: false })
@@ -389,6 +390,19 @@ export default function AdminModelDetailPage() {
   };
 
   const instagramHandle = model.instagram_name;
+
+  // Compute what the live profile would show as the hero portrait (same logic as the public page)
+  const autoPortrait = !portraitItem
+    ? getHeroPortrait({
+        profilePhotoUrl: profilePhoto || null,
+        portfolioPhotos: contentImages.map((img) => ({
+          url: resolveMediaUrl(img.media_url),
+          width: img.width,
+          height: img.height,
+          isPrimary: img.is_primary,
+        })),
+      })
+    : null;
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -714,12 +728,19 @@ export default function AdminModelDetailPage() {
                     src={resolveMediaUrl(portraitItem.media_url)}
                     alt="Portrait"
                     fill
-                    className="object-cover"
+                    className="object-cover object-top"
+                  />
+                ) : autoPortrait ? (
+                  <Image
+                    src={autoPortrait.url}
+                    alt="Portrait (auto)"
+                    fill
+                    className="object-cover object-top"
                   />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-2">
                     <User className="h-10 w-10 text-muted-foreground/20" />
-                    <p className="text-xs text-muted-foreground">Auto-selected from portfolio</p>
+                    <p className="text-xs text-muted-foreground">No photos</p>
                   </div>
                 )}
                 {portraitItem && (
@@ -727,6 +748,13 @@ export default function AdminModelDetailPage() {
                     <Badge className="bg-yellow-500/90 text-white text-xs">
                       <Star className="h-3 w-3 mr-1 fill-white" />
                       Primary
+                    </Badge>
+                  </div>
+                )}
+                {!portraitItem && autoPortrait && (
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-black/60 text-white/80 text-xs border border-white/20">
+                      Auto-selected
                     </Badge>
                   </div>
                 )}
