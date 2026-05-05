@@ -965,6 +965,7 @@ export default function AdminShowsPage() {
   const [availResponded, setAvailResponded] = useState(0);
   const [availLoading, setAvailLoading] = useState(false);
   const [availGigId, setAvailGigId] = useState<string>("");
+  const [availGigs, setAvailGigs] = useState<{ id: string; title: string }[]>([]);
   const [availFilterDay, setAvailFilterDay] = useState<string>("all");
 
   const supabase = createClient();
@@ -1010,11 +1011,46 @@ export default function AdminShowsPage() {
 
   useEffect(() => {
     if (!selectedEventId) return;
-    // Auto-pick the first gig for the selected event for availability view
-    supabase.from("gigs").select("id").eq("event_id", selectedEventId).limit(1)
-      .then(({ data }) => { if (data?.[0]) setAvailGigId(data[0].id); });
+    async function loadAvailGigs() {
+      const event = events.find((e) => e.id === selectedEventId);
+
+      // Primary: gigs linked to this event via event_id
+      const { data: byEventId } = await (supabase.from("gigs") as any)
+        .select("id, title")
+        .eq("event_id", selectedEventId)
+        .order("start_at", { ascending: true });
+
+      let gigs = byEventId || [];
+
+      // Fallback: gigs in the event's date range (catches unlinked gigs)
+      if (gigs.length === 0 && event?.start_date) {
+        const from = event.start_date;
+        const to = event.end_date || event.start_date;
+        const { data: byDate } = await (supabase.from("gigs") as any)
+          .select("id, title")
+          .gte("start_at", from)
+          .lte("start_at", to + "T23:59:59")
+          .order("start_at", { ascending: true });
+        gigs = byDate || [];
+      }
+
+      // Last resort: search by event short name in title
+      if (gigs.length === 0 && event?.short_name) {
+        const { data: byTitle } = await (supabase.from("gigs") as any)
+          .select("id, title")
+          .ilike("title", `%${event.short_name}%`)
+          .order("start_at", { ascending: true })
+          .limit(10);
+        gigs = byTitle || [];
+      }
+
+      setAvailGigs(gigs);
+      if (gigs.length > 0) setAvailGigId(gigs[0].id);
+      else setAvailGigId("");
+    }
+    loadAvailGigs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedEventId]);
+  }, [selectedEventId, events]);
 
   async function loadShows() {
     const res = await fetch(`/api/admin/lineups?event_id=${selectedEventId}`);
@@ -1612,8 +1648,24 @@ export default function AdminShowsPage() {
             <div className="px-5 py-3 border-b border-white/[0.06] flex items-center gap-3 flex-wrap shrink-0 bg-black/10">
               <div className="flex items-center gap-2">
                 <CalendarCheck className="h-4 w-4 text-pink-400" />
-                <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-white/50">Model Availability — Miami Swim Week 2026</p>
+                <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-white/50">Model Availability</p>
               </div>
+              {/* Gig selector */}
+              {availGigs.length > 1 ? (
+                <select
+                  value={availGigId}
+                  onChange={(e) => setAvailGigId(e.target.value)}
+                  className="h-7 text-xs bg-white/[0.04] border border-white/[0.08] text-white/70 rounded-lg px-2 focus:outline-none focus:border-pink-500/40"
+                >
+                  {availGigs.map((g) => (
+                    <option key={g.id} value={g.id}>{g.title}</option>
+                  ))}
+                </select>
+              ) : availGigs.length === 1 ? (
+                <span className="text-[11px] text-white/35 truncate max-w-[260px]">{availGigs[0].title}</span>
+              ) : (
+                <span className="text-[11px] text-amber-400/70">No gig found for this event</span>
+              )}
               <div className="flex items-center gap-2 ml-2">
                 <span className="text-[11px] text-white/40 tabular-nums">
                   <span className="text-emerald-400 font-semibold">{availResponded}</span>/{availTotal} responded
