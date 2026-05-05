@@ -89,6 +89,11 @@ const nextConfig: NextConfig = {
         destination: '/fresh-digitals',
         permanent: true,
       },
+      {
+        source: '/castingcall',
+        destination: 'https://www.digis.cc/events/exa-swim-week-casting-call-0a3f7901',
+        permanent: false,
+      },
     ];
   },
   // Security headers
