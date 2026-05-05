@@ -211,6 +211,10 @@ export default function AdminModelDetailPage() {
   const [cropperOpen, setCropperOpen] = useState(false);
   const [cropperSrc, setCropperSrc] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [portraitUploading, setPortraitUploading] = useState(false);
+  const [portraitCropperOpen, setPortraitCropperOpen] = useState(false);
+  const [portraitCropperSrc, setPortraitCropperSrc] = useState("");
+  const portraitInputRef = useRef<HTMLInputElement>(null);
 
   // Portrait & content picker state
   const [portraitItem, setPortraitItem] = useState<{ id: string; media_url: string } | null>(null);
@@ -448,6 +452,47 @@ export default function AdminModelDetailPage() {
       toast.error(message);
     } finally {
       setPhotoUploading(false);
+    }
+  };
+
+  const handlePortraitSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPortraitCropperSrc(reader.result as string);
+      setPortraitCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handlePortraitCropComplete = async (croppedBlob: Blob) => {
+    setPortraitCropperOpen(false);
+    setPortraitUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", croppedBlob, "portrait.jpg");
+
+      const res = await fetch(`/api/admin/models/${model.id}/portrait`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to upload portrait");
+      }
+
+      const data = await res.json();
+      setPortraitItem({ id: data.id, media_url: data.url });
+      setContentImages((prev) => prev.map((i) => ({ ...i, is_primary: false })));
+      toast.success("Portrait updated");
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to upload portrait";
+      toast.error(message);
+    } finally {
+      setPortraitUploading(false);
     }
   };
 
@@ -763,12 +808,33 @@ export default function AdminModelDetailPage() {
                 variant="outline"
                 size="sm"
                 className="w-full"
+                onClick={() => portraitInputRef.current?.click()}
+                disabled={portraitUploading}
+              >
+                {portraitUploading ? (
+                  <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="h-3 w-3 mr-2" />
+                )}
+                Upload New
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
                 onClick={() => { setContentPickerMode("portrait"); setContentPickerOpen(true); }}
-                disabled={contentImages.length === 0}
+                disabled={contentImages.length === 0 || portraitUploading}
               >
                 <LayoutGrid className="h-3 w-3 mr-2" />
                 {contentImages.length === 0 ? "No portfolio images" : "Set from Portfolio"}
               </Button>
+              <input
+                ref={portraitInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handlePortraitSelect}
+                className="hidden"
+              />
               {portraitItem && (
                 <Button
                   variant="ghost"
@@ -807,6 +873,16 @@ export default function AdminModelDetailPage() {
             imageSrc={cropperSrc}
             onCropComplete={handleCropComplete}
             aspectRatio={1}
+            circularCrop={false}
+          />
+
+          {/* Portrait Cropper Dialog */}
+          <ImageCropper
+            open={portraitCropperOpen}
+            onClose={() => setPortraitCropperOpen(false)}
+            imageSrc={portraitCropperSrc}
+            onCropComplete={handlePortraitCropComplete}
+            aspectRatio={3 / 4}
             circularCrop={false}
           />
 
