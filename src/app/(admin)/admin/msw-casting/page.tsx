@@ -7,8 +7,10 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
 import {
-  ArrowLeft, Heart, ChevronDown, ChevronUp, Building2, RefreshCw, Loader2, Users,
+  ArrowLeft, Heart, ChevronDown, ChevronUp, Building2, RefreshCw, Loader2,
+  Copy, Check, Link2, Trophy,
 } from "lucide-react";
 
 interface ModelRow {
@@ -27,6 +29,34 @@ interface BrandPick {
   picks: string[];
 }
 
+function CopyLinkButton() {
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    const url = `${window.location.origin}/brands/msw-casting`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      toast.success("Draft Room link copied — send it to the designer");
+      setTimeout(() => setCopied(false), 2500);
+    });
+  }
+
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); copy(); }}
+      title="Copy Draft Room link"
+      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
+        copied
+          ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+          : "bg-white/[0.04] border-white/[0.08] text-white/40 hover:text-white/70 hover:border-white/15"
+      }`}
+    >
+      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? "Copied!" : "Copy Link"}
+    </button>
+  );
+}
+
 export default function AdminMswCastingPage() {
   const supabase = createClient();
 
@@ -40,53 +70,43 @@ export default function AdminMswCastingPage() {
   const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
   const [modelMap, setModelMap] = useState<Map<string, ModelRow>>(new Map());
 
-  useEffect(() => {
-    loadInitial();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function loadInitial() {
     const { data: event } = await supabase
-      .from("events")
-      .select("id, name")
+      .from("events").select("id, name")
       .ilike("name", "%miami swim week%")
-      .order("year", { ascending: false })
-      .limit(1)
-      .maybeSingle() as { data: { id: string; name: string } | null };
+      .order("year", { ascending: false }).limit(1).maybeSingle() as
+      { data: { id: string; name: string } | null };
 
     if (!event) { setLoading(false); return; }
     setEventId(event.id);
     setEventName(event.name);
 
-    // Confirmed models = badge holders for this event
     const { data: eventBadge } = await supabase
-      .from("badges")
-      .select("id")
-      .eq("event_id", event.id)
-      .eq("badge_type", "event")
-      .eq("is_active", true)
+      .from("badges").select("id")
+      .eq("event_id", event.id).eq("badge_type", "event").eq("is_active", true)
       .maybeSingle() as { data: { id: string } | null };
 
     if (eventBadge) {
-      const { data: badgeHolders } = await supabase
-        .from("model_badges")
-        .select("model_id")
-        .eq("badge_id", eventBadge.id) as { data: { model_id: string }[] | null };
+      const { data: holders } = await supabase
+        .from("model_badges").select("model_id").eq("badge_id", eventBadge.id) as
+        { data: { model_id: string }[] | null };
 
-      const modelIds = (badgeHolders || []).map((b) => b.model_id);
+      const modelIds = (holders || []).map((b) => b.model_id);
       setConfirmedCount(modelIds.length);
 
       if (modelIds.length > 0) {
-        const { data: models } = await supabase
-          .from("models")
-          .select("id, first_name, last_name, username, profile_photo_url, height")
+        const { data: mdls } = await supabase
+          .from("models").select("id, first_name, last_name, username, profile_photo_url, height")
           .in("id", modelIds);
-        setModelMap(new Map(((models || []) as ModelRow[]).map((m) => [m.id, m])));
+        setModelMap(new Map(((mdls || []) as ModelRow[]).map((m) => [m.id, m])));
       }
     }
 
     setLoading(false);
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadInitial(); }, []);
 
   async function loadBrandPicks() {
     if (!eventId) return;
@@ -96,18 +116,14 @@ export default function AdminMswCastingPage() {
       .from("event_show_designers")
       .select("brand_id, brand:brands ( company_name, logo_url )")
       .not("brand_id", "is", null) as {
-        data: Array<{
-          brand_id: string;
-          brand: { company_name: string; logo_url: string | null } | null;
-        }> | null;
+        data: Array<{ brand_id: string; brand: { company_name: string; logo_url: string | null } | null }> | null;
       };
 
     if (!designers?.length) { setPicksLoading(false); return; }
 
     const { data: picks } = await (supabase as any)
-      .from("msw_casting_picks")
-      .select("brand_id, model_id")
-      .eq("event_id", eventId) as { data: Array<{ brand_id: string; model_id: string }> | null };
+      .from("msw_casting_picks").select("brand_id, model_id").eq("event_id", eventId) as
+      { data: Array<{ brand_id: string; model_id: string }> | null };
 
     const picksByBrand: Record<string, string[]> = {};
     for (const p of picks || []) {
@@ -120,12 +136,7 @@ export default function AdminMswCastingPage() {
     for (const d of designers) {
       if (!d.brand_id || !d.brand || seen.has(d.brand_id)) continue;
       seen.add(d.brand_id);
-      rows.push({
-        brand_id: d.brand_id,
-        company_name: d.brand.company_name,
-        logo_url: d.brand.logo_url,
-        picks: picksByBrand[d.brand_id] || [],
-      });
+      rows.push({ brand_id: d.brand_id, company_name: d.brand.company_name, logo_url: d.brand.logo_url, picks: picksByBrand[d.brand_id] || [] });
     }
     rows.sort((a, b) => b.picks.length - a.picks.length);
     setBrandPicks(rows);
@@ -134,8 +145,7 @@ export default function AdminMswCastingPage() {
 
   useEffect(() => {
     if (eventId && brandPicks.length === 0 && !picksLoading) loadBrandPicks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventId]);
+  }, [eventId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (
@@ -145,8 +155,11 @@ export default function AdminMswCastingPage() {
     );
   }
 
+  const draftRoomUrl = typeof window !== "undefined" ? `${window.location.origin}/brands/msw-casting` : "/brands/msw-casting";
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+
       {/* Header */}
       <div className="flex items-center gap-4 flex-wrap">
         <Button variant="ghost" size="sm" asChild>
@@ -155,8 +168,36 @@ export default function AdminMswCastingPage() {
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold">MSW Casting Portal</h1>
           <p className="text-sm text-muted-foreground">
-            {eventName} · {confirmedCount} confirmed models (badge holders) · {brandPicks.filter((b) => b.picks.length > 0).length} brands with picks
+            {eventName} · {confirmedCount} confirmed models · {brandPicks.filter((b) => b.picks.length > 0).length} brands with picks
           </p>
+        </div>
+      </div>
+
+      {/* Draft Room link banner */}
+      <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 flex items-start gap-3">
+        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-pink-500 to-violet-600 flex items-center justify-center shrink-0">
+          <Trophy className="h-5 w-5 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">Designer Draft Room</p>
+          <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+            Send this link to any registered designer. They log in and see the full model roster as a draft board — pick models like a game.
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <code className="text-xs bg-black/20 rounded-lg px-2.5 py-1.5 text-violet-300 border border-violet-500/20 truncate max-w-xs">
+              {draftRoomUrl}
+            </code>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(draftRoomUrl);
+                toast.success("Draft Room link copied!");
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-500/20 border border-violet-500/30 text-violet-300 hover:bg-violet-500/30 transition-colors"
+            >
+              <Link2 className="h-3.5 w-3.5" />
+              Copy Link
+            </button>
+          </div>
         </div>
       </div>
 
@@ -187,7 +228,7 @@ export default function AdminMswCastingPage() {
         <CardContent className="p-4">
           <p className="text-sm font-medium mb-1">Import Brand Accounts from CSV</p>
           <p className="text-xs text-muted-foreground mb-2">
-            Run once from your terminal after placing the CSV at any path. CSV must have <code className="bg-muted px-1 rounded">brand_name,email</code> headers.
+            Run once from your terminal. CSV must have <code className="bg-muted px-1 rounded">brand_name,email</code> headers.
           </p>
           <code className="block text-xs bg-muted rounded-lg px-3 py-2 text-muted-foreground select-all">
             npx tsx scripts/data-imports/import-msw-brands.ts path/to/brands.csv
@@ -235,6 +276,8 @@ export default function AdminMswCastingPage() {
                   <p className="font-medium text-sm truncate">{brand.company_name}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  {/* Per-brand copy link button */}
+                  <CopyLinkButton />
                   <Badge
                     variant={brand.picks.length > 0 ? "default" : "outline"}
                     className={brand.picks.length > 0 ? "bg-pink-500 border-pink-500" : ""}
@@ -290,7 +333,7 @@ export default function AdminMswCastingPage() {
       {/* Manage confirmed models link */}
       <div className="border-t border-border pt-4">
         <p className="text-xs text-muted-foreground">
-          Confirmed models are managed via the <strong>badge system</strong>. To add or remove models from the casting pool, go to{" "}
+          Confirmed models are managed via the <strong>badge system</strong>. To add or remove models, go to{" "}
           <Link href="/admin/models" className="text-pink-500 hover:underline">Admin → Models</Link> and award/revoke the MSW 2026 event badge.
         </p>
       </div>

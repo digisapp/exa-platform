@@ -26,6 +26,7 @@ import {
   Copy, AlertTriangle, FileText, Pencil, ArrowRightLeft, Eye, Repeat, Star,
   CalendarCheck, RefreshCw,
 } from "lucide-react";
+import { ModelDraftCard } from "@/components/models/model-draft-card";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -52,6 +53,11 @@ interface ModelInfo {
   dress_size: string | null;
   shoe_size: string | null;
   instagram_followers: number | null;
+  admin_rating: number | null;
+  reliability_score: number | null;
+  city: string | null;
+  state: string | null;
+  focus_tags: string[] | null;
 }
 
 interface ShowModel {
@@ -209,86 +215,24 @@ function SortableModelCard({
 }
 
 // ─── Model Pool Card ─────────────────────────────────────────────────────────
+// Wraps ModelDraftCard (pool variant) and adds shows-specific indicators:
+// isSelected = bulk-selected for lineup add; isPick = designer pre-picked
 
 function ModelPoolCard({ model, assignedCount, isSelected, onToggle, isPick }: {
   model: ModelInfo; assignedCount: number; isSelected: boolean; onToggle: () => void; isPick: boolean;
 }) {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const hasMeasurements = model.bust || model.waist || model.hips || model.dress_size || model.shoe_size;
   return (
-    <div className="relative">
-      <button
-        onClick={onToggle}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        className={`w-full flex items-center gap-3 p-2.5 rounded-lg border transition-all duration-150 text-left ${
-          isSelected
-            ? "border-pink-500/60 bg-pink-500/12 shadow-[inset_0_0_20px_rgba(236,72,153,0.07)]"
-            : isPick
-              ? "border-amber-400/30 bg-amber-500/[0.04] hover:border-amber-400/60"
-              : "border-white/[0.05] bg-white/[0.01] hover:border-pink-500/25 hover:bg-pink-500/[0.02]"
-        }`}>
-        <div className="relative h-10 w-10 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
-          {model.profile_photo_url ? (
-            <Image src={model.profile_photo_url} alt={model.first_name || ""} fill className="object-cover" />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center text-xs text-white/30">
-              {model.first_name?.[0]}{model.last_name?.[0]}
-            </div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate text-white/85">{model.first_name} {model.last_name}</p>
-          <p className="text-[11px] text-white/30 truncate">
-            @{model.username}{model.height ? ` · ${model.height}` : ""}{model.dress_size ? ` · Sz ${model.dress_size}` : ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          {isPick && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />}
-          {assignedCount > 0 && (
-            <span className="text-[10px] font-semibold bg-pink-500/20 text-pink-300 rounded-full px-1.5 py-0.5 leading-none tabular-nums">
-              {assignedCount}×
-            </span>
-          )}
-          {isSelected && <Check className="h-4 w-4 text-pink-400" />}
-        </div>
-      </button>
-      {showTooltip && (
-        <div className="absolute left-full ml-2 top-0 z-50 w-64 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl shadow-black/60 p-3.5 pointer-events-none">
-          <div className="flex gap-3">
-            <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
-              {model.profile_photo_url
-                ? <Image src={model.profile_photo_url} alt={model.first_name || ""} fill className="object-cover" />
-                : <div className="h-full w-full flex items-center justify-center text-lg text-white/25">{model.first_name?.[0]}{model.last_name?.[0]}</div>}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-white/90 truncate">{model.first_name} {model.last_name}</p>
-              <p className="text-xs text-white/35">@{model.username}</p>
-              {isPick && (
-                <p className="text-xs text-amber-400 font-medium mt-1 flex items-center gap-1">
-                  <Star className="h-3 w-3 fill-amber-400" /> Designer&apos;s pick
-                </p>
-              )}
-            </div>
-          </div>
-          {hasMeasurements && (
-            <div className="mt-3 pt-2.5 border-t border-white/[0.07] grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-              {model.height && <><span className="text-white/30">Height</span><span className="text-white/70">{model.height}</span></>}
-              {model.bust && <><span className="text-white/30">Bust</span><span className="text-white/70">{model.bust}</span></>}
-              {model.waist && <><span className="text-white/30">Waist</span><span className="text-white/70">{model.waist}</span></>}
-              {model.hips && <><span className="text-white/30">Hips</span><span className="text-white/70">{model.hips}</span></>}
-              {model.dress_size && <><span className="text-white/30">Dress</span><span className="text-white/70">{model.dress_size}</span></>}
-              {model.shoe_size && <><span className="text-white/30">Shoe</span><span className="text-white/70">{model.shoe_size}</span></>}
-            </div>
-          )}
-          <div className="mt-2.5 pt-2.5 border-t border-white/[0.07] grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-            {model.instagram_followers && (
-              <><span className="text-white/30">Followers</span><span className="text-white/70">{model.instagram_followers.toLocaleString()}</span></>
-            )}
-            {assignedCount > 0 && (
-              <><span className="text-white/30">Walks</span><span className="text-white/70">{assignedCount} lineup{assignedCount > 1 ? "s" : ""}</span></>
-            )}
-          </div>
+    <div className={`relative rounded-xl transition-all ${isSelected ? "ring-2 ring-pink-500/60 shadow-[0_0_12px_rgba(236,72,153,0.3)]" : ""}`}>
+      <ModelDraftCard
+        model={model}
+        isPicked={isSelected}
+        onPick={onToggle}
+        assignedCount={assignedCount}
+        variant="pool"
+      />
+      {isPick && (
+        <div className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-amber-400 flex items-center justify-center shadow-lg shadow-amber-400/40 pointer-events-none z-10">
+          <Star className="h-3 w-3 fill-black text-black" />
         </div>
       )}
     </div>
@@ -1064,7 +1008,7 @@ export default function AdminShowsPage() {
   async function loadModels() {
     setLoadingModels(true);
     const { data } = await supabase.from("models")
-      .select("id, username, first_name, last_name, profile_photo_url, height, bust, waist, hips, dress_size, shoe_size, instagram_followers")
+      .select("id, username, first_name, last_name, profile_photo_url, height, bust, waist, hips, dress_size, shoe_size, instagram_followers, admin_rating, reliability_score, city, state, focus_tags")
       .eq("is_approved", true).not("user_id", "is", null).order("first_name", { ascending: true });
     setAllModels((data || []) as ModelInfo[]);
     setLoadingModels(false);
