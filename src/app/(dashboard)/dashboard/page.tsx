@@ -15,6 +15,7 @@ export const revalidate = 0;
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { GigsFeed } from "@/components/gigs/GigsFeed";
+import { MswAvailabilityCard } from "@/components/dashboard/MswAvailabilityCard";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
@@ -259,6 +260,28 @@ export default async function DashboardPage() {
     .from("gig_applications") as any)
     .select("gig_id, status")
     .eq("model_id", model.id);
+
+  // Check if model is confirmed for Miami Swim Week 2026
+  const { data: mswEvent } = await (adminClient.from("events") as any)
+    .select("id")
+    .eq("slug", "miami-swim-week-2026")
+    .maybeSingle();
+  let mswConfirmedGigId: string | null = null;
+  if (mswEvent) {
+    const { data: mswGigs } = await (adminClient.from("gigs") as any)
+      .select("id")
+      .eq("event_id", mswEvent.id);
+    const mswGigIds = (mswGigs || []).map((g: any) => g.id);
+    if (mswGigIds.length > 0) {
+      const { data: mswApp } = await (adminClient.from("gig_applications") as any)
+        .select("gig_id")
+        .in("gig_id", mswGigIds)
+        .eq("model_id", model.id)
+        .eq("status", "accepted")
+        .maybeSingle();
+      if (mswApp) mswConfirmedGigId = mswApp.gig_id;
+    }
+  }
 
   // Get model's auctions for EXA Bids section
   const { data: modelAuctions } = await (supabase as any)
@@ -634,6 +657,15 @@ export default async function DashboardPage() {
           isApproved={model.is_approved}
         />
       </section>
+
+      {/* ──────────────────────────────────────────────────────
+          MIAMI SWIM WEEK AVAILABILITY — only for confirmed models
+         ────────────────────────────────────────────────────── */}
+      {mswConfirmedGigId && (
+        <section>
+          <MswAvailabilityCard gigId={mswConfirmedGigId} />
+        </section>
+      )}
 
       {/* ──────────────────────────────────────────────────────
           PRIORITY INBOX — full-width

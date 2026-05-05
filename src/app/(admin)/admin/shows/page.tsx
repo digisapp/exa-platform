@@ -24,6 +24,7 @@ import {
   ArrowLeft, Plus, Search, X, GripVertical, Calendar, Clock,
   Download, Trash2, ChevronDown, ChevronUp, Check, UserPlus, Loader2,
   Copy, AlertTriangle, FileText, Pencil, ArrowRightLeft, Eye, Repeat, Star,
+  CalendarCheck, RefreshCw,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -950,6 +951,22 @@ export default function AdminShowsPage() {
   const [addDesignerShowId, setAddDesignerShowId] = useState<string | null>(null);
   const [newDesignerName, setNewDesignerName] = useState("");
 
+  // Main view toggle: shows builder vs. availability grid
+  const [mainView, setMainView] = useState<"shows" | "availability">("shows");
+
+  // Availability state
+  type AvailModel = {
+    id: string; first_name: string | null; last_name: string | null;
+    username: string | null; profile_photo_url: string | null;
+    available_dates: string[]; has_responded: boolean;
+  };
+  const [availModels, setAvailModels] = useState<AvailModel[]>([]);
+  const [availTotal, setAvailTotal] = useState(0);
+  const [availResponded, setAvailResponded] = useState(0);
+  const [availLoading, setAvailLoading] = useState(false);
+  const [availGigId, setAvailGigId] = useState<string>("");
+  const [availFilterDay, setAvailFilterDay] = useState<string>("all");
+
   const supabase = createClient();
 
   const designerSensors = useSensors(
@@ -985,6 +1002,19 @@ export default function AdminShowsPage() {
     if (!activeDesignerEntryId && filterAssigned === "picks") setFilterAssigned("all");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeDesignerEntryId]);
+
+  useEffect(() => {
+    if (mainView === "availability" && availGigId) loadAvailability(availGigId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mainView, availGigId]);
+
+  useEffect(() => {
+    if (!selectedEventId) return;
+    // Auto-pick the first gig for the selected event for availability view
+    supabase.from("gigs").select("id").eq("event_id", selectedEventId).limit(1)
+      .then(({ data }) => { if (data?.[0]) setAvailGigId(data[0].id); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEventId]);
 
   async function loadShows() {
     const res = await fetch(`/api/admin/lineups?event_id=${selectedEventId}`);
@@ -1161,6 +1191,19 @@ export default function AdminShowsPage() {
   }, [shows]);
 
   // ─── Actions ─────────────────────────────────────────────────────────────
+
+  async function loadAvailability(gigId: string) {
+    if (!gigId) return;
+    setAvailLoading(true);
+    const res = await fetch(`/api/admin/gig-availability?gig_id=${gigId}`);
+    if (res.ok) {
+      const data = await res.json();
+      setAvailModels(data.models || []);
+      setAvailTotal(data.total || 0);
+      setAvailResponded(data.responded || 0);
+    }
+    setAvailLoading(false);
+  }
 
   async function createShow() {
     if (!newShowName) return;
@@ -1483,6 +1526,32 @@ export default function AdminShowsPage() {
         <div className="h-4 w-px bg-white/10" />
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/40 hidden sm:block">Show Builder</p>
 
+        {/* Main view tabs */}
+        <div className="flex items-center gap-0.5 bg-white/[0.04] border border-white/[0.07] rounded-lg p-0.5">
+          {([
+            { key: "shows", label: "Lineups" },
+            { key: "availability", label: "Availability" },
+          ] as { key: typeof mainView; label: string }[]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setMainView(key)}
+              className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide px-3 py-1.5 rounded-md transition-all ${
+                mainView === key
+                  ? "bg-white/12 text-white/90"
+                  : "text-white/30 hover:text-white/60"
+              }`}
+            >
+              {key === "availability" && <CalendarCheck className="h-3 w-3" />}
+              {label}
+              {key === "availability" && availTotal > 0 && (
+                <span className="text-[9px] font-bold bg-emerald-500/20 text-emerald-400 rounded-full px-1.5 py-0.5 leading-none tabular-nums">
+                  {availResponded}/{availTotal}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
         <Select value={selectedEventId} onValueChange={setSelectedEventId}>
           <SelectTrigger className="w-[240px] h-8 border-white/10 bg-white/[0.04] text-white/75 text-sm hover:border-white/20 transition-colors">
             <SelectValue placeholder="Select event" />
@@ -1522,8 +1591,163 @@ export default function AdminShowsPage() {
         )}
       </div>
 
+      {/* ── Availability Grid ───────────────────────────────────────────── */}
+      {mainView === "availability" && (() => {
+        const MSW_DAYS = [
+          { date: "2026-05-26", label: "Mon 5/26" },
+          { date: "2026-05-27", label: "Tue 5/27" },
+          { date: "2026-05-28", label: "Wed 5/28" },
+          { date: "2026-05-29", label: "Thu 5/29" },
+          { date: "2026-05-30", label: "Fri 5/30" },
+          { date: "2026-05-31", label: "Sat 5/31" },
+        ];
+        const filteredAvail = availFilterDay === "all"
+          ? availModels
+          : availModels.filter((m) => m.available_dates.includes(availFilterDay));
+        const notResponded = availModels.filter((m) => !m.has_responded).length;
+
+        return (
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Toolbar */}
+            <div className="px-5 py-3 border-b border-white/[0.06] flex items-center gap-3 flex-wrap shrink-0 bg-black/10">
+              <div className="flex items-center gap-2">
+                <CalendarCheck className="h-4 w-4 text-pink-400" />
+                <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-white/50">Model Availability — Miami Swim Week 2026</p>
+              </div>
+              <div className="flex items-center gap-2 ml-2">
+                <span className="text-[11px] text-white/40 tabular-nums">
+                  <span className="text-emerald-400 font-semibold">{availResponded}</span>/{availTotal} responded
+                </span>
+                {notResponded > 0 && (
+                  <span className="text-[10px] text-amber-400/70 tabular-nums">
+                    · {notResponded} pending
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1 ml-auto flex-wrap">
+                {/* Day filter pills */}
+                {[{ date: "all", label: `All · ${availModels.length}` },
+                  ...MSW_DAYS.map((d) => ({
+                    date: d.date,
+                    label: `${d.label} · ${availModels.filter((m) => m.available_dates.includes(d.date)).length}`,
+                  }))
+                ].map(({ date, label }) => (
+                  <button
+                    key={date}
+                    onClick={() => setAvailFilterDay(date)}
+                    className={`text-[10px] uppercase tracking-wide font-medium px-2.5 py-1 rounded-full border transition-all ${
+                      availFilterDay === date
+                        ? "bg-pink-500 border-pink-500 text-white shadow-[0_0_12px_rgba(236,72,153,0.35)]"
+                        : "border-white/[0.08] text-white/30 hover:border-white/20 hover:text-white/55"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+                <button
+                  onClick={() => loadAvailability(availGigId)}
+                  className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white/60 border border-white/[0.08] hover:border-white/20 rounded-full px-2.5 py-1 transition-all"
+                >
+                  <RefreshCw className="h-2.5 w-2.5" /> Refresh
+                </button>
+              </div>
+            </div>
+
+            {/* Grid */}
+            <div className="flex-1 overflow-auto p-5">
+              {availLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="h-5 w-5 animate-spin text-white/20" />
+                </div>
+              ) : availModels.length === 0 ? (
+                <div className="text-center py-20">
+                  <CalendarCheck className="h-8 w-8 text-white/10 mx-auto mb-3" />
+                  <p className="text-sm text-white/30">No confirmed models found for this event&apos;s gig.</p>
+                  <p className="text-xs text-white/20 mt-1">Make sure the gig has accepted applications.</p>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-white/[0.07] overflow-hidden">
+                  {/* Header row */}
+                  <div className="flex items-center bg-black/30 border-b border-white/[0.07] px-4 py-2.5 sticky top-0 z-10">
+                    <div className="w-[200px] shrink-0 text-[10px] uppercase tracking-[0.18em] font-semibold text-white/25">Model</div>
+                    {MSW_DAYS.map((d) => (
+                      <div key={d.date} className="flex-1 text-center text-[10px] uppercase tracking-wide font-semibold text-white/25">
+                        {d.label}
+                      </div>
+                    ))}
+                    <div className="w-[80px] shrink-0 text-right text-[10px] uppercase tracking-wide font-semibold text-white/25">Days</div>
+                  </div>
+
+                  {/* Model rows */}
+                  <div className="divide-y divide-white/[0.04]">
+                    {filteredAvail.map((m) => (
+                      <div key={m.id} className="flex items-center px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
+                        {/* Model info */}
+                        <div className="w-[200px] shrink-0 flex items-center gap-2.5 min-w-0">
+                          <div className="relative h-7 w-7 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
+                            {m.profile_photo_url ? (
+                              <Image src={m.profile_photo_url} alt="" fill className="object-cover" />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center text-[8px] text-white/25">
+                                {m.first_name?.[0]}{m.last_name?.[0]}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-white/80 truncate leading-tight">
+                              {m.first_name} {m.last_name}
+                            </p>
+                            {!m.has_responded && (
+                              <p className="text-[9px] text-amber-400/60 leading-tight">No response</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Day cells */}
+                        {MSW_DAYS.map((d) => {
+                          const avail = m.available_dates.includes(d.date);
+                          return (
+                            <div key={d.date} className="flex-1 flex items-center justify-center">
+                              {!m.has_responded ? (
+                                <span className="h-2 w-2 rounded-full bg-white/[0.08]" title="No response" />
+                              ) : avail ? (
+                                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-emerald-500/20 border border-emerald-500/40 shadow-[0_0_8px_rgba(34,197,94,0.25)]">
+                                  <Check className="h-3 w-3 text-emerald-400" />
+                                </span>
+                              ) : (
+                                <span className="h-1 w-1 rounded-full bg-white/10" title="Unavailable" />
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        {/* Days count */}
+                        <div className="w-[80px] shrink-0 text-right">
+                          {m.has_responded ? (
+                            <span className={`text-xs font-semibold tabular-nums ${
+                              m.available_dates.length === 6 ? "text-emerald-400" :
+                              m.available_dates.length >= 3 ? "text-white/70" :
+                              m.available_dates.length > 0 ? "text-amber-400" :
+                              "text-red-400/70"
+                            }`}>
+                              {m.available_dates.length}/6
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-white/20">—</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── 3-Panel Layout ──────────────────────────────────────────────── */}
-      <div className="flex-1 flex overflow-hidden">
+      {mainView === "shows" && <div className="flex-1 flex overflow-hidden">
 
         {/* Left — Model Pool */}
         <div className="w-[300px] border-r border-white/[0.06] flex flex-col bg-black/20 shrink-0">
@@ -1926,7 +2150,7 @@ export default function AdminShowsPage() {
             )}
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Create Show Dialog */}
       <Dialog open={showCreateShow} onOpenChange={setShowCreateShow}>
