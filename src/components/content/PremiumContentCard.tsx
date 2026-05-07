@@ -154,7 +154,9 @@ export function PremiumContentCard({
               <>
                 <video
                   ref={videoRef}
-                  src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
+                  // #t=0.1 forces the browser to seek/render a frame so the card
+                  // shows a thumbnail before autoplay (Safari/iOS otherwise stay black).
+                  src={`${isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}#t=0.1`}
                   muted
                   playsInline
                   loop
