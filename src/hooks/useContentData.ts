@@ -168,9 +168,9 @@ export function useContentData() {
           const errData = await res.json().catch(() => ({}));
           throw new Error(errData.details || errData.error || 'Failed to create item');
         }
-        toast.success('Content item created');
+        const result = await res.json();
         await Promise.all([fetchItems(), fetchStats()]);
-        return await res.json();
+        return result;
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Failed to create content item';
         toast.error(message);

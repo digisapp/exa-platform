@@ -83,6 +83,17 @@ function getMediaUrl(url: string): string {
   return `${supabaseUrl}/storage/v1/object/public/portfolio/${url}`;
 }
 
+// Resolve MIME type from file extension when browser doesn't report it (common on iOS for videos)
+function resolveFileType(file: File): string {
+  if (file.type) return file.type;
+  const ext = file.name.split('.').pop()?.toLowerCase() || '';
+  const extMap: Record<string, string> = {
+    mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm',
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif',
+  };
+  return extMap[ext] || '';
+}
+
 // ---------------------------------------------------------------------------
 // Main Page Component
 // ---------------------------------------------------------------------------
@@ -1075,8 +1086,9 @@ function UploadDialog({
         continue;
       }
 
-      const isImage = ALLOWED_IMAGE_TYPES.includes(file.type);
-      const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type);
+      const resolvedType = resolveFileType(file);
+      const isImage = ALLOWED_IMAGE_TYPES.includes(resolvedType);
+      const isVideo = ALLOWED_VIDEO_TYPES.includes(resolvedType);
 
       if (!isImage && !isVideo) {
         toast.error(`"${file.name}" is not a supported format. Use JPEG, PNG, WebP, GIF, MP4, MOV, or WebM.`);
@@ -1112,6 +1124,7 @@ function UploadDialog({
 
   const uploadSingleFile = async (uploadFile: UploadFile, idx: number): Promise<boolean> => {
     const { file } = uploadFile;
+    const fileType = resolveFileType(file);
 
     // Update status
     setFiles((prev) =>
@@ -1125,7 +1138,7 @@ function UploadDialog({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fileName: file.name,
-          fileType: file.type,
+          fileType,
           fileSize: file.size,
           title: title || file.name.split('.')[0],
         }),
@@ -1142,15 +1155,20 @@ function UploadDialog({
         prev.map((f, i) => (i === idx ? { ...f, progress: 30 } : f)),
       );
 
-      // Step 2: Upload to storage
+      // Step 2: Upload to storage directly from browser (bypasses Vercel size limit)
       const uploadRes = await fetch(signedUrl, {
         method: 'PUT',
-        headers: { 'Content-Type': file.type },
+        headers: { 'Content-Type': fileType },
         body: file,
       });
 
       if (!uploadRes.ok) {
-        throw new Error('Failed to upload file to storage');
+        let detail = `Storage upload failed (${uploadRes.status})`;
+        try {
+          const errBody = await uploadRes.json();
+          detail = errBody.message || errBody.error || detail;
+        } catch { /* ignore JSON parse errors */ }
+        throw new Error(detail);
       }
 
       setFiles((prev) =>
@@ -1158,7 +1176,7 @@ function UploadDialog({
       );
 
       // Step 3: Create content item
-      const isVideo = file.type.startsWith('video/');
+      const isVideo = fileType.startsWith('video/');
 
       const itemData: Partial<ContentItem> = {
         media_url: storagePath,
