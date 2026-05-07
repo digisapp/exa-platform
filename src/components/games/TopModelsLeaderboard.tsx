@@ -57,13 +57,13 @@ export function TopModelsLeaderboard({
 
     fetchLeaderboard();
 
-    // Refresh every 30 seconds, but pause when tab is hidden
-    let interval = setInterval(fetchLeaderboard, 30000);
+    // Refresh every 60s to match the API's s-maxage; pause when tab is hidden.
+    let interval = setInterval(fetchLeaderboard, 60000);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         fetchLeaderboard();
-        interval = setInterval(fetchLeaderboard, 30000);
+        interval = setInterval(fetchLeaderboard, 60000);
       } else {
         clearInterval(interval);
       }

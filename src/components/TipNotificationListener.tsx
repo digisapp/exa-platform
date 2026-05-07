@@ -49,25 +49,27 @@ export function TipNotificationListener({ actorId }: TipNotificationListenerProp
             return;
           }
 
-          // Check if we're a participant in this conversation
-          const { data: participation } = await supabase
-            .from("conversation_participants")
-            .select("actor_id")
-            .eq("conversation_id", message.conversation_id)
-            .eq("actor_id", actorId)
-            .maybeSingle();
+          // Run participation check + sender lookup in parallel (was sequential).
+          // Sender lookup is cheap and discarded if we aren't a participant.
+          const [participationResult, senderActorResult] = await Promise.all([
+            supabase
+              .from("conversation_participants")
+              .select("actor_id")
+              .eq("conversation_id", message.conversation_id)
+              .eq("actor_id", actorId)
+              .maybeSingle(),
+            supabase
+              .from("actors")
+              .select("type, user_id")
+              .eq("id", message.sender_id)
+              .single(),
+          ]);
 
-          if (!participation) {
+          if (!participationResult.data) {
             return; // Not our conversation
           }
 
-          // Get the sender's name
-          const { data: senderActor } = await supabase
-            .from("actors")
-            .select("type, user_id")
-            .eq("id", message.sender_id)
-            .single();
-
+          const senderActor = senderActorResult.data;
           let senderName = "Someone";
           if (senderActor?.type === "fan") {
             const { data: fan } = await supabase

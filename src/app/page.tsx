@@ -40,8 +40,10 @@ export const metadata: Metadata = {
   },
 };
 
-// Cache homepage for 60 seconds so bid counts stay reasonably fresh
-export const revalidate = 60;
+// 5-minute ISR window: homepage data (top models, gigs, auctions) doesn't need
+// per-minute freshness, and the previous 60s value caused 6+ DB round-trips
+// per origin miss to dominate p95 page latency.
+export const revalidate = 300;
 
 // Shuffle array helper
 function shuffleArray<T>(array: T[]): T[] {

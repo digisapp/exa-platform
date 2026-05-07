@@ -45,10 +45,15 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search");
     const sort = searchParams.get("sort") || "created_at";
     const order = searchParams.get("order") || "desc";
+    const limit = Math.min(
+      Math.max(parseInt(searchParams.get("limit") || "500", 10) || 500, 1),
+      500,
+    );
+    const offset = Math.max(parseInt(searchParams.get("offset") || "0", 10) || 0, 0);
 
     let query = service
       .from("content_items")
-      .select("*")
+      .select("*", { count: "exact" })
       .eq("model_id", modelId);
 
     if (status) query = query.eq("status", status);
@@ -59,16 +64,23 @@ export async function GET(request: NextRequest) {
 
     const validSorts = ["created_at", "unlock_count", "coin_price"];
     const sortField = validSorts.includes(sort) ? sort : "created_at";
-    query = query.order(sortField, { ascending: order === "asc" });
+    query = query
+      .order(sortField, { ascending: order === "asc" })
+      .range(offset, offset + limit - 1);
 
-    const { data: items, error } = await query;
+    const { data: items, error, count } = await query;
 
     if (error) {
       logger.error("Content items query error", error);
       return NextResponse.json({ error: "Failed to fetch items" }, { status: 500 });
     }
 
-    return NextResponse.json({ items: items || [] });
+    return NextResponse.json({
+      items: items || [],
+      total: count ?? 0,
+      limit,
+      offset,
+    });
   } catch (error) {
     logger.error("Content items GET error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -29,10 +29,12 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: "Model profile not found" }, { status: 403 });
     }
 
-    // Fetch sets
+    // Use Supabase nested select with count aggregation:
+    // PostgREST converts `content_items(count)` into a single LEFT JOIN + GROUP BY,
+    // avoiding the prior pattern of fetching every set_id row to JS-count them.
     const { data: sets, error } = await service
       .from("content_sets")
-      .select("*")
+      .select("*, content_items(count)")
       .eq("model_id", modelId)
       .order("position", { ascending: true })
       .order("created_at", { ascending: false });
@@ -42,29 +44,18 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch sets" }, { status: 500 });
     }
 
-    // Get item counts per set
-    const setIds = (sets || []).map((s: any) => s.id);
-    const itemCounts: Record<string, number> = {};
+    const setsWithCounts = (sets || []).map((s: any) => {
+      const { content_items, ...rest } = s;
+      return {
+        ...rest,
+        item_count: Array.isArray(content_items) ? content_items[0]?.count ?? 0 : 0,
+      };
+    });
 
-    if (setIds.length > 0) {
-      const { data: counts, error: countError } = await service
-        .from("content_items")
-        .select("set_id")
-        .in("set_id", setIds);
-
-      if (!countError && counts) {
-        for (const row of counts) {
-          itemCounts[row.set_id] = (itemCounts[row.set_id] || 0) + 1;
-        }
-      }
-    }
-
-    const setsWithCounts = (sets || []).map((s: any) => ({
-      ...s,
-      item_count: itemCounts[s.id] || 0,
-    }));
-
-    return NextResponse.json({ sets: setsWithCounts });
+    return NextResponse.json(
+      { sets: setsWithCounts },
+      { headers: { "Cache-Control": "private, max-age=10" } },
+    );
   } catch (error) {
     logger.error("Content sets GET error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

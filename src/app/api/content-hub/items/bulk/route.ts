@@ -119,13 +119,18 @@ export async function POST(request: NextRequest) {
             await service.storage.from("portfolio").remove(storagePaths);
           }
 
-          // Clean up matching media_assets records
-          for (const url of mediaUrls) {
+          // Clean up matching media_assets in a single query (.in covers all 3 columns via or())
+          if (mediaUrls.length > 0) {
+            const quoted = mediaUrls
+              .map((u: string) => `"${u.replace(/"/g, '\\"')}"`)
+              .join(",");
             await service
               .from("media_assets")
               .delete()
               .eq("model_id", modelId)
-              .or(`url.eq.${url},photo_url.eq.${url},storage_path.eq.${url}`);
+              .or(
+                `url.in.(${quoted}),photo_url.in.(${quoted}),storage_path.in.(${quoted})`,
+              );
           }
         }
         break;
@@ -134,30 +139,39 @@ export async function POST(request: NextRequest) {
         if (!tag) {
           return NextResponse.json({ error: "tag is required for add_tag" }, { status: 400 });
         }
-        // Update each item's tags individually to append
-        for (const item of items) {
-          const currentTags: string[] = item.tags || [];
-          if (!currentTags.includes(tag)) {
-            await service
+        const updatedAt = new Date().toISOString();
+        const updates = items
+          .filter((item: any) => !(item.tags || []).includes(tag))
+          .map((item: any) =>
+            service
               .from("content_items")
-              .update({ tags: [...currentTags, tag], updated_at: new Date().toISOString() })
-              .eq("id", item.id);
-          }
-        }
+              .update({ tags: [...(item.tags || []), tag], updated_at: updatedAt })
+              .eq("id", item.id),
+          );
+        const results = await Promise.all(updates);
+        const failed = results.find((r: any) => r.error);
+        if (failed?.error) error = failed.error;
         break;
       }
       case "remove_tag": {
         if (!tag) {
           return NextResponse.json({ error: "tag is required for remove_tag" }, { status: 400 });
         }
-        for (const item of items) {
-          const currentTags: string[] = item.tags || [];
-          const newTags = currentTags.filter((t: string) => t !== tag);
-          await service
-            .from("content_items")
-            .update({ tags: newTags, updated_at: new Date().toISOString() })
-            .eq("id", item.id);
-        }
+        const updatedAt = new Date().toISOString();
+        const updates = items
+          .filter((item: any) => (item.tags || []).includes(tag))
+          .map((item: any) =>
+            service
+              .from("content_items")
+              .update({
+                tags: (item.tags || []).filter((t: string) => t !== tag),
+                updated_at: updatedAt,
+              })
+              .eq("id", item.id),
+          );
+        const results = await Promise.all(updates);
+        const failed = results.find((r: any) => r.error);
+        if (failed?.error) error = failed.error;
         break;
       }
       case "set_set": {
