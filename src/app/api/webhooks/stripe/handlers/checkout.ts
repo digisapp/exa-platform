@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
 import { BrandTier } from "@/lib/stripe-config";
 import { TICKET_CONFIG } from "@/lib/ticket-config";
+import { centsToCoins } from "@/lib/coin-config";
 import { sendTicketPurchaseConfirmationEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
 
@@ -475,8 +476,19 @@ export async function processAffiliateCommission(
     return;
   }
 
-  // Credit coins to model (1 coin = 1 cent)
-  const coinsToCredit = commissionCents;
+  // Credit coins to model. 1 coin = $0.10 = 10 cents (see coin-config.ts).
+  // Commission is stored as cents in affiliate_commissions; coins are cashable
+  // at $0.10 each, so divide by 10 to convert.
+  const coinsToCredit = centsToCoins(commissionCents);
+
+  if (coinsToCredit <= 0) {
+    logger.info("Affiliate commission below 1-coin threshold, skipping coin credit", {
+      commissionCents,
+      modelId,
+      eventId,
+    });
+    return;
+  }
 
   const { error: coinError } = await supabaseAdmin.rpc("add_coins", {
     p_actor_id: actorId,

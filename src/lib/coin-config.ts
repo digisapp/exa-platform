@@ -30,6 +30,12 @@ export function usdToCoins(usd: number): number {
   return Math.floor(usd / COIN_USD_RATE);
 }
 
+// Convert a fiat cent amount (e.g. Stripe sale_amount, commission_cents)
+// into coins, rounded down. 1 coin = $0.10 = 10 cents, so cents / 10 = coins.
+export function centsToCoins(cents: number): number {
+  return Math.floor(cents / (COIN_USD_RATE * 100));
+}
+
 export function formatUsd(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
