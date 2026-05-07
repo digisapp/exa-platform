@@ -923,9 +923,18 @@ export default function AdminShowsPage() {
 
   useEffect(() => {
     async function loadEvents() {
-      const { data } = await supabase.from("events").select("id, name, short_name, start_date, end_date, year, status").order("start_date", { ascending: false });
-      setEvents(data || []);
-      if (data?.length && !selectedEventId) setSelectedEventId(data[0].id);
+      const [eventsRes, gigsRes, showsRes] = await Promise.all([
+        supabase.from("events").select("id, name, short_name, start_date, end_date, year, status").order("start_date", { ascending: false }),
+        supabase.from("gigs").select("event_id").not("event_id", "is", null),
+        supabase.from("event_shows").select("event_id"),
+      ]);
+      const activeIds = new Set<string>([
+        ...((gigsRes.data || []).map((g: { event_id: string | null }) => g.event_id).filter(Boolean) as string[]),
+        ...((showsRes.data || []).map((s: { event_id: string | null }) => s.event_id).filter(Boolean) as string[]),
+      ]);
+      const filtered = (eventsRes.data || []).filter((e) => activeIds.has(e.id));
+      setEvents(filtered);
+      if (filtered.length && !selectedEventId) setSelectedEventId(filtered[0].id);
       setLoading(false);
     }
     loadEvents();
@@ -934,10 +943,15 @@ export default function AdminShowsPage() {
 
   useEffect(() => {
     if (!selectedEventId) return;
+    setFilterAssigned("all");
     loadShows();
     loadEventModels();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEventId]);
+
+  useEffect(() => {
+    if (eventModelIds.size > 0) setFilterAssigned("event");
+  }, [eventModelIds]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadModels(); }, []);
@@ -1552,6 +1566,7 @@ export default function AdminShowsPage() {
               </span>
             )}
             {[
+              { v: eventModelIds.size, label: "confirmed" },
               { v: shows.length, label: "shows" },
               { v: totalDesigners, label: "designers" },
               { v: totalModelsAssigned, label: "models" },
