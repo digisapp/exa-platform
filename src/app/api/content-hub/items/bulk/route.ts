@@ -119,18 +119,19 @@ export async function POST(request: NextRequest) {
             await service.storage.from("portfolio").remove(storagePaths);
           }
 
-          // Clean up matching media_assets in a single query (.in covers all 3 columns via or())
+          // Clean up matching media_assets. Run the per-URL deletes in parallel
+          // instead of awaiting each one — bulk is bounded to 50 items, and signed
+          // URLs contain commas/quotes that break PostgREST's `or().in.()` quoting.
           if (mediaUrls.length > 0) {
-            const quoted = mediaUrls
-              .map((u: string) => `"${u.replace(/"/g, '\\"')}"`)
-              .join(",");
-            await service
-              .from("media_assets")
-              .delete()
-              .eq("model_id", modelId)
-              .or(
-                `url.in.(${quoted}),photo_url.in.(${quoted}),storage_path.in.(${quoted})`,
-              );
+            await Promise.all(
+              mediaUrls.map((url: string) =>
+                service
+                  .from("media_assets")
+                  .delete()
+                  .eq("model_id", modelId)
+                  .or(`url.eq.${url},photo_url.eq.${url},storage_path.eq.${url}`),
+              ),
+            );
           }
         }
         break;
