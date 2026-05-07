@@ -471,6 +471,9 @@ export function ChatView({
       recipient_instagram: null,
       sender_type: currentActor.type,
       transaction_id: null,
+      edit_count: 0,
+      edited_at: null,
+      reply_to_id: currentReplyToId ?? null,
       _status: "sending",
       _tempId: tempId,
     };

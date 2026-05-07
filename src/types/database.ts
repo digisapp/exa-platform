@@ -1,4 +1,3 @@
-Initialising login role...
 export type Json =
   | string
   | number
@@ -10758,5 +10757,19 @@ export const Constants = {
     },
   },
 } as const
-A new version of Supabase CLI is available: v2.98.2 (currently installed v2.75.0)
-We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+
+// Convenience type aliases
+export type Actor = Database['public']['Tables']['actors']['Row']
+export type Model = Database['public']['Tables']['models']['Row']
+export type Fan = Database['public']['Tables']['fans']['Row']
+export type Brand = Database['public']['Tables']['brands']['Row']
+export type Message = Database['public']['Tables']['messages']['Row']
+export type Conversation = Database['public']['Tables']['conversations']['Row']
+export type MediaAsset = Database['public']['Tables']['media_assets']['Row']
+export type Booking = Database['public']['Tables']['bookings']['Row']
+export type Tag = Database['public']['Tables']['tags']['Row']
+export type Gig = Database['public']['Tables']['gigs']['Row']
+export type Event = Database['public']['Tables']['events']['Row']
+export type Workshop = Database['public']['Tables']['workshops']['Row']
+export type AIGeneration = Database['public']['Tables']['ai_generations']['Row']
+export type AISavedPhoto = Database['public']['Tables']['ai_saved_photos']['Row']
