@@ -1,6 +1,18 @@
 /**
  * Coin and Payout Configuration
- * Centralized configuration for coin values and payout settings
+ * Centralized configuration for coin values and payout settings.
+ *
+ * ─── UNITS POLICY ────────────────────────────────────────────────────────
+ * Every Stripe-fiat amount is in **CENTS**. Every wallet/`add_coins`
+ * amount is in **COINS** (1 coin = $0.10 cashout per `COIN_USD_RATE`).
+ * THESE ARE DIFFERENT UNITS — never pass cents into add_coins.
+ *
+ * At every fiat → wallet boundary (Stripe webhooks, commission credits),
+ * convert with `centsToCoins()` first. Skipping this is a 10× overpayment
+ * bug; we shipped exactly that in 2026-05 in
+ * `src/app/api/webhooks/stripe/handlers/checkout.ts` (fix: commit 91adb530).
+ * Mirror helper exists in digis-app at `src/lib/stripe/constants.ts`.
+ * ─────────────────────────────────────────────────────────────────────────
  */
 
 // Coin to USD conversion rate (model payout / internal accounting)
@@ -30,8 +42,16 @@ export function usdToCoins(usd: number): number {
   return Math.floor(usd / COIN_USD_RATE);
 }
 
-// Convert a fiat cent amount (e.g. Stripe sale_amount, commission_cents)
-// into coins, rounded down. 1 coin = $0.10 = 10 cents, so cents / 10 = coins.
+/**
+ * Convert a fiat cent amount (e.g. Stripe `session.amount_total`, commission
+ * cents, ticket totals) into **coins**, rounded down. 1 coin = $0.10 = 10
+ * cents, so `cents / 10 = coins`.
+ *
+ * **Always use this helper at any Stripe-fiat → `add_coins` boundary** —
+ * passing raw cents into `supabaseAdmin.rpc('add_coins', { p_amount: cents })`
+ * is a 10× overpayment bug. We had this incident in 2026-05 (commit 91adb530)
+ * on the affiliate-commission webhook; do not repeat.
+ */
 export function centsToCoins(cents: number): number {
   return Math.floor(cents / (COIN_USD_RATE * 100));
 }
