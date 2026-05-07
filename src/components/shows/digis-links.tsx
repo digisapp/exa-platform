@@ -8,7 +8,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Ticket, ExternalLink, ArrowRight, Tv } from "lucide-react";
+import { Ticket, ExternalLink, ArrowRight, Tv, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -119,6 +119,30 @@ export function DigisTicketButton({
         <ExternalLink className="h-4 w-4 ml-2" />
       </Button>
       <DigisDialog href={dialogHref} open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Casting Call button — shows/[slug] page (MSW only)
+// ---------------------------------------------------------------------------
+
+export function DigisCastingCallButton({ href }: { href: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="lg"
+        className="w-full border-pink-500/40 bg-pink-500/10 hover:bg-pink-500/20 text-pink-100 hover:text-white text-base py-5 rounded-xl shadow-[0_0_16px_rgba(236,72,153,0.2)] hover:shadow-[0_0_24px_rgba(236,72,153,0.35)] transition-all"
+        onClick={() => setOpen(true)}
+      >
+        <Sparkles className="h-5 w-5 mr-2" />
+        Model Casting Call — May 25
+        <ExternalLink className="h-4 w-4 ml-2" />
+      </Button>
+      <DigisDialog href={href} open={open} onOpenChange={setOpen} />
     </>
   );
 }

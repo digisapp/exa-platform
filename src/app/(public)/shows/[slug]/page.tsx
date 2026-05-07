@@ -24,6 +24,7 @@ import type { Metadata } from "next";
 import { HotelFloorPlan } from "@/components/shows/hotel-floor-plan";
 import {
   DigisTicketButton,
+  DigisCastingCallButton,
   DigisScheduleSection,
   DigisSponsorCard,
 } from "@/components/shows/digis-links";
@@ -404,7 +405,7 @@ export default async function EventPage({ params, searchParams }: Props) {
               </p>
 
               {/* Ticket Button */}
-              <div className="mb-6" id="tickets">
+              <div className="mb-6 space-y-3" id="tickets">
                 {hasInternalTickets ? (
                   <Button
                     asChild
@@ -427,6 +428,10 @@ export default async function EventPage({ params, searchParams }: Props) {
                     <Ticket className="h-6 w-6 mr-2" />
                     Tickets Coming Soon
                   </Button>
+                )}
+
+                {event.slug === "miami-swim-week-2026" && (
+                  <DigisCastingCallButton href="https://www.digis.cc/events/exa-swim-week-casting-call-0a3f7901" />
                 )}
               </div>
 
