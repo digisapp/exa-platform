@@ -29,12 +29,13 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: "Model profile not found" }, { status: 403 });
     }
 
-    // Use Supabase nested select with count aggregation:
-    // PostgREST converts `content_items(count)` into a single LEFT JOIN + GROUP BY,
-    // avoiding the prior pattern of fetching every set_id row to JS-count them.
+    // Use Supabase nested select with count aggregation. PostgREST converts
+    // `content_items!content_items_set_id_fkey(count)` into a single LEFT JOIN +
+    // GROUP BY, avoiding the prior "fetch every set_id row to JS-count" pattern.
+    // The FK hint disambiguates from `fk_cover_item` (set.cover_item_id -> item.id).
     const { data: sets, error } = await service
       .from("content_sets")
-      .select("*, content_items(count)")
+      .select("*, content_items!content_items_set_id_fkey(count)")
       .eq("model_id", modelId)
       .order("position", { ascending: true })
       .order("created_at", { ascending: false });
