@@ -5,6 +5,9 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { getModelId } from "@/lib/ids";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { processImage } from "@/lib/image-processing";
+
+export const runtime = "nodejs";
 
 const createItemSchema = z.object({
   media_url: z.string().min(1, "media_url is required"),
@@ -118,9 +121,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Normalize freshly-uploaded images: download from storage, bake EXIF
+    // rotation into pixels (Satori/next-og ignores EXIF orientation, which made
+    // photos taken in portrait on iPhones render sideways in flyers), strip
+    // metadata, and capture dimensions. Only runs for images stored as
+    // relative paths in the portfolio bucket — full URLs and external sources
+    // are left alone.
+    let width: number | null = null;
+    let height: number | null = null;
+    let mediaUrl = parsed.data.media_url;
+    if (parsed.data.media_type === "image" && !/^https?:\/\//i.test(mediaUrl)) {
+      try {
+        const { data: blob, error: dlErr } = await service.storage
+          .from("portfolio")
+          .download(mediaUrl);
+        if (dlErr) throw dlErr;
+        const inputBuf = Buffer.from(await blob.arrayBuffer());
+        const processed = await processImage(inputBuf, {
+          maxWidth: 2048,
+          maxHeight: 2048,
+          quality: 90,
+        });
+        const { error: upErr } = await service.storage
+          .from("portfolio")
+          .upload(mediaUrl, processed.buffer, {
+            contentType: processed.contentType,
+            upsert: true,
+          });
+        if (upErr) throw upErr;
+        width = processed.width;
+        height = processed.height;
+      } catch (normalizeError) {
+        logger.error("[content-hub/items] Image normalize failed", normalizeError, {
+          media_url: mediaUrl,
+          model_id: modelId,
+        });
+        // Fall through — better to record the item than to fail the upload
+      }
+    }
+
     const { data: item, error } = await service
       .from("content_items")
-      .insert({ ...parsed.data, model_id: modelId })
+      .insert({
+        ...parsed.data,
+        media_url: mediaUrl,
+        model_id: modelId,
+        ...(width !== null ? { width } : {}),
+        ...(height !== null ? { height } : {}),
+      })
       .select()
       .single();
 
