@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
     // are left alone.
     let width: number | null = null;
     let height: number | null = null;
-    let mediaUrl = parsed.data.media_url;
+    const mediaUrl = parsed.data.media_url;
     if (parsed.data.media_type === "image" && !/^https?:\/\//i.test(mediaUrl)) {
       try {
         const { data: blob, error: dlErr } = await service.storage
