@@ -787,9 +787,9 @@ export default function FreeCompCardPage() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="space-y-1"><Label htmlFor="height">Height</Label><Input id="height" value={height} onChange={(e) => setHeight(e.target.value)} placeholder={`5'9"`} /></div>
-                <div className="space-y-1"><Label htmlFor="bust">Bust</Label><Input id="bust" inputMode="numeric" value={bust} onChange={(e) => setBust(e.target.value)} placeholder={`34"`} /></div>
-                <div className="space-y-1"><Label htmlFor="waist">Waist</Label><Input id="waist" inputMode="numeric" value={waist} onChange={(e) => setWaist(e.target.value)} placeholder={`26"`} /></div>
-                <div className="space-y-1"><Label htmlFor="hips">Hips</Label><Input id="hips" inputMode="numeric" value={hips} onChange={(e) => setHips(e.target.value)} placeholder={`36"`} /></div>
+                <div className="space-y-1"><Label htmlFor="bust">Bust</Label><Input id="bust" inputMode="decimal" value={bust} onChange={(e) => setBust(e.target.value)} placeholder={`34.5"`} /></div>
+                <div className="space-y-1"><Label htmlFor="waist">Waist</Label><Input id="waist" inputMode="decimal" value={waist} onChange={(e) => setWaist(e.target.value)} placeholder={`26.5"`} /></div>
+                <div className="space-y-1"><Label htmlFor="hips">Hips</Label><Input id="hips" inputMode="decimal" value={hips} onChange={(e) => setHips(e.target.value)} placeholder={`36.5"`} /></div>
                 <div className="space-y-1"><Label htmlFor="eyeColor">Eye Color</Label><Input id="eyeColor" value={eyeColor} onChange={(e) => setEyeColor(e.target.value)} placeholder="Brown" /></div>
                 <div className="space-y-1"><Label htmlFor="hairColor">Hair Color</Label><Input id="hairColor" value={hairColor} onChange={(e) => setHairColor(e.target.value)} placeholder="Black" /></div>
                 <div className="space-y-1"><Label htmlFor="dressSize">Dress Size</Label><Input id="dressSize" value={dressSize} onChange={(e) => setDressSize(e.target.value)} placeholder="4" /></div>

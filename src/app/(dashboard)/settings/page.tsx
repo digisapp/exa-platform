@@ -1767,27 +1767,30 @@ export default function ProfilePage() {
                   <Label htmlFor="bust">Bust</Label>
                   <Input
                     id="bust"
+                    inputMode="decimal"
                     value={model.bust || ""}
                     onChange={(e) => setModel({ ...model, bust: e.target.value })}
-                    placeholder="34&quot;"
+                    placeholder="34.5&quot;"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="waist">Waist</Label>
                   <Input
                     id="waist"
+                    inputMode="decimal"
                     value={model.waist || ""}
                     onChange={(e) => setModel({ ...model, waist: e.target.value })}
-                    placeholder="26&quot;"
+                    placeholder="26.5&quot;"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="hips">Hips</Label>
                   <Input
                     id="hips"
+                    inputMode="decimal"
                     value={model.hips || ""}
                     onChange={(e) => setModel({ ...model, hips: e.target.value })}
-                    placeholder="36&quot;"
+                    placeholder="36.5&quot;"
                   />
                 </div>
               </div>
