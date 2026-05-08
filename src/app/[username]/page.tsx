@@ -567,8 +567,9 @@ export default async function ModelProfilePage({ params }: Props) {
                 {/* TOP FLOATING ROW: online (left) | wordmark (center) | actions (right)
                     Uses grid-cols-[1fr_auto_1fr] so left + right columns always take equal
                     width — this guarantees the wordmark stays truly centered on the hero
-                    regardless of how many chips/buttons/badges are in the side columns. */}
-                <div className="absolute top-0 inset-x-0 z-20 p-3 grid grid-cols-[1fr_auto_1fr] items-start gap-2 bg-gradient-to-b from-black/45 via-black/15 to-transparent">
+                    regardless of how many chips/buttons/badges are in the side columns.
+                    Sits below the event ticker (h-10) when one is active, otherwise top-0. */}
+                <div className={`absolute ${eventBadges && eventBadges.length > 0 ? 'top-10' : 'top-0'} inset-x-0 z-20 p-3 grid grid-cols-[1fr_auto_1fr] items-start gap-2 bg-gradient-to-b from-black/45 via-black/15 to-transparent`}>
                   {/* Left column: online chip */}
                   <div className="flex flex-col items-start gap-1.5 min-w-0 justify-self-start">
                     {isOnline && (
@@ -620,11 +621,12 @@ export default async function ModelProfilePage({ params }: Props) {
                   </div>
                 </div>
 
-                {/* Event ticker strip — full-width scrolling banner over the portrait */}
+                {/* Event ticker strip — promo bar pinned to the very top edge so it
+                    never falls on the model's face regardless of photo crop. */}
                 {eventBadges && eventBadges.length > 0 && (
                   <Link
                     href={`/shows/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
-                    className="absolute top-[60px] md:top-[84px] inset-x-0 z-20 overflow-hidden h-10 flex items-center bg-gradient-to-r from-cyan-600/85 via-sky-500/85 to-violet-600/85 backdrop-blur-sm border-y border-cyan-300/30 shadow-[0_0_24px_rgba(34,211,238,0.45),inset_0_0_12px_rgba(255,255,255,0.05)]"
+                    className="absolute top-0 inset-x-0 z-30 overflow-hidden h-10 flex items-center bg-gradient-to-r from-cyan-600/85 via-sky-500/85 to-violet-600/85 backdrop-blur-sm border-b border-cyan-300/30 shadow-[0_0_24px_rgba(34,211,238,0.45),inset_0_0_12px_rgba(255,255,255,0.05)]"
                   >
                     <div className="event-ticker-scroll">
                       {[0, 1].map((i) => (
