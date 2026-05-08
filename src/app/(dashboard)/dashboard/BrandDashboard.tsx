@@ -4,21 +4,18 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModelCard } from "@/components/models/model-card";
-import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
+import { BrandQuickActions } from "@/components/dashboard/BrandQuickActions";
 import { BRAND_SUBSCRIPTION_TIERS } from "@/lib/stripe-config";
 import {
   ArrowRight,
-  Sparkles,
   Clock,
   Calendar,
-  Search,
   Mail,
   Crown,
   CheckCircle2,
   Megaphone,
-  Circle,
   Heart,
-  Plus,
+  AlertCircle,
 } from "lucide-react";
 
 const BRAND_SERVICE_LABELS: Record<string, string> = {
@@ -47,7 +44,6 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
 
   const [
     { data: campaignsList },
-    { count: campaignCount },
     { data: offersData },
     { data: upcomingBookings },
     { data: follows },
@@ -55,11 +51,7 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
     (supabase.from("campaigns") as any)
       .select(`*, campaign_models(id)`)
       .eq("brand_id", actorId)
-      .order("created_at", { ascending: false })
-      .limit(3),
-    (supabase.from("campaigns") as any)
-      .select("*", { count: "exact", head: true })
-      .eq("brand_id", actorId),
+      .order("created_at", { ascending: false }),
     (supabase.from("offers") as any)
       .select(`*, offer_responses(id, status, model_id, responded_at)`)
       .eq("brand_id", actorId)
@@ -81,11 +73,10 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
       `)
       .eq("follower_id", actorId)
       .order("created_at", { ascending: false })
-      .limit(8),
+      .limit(6),
   ]);
 
   const coinBalance = brand?.coin_balance || 0;
-  const activeCampaignCount = campaignCount || 0;
 
   const allResponses = (offersData || []).flatMap((offer: any) =>
     (offer.offer_responses || []).map((r: any) => ({
@@ -130,19 +121,14 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
   const currentTier = (brand?.subscription_tier || "free") as keyof typeof BRAND_SUBSCRIPTION_TIERS;
   const tierConfig = BRAND_SUBSCRIPTION_TIERS[currentTier] || BRAND_SUBSCRIPTION_TIERS.free;
 
-  const hasProfile = !!brand?.logo_url;
-  const hasCampaign = activeCampaignCount > 0;
-  const hasSentOffer = (offersData || []).length > 0;
-  const completedSteps = [hasProfile, hasCampaign, hasSentOffer].filter(Boolean).length;
-
   const followedUserIds = follows?.map((f: any) => f.actors?.user_id).filter(Boolean) || [];
   let favoriteModels: any[] = [];
   if (followedUserIds.length > 0) {
     const { data: followedModels } = await (supabase.from("models") as any)
       .select(`
-        id, username, first_name, last_name, profile_photo_url,
+        id, user_id, username, first_name, last_name, profile_photo_url,
         city, state, show_location,
-        instagram_name, show_social_media,
+        instagram_followers, tiktok_followers,
         height, show_measurements,
         focus_tags, reliability_score,
         is_verified, is_featured, last_active_at
@@ -150,7 +136,9 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
       .in("user_id", followedUserIds)
       .eq("is_approved", true);
 
-    const modelsByUserId = new Map((followedModels || []).map((m: any) => [m.user_id, m]));
+    const modelsByUserId = new Map(
+      (followedModels || []).map((m: any) => [m.user_id, m])
+    );
     favoriteModels = followedUserIds
       .map((userId: string) => modelsByUserId.get(userId))
       .filter(Boolean);
@@ -158,11 +146,18 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
 
   const displayName = brand?.company_name || "Brand";
 
+  const dashboardCampaigns = (campaignsList || []).map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    color: c.color,
+    modelCount: c.campaign_models?.length || 0,
+  }));
+
+  const hasActionItems = isPending || pendingResponseCount > 0;
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* ──────────────────────────────────────────────
-          HERO — brand identity + quick actions
-         ────────────────────────────────────────────── */}
+      {/* HERO — identity + quick actions */}
       <section
         className="relative overflow-hidden rounded-3xl border border-white/10 p-5 md:p-7"
         style={{
@@ -213,7 +208,9 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
                   </span>
                 )}
                 <span className="text-[11px] text-white/40">·</span>
-                <span className="text-[11px] text-white/60">{coinBalance.toLocaleString()} coins</span>
+                <Link href="/coins" className="text-[11px] text-white/60 hover:text-white transition-colors">
+                  {coinBalance.toLocaleString()} coins
+                </Link>
                 {currentTier !== "enterprise" && (
                   <Link href="/brands/subscription" className="text-[11px] font-semibold text-violet-300 hover:text-violet-200 transition-colors">
                     Upgrade
@@ -222,176 +219,144 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2 md:gap-3 md:flex md:items-center">
-            <Link
-              href="/models"
-              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-xs md:text-sm font-semibold text-white shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all"
-            >
-              <Search className="h-4 w-4" />
-              <span className="hidden sm:inline">Browse</span>
-            </Link>
-            <Link
-              href="/campaigns/new"
-              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-400 hover:to-cyan-400 text-xs md:text-sm font-semibold text-white shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Campaign</span>
-            </Link>
-            <Link
-              href="/brands/offers/new"
-              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs md:text-sm font-semibold text-white transition-all"
-            >
-              <Mail className="h-4 w-4" />
-              <span className="hidden sm:inline">Offer</span>
-            </Link>
-          </div>
+          <BrandQuickActions campaigns={dashboardCampaigns} />
         </div>
       </section>
 
-      {/* ──────────────────────────────────────────────
-          KPI RAIL
-         ────────────────────────────────────────────── */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Link href="/campaigns" className="group relative overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-4 transition-all hover:border-violet-500/50 hover:bg-violet-500/10">
-          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-violet-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Megaphone className="h-3.5 w-3.5 text-violet-400" />
-              <span className="font-medium uppercase tracking-wider">Campaigns</span>
+      {/* ACTION REQUIRED — only renders when something needs the brand's attention */}
+      {hasActionItems && (
+        <section className="space-y-3">
+          {isPending && (
+            <div className="flex items-start gap-4 p-5 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+              <div className="p-3 rounded-xl bg-amber-500/20 ring-1 ring-amber-500/40">
+                <Clock className="h-6 w-6 text-amber-300" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white text-lg">Application under review</h3>
+                <p className="text-white/60 text-sm mt-1">
+                  We&apos;re reviewing your brand application. You&apos;ll receive an email once approved.
+                  In the meantime, feel free to browse our models!
+                </p>
+              </div>
             </div>
-            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">{activeCampaignCount}</p>
-            <p className="text-xs text-white/50 mt-0.5">active</p>
-          </div>
-        </Link>
-
-        <Link href="/favorites" className="group relative overflow-hidden rounded-2xl border border-pink-500/25 bg-gradient-to-br from-pink-500/10 to-pink-500/5 p-4 transition-all hover:border-pink-500/50 hover:bg-pink-500/10">
-          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-pink-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Heart className="h-3.5 w-3.5 text-pink-400 fill-pink-400/50" />
-              <span className="font-medium uppercase tracking-wider">Favorites</span>
-            </div>
-            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">{favoriteModels.length}</p>
-            <p className="text-xs text-white/50 mt-0.5">saved models</p>
-          </div>
-        </Link>
-
-        <Link href="/brands/offers" className="group relative overflow-hidden rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/10 to-amber-500/5 p-4 transition-all hover:border-amber-500/50 hover:bg-amber-500/10">
-          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-amber-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Mail className="h-3.5 w-3.5 text-amber-400" />
-              <span className="font-medium uppercase tracking-wider">Pending</span>
-            </div>
-            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">{pendingResponseCount}</p>
-            <p className="text-xs text-white/50 mt-0.5">responses</p>
-          </div>
-        </Link>
-
-        <Link href="/bookings" className="group relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-4 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/10">
-          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-emerald-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Calendar className="h-3.5 w-3.5 text-emerald-400" />
-              <span className="font-medium uppercase tracking-wider">Upcoming</span>
-            </div>
-            <p className="mt-2 text-2xl md:text-3xl font-bold text-white tracking-tight">{upcomingEventCount}</p>
-            <p className="text-xs text-white/50 mt-0.5">shows booked</p>
-          </div>
-        </Link>
-      </section>
-
-      {/* ──────────────────────────────────────────────
-          Pending approval notice
-         ────────────────────────────────────────────── */}
-      {isPending && (
-        <div className="flex items-start gap-4 p-5 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent shadow-[0_0_20px_rgba(245,158,11,0.15)]">
-          <div className="p-3 rounded-xl bg-amber-500/20 ring-1 ring-amber-500/40">
-            <Clock className="h-6 w-6 text-amber-300" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-white text-lg">Application under review</h3>
-            <p className="text-white/60 text-sm mt-1">
-              We&apos;re reviewing your brand application. You&apos;ll receive an email once approved.
-              In the meantime, feel free to browse our models!
-            </p>
-          </div>
-        </div>
+          )}
+          {pendingResponseCount > 0 && (
+            <Link
+              href="/brands/offers"
+              className="flex items-center gap-4 p-4 rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 via-blue-500/5 to-transparent hover:border-cyan-500/50 transition-all group"
+            >
+              <div className="p-2.5 rounded-xl bg-cyan-500/15 ring-1 ring-cyan-500/40">
+                <AlertCircle className="h-5 w-5 text-cyan-300" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-white text-sm">
+                  {pendingResponseCount} {pendingResponseCount === 1 ? "model is" : "models are"} reviewing your offers
+                </p>
+                <p className="text-xs text-white/60">Check back soon, or open the offers page to follow up.</p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+            </Link>
+          )}
+        </section>
       )}
 
-      {/* ──────────────────────────────────────────────
-          Getting Started Checklist
-         ────────────────────────────────────────────── */}
-      {completedSteps < 3 && (
-        <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
+      {/* CORE — Upcoming shows + Active campaigns side-by-side */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Upcoming shows */}
+        <div className="rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent overflow-hidden">
           <header className="flex items-center justify-between p-5 border-b border-white/5">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-cyan-400" />
-              <h2 className="text-base font-semibold text-white">Getting started</h2>
+              <Calendar className="h-5 w-5 text-emerald-400" />
+              <h2 className="text-base font-semibold text-white">Upcoming shows</h2>
+              {upcomingEventCount > 0 && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300">
+                  {upcomingEventCount}
+                </span>
+              )}
             </div>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-              {completedSteps}/3
-            </span>
+            {upcomingEventCount > 0 && (
+              <Link href="/bookings" className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold">
+                View all <ArrowRight className="h-3 w-3" />
+              </Link>
+            )}
           </header>
           <div className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                { href: "/settings", done: hasProfile, title: "Complete your profile", sub: "Add logo + company details" },
-                { href: "/campaigns", done: hasCampaign, title: "Create a campaign", sub: "Organize models by project" },
-                { href: "/brands/offers", done: hasSentOffer, title: "Send your first offer", sub: "Reach out to models" },
-              ].map((step) => (
-                <Link
-                  key={step.href}
-                  href={step.href}
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                    step.done
-                      ? "bg-emerald-500/5 border-emerald-500/25 hover:border-emerald-500/40"
-                      : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20"
-                  }`}
-                >
-                  {step.done ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
-                  ) : (
-                    <Circle className="h-5 w-5 text-white/30 shrink-0" />
-                  )}
-                  <div className="min-w-0">
-                    <p className={`font-medium text-sm truncate ${step.done ? "line-through text-white/50" : "text-white"}`}>
-                      {step.title}
-                    </p>
-                    <p className="text-xs text-white/50 truncate">{step.sub}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            {(upcomingBookings || []).length > 0 ? (
+              <div className="space-y-3">
+                {(upcomingBookings || []).map((booking: any) => {
+                  const model = enrichMap.get(booking.model_id);
+                  const respName = model?.first_name
+                    ? `${model.first_name} ${model.last_name || ""}`.trim()
+                    : model?.username || "Model";
+                  return (
+                    <div key={booking.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                      <Avatar className="h-10 w-10 ring-1 ring-white/10">
+                        <AvatarImage src={model?.profile_photo_url || undefined} />
+                        <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-cyan-500 text-white">
+                          {respName.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        {model?.username ? (
+                          <Link href={`/${model.username}`} className="font-medium text-sm text-white hover:text-cyan-300 truncate block transition-colors">
+                            {respName}
+                          </Link>
+                        ) : (
+                          <p className="font-medium text-sm text-white truncate">{respName}</p>
+                        )}
+                        <p className="text-xs text-white/50">
+                          {BRAND_SERVICE_LABELS[booking.service_type] || booking.service_type}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-semibold text-white">
+                          {new Date(booking.event_date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </p>
+                        <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0">
+                          {booking.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/30 mb-3">
+                  <Calendar className="h-6 w-6 text-emerald-300" />
+                </div>
+                <p className="text-sm text-white/60">No upcoming shows</p>
+                <p className="text-xs text-white/40 mt-1">Confirmed bookings will appear here.</p>
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-
-      {/* ──────────────────────────────────────────────
-          EXA Live Wall
-         ────────────────────────────────────────────── */}
-      <LiveWallServer actorId={actorId} actorType="brand" />
-
-      {/* ──────────────────────────────────────────────
-          Active Campaigns + Recent Responses
-         ────────────────────────────────────────────── */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Active campaigns */}
         <div className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-transparent overflow-hidden">
           <header className="flex items-center justify-between p-5 border-b border-white/5">
             <div className="flex items-center gap-2">
               <Megaphone className="h-5 w-5 text-violet-400" />
-              <h2 className="text-base font-semibold text-white">Active campaigns</h2>
+              <h2 className="text-base font-semibold text-white">Campaigns</h2>
+              {dashboardCampaigns.length > 0 && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300">
+                  {dashboardCampaigns.length}
+                </span>
+              )}
             </div>
-            <Link href="/campaigns" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1 font-semibold">
-              View all <ArrowRight className="h-3 w-3" />
-            </Link>
+            {dashboardCampaigns.length > 0 && (
+              <Link href="/campaigns" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1 font-semibold">
+                View all <ArrowRight className="h-3 w-3" />
+              </Link>
+            )}
           </header>
           <div className="p-3">
-            {(campaignsList || []).length > 0 ? (
+            {dashboardCampaigns.length > 0 ? (
               <div className="space-y-2">
-                {(campaignsList || []).map((campaign: any) => {
-                  const modelCount = campaign.campaign_models?.length || 0;
+                {dashboardCampaigns.slice(0, 4).map((campaign: { id: string; name: string; color?: string | null; modelCount: number }) => {
                   const offerSummary = campaignOfferMap.get(campaign.id);
                   return (
                     <Link
@@ -406,7 +371,7 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm text-white truncate">{campaign.name}</p>
                         <p className="text-xs text-white/50">
-                          {modelCount} {modelCount === 1 ? "model" : "models"}
+                          {campaign.modelCount} {campaign.modelCount === 1 ? "model" : "models"}
                           {offerSummary && (offerSummary.accepted > 0 || offerSummary.pending > 0) && (
                             <>
                               {" · "}
@@ -427,23 +392,25 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
                 })}
               </div>
             ) : (
-              <div className="text-center py-10">
+              <div className="text-center py-10 px-4">
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-violet-500/10 ring-1 ring-violet-500/30 mb-3">
                   <Megaphone className="h-6 w-6 text-violet-300" />
                 </div>
-                <p className="text-sm text-white/60 mb-3">No campaigns yet</p>
-                <Link
-                  href="/campaigns/new"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-400 hover:to-pink-400 text-sm font-semibold text-white shadow-[0_0_18px_rgba(167,139,250,0.4)] transition-all"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Campaign
-                </Link>
+                <p className="text-sm text-white/70 font-medium">Start with a campaign</p>
+                <p className="text-xs text-white/50 mt-1 mb-3">
+                  Group the models you want to reach, then send them offers.
+                </p>
+                <p className="text-[11px] text-white/40">
+                  Use the <span className="text-violet-300 font-semibold">Campaign</span> button above to create one.
+                </p>
               </div>
             )}
           </div>
         </div>
+      </section>
 
+      {/* RECENT RESPONSES — only renders if there's anything to show */}
+      {recentResponses.length > 0 && (
         <div className="rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
           <header className="flex items-center justify-between p-5 border-b border-white/5">
             <div className="flex items-center gap-2">
@@ -455,126 +422,44 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
             </Link>
           </header>
           <div className="p-4">
-            {recentResponses.length > 0 ? (
-              <div className="space-y-3">
-                {recentResponses.map((response: any) => {
-                  const model = enrichMap.get(response.model_id);
-                  const respName = model?.first_name
-                    ? `${model.first_name} ${model.last_name || ""}`.trim()
-                    : model?.username || "Model";
-                  return (
-                    <div key={response.id} className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9 ring-1 ring-white/10">
-                        <AvatarImage src={model?.profile_photo_url || undefined} />
-                        <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-500 text-white text-xs">
-                          {respName.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-white truncate">{respName}</p>
-                        <p className="text-xs text-white/50 truncate">{response.offer_title}</p>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] uppercase tracking-wider font-semibold px-2 ${
-                          response.status === "accepted" || response.status === "confirmed"
-                            ? "text-emerald-300 border-emerald-500/40 bg-emerald-500/10"
-                            : "text-rose-300 border-rose-500/40 bg-rose-500/10"
-                        }`}
-                      >
-                        {response.status}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-10">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-cyan-500/10 ring-1 ring-cyan-500/30 mb-3">
-                  <Mail className="h-6 w-6 text-cyan-300" />
-                </div>
-                <p className="text-sm text-white/60">
-                  Responses to your offers will appear here
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ──────────────────────────────────────────────
-          Upcoming Shows
-         ────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent overflow-hidden">
-        <header className="flex items-center justify-between p-5 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-emerald-400" />
-            <h2 className="text-base font-semibold text-white">Upcoming shows</h2>
-          </div>
-          {upcomingEventCount > 0 && (
-            <Link href="/bookings" className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold">
-              View all <ArrowRight className="h-3 w-3" />
-            </Link>
-          )}
-        </header>
-        <div className="p-4">
-          {(upcomingBookings || []).length > 0 ? (
             <div className="space-y-3">
-              {(upcomingBookings || []).map((booking: any) => {
-                const model = enrichMap.get(booking.model_id);
+              {recentResponses.map((response: any) => {
+                const model = enrichMap.get(response.model_id);
                 const respName = model?.first_name
                   ? `${model.first_name} ${model.last_name || ""}`.trim()
                   : model?.username || "Model";
                 return (
-                  <div key={booking.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5">
-                    <Avatar className="h-10 w-10 ring-1 ring-white/10">
+                  <div key={response.id} className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9 ring-1 ring-white/10">
                       <AvatarImage src={model?.profile_photo_url || undefined} />
-                      <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-cyan-500 text-white">
+                      <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-500 text-white text-xs">
                         {respName.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      {model?.username ? (
-                        <Link href={`/${model.username}`} className="font-medium text-sm text-white hover:text-cyan-300 truncate block transition-colors">
-                          {respName}
-                        </Link>
-                      ) : (
-                        <p className="font-medium text-sm text-white truncate">{respName}</p>
-                      )}
-                      <p className="text-xs text-white/50">
-                        {BRAND_SERVICE_LABELS[booking.service_type] || booking.service_type}
-                      </p>
+                      <p className="font-medium text-sm text-white truncate">{respName}</p>
+                      <p className="text-xs text-white/50 truncate">{response.offer_title}</p>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-semibold text-white">
-                        {new Date(booking.event_date).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </p>
-                      <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0">
-                        {booking.status}
-                      </Badge>
-                    </div>
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] uppercase tracking-wider font-semibold px-2 ${
+                        response.status === "accepted" || response.status === "confirmed"
+                          ? "text-emerald-300 border-emerald-500/40 bg-emerald-500/10"
+                          : "text-rose-300 border-rose-500/40 bg-rose-500/10"
+                      }`}
+                    >
+                      {response.status}
+                    </Badge>
                   </div>
                 );
               })}
             </div>
-          ) : (
-            <div className="text-center py-10">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/30 mb-3">
-                <Calendar className="h-6 w-6 text-emerald-300" />
-              </div>
-              <p className="text-sm text-white/60">No upcoming shows</p>
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* ──────────────────────────────────────────────
-          Favorites
-         ────────────────────────────────────────────── */}
-      {favoriteModels.length > 0 ? (
+      {/* FAVORITES — only renders when there's something to show */}
+      {favoriteModels.length > 0 && (
         <div className="rounded-2xl border border-pink-500/25 bg-gradient-to-br from-pink-500/10 via-rose-500/5 to-transparent overflow-hidden">
           <header className="flex items-center justify-between p-5 border-b border-white/5">
             <div className="flex items-center gap-2">
@@ -593,26 +478,7 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
             </div>
           </div>
         </div>
-      ) : (
-        <div className="flex items-center gap-4 p-5 rounded-2xl border border-pink-500/25 bg-gradient-to-r from-pink-500/10 via-violet-500/5 to-transparent shadow-[0_0_18px_rgba(236,72,153,0.15)]">
-          <div className="p-3 rounded-xl bg-pink-500/15 ring-1 ring-pink-500/30">
-            <Heart className="h-6 w-6 text-pink-300" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-white">Save your favorite models</h3>
-            <p className="text-sm text-white/60">
-              Click the heart icon on models you work with frequently for quick access.
-            </p>
-          </div>
-          <Link
-            href="/models"
-            className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-sm font-semibold text-white shadow-[0_0_16px_rgba(236,72,153,0.4)] transition-all"
-          >
-            Browse Models
-          </Link>
-        </div>
       )}
-
     </div>
   );
 }

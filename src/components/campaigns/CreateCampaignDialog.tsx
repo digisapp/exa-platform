@@ -26,7 +26,7 @@ const COLORS = [
   "#84cc16", // lime
 ];
 
-export function CreateCampaignDialog() {
+export function CreateCampaignDialog({ triggerClassName, triggerLabel = "New Campaign" }: { triggerClassName?: string; triggerLabel?: string } = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -69,10 +69,18 @@ export function CreateCampaignDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-violet-500 hover:bg-violet-600">
-          <Plus className="h-4 w-4 mr-2" />
-          New Campaign
-        </Button>
+        {triggerClassName ? (
+          <button type="button" className={triggerClassName}>
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">{triggerLabel}</span>
+            <span className="sm:hidden">Campaign</span>
+          </button>
+        ) : (
+          <Button className="bg-violet-500 hover:bg-violet-600">
+            <Plus className="h-4 w-4 mr-2" />
+            {triggerLabel}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
