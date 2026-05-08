@@ -21,7 +21,10 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Search,
+  X,
 } from "lucide-react";
+import Image from "next/image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +35,15 @@ interface ContractTemplate {
   description: string;
   category: string;
   content: string;
+}
+
+interface ModelSearchResult {
+  id: string;
+  username: string;
+  first_name: string;
+  profile_photo_url: string | null;
+  city?: string | null;
+  state?: string | null;
 }
 
 interface ContractSendDialogProps {
@@ -83,6 +95,18 @@ export function ContractSendDialog({
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Model selection state (only used when modelId prop is not provided)
+  const [pickedModel, setPickedModel] = useState<ModelSearchResult | null>(null);
+  const [modelQuery, setModelQuery] = useState("");
+  const [modelResults, setModelResults] = useState<ModelSearchResult[]>([]);
+  const [searchingModels, setSearchingModels] = useState(false);
+
+  const effectiveModelId = modelId || pickedModel?.id || null;
+  const effectiveModelName =
+    modelName ||
+    (pickedModel ? pickedModel.first_name || `@${pickedModel.username}` : null);
+  const needsModelSelection = !modelId;
+
   useEffect(() => {
     if (open) {
       fetchTemplates();
@@ -94,8 +118,40 @@ export function ContractSendDialog({
       setPdfFile(null);
       setPdfUrl(null);
       setPdfStoragePath(null);
+      setPickedModel(null);
+      setModelQuery("");
+      setModelResults([]);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !needsModelSelection || pickedModel) return;
+    const trimmed = modelQuery.trim();
+    if (!trimmed) {
+      setModelResults([]);
+      return;
+    }
+    let cancelled = false;
+    setSearchingModels(true);
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/models/search?q=${encodeURIComponent(trimmed)}&limit=10`
+        );
+        if (!res.ok) throw new Error("Search failed");
+        const data = await res.json();
+        if (!cancelled) setModelResults(data.models || []);
+      } catch {
+        if (!cancelled) setModelResults([]);
+      } finally {
+        if (!cancelled) setSearchingModels(false);
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [modelQuery, open, needsModelSelection, pickedModel]);
 
   const fetchTemplates = async () => {
     setLoadingTemplates(true);
@@ -111,6 +167,10 @@ export function ContractSendDialog({
   };
 
   const handleSelectTemplate = (template: ContractTemplate) => {
+    if (needsModelSelection && !pickedModel) {
+      toast.error("Please choose a recipient first");
+      return;
+    }
     setSelectedTemplate(template);
     setTitle(template.name);
     setPdfFile(null);
@@ -120,6 +180,10 @@ export function ContractSendDialog({
   };
 
   const handlePdfUpload = async (file: File) => {
+    if (needsModelSelection && !pickedModel) {
+      toast.error("Please choose a recipient first");
+      return;
+    }
     if (file.type !== "application/pdf") {
       toast.error("Only PDF files are allowed");
       return;
@@ -162,8 +226,8 @@ export function ContractSendDialog({
   };
 
   const handleSend = async () => {
-    if (!modelId) {
-      toast.error("No model selected");
+    if (!effectiveModelId) {
+      toast.error("Please choose a recipient");
       return;
     }
     if (!title.trim()) {
@@ -186,7 +250,7 @@ export function ContractSendDialog({
           content: selectedTemplate?.content || null,
           pdfUrl: pdfUrl || null,
           pdfStoragePath: pdfStoragePath || null,
-          modelId,
+          modelId: effectiveModelId,
           bookingId: bookingId || null,
           offerId: offerId || null,
           status: "sent",
@@ -218,7 +282,7 @@ export function ContractSendDialog({
           </DialogTitle>
           <DialogDescription>
             {step === 1
-              ? `Choose a template or upload a custom PDF${modelName ? ` for ${modelName}` : ""}`
+              ? `Choose a template or upload a custom PDF${effectiveModelName ? ` for ${effectiveModelName}` : ""}`
               : "Review the details and send the contract"
             }
           </DialogDescription>
@@ -226,6 +290,106 @@ export function ContractSendDialog({
 
         {step === 1 && (
           <div className="space-y-4">
+            {/* Recipient picker — only shown when modelId not pre-supplied */}
+            {needsModelSelection && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Recipient</Label>
+                {pickedModel ? (
+                  <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/40">
+                    <div className="w-9 h-9 rounded-full bg-muted overflow-hidden shrink-0">
+                      {pickedModel.profile_photo_url ? (
+                        <Image
+                          src={pickedModel.profile_photo_url}
+                          alt={pickedModel.first_name || pickedModel.username}
+                          width={36}
+                          height={36}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : null}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {pickedModel.first_name || `@${pickedModel.username}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        @{pickedModel.username}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setPickedModel(null);
+                        setModelQuery("");
+                        setModelResults([]);
+                      }}
+                      className="text-muted-foreground"
+                      aria-label="Clear recipient"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={modelQuery}
+                        onChange={(e) => setModelQuery(e.target.value)}
+                        placeholder="Search models by name or username"
+                        className="pl-9"
+                      />
+                    </div>
+                    {modelQuery.trim() && (
+                      <div className="rounded-lg border max-h-56 overflow-y-auto divide-y">
+                        {searchingModels ? (
+                          <div className="flex justify-center py-4">
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          </div>
+                        ) : modelResults.length === 0 ? (
+                          <p className="text-xs text-muted-foreground text-center py-4">
+                            No models match &quot;{modelQuery}&quot;
+                          </p>
+                        ) : (
+                          modelResults.map((m) => (
+                            <button
+                              key={m.id}
+                              onClick={() => {
+                                setPickedModel(m);
+                                setModelResults([]);
+                              }}
+                              className="flex items-center gap-3 p-2.5 w-full text-left hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="w-8 h-8 rounded-full bg-muted overflow-hidden shrink-0">
+                                {m.profile_photo_url ? (
+                                  <Image
+                                    src={m.profile_photo_url}
+                                    alt={m.first_name || m.username}
+                                    width={32}
+                                    height={32}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : null}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">
+                                  {m.first_name || `@${m.username}`}
+                                </p>
+                                <p className="text-xs text-muted-foreground truncate">
+                                  @{m.username}
+                                  {m.city ? ` · ${m.city}${m.state ? `, ${m.state}` : ""}` : ""}
+                                </p>
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Templates */}
             {loadingTemplates ? (
               <div className="flex justify-center py-8">
@@ -351,11 +515,11 @@ export function ContractSendDialog({
               />
             </div>
 
-            {/* Model name display */}
-            {modelName && (
+            {/* Recipient display */}
+            {effectiveModelName && (
               <div className="p-3 rounded-lg bg-muted/30">
                 <p className="text-xs text-muted-foreground">Sending to</p>
-                <p className="text-sm font-medium">{modelName}</p>
+                <p className="text-sm font-medium">{effectiveModelName}</p>
               </div>
             )}
           </div>

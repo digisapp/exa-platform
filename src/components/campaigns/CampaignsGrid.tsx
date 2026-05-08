@@ -25,6 +25,10 @@ interface Campaign {
   color: string;
   models: Model[];
   model_count: number;
+  offer_count?: number;
+  offers_accepted?: number;
+  offers_pending?: number;
+  offers_declined?: number;
 }
 
 interface CampaignsGridProps {
@@ -150,6 +154,29 @@ export function CampaignsGrid({ campaigns }: CampaignsGridProps) {
                         View Campaign
                       </span>
                     </div>
+
+                    {(campaign.offer_count ?? 0) > 0 && (
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs pt-2 border-t border-border/50">
+                        <span className="text-muted-foreground">
+                          {campaign.offer_count} {campaign.offer_count === 1 ? "offer" : "offers"} sent
+                        </span>
+                        {(campaign.offers_accepted ?? 0) > 0 && (
+                          <span className="text-emerald-500">
+                            {campaign.offers_accepted} accepted
+                          </span>
+                        )}
+                        {(campaign.offers_pending ?? 0) > 0 && (
+                          <span className="text-amber-500">
+                            {campaign.offers_pending} pending
+                          </span>
+                        )}
+                        {(campaign.offers_declined ?? 0) > 0 && (
+                          <span className="text-rose-500">
+                            {campaign.offers_declined} declined
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </Link>
               </CardContent>

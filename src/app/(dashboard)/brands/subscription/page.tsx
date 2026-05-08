@@ -290,7 +290,7 @@ export default function BrandSubscriptionPage() {
           <Link href="/wallet">
             <Button variant="outline">
               <Receipt className="h-4 w-4 mr-2" />
-              Payment History
+              Coin Wallet
             </Button>
           </Link>
         </CardFooter>
@@ -404,7 +404,15 @@ export default function BrandSubscriptionPage() {
           <DialogHeader>
             <DialogTitle>Cancel Subscription?</DialogTitle>
             <DialogDescription>
-              Your subscription will be cancelled at the end of the current billing period.
+              {brand?.subscription_ends_at
+                ? `You'll keep full access until ${new Date(
+                    brand.subscription_ends_at
+                  ).toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}, then your subscription ends.`
+                : "Your subscription will be cancelled at the end of the current billing period."}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">

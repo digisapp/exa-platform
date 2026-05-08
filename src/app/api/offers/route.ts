@@ -15,7 +15,7 @@ const createOfferSchema = z.object({
   location_state: z.string().max(100, "State is too long").optional().nullable(),
   event_date: z.string().optional().nullable(),
   event_time: z.string().max(50, "Event time is too long").optional().nullable(),
-  compensation_type: z.enum(["paid", "tfp", "perks", "negotiable"]).default("perks"),
+  compensation_type: z.enum(["paid", "tfp", "perks", "exposure"]).default("perks"),
   compensation_amount: z.number().min(0, "Amount cannot be negative").optional().nullable(),
   compensation_description: z.string().max(500, "Compensation description is too long").optional().nullable(),
   deliverables: z.string().max(500, "Deliverables is too long").optional().nullable(),
@@ -130,10 +130,12 @@ export async function GET(request: NextRequest) {
             id,
             model_id,
             status,
+            notes,
             responded_at,
+            created_at,
             checked_in_at,
             no_show,
-            model:models(id, username, first_name, last_name, profile_photo_url, reliability_score)
+            model:models(id, username, first_name, last_name, profile_photo_url, reliability_score, city, state)
           )
         `)
         .eq("brand_id", actor.id);
@@ -340,23 +342,51 @@ export async function POST(request: NextRequest) {
           compensationStr = compensation_description;
         }
 
-        // Send emails to all models (fire and forget)
-        for (const model of models) {
-          const email = userEmails.get(model.user_id);
-          if (email) {
+        // Send emails to all models — await results so we can report failures
+        const emailTargets = models
+          .map((model: any) => ({
+            email: userEmails.get(model.user_id),
+            model,
+          }))
+          .filter((t) => Boolean(t.email));
+
+        const results = await Promise.allSettled(
+          emailTargets.map((t) =>
             sendOfferReceivedEmail({
-              to: email,
-              modelName: model.first_name || model.username || "Model",
+              to: t.email!,
+              modelName: t.model.first_name || t.model.username || "Model",
               brandName,
               offerTitle: title,
-              eventDate: event_date ? new Date(event_date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : "",
+              eventDate: event_date
+                ? new Date(event_date).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : "",
               eventTime: event_time ?? undefined,
               location: locationStr,
               compensation: compensationStr,
               offerId: offer.id,
-            }).catch((err) => console.error("Failed to send offer email:", err));
-          }
+            })
+          )
+        );
+
+        const emailSuccesses = results.filter((r) => r.status === "fulfilled").length;
+        const emailFailures = results.length - emailSuccesses;
+        if (emailFailures > 0) {
+          console.error(
+            `Failed to send ${emailFailures}/${results.length} offer notification emails for offer ${offer.id}`
+          );
         }
+
+        return NextResponse.json({
+          offer,
+          models_notified: campaignModels.length,
+          emails_attempted: results.length,
+          emails_sent: emailSuccesses,
+          emails_failed: emailFailures,
+        });
       }
     }
 

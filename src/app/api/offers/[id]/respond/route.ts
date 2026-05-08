@@ -47,7 +47,7 @@ export async function POST(
     // Get offer
     const { data: offer } = await supabase
       .from("offers")
-      .select("id, title, brand_id, status, spots, spots_filled")
+      .select("id, title, brand_id, status, spots, spots_filled, event_date")
       .eq("id", offerId)
       .single();
 
@@ -57,6 +57,16 @@ export async function POST(
 
     if (offer.status !== "open") {
       return NextResponse.json({ error: "This offer is no longer open" }, { status: 400 });
+    }
+
+    if (offer.event_date) {
+      const today = new Date().toISOString().split("T")[0];
+      if (offer.event_date < today) {
+        return NextResponse.json(
+          { error: "This offer has expired (the event date has passed)" },
+          { status: 400 }
+        );
+      }
     }
 
     // Get existing response
@@ -100,6 +110,15 @@ export async function POST(
     // Update spots_filled
     if (status === "accepted" && previousStatus !== "accepted") {
       await adminClient.rpc("increment_offer_spots_filled", { p_offer_id: offerId });
+
+      // Auto-close the offer when all spots are filled
+      const newFilled = (offer.spots_filled ?? 0) + 1;
+      if (offer.spots && newFilled >= offer.spots) {
+        await adminClient
+          .from("offers")
+          .update({ status: "closed" })
+          .eq("id", offerId);
+      }
     } else if (previousStatus === "accepted" && status !== "accepted") {
       await adminClient.rpc("decrement_offer_spots_filled", { p_offer_id: offerId });
     }

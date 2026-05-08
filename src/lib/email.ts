@@ -6260,3 +6260,114 @@ export async function sendModelOnboardingInviteEmail({
   }
 }
 
+export async function sendBrandPaymentFailedEmail({
+  to,
+  companyName,
+  tierName,
+  amountDueCents,
+  hostedInvoiceUrl,
+}: {
+  to: string;
+  companyName: string;
+  tierName: string;
+  amountDueCents?: number | null;
+  hostedInvoiceUrl?: string | null;
+}) {
+  try {
+    // Billing emails are transactional — do not honor marketing unsubscribes,
+    // but still respect a full "all" opt-out.
+    if (await isEmailUnsubscribed(to, "all")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const subscriptionUrl = `${BASE_URL}/brands/subscription`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+    const amountDisplay =
+      typeof amountDueCents === "number" && amountDueCents > 0
+        ? `$${(amountDueCents / 100).toFixed(2)}`
+        : null;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: "Action needed: your EXA payment didn't go through",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 26px; font-weight: bold;">
+                Payment Issue
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.92); font-size: 15px;">
+                Your ${escapeHtml(tierName)} subscription needs attention
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px 30px;">
+              <p style="margin: 0 0 16px; color: #ffffff; font-size: 17px;">
+                Hi ${escapeHtml(companyName)},
+              </p>
+              <p style="margin: 0 0 20px; color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+                We weren't able to charge your card for your latest EXA subscription invoice${amountDisplay ? ` (<strong>${amountDisplay}</strong>)` : ""}.
+                This usually happens because the card on file has expired, was replaced, or was declined by the issuing bank.
+              </p>
+              <p style="margin: 0 0 28px; color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+                To avoid losing access to messaging, calling, and offers, please update your payment method as soon as possible.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${subscriptionUrl}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Update Payment Method
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              ${hostedInvoiceUrl ? `
+              <p style="margin: 28px 0 0; color: #a1a1aa; font-size: 13px; text-align: center;">
+                Or pay this invoice directly:
+                <a href="${hostedInvoiceUrl}" style="color: #67e8f9;">View invoice</a>
+              </p>` : ""}
+
+              <p style="margin: 28px 0 0; color: #71717a; font-size: 13px; line-height: 1.5;">
+                Stripe will automatically retry the charge a few times over the next several days. If it still fails, your subscription will be paused and your monthly coin grant will stop. Your existing coins will be preserved.
+              </p>
+            </td>
+          </tr>
+          ${generateEmailFooter(unsubscribeToken)}
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Brand payment-failed email error", error);
+    return { success: false, error };
+  }
+}
+

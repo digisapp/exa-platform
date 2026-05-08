@@ -4,7 +4,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Coins, Users, Calendar, TrendingUp, Loader2, BarChart3 } from "lucide-react";
+import { Coins, Users, Calendar, TrendingUp, Loader2, BarChart3, Mail, CheckCircle2, Clock } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Link from "next/link";
 
 interface AnalyticsData {
@@ -34,6 +41,15 @@ interface AnalyticsData {
       profile_photo_url: string | null;
     } | null;
   }>;
+  offerStats?: {
+    totalOffers: number;
+    openOffers: number;
+    totalResponses: number;
+    acceptedResponses: number;
+    declinedResponses: number;
+    pendingResponses: number;
+    acceptanceRate: number;
+  };
 }
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -48,29 +64,49 @@ const SERVICE_LABELS: Record<string, string> = {
   other: "Other",
 };
 
+type AnalyticsRange = "7d" | "30d" | "90d" | "all";
+
+const RANGE_LABELS: Record<AnalyticsRange, string> = {
+  "7d": "Last 7 days",
+  "30d": "Last 30 days",
+  "90d": "Last 90 days",
+  all: "All time",
+};
+
 export default function BrandAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [range, setRange] = useState<AnalyticsRange>("all");
 
   useEffect(() => {
+    let cancelled = false;
     async function fetchAnalytics() {
+      setLoading(true);
       try {
-        const res = await fetch("/api/brands/analytics");
+        const res = await fetch(`/api/brands/analytics?range=${range}`);
         if (!res.ok) {
           throw new Error("Failed to fetch analytics");
         }
         const json = await res.json();
-        setData(json);
+        if (!cancelled) {
+          setData(json);
+          setError(null);
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load analytics");
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Failed to load analytics");
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchAnalytics();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [range]);
 
   if (loading) {
     return (
@@ -95,9 +131,23 @@ export default function BrandAnalyticsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Analytics</h1>
-        <p className="text-muted-foreground">Track your activity and spending</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Analytics</h1>
+          <p className="text-muted-foreground">Track your activity and spending</p>
+        </div>
+        <Select value={range} onValueChange={(v) => setRange(v as AnalyticsRange)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(RANGE_LABELS) as AnalyticsRange[]).map((key) => (
+              <SelectItem key={key} value={key}>
+                {RANGE_LABELS[key]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Stats Cards */}
@@ -146,6 +196,76 @@ export default function BrandAnalyticsPage() {
         </Card>
       </div>
 
+      {/* Offer Performance */}
+      {data.offerStats && data.offerStats.totalOffers > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-cyan-500" />
+              Offer Performance
+            </CardTitle>
+            <CardDescription>
+              How models are responding to the offers you&apos;ve sent
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="p-4 rounded-lg bg-muted/40">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <Mail className="h-4 w-4" />
+                  <span className="text-xs">Offers Sent</span>
+                </div>
+                <p className="text-2xl font-bold">{data.offerStats.totalOffers}</p>
+                {data.offerStats.openOffers > 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {data.offerStats.openOffers} still open
+                  </p>
+                )}
+              </div>
+              <div className="p-4 rounded-lg bg-emerald-500/10">
+                <div className="flex items-center gap-2 text-emerald-500 mb-1">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span className="text-xs">Accepted</span>
+                </div>
+                <p className="text-2xl font-bold text-emerald-500">
+                  {data.offerStats.acceptedResponses}
+                </p>
+              </div>
+              <div className="p-4 rounded-lg bg-amber-500/10">
+                <div className="flex items-center gap-2 text-amber-500 mb-1">
+                  <Clock className="h-4 w-4" />
+                  <span className="text-xs">Pending</span>
+                </div>
+                <p className="text-2xl font-bold text-amber-500">
+                  {data.offerStats.pendingResponses}
+                </p>
+              </div>
+              <div className="p-4 rounded-lg bg-rose-500/10">
+                <div className="flex items-center gap-2 text-rose-500 mb-1">
+                  <Users className="h-4 w-4" />
+                  <span className="text-xs">Declined</span>
+                </div>
+                <p className="text-2xl font-bold text-rose-500">
+                  {data.offerStats.declinedResponses}
+                </p>
+              </div>
+              <div className="p-4 rounded-lg bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20">
+                <div className="flex items-center gap-2 text-cyan-500 mb-1">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="text-xs">Acceptance Rate</span>
+                </div>
+                <p className="text-2xl font-bold text-cyan-500">
+                  {data.offerStats.acceptanceRate}%
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  of models who responded
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Spend Chart */}
       {months.length > 0 && (
         <Card>
@@ -154,7 +274,9 @@ export default function BrandAnalyticsPage() {
               <BarChart3 className="h-5 w-5" />
               Monthly Spend
             </CardTitle>
-            <CardDescription>Coins spent over the last 6 months</CardDescription>
+            <CardDescription>
+              Coins spent — {RANGE_LABELS[range].toLowerCase()}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-end gap-2 h-40">

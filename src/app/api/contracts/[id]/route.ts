@@ -3,8 +3,12 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { sendContractSignedEmail } from "@/lib/email";
+import { renderSignedContractPdf } from "@/lib/contract-pdf";
+import { signedContractStoragePath } from "@/lib/contract-storage";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+
+export const runtime = "nodejs";
 
 const updateContractSchema = z.object({
   action: z.enum(["sign", "void"]),
@@ -177,6 +181,50 @@ export async function PATCH(
       if (updateError) {
         logger.error("Error signing contract", updateError);
         return NextResponse.json({ error: "Failed to sign contract" }, { status: 500 });
+      }
+
+      // Generate signed PDF certificate (best effort — failure shouldn't block signing)
+      try {
+        const [{ data: brandRow }, { data: modelRow }] = await Promise.all([
+          adminClient.from("brands").select("company_name").eq("id", contract.brand_id).single(),
+          adminClient
+            .from("models")
+            .select("first_name, last_name, username")
+            .eq("id", contract.model_id)
+            .single(),
+        ]);
+        const brandLabel = brandRow?.company_name || "Brand";
+        const modelLabel =
+          [modelRow?.first_name, modelRow?.last_name].filter(Boolean).join(" ") ||
+          (modelRow?.username ? `@${modelRow.username}` : signerName);
+        const pdfBuffer = await renderSignedContractPdf({
+          contractId: contract.id,
+          title: contract.title,
+          content: contract.content,
+          hasOriginalPdf: Boolean(contract.pdf_url || contract.pdf_storage_path),
+          brandName: brandLabel,
+          modelName: modelLabel,
+          signerName,
+          signerIp,
+          signedAt: new Date(),
+        });
+
+        const storagePath = signedContractStoragePath(contract.id);
+        const { error: uploadError } = await adminClient.storage
+          .from("portfolio")
+          .upload(storagePath, pdfBuffer, {
+            contentType: "application/pdf",
+            upsert: true,
+          });
+        if (uploadError) {
+          logger.error("Failed to upload signed contract PDF", uploadError, {
+            contractId: contract.id,
+          });
+        }
+      } catch (pdfError) {
+        logger.error("Failed to generate signed contract PDF", pdfError, {
+          contractId: contract.id,
+        });
       }
 
       // Notify the brand

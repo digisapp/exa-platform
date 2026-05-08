@@ -47,6 +47,7 @@ interface Offer {
   compensation_type: string;
   compensation_amount: number;
   compensation_description: string | null;
+  deliverables: string | null;
   spots: number;
   spots_filled: number;
   status: string;
@@ -137,6 +138,34 @@ export default function BrandOffersPage() {
       fetchOffers();
     } catch {
       toast.error("Failed to update status");
+    }
+  }
+
+  async function confirmAllAccepted(offerId: string, responseIds: string[]) {
+    if (responseIds.length === 0) return;
+    try {
+      const results = await Promise.allSettled(
+        responseIds.map((id) =>
+          fetch(`/api/offers/${offerId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ update_response: { id, status: "confirmed" } }),
+          }).then((res) => {
+            if (!res.ok) throw new Error("Update failed");
+          })
+        )
+      );
+      const failed = results.filter((r) => r.status === "rejected").length;
+      const succeeded = responseIds.length - failed;
+      if (succeeded > 0) {
+        toast.success(`Confirmed ${succeeded} model${succeeded === 1 ? "" : "s"}`);
+      }
+      if (failed > 0) {
+        toast.error(`${failed} confirmation${failed === 1 ? "" : "s"} failed`);
+      }
+      fetchOffers();
+    } catch {
+      toast.error("Failed to bulk confirm");
     }
   }
 
@@ -329,6 +358,23 @@ export default function BrandOffersPage() {
                       {currentOffer.spots_filled}/{currentOffer.spots} spots filled
                     </span>
                   </div>
+
+                  {currentOffer.description && (
+                    <p className="mt-3 text-sm text-muted-foreground whitespace-pre-wrap">
+                      {currentOffer.description}
+                    </p>
+                  )}
+
+                  {currentOffer.deliverables && (
+                    <div className="mt-3 p-3 rounded-lg bg-muted/40 border">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
+                        Deliverables
+                      </p>
+                      <p className="text-sm whitespace-pre-wrap">
+                        {currentOffer.deliverables}
+                      </p>
+                    </div>
+                  )}
                 </CardHeader>
 
                 <CardContent>
@@ -355,9 +401,31 @@ export default function BrandOffersPage() {
 
                   {/* Responses List */}
                   <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-                      Responses ({currentOffer.responses?.length || 0})
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                        Responses ({currentOffer.responses?.length || 0})
+                      </h3>
+                      {(() => {
+                        const eventPassed = currentOffer.event_date
+                          ? new Date(currentOffer.event_date) < new Date()
+                          : false;
+                        const acceptedIds = (currentOffer.responses || [])
+                          .filter((r) => r.status === "accepted")
+                          .map((r) => r.id);
+                        if (eventPassed || acceptedIds.length < 2) return null;
+                        return (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-blue-500 border-blue-500/40 hover:bg-blue-500/10"
+                            onClick={() => confirmAllAccepted(currentOffer.id, acceptedIds)}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1.5" />
+                            Confirm all {acceptedIds.length}
+                          </Button>
+                        );
+                      })()}
+                    </div>
 
                     {(!currentOffer.responses || currentOffer.responses.length === 0) ? (
                       <p className="text-muted-foreground text-sm py-8 text-center">
@@ -382,8 +450,9 @@ export default function BrandOffersPage() {
                           return (
                             <div
                               key={response.id}
-                              className="flex items-center gap-3 p-3 rounded-lg border"
+                              className="p-3 rounded-lg border space-y-2"
                             >
+                              <div className="flex items-center gap-3">
                               <Avatar className="h-10 w-10">
                                 <AvatarImage src={response.model?.profile_photo_url || undefined} />
                                 <AvatarFallback>
@@ -509,6 +578,18 @@ export default function BrandOffersPage() {
                                   </Link>
                                 </Button>
                               </div>
+                              </div>
+
+                              {response.notes && (
+                                <div className="pl-[52px] pt-2 border-t border-border/50">
+                                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mt-2 mb-1">
+                                    {response.status === "declined" ? "Reason" : "Note"} from {response.model?.first_name || `@${response.model?.username}`}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground italic whitespace-pre-wrap">
+                                    &ldquo;{response.notes}&rdquo;
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           );
                         })

@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { DeliveryCard } from "@/components/deliveries/DeliveryCard";
 import { DeliveryDetailSheet } from "@/components/deliveries/DeliveryDetailSheet";
 import { LibraryContentCard } from "@/components/deliveries/LibraryContentCard";
 import { LibraryContentDetailSheet } from "@/components/deliveries/LibraryContentDetailSheet";
-import { FolderDown, Loader2, Inbox } from "lucide-react";
+import { FolderDown, Loader2, Inbox, Search } from "lucide-react";
 
 interface Delivery {
   id: string;
@@ -63,6 +64,7 @@ export default function BrandContentPage() {
   const [librarySheetOpen, setLibrarySheetOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("models");
   const [activeTab, setActiveTab] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const loadDeliveries = async () => {
     try {
@@ -106,9 +108,37 @@ export default function BrandContentPage() {
     setLibrarySheetOpen(true);
   };
 
+  const matchesQuery = (d: Delivery) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    const haystack = [
+      d.title,
+      d.notes,
+      d.model?.username,
+      d.model?.first_name,
+      d.model?.last_name,
+      d.booking?.booking_number,
+      d.booking?.service_type,
+      d.offer?.title,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(q);
+  };
+
   const filteredDeliveries = deliveries.filter((d) => {
+    if (!matchesQuery(d)) return false;
     if (activeTab === "all") return true;
     return d.status === activeTab;
+  });
+
+  const filteredLibraryItems = libraryItems.filter((item) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return [item.title, item.description, item.notes]
+      .filter(Boolean)
+      .some((v) => v!.toLowerCase().includes(q));
   });
 
   if (loading) {
@@ -132,6 +162,17 @@ export default function BrandContentPage() {
             Content deliverables and shared files
           </p>
         </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by model, booking, offer, or title"
+          className="pl-9"
+        />
       </div>
 
       {/* Section Tabs: From Models / From EXA */}
@@ -191,17 +232,23 @@ export default function BrandContentPage() {
 
         {/* From EXA */}
         <TabsContent value="exa" className="mt-4">
-          {libraryItems.length === 0 ? (
+          {filteredLibraryItems.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <Inbox className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="font-medium">No shared content yet</p>
+              <p className="font-medium">
+                {searchQuery && libraryItems.length > 0
+                  ? `No results for "${searchQuery}"`
+                  : "No shared content yet"}
+              </p>
               <p className="text-sm mt-1">
-                Content shared by EXA will appear here
+                {searchQuery && libraryItems.length > 0
+                  ? "Try a different search term"
+                  : "Content shared by EXA will appear here"}
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {libraryItems.map((item) => (
+              {filteredLibraryItems.map((item) => (
                 <LibraryContentCard
                   key={item.assignmentId}
                   item={item}

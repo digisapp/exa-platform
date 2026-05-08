@@ -21,6 +21,7 @@ import {
   Clock,
   ExternalLink,
   AlertTriangle,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -214,9 +215,34 @@ export function ContractViewDialog({
               {/* Signature info */}
               {contract.status === "signed" && contract.signed_at && (
                 <div className="mt-4 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    <p className="font-medium text-green-500">Signed</p>
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <p className="font-medium text-green-500">Signed</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-green-500 border-green-500/40 hover:bg-green-500/10"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(
+                            `/api/contracts/${contract.id}/signed-pdf`
+                          );
+                          const data = await res.json();
+                          if (!res.ok || !data.url) {
+                            toast.error(data.error || "Signed PDF not ready yet");
+                            return;
+                          }
+                          window.open(data.url, "_blank", "noopener,noreferrer");
+                        } catch {
+                          toast.error("Failed to fetch signed PDF");
+                        }
+                      }}
+                    >
+                      <Download className="h-3.5 w-3.5 mr-1.5" />
+                      Download signed PDF
+                    </Button>
                   </div>
                   <div className="text-sm text-muted-foreground space-y-1">
                     <p>Signed by: <span className="text-foreground">{contract.signer_name}</span></p>

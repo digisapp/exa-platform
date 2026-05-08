@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 import { logger } from "@/lib/logger";
+import { sendBrandPaymentFailedEmail } from "@/lib/email";
 
 export async function handleSubscriptionUpdate(
   subscription: Stripe.Subscription & Record<string, any>,
@@ -121,13 +122,46 @@ export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, supaba
   logger.error("Invoice payment failed", undefined, { invoiceId: invoice.id });
   // Update subscription status to past_due
   const failedSubId = (invoice as any).subscription;
-  if (failedSubId) {
-    const subscriptionId = typeof failedSubId === "string"
-      ? failedSubId
-      : failedSubId.id;
-    await supabaseAdmin
+  if (!failedSubId) return;
+
+  const subscriptionId = typeof failedSubId === "string"
+    ? failedSubId
+    : failedSubId.id;
+
+  await supabaseAdmin
+    .from("brands")
+    .update({ subscription_status: "past_due" })
+    .eq("stripe_subscription_id", subscriptionId);
+
+  // Notify the brand so they can fix payment before the subscription is paused
+  try {
+    const { data: brand } = await supabaseAdmin
       .from("brands")
-      .update({ subscription_status: "past_due" })
-      .eq("stripe_subscription_id", subscriptionId);
+      .select("company_name, email, subscription_tier")
+      .eq("stripe_subscription_id", subscriptionId)
+      .maybeSingle() as {
+        data: { company_name: string | null; email: string | null; subscription_tier: BrandTier | null } | null;
+      };
+
+    if (!brand?.email) {
+      logger.warn("Skipping payment-failed email: no brand email on file", { subscriptionId });
+      return;
+    }
+
+    const tierKey = brand.subscription_tier || "free";
+    const tierConfig = BRAND_SUBSCRIPTION_TIERS[tierKey as BrandTier];
+    const tierName = tierConfig?.name || "EXA";
+    const amountDueCents = (invoice as any).amount_due ?? null;
+    const hostedInvoiceUrl = (invoice as any).hosted_invoice_url ?? null;
+
+    await sendBrandPaymentFailedEmail({
+      to: brand.email,
+      companyName: brand.company_name || "there",
+      tierName,
+      amountDueCents,
+      hostedInvoiceUrl,
+    });
+  } catch (err) {
+    logger.error("Failed to send payment-failed notification email", err, { subscriptionId });
   }
 }

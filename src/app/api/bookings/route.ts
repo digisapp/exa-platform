@@ -273,8 +273,10 @@ export async function POST(request: NextRequest) {
         .eq("id", actor.id)
         .maybeSingle();
 
-      const hasActiveSubscription = brand?.subscription_status === "active" ||
-        (brand?.subscription_tier && brand.subscription_tier !== "free");
+      const hasActiveSubscription =
+        brand?.subscription_status === "active" &&
+        !!brand?.subscription_tier &&
+        brand.subscription_tier !== "free";
 
       if (!hasActiveSubscription) {
         return NextResponse.json({

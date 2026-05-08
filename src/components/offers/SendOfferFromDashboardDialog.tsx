@@ -22,9 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Send, Loader2, Repeat, Mail, Megaphone } from "lucide-react";
+import { Send, Loader2, Mail, Megaphone } from "lucide-react";
 
 export interface DashboardOfferCampaign {
   id: string;
@@ -108,9 +107,12 @@ export function SendOfferFromDashboardDialog({ campaigns, triggerClassName }: Pr
         return;
       }
 
-      toast.success(
-        `Offer sent to ${data.models_notified} models!${formData.is_recurring ? " (Recurring)" : ""}`
-      );
+      toast.success(`Offer sent to ${data.models_notified} models!`);
+      if (data.emails_failed && data.emails_failed > 0) {
+        toast.warning(
+          `${data.emails_failed} of ${data.emails_attempted} email notifications didn't go through. Models without email won't be notified by mail.`
+        );
+      }
       setOpen(false);
       setFormData(EMPTY_FORM);
       router.refresh();
@@ -362,57 +364,6 @@ export function SendOfferFromDashboardDialog({ campaigns, triggerClassName }: Pr
                   setFormData({ ...formData, spots: parseInt(e.target.value) || 1 })
                 }
               />
-            </div>
-
-            <div className="space-y-4 pt-2 border-t">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="is_recurring"
-                  checked={formData.is_recurring}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, is_recurring: checked === true })
-                  }
-                />
-                <Label htmlFor="is_recurring" className="flex items-center gap-2 cursor-pointer">
-                  <Repeat className="h-4 w-4 text-violet-400" />
-                  Make this a recurring offer
-                </Label>
-              </div>
-
-              {formData.is_recurring && (
-                <div className="grid grid-cols-2 gap-3 pl-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="recurrence_pattern">Repeat</Label>
-                    <Select
-                      value={formData.recurrence_pattern}
-                      onValueChange={(v) =>
-                        setFormData({ ...formData, recurrence_pattern: v })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="biweekly">Every 2 weeks</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="recurrence_end_date">Until (optional)</Label>
-                    <Input
-                      id="recurrence_end_date"
-                      type="date"
-                      value={formData.recurrence_end_date}
-                      onChange={(e) =>
-                        setFormData({ ...formData, recurrence_end_date: e.target.value })
-                      }
-                      min={formData.event_date || undefined}
-                    />
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="flex justify-end gap-3 pt-4">

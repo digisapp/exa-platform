@@ -1,10 +1,23 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 
-export async function GET() {
+const RANGE_DAYS: Record<string, number | null> = {
+  "7d": 7,
+  "30d": 30,
+  "90d": 90,
+  all: null,
+};
+
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const url = new URL(request.url);
+    const rangeParam = url.searchParams.get("range") || "all";
+    const days = RANGE_DAYS[rangeParam] ?? null;
+    const sinceIso = days
+      ? new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+      : null;
 
     // Auth check
     const { data: { user } } = await supabase.auth.getUser();
@@ -37,11 +50,13 @@ export async function GET() {
     const brandActorId = brand.id;
 
     // 1. Get total coins spent (negative amounts = spending)
-    const { data: coinData } = await supabase
+    let coinQuery = supabase
       .from("coin_transactions")
       .select("amount, action, created_at")
       .eq("actor_id", brandActorId)
       .lt("amount", 0);
+    if (sinceIso) coinQuery = coinQuery.gte("created_at", sinceIso);
+    const { data: coinData } = await coinQuery;
 
     const totalCoinsSpent = Math.abs(
       (coinData || []).reduce((sum: number, t: any) => sum + t.amount, 0)
@@ -54,18 +69,26 @@ export async function GET() {
       spendByMonth[month] = (spendByMonth[month] || 0) + Math.abs(t.amount);
     });
 
-    // 2. Get bookings data
-    const { data: bookings } = await supabase
+    // 2. Get bookings data — totals/completed honor the selected range,
+    //    but upcoming bookings always reflect what's actually coming up.
+    let bookingsQuery = supabase
       .from("bookings")
       .select("id, model_id, status, event_date, service_type, total_amount, created_at")
       .eq("client_id", brandActorId);
+    if (sinceIso) bookingsQuery = bookingsQuery.gte("created_at", sinceIso);
+    const { data: bookings } = await bookingsQuery;
 
     const totalBookings = bookings?.length || 0;
     const completedBookings = bookings?.filter((b: any) => b.status === "completed").length || 0;
-    const upcomingBookings = bookings?.filter((b: any) =>
-      ["accepted", "confirmed", "pending"].includes(b.status) &&
-      new Date(b.event_date) >= new Date()
-    ) || [];
+
+    const todayIso = new Date().toISOString().split("T")[0];
+    const { data: upcomingBookingsRaw } = await supabase
+      .from("bookings")
+      .select("id, model_id, status, event_date, service_type, total_amount, created_at")
+      .eq("client_id", brandActorId)
+      .in("status", ["accepted", "confirmed", "pending"])
+      .gte("event_date", todayIso);
+    const upcomingBookings = upcomingBookingsRaw || [];
 
     // 3. Get unique models contacted (from conversations)
     const { data: conversations } = await supabase
@@ -136,7 +159,56 @@ export async function GET() {
       }
     }
 
-    // 5. Get upcoming bookings with model info
+    // 5. Offer performance — sent / accepted / response counts
+    let offersQuery = supabase
+      .from("offers")
+      .select("id, status, created_at, spots_filled")
+      .eq("brand_id", brandActorId);
+    if (sinceIso) offersQuery = offersQuery.gte("created_at", sinceIso);
+    const { data: brandOffers } = await offersQuery;
+
+    const offerIds = (brandOffers || []).map((o: any) => o.id);
+    const offerStats = {
+      totalOffers: 0,
+      openOffers: 0,
+      totalResponses: 0,
+      acceptedResponses: 0,
+      declinedResponses: 0,
+      pendingResponses: 0,
+      acceptanceRate: 0,
+    };
+
+    offerStats.totalOffers = brandOffers?.length || 0;
+    offerStats.openOffers = (brandOffers || []).filter(
+      (o: any) => o.status === "open"
+    ).length;
+
+    if (offerIds.length > 0) {
+      const { data: respCounts } = await supabase
+        .from("offer_responses")
+        .select("status")
+        .in("offer_id", offerIds);
+
+      (respCounts || []).forEach((r: any) => {
+        offerStats.totalResponses++;
+        if (r.status === "accepted" || r.status === "confirmed") {
+          offerStats.acceptedResponses++;
+        } else if (r.status === "declined") {
+          offerStats.declinedResponses++;
+        } else if (r.status === "pending") {
+          offerStats.pendingResponses++;
+        }
+      });
+
+      const respondedTotal =
+        offerStats.acceptedResponses + offerStats.declinedResponses;
+      offerStats.acceptanceRate =
+        respondedTotal > 0
+          ? Math.round((offerStats.acceptedResponses / respondedTotal) * 100)
+          : 0;
+    }
+
+    // 6. Get upcoming bookings with model info
     let upcomingWithModels: any[] = [];
     if (upcomingBookings.length > 0) {
       const upcomingModelIds = upcomingBookings.map((b: any) => b.model_id).filter(Boolean);
@@ -161,6 +233,7 @@ export async function GET() {
     }
 
     return NextResponse.json({
+      range: rangeParam,
       totalCoinsSpent,
       spendByMonth,
       totalBookings,
@@ -168,6 +241,7 @@ export async function GET() {
       modelsContacted,
       frequentCollaborators,
       upcomingBookings: upcomingWithModels,
+      offerStats,
     });
   } catch (error) {
     logger.error("Analytics error", error);

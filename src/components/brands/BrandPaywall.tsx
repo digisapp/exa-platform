@@ -7,12 +7,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Lock, Coins, Users, MessageCircle, Calendar, Check, Sparkles } from "lucide-react";
+import { BRAND_SUBSCRIPTION_TIERS } from "@/lib/stripe-config";
 
 interface BrandPaywallProps {
   isOpen?: boolean;
   onClose?: () => void;
   trigger?: "browse" | "message" | "booking";
 }
+
+const formatPrice = (cents: number) =>
+  `$${Math.round(cents / 100).toLocaleString()}`;
+
+const STARTER = BRAND_SUBSCRIPTION_TIERS.starter;
+const PRO = BRAND_SUBSCRIPTION_TIERS.pro;
+const ENTERPRISE = BRAND_SUBSCRIPTION_TIERS.enterprise;
+const DISCOVERY = BRAND_SUBSCRIPTION_TIERS.discovery;
 
 export function BrandPaywall({ isOpen = true, onClose, trigger = "browse" }: BrandPaywallProps) {
   const [open, setOpen] = useState(isOpen);
@@ -86,13 +95,13 @@ export function BrandPaywall({ isOpen = true, onClose, trigger = "browse" }: Bra
             <div className="flex items-center justify-between p-4 rounded-lg border hover:border-cyan-500/50 transition-colors">
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold">Starter</p>
-                  <Badge variant="secondary" className="text-xs">500 coins/mo</Badge>
+                  <p className="font-semibold">{STARTER.name}</p>
+                  <Badge variant="secondary" className="text-xs">{STARTER.monthlyCoins.toLocaleString()} coins/mo</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">Full access to all features</p>
+                <p className="text-sm text-muted-foreground">Direct messaging with models</p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-lg">$149<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                <p className="font-bold text-lg">{formatPrice(STARTER.monthlyPrice)}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
               </div>
             </div>
 
@@ -100,27 +109,27 @@ export function BrandPaywall({ isOpen = true, onClose, trigger = "browse" }: Bra
               <div>
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-cyan-500" />
-                  <p className="font-semibold">Professional</p>
+                  <p className="font-semibold">{PRO.name}</p>
                   <Badge className="bg-cyan-500 text-xs">Popular</Badge>
-                  <Badge variant="secondary" className="text-xs">1,200 coins/mo</Badge>
+                  <Badge variant="secondary" className="text-xs">{PRO.monthlyCoins.toLocaleString()} coins/mo</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">+ Verified badge & priority support</p>
+                <p className="text-sm text-muted-foreground">+ Calling, verified badge & bulk tools</p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-lg text-cyan-500">$349<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                <p className="font-bold text-lg text-cyan-500">{formatPrice(PRO.monthlyPrice)}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
               </div>
             </div>
 
             <div className="flex items-center justify-between p-4 rounded-lg border hover:border-cyan-500/50 transition-colors">
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold">Enterprise</p>
-                  <Badge variant="secondary" className="text-xs">2,500 coins/mo</Badge>
+                  <p className="font-semibold">{ENTERPRISE.name}</p>
+                  <Badge variant="secondary" className="text-xs">{ENTERPRISE.monthlyCoins.toLocaleString()} coins/mo</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">+ Featured placement & account manager</p>
+                <p className="text-sm text-muted-foreground">+ Unlimited lists & dedicated account manager</p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-lg">$699<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                <p className="font-bold text-lg">{formatPrice(ENTERPRISE.monthlyPrice)}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
               </div>
             </div>
           </div>
@@ -182,7 +191,7 @@ export function BrandPaywallOverlay() {
 
           <div className="text-center p-4 rounded-lg bg-muted/50">
             <p className="text-sm text-muted-foreground mb-1">Starting at</p>
-            <p className="text-3xl font-bold">$149<span className="text-sm font-normal text-muted-foreground">/month</span></p>
+            <p className="text-3xl font-bold">{formatPrice(DISCOVERY.monthlyPrice)}<span className="text-sm font-normal text-muted-foreground">/month</span></p>
           </div>
 
           <Button asChild className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 h-12">
