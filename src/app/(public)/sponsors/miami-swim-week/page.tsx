@@ -37,9 +37,7 @@ import {
 import { Footer } from "@/components/layout/footer";
 import { HotelFloorPlan } from "@/components/shows/hotel-floor-plan";
 import { ModelGrid } from "./model-grid";
-import {
-  MSW_2026_SCHEDULE,
-} from "@/lib/msw-schedule";
+import { DigisScheduleSectionCompact } from "@/components/shows/digis-links";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -54,8 +52,6 @@ export const metadata: Metadata = {
 };
 
 const VENUE = "The Alexander Hotel, Miami Beach";
-
-const SCHEDULE = MSW_2026_SCHEDULE;
 
 const CASTING_CALL_PACKAGES = [
   {
@@ -657,29 +653,7 @@ export default async function SponsorMswPage() {
               </div>
               EXA Shows Schedule
             </h3>
-            <div className="space-y-2">
-              {SCHEDULE.map((event) => (
-                <div
-                  key={event.id}
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                    event.highlight
-                      ? "border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-violet-500/5 to-transparent shadow-[0_0_14px_rgba(236,72,153,0.12)]"
-                      : "bg-white/[0.03] border border-white/5"
-                  }`}
-                >
-                  <div className="text-center flex-shrink-0 w-12">
-                    <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{event.day.slice(0, 3)}</p>
-                    <p className={`text-base font-bold ${event.highlight ? "text-pink-300" : "text-white"}`}>
-                      {event.date.split(" ")[1]}
-                    </p>
-                  </div>
-                  <div className="h-8 w-px bg-white/10 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-white">{event.title}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <DigisScheduleSectionCompact />
           </div>
         </div>
 

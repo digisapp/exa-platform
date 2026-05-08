@@ -12,10 +12,9 @@ export const metadata: Metadata = {
 const PACKAGE_NAMES: Record<string, string> = {
   "opening-show": "Opening Show — Tuesday, May 26",
   "day-2": "Day 2 Show — Wednesday, May 27",
-  "day-3": "Day 3 Show — Thursday, May 28",
   "day-4": "Day 4 Show — Friday, May 29",
-  "day-5": "Day 5 Show — May 30–31",
-  "daytime-show": "Daytime Show — Thursday, May 28",
+  "day-5": "Day 5 Show — Saturday, May 30",
+  "day-6": "Day 6 Show — Sunday, May 31",
 };
 
 interface Props {

@@ -116,23 +116,10 @@ const DAY_META: Record<
     Icon: Sparkles,
     highlight: false,
   },
-  "May 28": {
-    dayLabel: "Thu",
-    dateNum: "28",
-    title: "Signature Runway",
-    subtitle: "Doors 6pm · Show 7pm",
-    badge: null,
-    badgeGradient: "",
-    gradient: "from-pink-500/15 via-violet-500/10 to-transparent",
-    ring: "ring-pink-500/30 hover:ring-pink-400/60",
-    iconColor: "text-pink-300",
-    Icon: Sparkles,
-    highlight: false,
-  },
   "May 29": {
     dayLabel: "Fri",
     dateNum: "29",
-    title: "Signature Runway",
+    title: "Friday Fashion Runway Show",
     subtitle: "Doors 6pm · Show 7pm",
     badge: null,
     badgeGradient: "",
@@ -145,8 +132,8 @@ const DAY_META: Record<
   "May 30": {
     dayLabel: "Sat",
     dateNum: "30",
-    title: "Afternoon Show + Night Show",
-    subtitle: "Show 2pm · Night Show 9pm",
+    title: "Saturday Runway Show",
+    subtitle: "Doors 3pm · Show 4pm",
     badge: null,
     badgeGradient: "",
     gradient: "from-violet-500/20 via-pink-500/10 to-transparent",
@@ -158,8 +145,8 @@ const DAY_META: Record<
   "May 31": {
     dayLabel: "Sun",
     dateNum: "31",
-    title: "Closing Show",
-    subtitle: "Doors 6pm · Show 7pm · Closing party",
+    title: "Sunday Closing",
+    subtitle: "Details coming soon",
     badge: null,
     badgeGradient: "",
     gradient: "from-pink-500/20 via-violet-500/10 to-transparent",
@@ -171,7 +158,7 @@ const DAY_META: Record<
 };
 
 // Order in which to display days
-const DAY_ORDER = ["May 25", "May 26", "May 27", "May 28", "May 29", "May 30", "May 31"];
+const DAY_ORDER = ["May 25", "May 26", "May 27", "May 29", "May 30", "May 31"];
 
 // Fallback metadata for any tier whose name we can't bucket into a day.
 const DEFAULT_DAY = {

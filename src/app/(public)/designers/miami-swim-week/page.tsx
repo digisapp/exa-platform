@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Designers — EXA's Miami Swim Week 2026 | EXA Models",
     description:
-      "Secure your runway show slot at EXA's Miami Swim Week 2026. Opening Night ($3,500), Day 2 ($2,500), Day 3–6 ($1,500 each), Daytime Show ($1,000).",
+      "Secure your runway show slot at EXA's Miami Swim Week 2026. Opening Night ($3,500), Day 2 ($2,500), Friday/Saturday/Sunday ($1,500 each).",
   },
 };
 
@@ -68,21 +68,6 @@ const PACKAGES = [
     ],
   },
   {
-    id: "day-3" as const,
-    name: "Emerging Designers Show",
-    date: "Thursday, May 28",
-    price: 1000,
-    badge: "Emerging Designers",
-    badgeGradient: "from-teal-500 to-cyan-500",
-    borderColor: "border-teal-500/20",
-    highlight: false,
-    features: [
-      "Dedicated runway show for up-and-coming designers",
-      "15 models — curated by our team",
-      "Perfect for first-time runway debuts",
-    ],
-  },
-  {
     id: "day-4" as const,
     name: "Day 4 Show",
     date: "Friday, May 29",
@@ -118,21 +103,6 @@ const PACKAGES = [
     borderColor: "border-pink-500/20",
     highlight: false,
     features: [
-      "15 models",
-    ],
-  },
-  {
-    id: "daytime-show" as const,
-    name: "Daytime Show",
-    date: "Thursday, May 28",
-    price: 1000,
-    badge: null,
-    badgeGradient: "",
-    borderColor: "border-cyan-500/20",
-    highlight: false,
-    features: [
-      "Boutique daytime runway showcase",
-      "Afternoon runway presentation",
       "15 models",
     ],
   },

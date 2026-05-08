@@ -156,12 +156,9 @@ export function DigisScheduleSection({
 }: {
   affiliateRef?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const [dialogHref, setDialogHref] = useState(MSW_DIGIS_TICKET_URL);
-
   const handleScheduleClick = (digisEventId: string) => {
-    // Each schedule item links to its own Digis event page so affiliate
-    // tracking (aff=) lands on the exact checkout context.
+    // Each schedule item opens its own Digis event page in a new tab so
+    // affiliate tracking (aff=) lands on the exact checkout context.
     let url = `https://digis.cc/events/${digisEventId}`;
     if (affiliateRef) url += `?ref=${affiliateRef}`;
     try {
@@ -173,8 +170,7 @@ export function DigisScheduleSection({
     } catch {
       // sessionStorage unavailable — proceed without aff
     }
-    setDialogHref(url);
-    setOpen(true);
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -216,7 +212,66 @@ export function DigisScheduleSection({
           </button>
         ))}
       </div>
-      <DigisDialog href={dialogHref} open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Compact MSW schedule — sponsors/miami-swim-week page
+// Smaller row height than DigisScheduleSection to fit the sidebar card.
+// ---------------------------------------------------------------------------
+
+export function DigisScheduleSectionCompact() {
+  const handleScheduleClick = (digisEventId: string) => {
+    let url = `https://digis.cc/events/${digisEventId}`;
+    try {
+      const clickId = sessionStorage.getItem("exa_click_id");
+      if (clickId) {
+        const sep = url.includes("?") ? "&" : "?";
+        url = `${url}${sep}aff=${encodeURIComponent(clickId)}`;
+      }
+    } catch {
+      // sessionStorage unavailable — proceed without aff
+    }
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <>
+      <div className="space-y-2">
+        {MSW_2026_SCHEDULE.map((event) => (
+          <button
+            key={event.id}
+            type="button"
+            onClick={() => handleScheduleClick(event.digisEventId)}
+            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer group text-left ${
+              event.highlight
+                ? "border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-violet-500/5 to-transparent shadow-[0_0_14px_rgba(236,72,153,0.12)] hover:border-pink-400/50 hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
+                : "bg-white/[0.03] border border-white/5 hover:border-violet-500/30 hover:bg-violet-500/5"
+            }`}
+          >
+            <div className="text-center flex-shrink-0 w-12">
+              <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">
+                {event.dayShort}
+              </p>
+              <p
+                className={`text-base font-bold ${
+                  event.highlight ? "text-pink-300" : "text-white"
+                }`}
+              >
+                {event.dateNum}
+              </p>
+            </div>
+            <div className="h-8 w-px bg-white/10 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm text-white group-hover:text-pink-200 transition-colors">
+                {event.title}
+              </p>
+            </div>
+            <Ticket className="h-3.5 w-3.5 text-white/20 group-hover:text-pink-300 flex-shrink-0 transition-colors" />
+          </button>
+        ))}
+      </div>
     </>
   );
 }
