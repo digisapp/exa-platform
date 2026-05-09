@@ -185,7 +185,7 @@ export default function AdminGigsPage() {
         instagram_handle,
         instagram_followers,
         digis_username,
-        model:models(id, username, first_name, last_name, profile_photo_url, height, bust, waist, hips, shoe_size, dress_size, eye_color, hair_color, dob, date_of_birth, instagram_followers, tiktok_followers, tiktok_username, youtube_subscribers, youtube_username, x_followers, x_username, snapchat_followers, snapchat_username)
+        model:models(id, user_id, username, first_name, last_name, profile_photo_url, height, bust, waist, hips, shoe_size, dress_size, eye_color, hair_color, dob, date_of_birth, instagram_followers, tiktok_followers, tiktok_username, youtube_subscribers, youtube_username, x_followers, x_username, snapchat_followers, snapchat_username)
       `)
       .eq("gig_id", gigId)
       .order("applied_at", { ascending: false });
@@ -251,6 +251,33 @@ export default function AdminGigsPage() {
             if (app.model && !app.model.profile_photo_url && legacyByModel[app.model.id]) {
               app.model.profile_photo_url = legacyByModel[app.model.id];
             }
+          }
+        }
+      }
+    }
+
+    // DOB fallback: pull from model_applications for any model missing dob/date_of_birth
+    const userIdsNeedingDob = apps
+      .filter((a: any) => a.model && !a.model.dob && !a.model.date_of_birth && a.model.user_id)
+      .map((a: any) => a.model.user_id);
+
+    if (userIdsNeedingDob.length > 0) {
+      const { data: appDobs } = await (supabase
+        .from("model_applications") as any)
+        .select("user_id, date_of_birth")
+        .in("user_id", userIdsNeedingDob)
+        .not("date_of_birth", "is", null);
+
+      if (appDobs && appDobs.length > 0) {
+        const dobByUser: Record<string, string> = {};
+        for (const row of appDobs) {
+          if (row.user_id && row.date_of_birth && !dobByUser[row.user_id]) {
+            dobByUser[row.user_id] = row.date_of_birth;
+          }
+        }
+        for (const app of apps) {
+          if (app.model?.user_id && !app.model.dob && !app.model.date_of_birth && dobByUser[app.model.user_id]) {
+            app.model.date_of_birth = dobByUser[app.model.user_id];
           }
         }
       }
