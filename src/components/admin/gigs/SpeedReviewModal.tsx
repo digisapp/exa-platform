@@ -28,6 +28,7 @@ interface ReviewModel {
   dress_size?: string | null;
   eye_color?: string | null;
   hair_color?: string | null;
+  date_of_birth?: string | null;
   tiktok_followers?: number | null;
   tiktok_username?: string | null;
   youtube_subscribers?: number | null;
@@ -64,6 +65,17 @@ function fmtNum(n: number | null | undefined): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return n.toString();
+}
+
+function calculateAge(dob: string | null | undefined): number | null {
+  if (!dob) return null;
+  const birthDate = new Date(dob);
+  if (isNaN(birthDate.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+  return age;
 }
 
 export default function SpeedReviewModal({
@@ -142,6 +154,8 @@ export default function SpeedReviewModal({
       `@${current.model.username}`
     : "";
 
+  const currentAge = calculateAge(current?.model?.date_of_birth);
+
   const hasMeasurements =
     current?.model &&
     (current.model.height ||
@@ -151,7 +165,8 @@ export default function SpeedReviewModal({
       current.model.shoe_size ||
       current.model.dress_size ||
       current.model.eye_color ||
-      current.model.hair_color);
+      current.model.hair_color ||
+      currentAge !== null);
 
   const socialPlatforms = current
     ? [
@@ -367,6 +382,14 @@ export default function SpeedReviewModal({
                         <span className="text-white/35 text-sm">Height</span>
                         <span className="text-white text-sm font-medium">
                           {current.model.height}
+                        </span>
+                      </div>
+                    )}
+                    {currentAge !== null && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/35 text-sm">Age</span>
+                        <span className="text-white text-sm font-medium">
+                          {currentAge}
                         </span>
                       </div>
                     )}

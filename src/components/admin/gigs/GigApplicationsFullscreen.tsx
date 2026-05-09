@@ -17,6 +17,17 @@ function parseHeightToInches(height: string | null | undefined): number | null {
   return null;
 }
 
+function calculateAge(dob: string | null | undefined): number | null {
+  if (!dob) return null;
+  const birthDate = new Date(dob);
+  if (isNaN(birthDate.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+  return age;
+}
+
 function formatFollowers(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
@@ -64,6 +75,7 @@ interface Application {
     dress_size?: string | null;
     eye_color?: string | null;
     hair_color?: string | null;
+    date_of_birth?: string | null;
     instagram_followers?: number | null;
     tiktok_followers?: number | null;
     tiktok_username?: string | null;
@@ -167,9 +179,16 @@ function ApplicationCard({
             </Link>
             <p className="text-xs text-[#00BFFF]">@{app.model?.username}</p>
 
-            {app.model?.height && (
-              <p className="text-sm text-white/80">{app.model.height}</p>
-            )}
+            {(() => {
+              const age = calculateAge(app.model?.date_of_birth);
+              const parts = [
+                app.model?.height,
+                age !== null ? `${age} yrs` : null,
+              ].filter(Boolean);
+              return parts.length > 0 ? (
+                <p className="text-sm text-white/80">{parts.join(" · ")}</p>
+              ) : null;
+            })()}
 
             {(app.model?.bust || app.model?.waist || app.model?.hips) && (
               <p className="text-xs text-white/60">

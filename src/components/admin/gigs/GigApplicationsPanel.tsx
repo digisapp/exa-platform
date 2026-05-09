@@ -44,6 +44,17 @@ function parseHeightToInches(height: string | null | undefined): number | null {
   return null;
 }
 
+function calculateAge(dob: string | null | undefined): number | null {
+  if (!dob) return null;
+  const birthDate = new Date(dob);
+  if (isNaN(birthDate.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+  return age;
+}
+
 const IG_PRESETS = [
   { label: "All", value: 0 },
   { label: "10K+", value: 10_000 },
@@ -85,6 +96,7 @@ interface Application {
     dress_size?: string | null;
     eye_color?: string | null;
     hair_color?: string | null;
+    date_of_birth?: string | null;
     instagram_followers?: number | null;
     tiktok_followers?: number | null;
     tiktok_username?: string | null;
@@ -654,6 +666,14 @@ export default function GigApplicationsPanel({
                           {app.model.height}
                         </span>
                       )}
+                      {(() => {
+                        const age = calculateAge(app.model?.date_of_birth);
+                        return age !== null ? (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white/[0.05] text-white/50 text-[11px] border border-white/10">
+                            {age} yrs
+                          </span>
+                        ) : null;
+                      })()}
                       {app.digis_username && (
                         <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-violet-500/10 text-violet-300 text-[11px] border border-violet-500/20">
                           Digis: {app.digis_username}
