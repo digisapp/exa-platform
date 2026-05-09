@@ -11,7 +11,9 @@ import {
   Sparkles,
   Search,
   X,
+  Wand2,
 } from "lucide-react";
+import { StickerGenerateFromModelModal } from "@/components/admin/StickerGenerateFromModelModal";
 
 interface Sticker {
   id: string;
@@ -61,6 +63,7 @@ export default function AdminStickersPage() {
   const [tags, setTags] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showGenerator, setShowGenerator] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -183,12 +186,19 @@ export default function AdminStickersPage() {
     <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto pb-32">
       <div className="mb-6 flex items-center gap-3">
         <Sparkles className="h-6 w-6 text-pink-400" />
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-white">EXA Stickers</h1>
           <p className="text-sm text-white/50">
             Brand-native GIF & sticker library for the Live Wall.
           </p>
         </div>
+        <button
+          onClick={() => setShowGenerator(true)}
+          className="px-4 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-medium hover:opacity-90 flex items-center gap-2 shadow-lg shadow-pink-500/25"
+        >
+          <Wand2 className="h-4 w-4" />
+          Generate from model
+        </button>
       </div>
 
       {/* Upload card */}
@@ -405,6 +415,12 @@ export default function AdminStickersPage() {
           ))}
         </div>
       )}
+
+      <StickerGenerateFromModelModal
+        open={showGenerator}
+        onClose={() => setShowGenerator(false)}
+        onCreated={load}
+      />
     </div>
   );
 }
