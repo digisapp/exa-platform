@@ -28,6 +28,7 @@ interface ReviewModel {
   dress_size?: string | null;
   eye_color?: string | null;
   hair_color?: string | null;
+  dob?: string | null;
   date_of_birth?: string | null;
   tiktok_followers?: number | null;
   tiktok_username?: string | null;
@@ -154,7 +155,7 @@ export default function SpeedReviewModal({
       `@${current.model.username}`
     : "";
 
-  const currentAge = calculateAge(current?.model?.date_of_birth);
+  const currentAge = calculateAge(current?.model?.dob || current?.model?.date_of_birth);
 
   const hasMeasurements =
     current?.model &&

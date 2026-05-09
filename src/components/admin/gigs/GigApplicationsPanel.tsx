@@ -96,6 +96,7 @@ interface Application {
     dress_size?: string | null;
     eye_color?: string | null;
     hair_color?: string | null;
+    dob?: string | null;
     date_of_birth?: string | null;
     instagram_followers?: number | null;
     tiktok_followers?: number | null;
@@ -667,7 +668,7 @@ export default function GigApplicationsPanel({
                         </span>
                       )}
                       {(() => {
-                        const age = calculateAge(app.model?.date_of_birth);
+                        const age = calculateAge(app.model?.dob || app.model?.date_of_birth);
                         return age !== null ? (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white/[0.05] text-white/50 text-[11px] border border-white/10">
                             {age} yrs

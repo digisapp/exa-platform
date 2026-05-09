@@ -75,6 +75,7 @@ interface Application {
     dress_size?: string | null;
     eye_color?: string | null;
     hair_color?: string | null;
+    dob?: string | null;
     date_of_birth?: string | null;
     instagram_followers?: number | null;
     tiktok_followers?: number | null;
@@ -180,7 +181,7 @@ function ApplicationCard({
             <p className="text-xs text-[#00BFFF]">@{app.model?.username}</p>
 
             {(() => {
-              const age = calculateAge(app.model?.date_of_birth);
+              const age = calculateAge(app.model?.dob || app.model?.date_of_birth);
               const parts = [
                 app.model?.height,
                 age !== null ? `${age} yrs` : null,
