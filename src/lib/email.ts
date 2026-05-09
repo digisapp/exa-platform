@@ -3339,6 +3339,244 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
   }
 }
 
+export async function sendMswCastingPhotoReminderEmail({
+  to,
+  modelName,
+}: {
+  to: string;
+  modelName: string;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const settingsUrl = `${BASE_URL}/dashboard/settings`;
+    const castingUrl = `${BASE_URL}/gigs/miami-swim-week-2026`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const greeting = modelName ? `Hey ${escapeHtml(modelName)}!` : "Hey!";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: "Apply for Miami Swim Week — Add Your Profile Photo",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <p style="margin: 0 0 8px; color: rgba(255,255,255,0.85); font-size: 13px; letter-spacing: 2px; text-transform: uppercase;">EXA &times; Miami Swim Week 2026</p>
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                ${greeting}
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                You're approved — let's get you cast
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px; line-height: 1.5;">
+                Casting is open for <strong>Miami Swim Week</strong>.
+              </p>
+              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Your profile is missing a photo, and designers can't consider you without one. Add a clear face shot to your profile, then apply for the casting call below.
+              </p>
+
+              <!-- Step 1 -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px; background-color: #111111; border: 1px solid #262626; border-radius: 12px;">
+                <tr>
+                  <td style="padding: 22px 24px;">
+                    <p style="margin: 0 0 6px; color: #ec4899; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Step 1</p>
+                    <p style="margin: 0 0 16px; color: #ffffff; font-size: 16px; font-weight: 600;">
+                      Upload your profile photo
+                    </p>
+                    <a href="${settingsUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 12px 26px; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                      Upload My Photo
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Step 2 -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #111111; border: 1px solid #262626; border-radius: 12px;">
+                <tr>
+                  <td style="padding: 22px 24px;">
+                    <p style="margin: 0 0 6px; color: #06b6d4; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Step 2</p>
+                    <p style="margin: 0 0 16px; color: #ffffff; font-size: 16px; font-weight: 600;">
+                      Apply for Miami Swim Week
+                    </p>
+                    <a href="${castingUrl}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 12px 26px; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                      Apply for Miami Swim Week
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; line-height: 1.6; text-align: center;">
+                Slots are limited. Get your photo up today so you don't miss the cut.
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendMswCastingPhotoReminderCorrectionEmail({
+  to,
+  modelName,
+}: {
+  to: string;
+  modelName: string;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const settingsUrl = `${BASE_URL}/dashboard/settings`;
+    const gigUrl = `${BASE_URL}/gigs/miami-swim-week-2026`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const greeting = modelName ? `Hey ${escapeHtml(modelName)},` : "Hey,";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: "Quick correction: apply for Miami Swim Week here",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <p style="margin: 0 0 8px; color: rgba(255,255,255,0.85); font-size: 13px; letter-spacing: 2px; text-transform: uppercase;">Quick Correction</p>
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                ${greeting}
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Use this link to apply for Miami Swim Week
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px; line-height: 1.5;">
+                Sorry for the extra email — our last note pointed you to the wrong place to apply.
+              </p>
+              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Here's the right flow to be considered for <strong style="color:#ffffff;">Miami Swim Week</strong>:
+              </p>
+
+              <!-- Step 1 -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px; background-color: #111111; border: 1px solid #262626; border-radius: 12px;">
+                <tr>
+                  <td style="padding: 22px 24px;">
+                    <p style="margin: 0 0 6px; color: #ec4899; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Step 1</p>
+                    <p style="margin: 0 0 16px; color: #ffffff; font-size: 16px; font-weight: 600;">
+                      Sign in to your EXA profile and upload a profile photo
+                    </p>
+                    <a href="${settingsUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 12px 26px; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                      Upload My Photo
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Step 2 -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #111111; border: 1px solid #262626; border-radius: 12px;">
+                <tr>
+                  <td style="padding: 22px 24px;">
+                    <p style="margin: 0 0 6px; color: #06b6d4; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Step 2</p>
+                    <p style="margin: 0 0 16px; color: #ffffff; font-size: 16px; font-weight: 600;">
+                      Go to the gig and click Apply
+                    </p>
+                    <a href="${gigUrl}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 12px 26px; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                      Apply for Miami Swim Week
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; line-height: 1.6; text-align: center;">
+                Designers can't consider you without a profile photo. Get yours up today.
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendNewGigAnnouncementEmail({
   to,
   modelName,
