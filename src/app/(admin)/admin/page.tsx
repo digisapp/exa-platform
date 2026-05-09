@@ -137,6 +137,7 @@ export default async function AdminPage() {
     { href: "/admin/travel", label: "EXA Travel", icon: Plane, color: "violet", featured: true },
     { href: "/admin/boost", label: "EXA Boost", icon: Flame, color: "orange", featured: true },
     { href: "/admin/exa-dolls", label: "EXA Dolls", icon: Sparkles, color: "pink", featured: true },
+    { href: "/admin/stickers", label: "EXA Stickers", icon: Sparkles, color: "violet", featured: true },
     { href: "/admin/messages", label: "Messages", icon: MessageCircle, color: "indigo" },
     { href: "/admin/email", label: "Email", icon: Mail, color: "blue" },
     { href: "/admin/studio", label: "Studio", icon: Camera, color: "teal" },

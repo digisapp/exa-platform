@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Send, ImageIcon, X, Smile } from "lucide-react";
+import { Send, ImageIcon, X, Smile, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LiveWallMentionPopover } from "./LiveWallMentionPopover";
+import { StickerPicker, type PickedSticker } from "./StickerPicker";
 
 const EMOJI_GRID = [
   // Smileys
@@ -33,10 +34,12 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
   const [isSending, setIsSending] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [stickerUrl, setStickerUrl] = useState<string | null>(null);
   const [mentionQuery, setMentionQuery] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const [mentionStart, setMentionStart] = useState(-1);
   const [showEmojis, setShowEmojis] = useState(false);
+  const [showStickers, setShowStickers] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -47,15 +50,17 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
     }
 
     const trimmed = value.trim();
-    if ((!trimmed && !imagePreview) || isSending) return;
+    if ((!trimmed && !imagePreview && !stickerUrl) || isSending) return;
 
     setIsSending(true);
     try {
       let uploadedUrl: string | undefined;
       let uploadedType: string | undefined;
 
-      // Upload image if attached
-      if (imageFile) {
+      if (stickerUrl) {
+        uploadedUrl = stickerUrl;
+        uploadedType = "sticker";
+      } else if (imageFile) {
         const formData = new FormData();
         formData.append("file", imageFile);
         // Upload to Supabase Storage via a simple fetch
@@ -85,10 +90,19 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
       setValue("");
       setImagePreview(null);
       setImageFile(null);
+      setStickerUrl(null);
       inputRef.current?.focus();
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleStickerSelect = (s: PickedSticker) => {
+    setStickerUrl(s.url);
+    setImagePreview(s.url);
+    setImageFile(null);
+    setShowStickers(false);
+    inputRef.current?.focus();
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,6 +173,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
               onClick={() => {
                 setImagePreview(null);
                 setImageFile(null);
+                setStickerUrl(null);
               }}
               className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center"
             >
@@ -196,6 +211,33 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
               className="hidden"
             />
           </>
+        )}
+
+        {/* EXA Sticker picker button */}
+        {isLoggedIn && (
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowStickers((prev) => !prev);
+                setShowEmojis(false);
+              }}
+              className={cn(
+                "shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+                showStickers
+                  ? "bg-pink-500/20 text-pink-400"
+                  : "bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10"
+              )}
+              title="EXA stickers"
+            >
+              <Sparkles className="h-4 w-4" />
+            </button>
+            {showStickers && (
+              <StickerPicker
+                onSelect={handleStickerSelect}
+                onClose={() => setShowStickers(false)}
+              />
+            )}
+          </div>
         )}
 
         {/* Emoji picker button */}
@@ -266,10 +308,10 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
         )}
         <button
           onClick={handleSubmit}
-          disabled={isSending || (!value.trim() && !imagePreview)}
+          disabled={isSending || (!value.trim() && !imagePreview && !stickerUrl)}
           className={cn(
             "shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all",
-            value.trim() || imagePreview
+            value.trim() || imagePreview || stickerUrl
               ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:scale-110 shadow-lg shadow-pink-500/25"
               : "bg-white/5 text-white/20"
           )}

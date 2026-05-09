@@ -11,7 +11,7 @@ const adminClient = createServiceRoleClient();
 const postSchema = z.object({
   content: z.string().max(280, "Message is too long (280 char max)").optional().default(""),
   imageUrl: z.string().url().optional(),
-  imageType: z.enum(["upload", "gif"]).optional(),
+  imageType: z.enum(["upload", "gif", "sticker"]).optional(),
 }).refine(
   (data) => (data.content && data.content.trim().length > 0) || data.imageUrl,
   { message: "Message or image required" }
