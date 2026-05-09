@@ -21,7 +21,6 @@ import {
   FileText,
   AlertCircle,
   Upload,
-  X,
   Move,
   ZoomIn,
   ImageDown,
@@ -34,7 +33,6 @@ import { cn } from "@/lib/utils";
 import {
   cropToPosition,
   photoToBase64,
-  fileToBase64,
   isAcceptedImage,
 } from "@/lib/comp-card-utils";
 
@@ -65,13 +63,7 @@ interface PortfolioPhoto {
   display_order: number | null;
 }
 
-interface UploadedPhoto {
-  id: string;
-  dataUrl: string;
-}
-
 const MAX_PHOTOS = 5;
-const UPLOAD_PREFIX = "upload-";
 
 export default function CompCardPage() {
   const supabase = createClient();
@@ -79,9 +71,9 @@ export default function CompCardPage() {
 
   const [model, setModel] = useState<ModelData | null>(null);
   const [photos, setPhotos] = useState<PortfolioPhoto[]>([]);
-  const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportingJpeg, setExportingJpeg] = useState(false);
   const [qrCodePreview, setQrCodePreview] = useState<string | null>(null);
@@ -234,10 +226,64 @@ export default function CompCardPage() {
 
   const PHOTO_LABELS = ["Front", "Back Top Left", "Back Top Right", "Back Bottom Left", "Back Bottom Right"];
 
+  // Upload one file via signed URL → /api/upload/complete persists it as a portfolio
+  // content_item, so it survives refresh and shows up alongside existing photos.
+  const uploadOne = async (file: File): Promise<PortfolioPhoto | null> => {
+    const signedRes = await fetch("/api/upload/signed-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        title: null,
+      }),
+    });
+    const signed = await signedRes.json().catch(() => ({}));
+    if (!signedRes.ok) throw new Error(signed?.error || "Failed to get upload URL");
+
+    const putRes = await fetch(signed.signedUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    if (!putRes.ok) throw new Error("Direct upload to storage failed");
+
+    const completeRes = await fetch("/api/upload/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storagePath: signed.storagePath,
+        bucket: signed.bucket,
+        uploadMeta: signed.uploadMeta,
+      }),
+    });
+    const complete = await completeRes.json().catch(() => ({}));
+    if (!completeRes.ok) throw new Error(complete?.error || "Failed to complete upload");
+
+    // /api/upload/complete inserts into content_items but doesn't return its id.
+    // Re-fetch the most recent portfolio item for this model to pick it up.
+    if (!model) return null;
+    const { data } = await (supabase as any)
+      .from("content_items")
+      .select("id, media_url")
+      .eq("model_id", model.id)
+      .eq("status", "portfolio")
+      .eq("media_type", "image")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    if (!data) return null;
+    const url = data.media_url.startsWith("http")
+      ? data.media_url
+      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${data.media_url}`;
+    return { id: data.id, url, photo_url: url, is_primary: false, display_order: 0 };
+  };
+
   // Handle file upload from device
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
     const remainingSlots = MAX_PHOTOS - selectedIds.length;
     if (remainingSlots <= 0) {
@@ -246,52 +292,45 @@ export default function CompCardPage() {
       return;
     }
 
-    const filesToProcess = Math.min(files.length, remainingSlots);
+    setUploading(true);
+    let added = 0;
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
 
-    for (let i = 0; i < filesToProcess; i++) {
-      const file = files[i];
+        if (!isAcceptedImage(file)) {
+          toast.error(`${file.name} is not a supported image`);
+          continue;
+        }
 
-      if (!isAcceptedImage(file)) {
-        toast.error(`${file.name} is not a supported image`);
-        continue;
+        if (file.size > 20 * 1024 * 1024) {
+          toast.error(`${file.name} is too large (max 20MB)`);
+          continue;
+        }
+
+        try {
+          const newPhoto = await uploadOne(file);
+          if (!newPhoto) continue;
+          setPhotos((prev) => [newPhoto, ...prev]);
+          // Auto-select if there's still room
+          setSelectedIds((prev) =>
+            prev.length >= MAX_PHOTOS ? prev : [...prev, newPhoto.id]
+          );
+          added++;
+        } catch (err) {
+          toast.error(
+            err instanceof Error ? err.message : `Failed to upload ${file.name}`
+          );
+        }
       }
 
-      if (file.size > 20 * 1024 * 1024) {
-        toast.error(`${file.name} is too large (max 20MB)`);
-        continue;
+      if (added > 0) {
+        toast.success(`Uploaded ${added} photo${added === 1 ? "" : "s"}`);
       }
-
-      let dataUrl: string;
-      try {
-        dataUrl = await fileToBase64(file);
-      } catch {
-        toast.error(`Failed to load ${file.name}. Try exporting as JPEG first.`);
-        continue;
-      }
-      const id = `${UPLOAD_PREFIX}${Date.now()}-${i}`;
-
-      setUploadedPhotos((prev) => [...prev, { id, dataUrl }]);
-
-      // Auto-select uploaded photos
-      setSelectedIds((prev) => {
-        if (prev.length >= MAX_PHOTOS) return prev;
-        return [...prev, id];
-      });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
-
-    if (files.length > filesToProcess) {
-      toast.error(`Only ${filesToProcess} photo${filesToProcess === 1 ? "" : "s"} added — ${MAX_PHOTOS} max`);
-    }
-
-    // Reset input so the same file can be re-uploaded
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const removeUploadedPhoto = (id: string) => {
-    setUploadedPhotos((prev) => prev.filter((p) => p.id !== id));
-    setSelectedIds((prev) => prev.filter((p) => p !== id));
   };
 
   const logoColor = logoVariant === "black" ? "#000000" : logoVariant === "white" ? "#ffffff" : null;
@@ -314,15 +353,8 @@ export default function CompCardPage() {
 
       for (let idx = 0; idx < selectedIds.length; idx++) {
         const id = selectedIds[idx];
-        let b64: string;
-
-        if (id.startsWith(UPLOAD_PREFIX)) {
-          const uploaded = uploadedPhotos.find((p) => p.id === id);
-          b64 = uploaded?.dataUrl || "";
-        } else {
-          const photo = photos.find((p) => p.id === id);
-          b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
-        }
+        const photo = photos.find((p) => p.id === id);
+        let b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
 
         // Pre-crop the hero photo (first) to match the user's repositioning + zoom
         if (idx === 0 && b64) {
@@ -372,14 +404,8 @@ export default function CompCardPage() {
     const photoBase64: string[] = [];
     for (let idx = 0; idx < selectedIds.length; idx++) {
       const id = selectedIds[idx];
-      let b64: string;
-      if (id.startsWith(UPLOAD_PREFIX)) {
-        const uploaded = uploadedPhotos.find((p) => p.id === id);
-        b64 = uploaded?.dataUrl || "";
-      } else {
-        const photo = photos.find((p) => p.id === id);
-        b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
-      }
+      const photo = photos.find((p) => p.id === id);
+      let b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
       if (idx === 0 && b64) b64 = await cropToPosition(b64, heroPos.x, heroPos.y, heroZoom);
       if (b64) photoBase64.push(b64);
     }
@@ -431,14 +457,8 @@ export default function CompCardPage() {
       const photoBase64: string[] = [];
       for (let idx = 0; idx < selectedIds.length; idx++) {
         const id = selectedIds[idx];
-        let b64: string;
-        if (id.startsWith(UPLOAD_PREFIX)) {
-          const uploaded = uploadedPhotos.find((p) => p.id === id);
-          b64 = uploaded?.dataUrl || "";
-        } else {
-          const photo = photos.find((p) => p.id === id);
-          b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
-        }
+        const photo = photos.find((p) => p.id === id);
+        let b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
         if (idx === 0 && b64) {
           b64 = await cropToPosition(b64, heroPos.x, heroPos.y, heroZoom);
         }
@@ -704,10 +724,6 @@ export default function CompCardPage() {
 
   // Get preview image URL for a selected ID
   const getPreviewUrl = (id: string): string => {
-    if (id.startsWith(UPLOAD_PREFIX)) {
-      const uploaded = uploadedPhotos.find((p) => p.id === id);
-      return uploaded?.dataUrl || "";
-    }
     const photo = photos.find((p) => p.id === id);
     return photo?.photo_url || photo?.url || "";
   };
@@ -825,65 +841,6 @@ export default function CompCardPage() {
             </>
           )}
 
-          {/* Uploaded Photos */}
-          {uploadedPhotos.length > 0 && (
-            <>
-              <p className="text-xs text-muted-foreground mb-2">
-                Uploaded Photos
-              </p>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
-                {uploadedPhotos.map((photo) => {
-                  const idx = getSelectionIndex(photo.id);
-                  const isSelected = idx !== -1;
-                  return (
-                    <div key={photo.id} className="relative">
-                      <button
-                        onClick={() => togglePhoto(photo.id)}
-                        className={cn(
-                          "relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all group w-full",
-                          isSelected
-                            ? "border-pink-500 ring-2 ring-pink-500/30"
-                            : "border-transparent hover:border-white/20"
-                        )}
-                      >
-                        <img
-                          src={photo.dataUrl}
-                          alt="Uploaded"
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
-                        <div
-                          className={cn(
-                            "absolute inset-0 transition-opacity",
-                            isSelected
-                              ? "bg-black/30"
-                              : "bg-black/0 group-hover:bg-black/20"
-                          )}
-                        />
-                        {isSelected && (
-                          <div className="absolute top-2 left-2 bg-pink-500 rounded-full px-2 py-0.5 flex items-center justify-center">
-                            <span className="text-white text-[9px] font-bold whitespace-nowrap">
-                              {PHOTO_LABELS[idx]}
-                            </span>
-                          </div>
-                        )}
-                        {!isSelected && (
-                          <div className="absolute top-2 left-2 h-6 w-6 rounded-full border-2 border-white/60 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        )}
-                      </button>
-                      {/* Remove button */}
-                      <button
-                        onClick={() => removeUploadedPhoto(photo.id)}
-                        className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors z-10"
-                      >
-                        <X className="h-3 w-3 text-white" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-
           {/* Upload Button */}
           <input
             ref={fileInputRef}
@@ -892,23 +849,34 @@ export default function CompCardPage() {
             multiple
             onChange={handleFileUpload}
             className="hidden"
+            disabled={uploading}
           />
           {selectedIds.length < MAX_PHOTOS && (
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-full border-2 border-dashed border-border hover:border-pink-500/50 rounded-lg p-6 flex flex-col items-center gap-2 transition-colors group"
+              disabled={uploading}
+              className="w-full border-2 border-dashed border-border hover:border-pink-500/50 rounded-lg p-6 flex flex-col items-center gap-2 transition-colors group disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <Upload className="h-6 w-6 text-muted-foreground group-hover:text-pink-500 transition-colors" />
-              <span className="text-sm text-muted-foreground group-hover:text-pink-500 transition-colors">
-                Upload from device
-              </span>
-              <span className="text-xs text-muted-foreground">
-                JPG, PNG, or WebP — {MAX_PHOTOS - selectedIds.length} slot{MAX_PHOTOS - selectedIds.length === 1 ? "" : "s"} remaining
-              </span>
+              {uploading ? (
+                <>
+                  <Loader2 className="h-6 w-6 text-pink-500 animate-spin" />
+                  <span className="text-sm text-pink-500">Uploading…</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-6 w-6 text-muted-foreground group-hover:text-pink-500 transition-colors" />
+                  <span className="text-sm text-muted-foreground group-hover:text-pink-500 transition-colors">
+                    Upload from device
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    JPG, PNG, or WebP — {MAX_PHOTOS - selectedIds.length} slot{MAX_PHOTOS - selectedIds.length === 1 ? "" : "s"} remaining
+                  </span>
+                </>
+              )}
             </button>
           )}
 
-          {photos.length === 0 && uploadedPhotos.length === 0 && (
+          {photos.length === 0 && !uploading && (
             <p className="text-sm text-muted-foreground text-center mt-4">
               Upload photos or{" "}
               <Link
