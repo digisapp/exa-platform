@@ -256,30 +256,37 @@ export default function AdminGigsPage() {
       }
     }
 
-    // DOB fallback: pull from model_applications for any model missing dob/date_of_birth
-    const userIdsNeedingDob = apps
-      .filter((a: any) => a.model && !a.model.dob && !a.model.date_of_birth && a.model.user_id)
-      .map((a: any) => a.model.user_id);
+    // DOB fallback: pull from model_applications via admin route (RLS bypassed server-side)
+    const userIdsNeedingDob = Array.from(new Set(
+      apps
+        .filter((a: any) => a.model && !a.model.dob && !a.model.date_of_birth && a.model.user_id)
+        .map((a: any) => a.model.user_id as string)
+    ));
 
     if (userIdsNeedingDob.length > 0) {
-      const { data: appDobs } = await (supabase
-        .from("model_applications") as any)
-        .select("user_id, date_of_birth")
-        .in("user_id", userIdsNeedingDob)
-        .not("date_of_birth", "is", null);
-
-      if (appDobs && appDobs.length > 0) {
-        const dobByUser: Record<string, string> = {};
-        for (const row of appDobs) {
-          if (row.user_id && row.date_of_birth && !dobByUser[row.user_id]) {
-            dobByUser[row.user_id] = row.date_of_birth;
+      try {
+        const res = await fetch("/api/admin/gigs/applicant-dobs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userIds: userIdsNeedingDob }),
+        });
+        if (res.ok) {
+          const { dobs } = (await res.json()) as { dobs: Record<string, string> };
+          if (dobs) {
+            for (const app of apps) {
+              if (
+                app.model?.user_id &&
+                !app.model.dob &&
+                !app.model.date_of_birth &&
+                dobs[app.model.user_id]
+              ) {
+                app.model.date_of_birth = dobs[app.model.user_id];
+              }
+            }
           }
         }
-        for (const app of apps) {
-          if (app.model?.user_id && !app.model.dob && !app.model.date_of_birth && dobByUser[app.model.user_id]) {
-            app.model.date_of_birth = dobByUser[app.model.user_id];
-          }
-        }
+      } catch {
+        // non-fatal: age just won't display for these applicants
       }
     }
 
