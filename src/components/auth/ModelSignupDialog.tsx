@@ -67,13 +67,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
 
       if (data.isImported) {
         setIsImportedModel(true);
-        setImportedModelInfo({
-          name: data.name || "",
-          instagram: data.instagram || "",
-        });
-        // Pre-fill name and instagram if available
-        if (data.name && !name) setName(data.name);
-        if (data.instagram && !instagram) setInstagram(data.instagram);
+        setImportedModelInfo({ name: "", instagram: "" });
       } else {
         setIsImportedModel(false);
         setImportedModelInfo(null);
@@ -335,7 +329,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
               <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-sm">
                 <p className="font-medium text-green-500 flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
-                  Welcome back{importedModelInfo.name ? `, ${importedModelInfo.name.split(" ")[0]}` : ""}!
+                  Welcome back!
                 </p>
                 <p className="text-muted-foreground text-xs mt-1">
                   We have your profile ready. Complete signup to claim your account.

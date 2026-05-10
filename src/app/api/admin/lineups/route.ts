@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 // GET /api/admin/lineups?event_id=xxx — list all shows for an event with designers and models
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
   const eventId = req.nextUrl.searchParams.get("event_id");
   if (!eventId) {
     return NextResponse.json({ error: "event_id required" }, { status: 400 });
@@ -54,6 +58,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/admin/lineups — create a new show
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
   const body = await req.json();
   const { event_id, name, show_date, show_time, show_order, notes } = body;
 

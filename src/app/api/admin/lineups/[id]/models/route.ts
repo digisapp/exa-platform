@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 // Note: [id] here is the designer_entry_id (event_show_designers.id)
 
@@ -8,6 +9,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
   const { id: designerEntryId } = await params;
   const body = await req.json();
   const { model_ids } = body as { model_ids: string[] };
@@ -58,6 +62,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
   const { id: designerEntryId } = await params;
   const body = await req.json();
   const { model_ids } = body as { model_ids: string[] };
@@ -86,6 +93,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
   const { id: designerEntryId } = await params;
   const body = await req.json();
   const { ordered_model_ids } = body as { ordered_model_ids: string[] };

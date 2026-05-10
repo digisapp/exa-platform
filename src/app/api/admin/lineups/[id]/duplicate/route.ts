@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 // POST /api/admin/lineups/[id]/duplicate — duplicate a show with all designers + models
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
   const { id } = await params;
   const supabase: any = createServiceRoleClient();
 

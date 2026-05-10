@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 // GET /api/admin/msw-casting/picks?brand_id=X&event_id=Y
 // Used by the admin shows page to highlight a designer's casting picks in the model pool
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
   const brandId = req.nextUrl.searchParams.get("brand_id");
   const eventId = req.nextUrl.searchParams.get("event_id");
   if (!brandId || !eventId) {

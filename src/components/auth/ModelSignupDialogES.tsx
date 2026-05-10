@@ -65,12 +65,7 @@ export function ModelSignupDialogES({ children }: ModelSignupDialogESProps) {
 
       if (data.isImported) {
         setIsImportedModel(true);
-        setImportedModelInfo({
-          name: data.name || "",
-          instagram: data.instagram || "",
-        });
-        if (data.name && !name) setName(data.name);
-        if (data.instagram && !instagram) setInstagram(data.instagram);
+        setImportedModelInfo({ name: "", instagram: "" });
       } else {
         setIsImportedModel(false);
         setImportedModelInfo(null);
@@ -323,7 +318,7 @@ export function ModelSignupDialogES({ children }: ModelSignupDialogESProps) {
               <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-sm">
                 <p className="font-medium text-green-500 flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
-                  ¡Bienvenida de vuelta{importedModelInfo.name ? `, ${importedModelInfo.name.split(" ")[0]}` : ""}!
+                  ¡Bienvenida de vuelta!
                 </p>
                 <p className="text-muted-foreground text-xs mt-1">
                   Ya tenemos tu perfil listo. Completa el registro para reclamar tu cuenta.

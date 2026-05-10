@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     // Check if there's an imported model with this email (has email but no user_id)
     const { data: model } = await adminClient
       .from("models")
-      .select("id, first_name, last_name, instagram_name, user_id")
+      .select("id")
       .eq("email", normalizedEmail)
       .is("user_id", null)
       .single();
@@ -34,14 +34,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ isImported: false });
     }
 
-    // Found an imported model
-    const fullName = [model.first_name, model.last_name].filter(Boolean).join(" ");
-
-    return NextResponse.json({
-      isImported: true,
-      name: fullName || null,
-      instagram: model.instagram_name || null,
-    });
+    // Do not return name / instagram — public endpoint, would enable PII enumeration.
+    // Pre-fill happens client-side after the user authenticates and claims the account.
+    return NextResponse.json({ isImported: true });
 
   } catch (error) {
     console.error("Check imported error:", error);

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 // GET /api/admin/lineups/day-sheet?event_id=xxx — full event schedule
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
   const eventId = req.nextUrl.searchParams.get("event_id");
   if (!eventId) {
     return NextResponse.json({ error: "event_id required" }, { status: 400 });

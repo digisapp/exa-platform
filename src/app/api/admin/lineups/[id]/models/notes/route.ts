@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 // PATCH /api/admin/lineups/[id]/models/notes — update outfit notes
 // [id] is the designer_entry_id
@@ -7,6 +8,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
   const { id: designerEntryId } = await params;
   const body = await req.json();
   const { model_id, outfit_notes } = body as { model_id: string; outfit_notes: string };
