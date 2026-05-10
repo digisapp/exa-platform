@@ -15,9 +15,17 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
 
+// Path shape: <model_uuid>/<draft_uuid>/<id_document|selfie>.<ext>
+// Pinning the format defends against path traversal (..), absolute paths,
+// and crafted paths pointing at other models' folders.
+const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+const PATH_REGEX = new RegExp(
+  `^${UUID}\\/${UUID}\\/(id_document|selfie)\\.(jpg|png|webp|heic|pdf)$`
+);
+
 const submitSchema = z.object({
-  id_document_path: z.string().min(1).max(500),
-  selfie_path: z.string().min(1).max(500),
+  id_document_path: z.string().regex(PATH_REGEX, "invalid path"),
+  selfie_path: z.string().regex(PATH_REGEX, "invalid path"),
 });
 
 export async function POST(request: NextRequest) {

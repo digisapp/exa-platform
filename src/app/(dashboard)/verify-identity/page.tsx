@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,7 +20,6 @@ type Status =
   | { status: "verified"; verifiedAt: string; legalName: string | null };
 
 export default function VerifyIdentityPage() {
-  const router = useRouter();
   const [state, setState] = useState<Status>({ status: "loading" });
   const [submitting, setSubmitting] = useState(false);
   const [idDocFile, setIdDocFile] = useState<File | null>(null);

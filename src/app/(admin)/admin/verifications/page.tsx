@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,21 +60,21 @@ export default function AdminVerificationsPage() {
   const [country, setCountry] = useState("");
   const [rejectReason, setRejectReason] = useState("");
 
-  async function load() {
+  const load = useCallback(async () => {
     setList(null);
     try {
       const res = await fetch(`/api/admin/verifications?status=${tab}`);
       const data = await res.json();
       setList(data.verifications || []);
-    } catch (e) {
+    } catch {
       setList([]);
       toast.error("Failed to load verifications");
     }
-  }
+  }, [tab]);
 
   useEffect(() => {
     load();
-  }, [tab]);
+  }, [load]);
 
   function openReview(v: Verification) {
     setReviewing(v);
@@ -375,7 +375,13 @@ function DocumentPreview({
   url: string | null;
   path: string;
 }) {
-  const isPdf = path.toLowerCase().endsWith(".pdf");
+  // HEIC + PDF can't render inline in most browsers — give a "Open in new tab"
+  // affordance instead of a broken <img>.
+  const lower = path.toLowerCase();
+  const isInlineRenderable =
+    lower.endsWith(".jpg") || lower.endsWith(".jpeg") ||
+    lower.endsWith(".png") || lower.endsWith(".webp");
+
   return (
     <div className="border border-white/10 rounded-xl p-3 bg-black/30">
       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
@@ -383,16 +389,7 @@ function DocumentPreview({
         <span>{label}</span>
       </div>
       {url ? (
-        isPdf ? (
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block text-violet-300 hover:text-violet-200 text-sm py-8 text-center border border-violet-500/30 rounded-lg"
-          >
-            Open PDF in new tab
-          </a>
-        ) : (
+        isInlineRenderable ? (
           <a href={url} target="_blank" rel="noopener noreferrer">
             <Image
               src={url}
@@ -402,6 +399,15 @@ function DocumentPreview({
               unoptimized
               className="w-full h-auto rounded-lg object-contain max-h-80"
             />
+          </a>
+        ) : (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-violet-300 hover:text-violet-200 text-sm py-8 text-center border border-violet-500/30 rounded-lg"
+          >
+            Open {lower.endsWith(".pdf") ? "PDF" : "file"} in new tab
           </a>
         )
       ) : (

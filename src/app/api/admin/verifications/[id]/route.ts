@@ -12,12 +12,30 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
 
+// Reject DOBs that imply the model is under 18, or in the future.
+function isAdultDob(dob: string): boolean {
+  const d = new Date(`${dob}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return false;
+  const now = new Date();
+  if (d > now) return false;
+  const eighteenYearsAgo = new Date(
+    Date.UTC(now.getUTCFullYear() - 18, now.getUTCMonth(), now.getUTCDate())
+  );
+  return d <= eighteenYearsAgo;
+}
+
 const patchSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("approve"),
     legal_name: z.string().trim().min(1).max(200),
-    date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "must be YYYY-MM-DD"),
-    country: z.string().trim().min(2).max(2),
+    date_of_birth: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "must be YYYY-MM-DD")
+      .refine(isAdultDob, "model must be 18+ and DOB cannot be in the future"),
+    country: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z]{2}$/, "must be a 2-letter ISO country code"),
   }),
   z.object({
     action: z.literal("reject"),
