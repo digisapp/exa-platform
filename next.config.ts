@@ -55,6 +55,15 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '50mb',
     },
+    // Auto-rewrite barrel imports (e.g. `import { X, Y } from "recharts"`) into
+    // per-file imports so unused exports get tree-shaken from client bundles.
+    // Biggest wins on heavy libs that ship a single index re-export.
+    optimizePackageImports: [
+      "recharts",
+      "lucide-react",
+      "date-fns",
+      "@radix-ui/react-icons",
+    ],
   },
   // Redirect old /events URLs to /shows
   async redirects() {

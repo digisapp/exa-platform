@@ -30,30 +30,19 @@ export async function fetchConversationList(
 
   const conversationIds = participations?.map(p => p.conversation_id) || [];
 
-  // Fetch last message for each conversation
+  // Fetch last message per conversation in a single round-trip via a DISTINCT ON
+  // RPC. Replaces N round-trips that previously dominated /chats render time.
   const lastMessageMap = new Map<string, any>();
 
   if (conversationIds.length > 0) {
-    const messagePromises = conversationIds.map(async (convId) => {
-      const { data } = await supabase
-        .from("messages")
-        .select("conversation_id, content, created_at, sender_id, media_url, media_type, is_system")
-        .eq("conversation_id", convId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return { convId, message: data };
-    });
+    const { data: lastMessages } = await (supabase as any).rpc(
+      "get_last_messages_for_conversations",
+      { p_conversation_ids: conversationIds }
+    );
 
-    const results = await Promise.allSettled(messagePromises);
-    results.forEach((result) => {
-      if (result.status === "fulfilled") {
-        const { convId, message } = result.value;
-        if (message) {
-          lastMessageMap.set(convId, message);
-        }
-      }
-    });
+    for (const m of (lastMessages || []) as Array<{ conversation_id: string }>) {
+      lastMessageMap.set(m.conversation_id, m);
+    }
   }
 
   // Batch fetch: Get all other participants for all conversations in ONE query
