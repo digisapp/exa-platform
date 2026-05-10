@@ -44,6 +44,8 @@ interface WithdrawalRequest {
     profile_photo_url: string | null;
     coin_balance: number;
     zelle_info: string | null;
+    identity_verified_at: string | null;
+    verified_legal_name: string | null;
   };
   bank_accounts: {
     id: string;
@@ -102,7 +104,9 @@ export default async function PayoutsPage({
         email,
         profile_photo_url,
         coin_balance,
-        zelle_info
+        zelle_info,
+        identity_verified_at,
+        verified_legal_name
       ),
       bank_accounts (
         id,
@@ -200,6 +204,27 @@ export default async function PayoutsPage({
               <p className="text-sm text-muted-foreground">@{model?.username}</p>
               {model?.email && (
                 <p className="text-xs text-muted-foreground">{model.email}</p>
+              )}
+              {model?.identity_verified_at ? (
+                <Badge
+                  variant="outline"
+                  className="mt-2 bg-emerald-500/10 text-emerald-400 border-emerald-500/50"
+                  title={
+                    model.verified_legal_name
+                      ? `Verified as ${model.verified_legal_name} on ${new Date(model.identity_verified_at).toLocaleDateString()}`
+                      : `Verified on ${new Date(model.identity_verified_at).toLocaleDateString()}`
+                  }
+                >
+                  ID verified
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="mt-2 bg-rose-500/10 text-rose-400 border-rose-500/50"
+                  title="No identity verification on file — review carefully before approving."
+                >
+                  ⚠ Unverified
+                </Badge>
               )}
             </div>
           </div>

@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       academy_applications: {
@@ -3743,6 +3718,94 @@ export type Database = {
           },
         ]
       }
+      exa_stickers: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          height: number | null
+          id: string
+          is_active: boolean
+          is_featured: boolean
+          mime_type: string
+          model_id: string | null
+          name: string
+          size_bytes: number | null
+          sort_order: number
+          storage_path: string
+          tags: string[]
+          updated_at: string
+          url: string
+          use_count: number
+          width: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          height?: number | null
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          mime_type: string
+          model_id?: string | null
+          name: string
+          size_bytes?: number | null
+          sort_order?: number
+          storage_path: string
+          tags?: string[]
+          updated_at?: string
+          url: string
+          use_count?: number
+          width?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          height?: number | null
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          mime_type?: string
+          model_id?: string | null
+          name?: string
+          size_bytes?: number | null
+          sort_order?: number
+          storage_path?: string
+          tags?: string[]
+          updated_at?: string
+          url?: string
+          use_count?: number
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exa_stickers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exa_stickers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exa_stickers_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fans: {
         Row: {
           avatar_url: string | null
@@ -5556,6 +5619,79 @@ export type Database = {
           },
         ]
       }
+      model_verifications: {
+        Row: {
+          country: string | null
+          created_at: string
+          date_of_birth: string | null
+          id: string
+          id_document_path: string
+          legal_name: string | null
+          metadata: Json
+          model_id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          selfie_path: string
+          status: string
+          submitted_at: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          id_document_path: string
+          legal_name?: string | null
+          metadata?: Json
+          model_id: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          selfie_path: string
+          status?: string
+          submitted_at?: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          id_document_path?: string
+          legal_name?: string | null
+          metadata?: Json
+          model_id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          selfie_path?: string
+          status?: string
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_verifications_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_verifications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_verifications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       models: {
         Row: {
           admin_rating: number | null
@@ -5599,6 +5735,8 @@ export type Database = {
           height: string | null
           hips: string | null
           id: string
+          identity_verified_at: string | null
+          identity_verified_by: string | null
           instagram_collab_rate: number | null
           instagram_cpm: number | null
           instagram_engagement_rate: string | null
@@ -5668,6 +5806,9 @@ export type Database = {
           user_id: string | null
           username: string | null
           username_changed_at: string | null
+          verified_country: string | null
+          verified_dob: string | null
+          verified_legal_name: string | null
           video_call_rate: number | null
           video_is_online: boolean
           voice_call_rate: number | null
@@ -5721,6 +5862,8 @@ export type Database = {
           height?: string | null
           hips?: string | null
           id?: string
+          identity_verified_at?: string | null
+          identity_verified_by?: string | null
           instagram_collab_rate?: number | null
           instagram_cpm?: number | null
           instagram_engagement_rate?: string | null
@@ -5790,6 +5933,9 @@ export type Database = {
           user_id?: string | null
           username?: string | null
           username_changed_at?: string | null
+          verified_country?: string | null
+          verified_dob?: string | null
+          verified_legal_name?: string | null
           video_call_rate?: number | null
           video_is_online?: boolean
           voice_call_rate?: number | null
@@ -5843,6 +5989,8 @@ export type Database = {
           height?: string | null
           hips?: string | null
           id?: string
+          identity_verified_at?: string | null
+          identity_verified_by?: string | null
           instagram_collab_rate?: number | null
           instagram_cpm?: number | null
           instagram_engagement_rate?: string | null
@@ -5912,6 +6060,9 @@ export type Database = {
           user_id?: string | null
           username?: string | null
           username_changed_at?: string | null
+          verified_country?: string | null
+          verified_dob?: string | null
+          verified_legal_name?: string | null
           video_call_rate?: number | null
           video_is_online?: boolean
           voice_call_rate?: number | null
@@ -5923,7 +6074,22 @@ export type Database = {
           youtube_username?: string | null
           zelle_info?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "models_identity_verified_by_fkey"
+            columns: ["identity_verified_by"]
+            isOneToOne: false
+            referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "models_identity_verified_by_fkey"
+            columns: ["identity_verified_by"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       msw_casting_picks: {
         Row: {
@@ -9685,15 +9851,26 @@ export type Database = {
         Args: { p_offer_id: string; p_response_id: string }
         Returns: Json
       }
-      add_coins: {
-        Args: {
-          p_action: string
-          p_actor_id: string
-          p_amount: number
-          p_metadata?: Json
-        }
-        Returns: boolean
-      }
+      add_coins:
+        | {
+            Args: {
+              p_action: string
+              p_actor_id: string
+              p_amount: number
+              p_metadata?: Json
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_action: string
+              p_actor_id: string
+              p_amount: number
+              p_idempotency_key: string
+              p_metadata: Json
+            }
+            Returns: Json
+          }
       add_gems_to_model: {
         Args: { p_gems: number; p_model_id: string }
         Returns: number
@@ -9701,6 +9878,15 @@ export type Database = {
       add_tag_to_model: {
         Args: { p_model_id: string; p_tag_id: string }
         Returns: boolean
+      }
+      approve_model_verification: {
+        Args: {
+          p_country: string
+          p_date_of_birth: string
+          p_legal_name: string
+          p_verification_id: string
+        }
+        Returns: Json
       }
       award_points: {
         Args: {
@@ -9828,6 +10014,17 @@ export type Database = {
           p_stars: number
           p_stripe_payment_id?: string
           p_user_id: string
+        }
+        Returns: Json
+      }
+      debit_actor_coins_for_booking: {
+        Args: {
+          p_amount: number
+          p_booking_id: string
+          p_booking_number: string
+          p_client_id: string
+          p_is_counter?: boolean
+          p_model_id: string
         }
         Returns: Json
       }
@@ -9964,6 +10161,7 @@ export type Database = {
         }[]
       }
       get_coin_balance: { Args: { p_actor_id: string }; Returns: number }
+      get_content_hub_stats: { Args: { p_model_id: string }; Returns: Json }
       get_country_breakdown: {
         Args: { limit_count: number; start_date: string }
         Returns: {
@@ -10004,6 +10202,18 @@ export type Database = {
         }[]
       }
       get_exa_coin_balance: { Args: { p_user_id: string }; Returns: number }
+      get_last_messages_for_conversations: {
+        Args: { p_conversation_ids: string[] }
+        Returns: {
+          content: string
+          conversation_id: string
+          created_at: string
+          is_system: boolean
+          media_type: string
+          media_url: string
+          sender_id: string
+        }[]
+      }
       get_leaderboard: {
         Args: { limit_count?: number }
         Returns: {
@@ -10155,6 +10365,10 @@ export type Database = {
         Args: { p_actor_id: string; p_amount: number; p_booking_id: string }
         Returns: Json
       }
+      increment_exa_sticker_use: {
+        Args: { p_sticker_id: string }
+        Returns: undefined
+      }
       increment_gig_spots_filled: {
         Args: { gig_id: string }
         Returns: undefined
@@ -10271,6 +10485,10 @@ export type Database = {
         Returns: undefined
       }
       refund_escrow: { Args: { p_escrow_id: string }; Returns: Json }
+      reject_model_verification: {
+        Args: { p_reason: string; p_verification_id: string }
+        Returns: Json
+      }
       release_escrow_to_model: {
         Args: { p_escrow_id: string; p_model_id: string }
         Returns: Json
@@ -10668,9 +10886,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       booking_status: [
@@ -10758,7 +10973,9 @@ export const Constants = {
   },
 } as const
 
-// Convenience type aliases
+// Convenience aliases for table Row types — preserved across `supabase gen types`
+// regenerations. Add new ones as needed; the generated file above is the
+// source of truth.
 export type Actor = Database['public']['Tables']['actors']['Row']
 export type Model = Database['public']['Tables']['models']['Row']
 export type Fan = Database['public']['Tables']['fans']['Row']

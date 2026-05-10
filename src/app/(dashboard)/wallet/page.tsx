@@ -33,6 +33,7 @@ import Link from "next/link";
 
 import EarningsTab from "@/components/wallet/EarningsTab";
 import PayoutsTab from "@/components/wallet/PayoutsTab";
+import { IdentityVerificationBanner } from "@/components/wallet/IdentityVerificationBanner";
 import BrandWalletSection from "@/components/wallet/BrandWalletSection";
 import AffiliateTab from "@/components/wallet/AffiliateTab";
 
@@ -717,7 +718,9 @@ export default function WalletPage() {
 
       {/* Model Tabs - Earnings, Payouts & Affiliate */}
       {(actorType === "model" || actorType === "admin") && (
-        <Tabs defaultValue="earnings" className="space-y-6">
+        <>
+          <IdentityVerificationBanner />
+          <Tabs defaultValue="earnings" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="earnings" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
@@ -790,6 +793,7 @@ export default function WalletPage() {
             {modelId && <AffiliateTab modelId={modelId} />}
           </TabsContent>
         </Tabs>
+        </>
       )}
 
       {/* Brand Subscription & Payment History */}

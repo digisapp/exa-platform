@@ -157,11 +157,11 @@ export async function POST(
           .single() as { data: { notify_outbid: boolean } | null };
 
         if (watchlistEntry?.notify_outbid !== false) {
-          const { data: outbidActor } = await adminClient
+          const { data: outbidActor } = await (adminClient as any)
             .from("actors")
             .select("user_id, fans(display_name), models(first_name, last_name)")
             .eq("id", leadingBidderId)
-            .single() as { data: any };
+            .single();
 
           if (outbidActor?.user_id) {
             const { data: authUser } = await adminClient.auth.admin.getUserById(outbidActor.user_id);
