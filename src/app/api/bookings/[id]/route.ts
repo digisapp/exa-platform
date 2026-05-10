@@ -233,95 +233,58 @@ export async function PATCH(
           return NextResponse.json({ error: "Can only accept pending bookings" }, { status: 400 });
         }
 
-        // Check if client has enough coins and escrow them
+        // Atomic escrow via RPC — locks the client's coin_balance row FOR UPDATE,
+        // checks the balance, debits, and writes the coin_transactions row in
+        // one transaction. Replaces a race-prone read-modify-write.
         const escrowAmount = booking.total_amount || 0;
         const clientId = booking.client_id;
         if (escrowAmount > 0 && clientId) {
-          // Get client's actor and balance
-          const { data: clientActor } = await adminClient
-            .from("actors")
-            .select("id, type")
-            .eq("id", clientId)
-            .maybeSingle();
-
-          let clientBalance = 0;
-          if (clientActor?.type === "fan") {
-            const { data: fan } = await adminClient
-              .from("fans")
-              .select("coin_balance")
-              .eq("id", clientActor.id)
-              .maybeSingle();
-            clientBalance = fan?.coin_balance || 0;
-          } else if (clientActor?.type === "brand") {
-            const { data: brand } = await adminClient
-              .from("brands")
-              .select("coin_balance")
-              .eq("id", clientActor.id)
-              .maybeSingle();
-            clientBalance = brand?.coin_balance || 0;
-          }
-
-          if (clientBalance < escrowAmount) {
-            // Auto-decline - client doesn't have enough coins
-            await adminClient
-              .from("bookings")
-              .update({
-                status: "declined",
-                model_response_notes: "Auto-declined: Client has insufficient coins",
-                responded_at: new Date().toISOString(),
-              })
-              .eq("id", id);
-
-            // Notify client
-            await adminClient.from("notifications").insert({
-              actor_id: booking.client_id,
-              type: "booking_declined",
-              title: "Booking Declined - Insufficient Funds",
-              body: `Your booking with ${bookingRecord.model?.first_name || bookingRecord.model?.username} was declined because you don't have enough coins. You need ${escrowAmount.toLocaleString()} coins but only have ${clientBalance.toLocaleString()}.`,
-              data: { booking_id: id, booking_number: booking.booking_number },
+          const { data: escrowResult, error: escrowRpcError } = await (adminClient as any)
+            .rpc("debit_actor_coins_for_booking", {
+              p_client_id: clientId,
+              p_amount: escrowAmount,
+              p_booking_id: id,
+              p_booking_number: booking.booking_number,
+              p_model_id: booking.model_id,
+              p_is_counter: false,
             });
 
-            return NextResponse.json({
-              error: "Client has insufficient coins for this booking",
-              clientBalance,
-              required: escrowAmount,
-            }, { status: 402 });
+          if (escrowRpcError) {
+            logger.error("Escrow RPC failed", escrowRpcError);
+            return NextResponse.json({ error: "Failed to escrow coins" }, { status: 500 });
           }
 
-          // Deduct coins from client (escrow)
-          const escrowTable = clientActor?.type === "fan" ? "fans" : "brands";
-          if (clientActor) {
-            const { error: escrowDebitError } = await adminClient
-              .from(escrowTable)
-              .update({ coin_balance: clientBalance - escrowAmount })
-              .eq("id", clientActor.id);
+          const result = escrowResult as { success: boolean; error?: string; balance?: number; new_balance?: number };
 
-            if (escrowDebitError) {
-              logger.error("Escrow debit failed", escrowDebitError);
-              return NextResponse.json({ error: "Failed to escrow coins" }, { status: 500 });
-            }
-
-            // Log escrow transaction
-            const { error: escrowLogError } = await adminClient.from("coin_transactions").insert({
-              actor_id: clientActor.id,
-              amount: -escrowAmount,
-              action: "booking_escrow",
-              metadata: {
-                booking_id: id,
-                booking_number: booking.booking_number,
-                model_id: booking.model_id,
-              },
-            });
-
-            if (escrowLogError) {
-              // ROLLBACK: Refund the escrow debit since transaction log failed
-              logger.error("Escrow transaction log failed, rolling back debit", escrowLogError);
+          if (!result?.success) {
+            if (result?.error === "insufficient_balance") {
+              // Auto-decline — client doesn't have enough coins
               await adminClient
-                .from(escrowTable)
-                .update({ coin_balance: clientBalance })
-                .eq("id", clientActor.id);
-              return NextResponse.json({ error: "Failed to process escrow" }, { status: 500 });
+                .from("bookings")
+                .update({
+                  status: "declined",
+                  model_response_notes: "Auto-declined: Client has insufficient coins",
+                  responded_at: new Date().toISOString(),
+                })
+                .eq("id", id);
+
+              await adminClient.from("notifications").insert({
+                actor_id: booking.client_id,
+                type: "booking_declined",
+                title: "Booking Declined - Insufficient Funds",
+                body: `Your booking with ${bookingRecord.model?.first_name || bookingRecord.model?.username} was declined because you don't have enough coins. You need ${escrowAmount.toLocaleString()} coins but only have ${(result.balance ?? 0).toLocaleString()}.`,
+                data: { booking_id: id, booking_number: booking.booking_number },
+              });
+
+              return NextResponse.json({
+                error: "Client has insufficient coins for this booking",
+                clientBalance: result.balance ?? 0,
+                required: escrowAmount,
+              }, { status: 402 });
             }
+
+            logger.error("Escrow rejected", undefined, { reason: result?.error });
+            return NextResponse.json({ error: "Failed to escrow coins" }, { status: 500 });
           }
         }
 
@@ -394,67 +357,35 @@ export async function PATCH(
           return NextResponse.json({ error: "No counter offer to accept" }, { status: 400 });
         }
 
-        // Escrow the counter amount from client
+        // Atomic escrow via RPC (same anti-race fix as the accept path).
         const counterEscrowAmount = booking.counter_amount || 0;
         if (counterEscrowAmount > 0) {
-          // Get client's balance
-          let counterClientBalance = 0;
-          if (actor.type === "fan") {
-            const { data: fan } = await adminClient
-              .from("fans")
-              .select("coin_balance")
-              .eq("id", actor.id)
-              .maybeSingle();
-            counterClientBalance = fan?.coin_balance || 0;
-          } else if (actor.type === "brand") {
-            const { data: brand } = await adminClient
-              .from("brands")
-              .select("coin_balance")
-              .eq("id", actor.id)
-              .maybeSingle();
-            counterClientBalance = brand?.coin_balance || 0;
-          }
+          const { data: counterEscrowResult, error: counterEscrowRpcError } = await (adminClient as any)
+            .rpc("debit_actor_coins_for_booking", {
+              p_client_id: actor.id,
+              p_amount: counterEscrowAmount,
+              p_booking_id: id,
+              p_booking_number: booking.booking_number,
+              p_model_id: booking.model_id,
+              p_is_counter: true,
+            });
 
-          if (counterClientBalance < counterEscrowAmount) {
-            return NextResponse.json({
-              error: `Insufficient coins. You need ${counterEscrowAmount.toLocaleString()} coins but only have ${counterClientBalance.toLocaleString()}.`,
-              required: counterEscrowAmount,
-              balance: counterClientBalance,
-            }, { status: 402 });
-          }
-
-          // Deduct coins from client (escrow)
-          const counterEscrowTable = actor.type === "fan" ? "fans" : "brands";
-          const { error: counterEscrowDebitError } = await adminClient
-            .from(counterEscrowTable)
-            .update({ coin_balance: counterClientBalance - counterEscrowAmount })
-            .eq("id", actor.id);
-
-          if (counterEscrowDebitError) {
-            logger.error("Counter escrow debit failed", counterEscrowDebitError);
+          if (counterEscrowRpcError) {
+            logger.error("Counter escrow RPC failed", counterEscrowRpcError);
             return NextResponse.json({ error: "Failed to escrow coins for counter offer" }, { status: 500 });
           }
 
-          // Log escrow transaction
-          const { error: counterEscrowLogError } = await adminClient.from("coin_transactions").insert({
-            actor_id: actor.id,
-            amount: -counterEscrowAmount,
-            action: "booking_escrow",
-            metadata: {
-              booking_id: id,
-              booking_number: booking.booking_number,
-              model_id: booking.model_id,
-              counter_offer: true,
-            },
-          });
+          const result = counterEscrowResult as { success: boolean; error?: string; balance?: number };
 
-          if (counterEscrowLogError) {
-            // ROLLBACK: Refund the escrow debit since transaction log failed
-            logger.error("Counter escrow transaction log failed, rolling back debit", counterEscrowLogError);
-            await adminClient
-              .from(counterEscrowTable)
-              .update({ coin_balance: counterClientBalance })
-              .eq("id", actor.id);
+          if (!result?.success) {
+            if (result?.error === "insufficient_balance") {
+              return NextResponse.json({
+                error: `Insufficient coins. You need ${counterEscrowAmount.toLocaleString()} coins but only have ${(result.balance ?? 0).toLocaleString()}.`,
+                required: counterEscrowAmount,
+                balance: result.balance ?? 0,
+              }, { status: 402 });
+            }
+            logger.error("Counter escrow rejected", undefined, { reason: result?.error });
             return NextResponse.json({ error: "Failed to process counter escrow" }, { status: 500 });
           }
         }

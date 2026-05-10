@@ -107,21 +107,10 @@ export async function handleCheckoutSessionCompleted(
     return { error: "Invalid coins value", status: 400 };
   }
 
-  // IDEMPOTENCY CHECK: Prevent duplicate coin credits from webhook retries
-  const { data: existingTransaction } = await supabaseAdmin
-    .from("coin_transactions")
-    .select("id")
-    .eq("actor_id", actorId)
-    .eq("action", "purchase")
-    .contains("metadata", { stripe_session_id: session.id })
-    .maybeSingle();
-
-  if (existingTransaction) {
-    logger.info("Duplicate webhook ignored - coins already credited for session", { sessionId: session.id });
-    return { duplicate: true };
-  }
-
-  const { error: creditError } = await supabaseAdmin.rpc("add_coins", {
+  // Atomic idempotent credit — the RPC inserts the ledger row with the
+  // session_id as idempotency_key first, so concurrent Stripe redeliveries
+  // collide on the unique index instead of double-crediting.
+  const { data: creditResult, error: creditError } = await (supabaseAdmin as any).rpc("add_coins", {
     p_actor_id: actorId,
     p_amount: coins,
     p_action: "purchase",
@@ -131,21 +120,22 @@ export async function handleCheckoutSessionCompleted(
       amount_paid: session.amount_total,
       currency: session.currency,
     },
+    p_idempotency_key: session.id,
   });
-
-  // Set idempotency_key on the transaction for DB-level duplicate prevention
-  if (!creditError) {
-    await supabaseAdmin
-      .from("coin_transactions")
-      .update({ idempotency_key: session.id })
-      .eq("actor_id", actorId)
-      .eq("action", "purchase")
-      .contains("metadata", { stripe_session_id: session.id });
-  }
 
   if (creditError) {
     logger.error("Error crediting coins", creditError);
     return { error: "Failed to credit coins", status: 500 };
+  }
+
+  const result = creditResult as { success: boolean; duplicate?: boolean; error?: string };
+  if (!result?.success) {
+    logger.error("Credit RPC rejected", undefined, { reason: result?.error, sessionId: session.id });
+    return { error: result?.error || "Failed to credit coins", status: 500 };
+  }
+  if (result.duplicate) {
+    logger.info("Duplicate webhook ignored - coins already credited for session", { sessionId: session.id });
+    return { duplicate: true };
   }
 }
 

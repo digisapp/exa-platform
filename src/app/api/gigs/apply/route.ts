@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       .select("id, status")
       .eq("gig_id", gigId)
       .eq("model_id", model.id)
-      .single();
+      .maybeSingle();
 
     if (existingApp) {
       return NextResponse.json({
@@ -90,8 +90,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "This gig is no longer accepting applications" }, { status: 400 });
     }
 
-    if (gig.spots && (gig.spots_filled ?? 0) >= gig.spots) {
-      return NextResponse.json({ error: "This gig is full" }, { status: 400 });
+    // Capacity claim — when the gig has a spot cap, increment spots_filled using
+    // optimistic concurrency (compare-and-swap). Without this, concurrent applicants
+    // all read spots_filled=N, all pass the check, and all insert, over-filling.
+    // We retry a few times on CAS conflict before giving up.
+    let claimedSpot = false;
+    if (gig.spots) {
+      const adminClient = createServiceRoleClient();
+      let current = gig.spots_filled ?? 0;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        if (current >= gig.spots) {
+          return NextResponse.json({ error: "This gig is full" }, { status: 400 });
+        }
+        const { data: claimed, error: claimErr } = await (adminClient as any)
+          .from("gigs")
+          .update({ spots_filled: current + 1 })
+          .eq("id", gigId)
+          .eq("spots_filled", current)
+          .select("id")
+          .maybeSingle();
+
+        if (claimErr) {
+          logger.error("Error claiming gig spot", claimErr);
+          return NextResponse.json({ error: "Failed to apply" }, { status: 500 });
+        }
+        if (claimed) {
+          claimedSpot = true;
+          break;
+        }
+        // CAS lost — re-read and try again.
+        const { data: fresh } = await (adminClient as any)
+          .from("gigs")
+          .select("spots_filled")
+          .eq("id", gigId)
+          .single();
+        current = fresh?.spots_filled ?? current + 1;
+      }
+
+      if (!claimedSpot) {
+        return NextResponse.json({ error: "This gig is full" }, { status: 400 });
+      }
     }
 
     // Create application
@@ -106,6 +144,21 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      // Roll back the spot we just claimed so the gig isn't permanently short.
+      if (claimedSpot) {
+        const adminClient = createServiceRoleClient();
+        const { data: current } = await (adminClient as any)
+          .from("gigs")
+          .select("spots_filled")
+          .eq("id", gigId)
+          .single();
+        if (current && (current.spots_filled ?? 0) > 0) {
+          await (adminClient as any)
+            .from("gigs")
+            .update({ spots_filled: current.spots_filled - 1 })
+            .eq("id", gigId);
+        }
+      }
       logger.error("Error creating application", error);
       throw error;
     }
