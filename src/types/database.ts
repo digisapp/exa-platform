@@ -9879,6 +9879,15 @@ export type Database = {
         Args: { p_model_id: string; p_tag_id: string }
         Returns: boolean
       }
+      admin_list_conversations_with_messages: {
+        Args: { p_offset: number; p_limit: number }
+        Returns: {
+          id: string
+          created_at: string
+          updated_at: string
+          total_count: number
+        }[]
+      }
       approve_model_verification: {
         Args: {
           p_country: string

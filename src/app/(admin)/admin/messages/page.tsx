@@ -38,6 +38,7 @@ import {
   Mic,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
+import { toast } from "sonner";
 
 interface Participant {
   actor_id: string;
@@ -96,12 +97,17 @@ export default function AdminMessagesPage() {
   const loadStats = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/messages?action=stats");
-      if (res.ok) {
-        const data = await res.json();
-        setStats(data);
+      if (!res.ok) {
+        const body = await res.text();
+        console.error("Stats request failed:", res.status, body);
+        toast.error(`Failed to load stats (${res.status})`);
+        return;
       }
+      const data = await res.json();
+      setStats(data);
     } catch (error) {
       console.error("Failed to load stats:", error);
+      toast.error("Failed to load stats");
     }
   }, []);
 
@@ -118,13 +124,18 @@ export default function AdminMessagesPage() {
       }
 
       const res = await fetch(`/api/admin/messages?${params}`);
-      if (res.ok) {
-        const data = await res.json();
-        setConversations(data.conversations || []);
-        setTotalCount(data.totalCount || 0);
+      if (!res.ok) {
+        const body = await res.text();
+        console.error("Conversations request failed:", res.status, body);
+        toast.error(`Failed to load conversations (${res.status})`);
+        return;
       }
+      const data = await res.json();
+      setConversations(data.conversations || []);
+      setTotalCount(data.totalCount || 0);
     } catch (error) {
       console.error("Failed to load conversations:", error);
+      toast.error("Failed to load conversations");
     } finally {
       setLoading(false);
     }
@@ -134,12 +145,17 @@ export default function AdminMessagesPage() {
     setLoadingMessages(true);
     try {
       const res = await fetch(`/api/admin/messages?action=messages&conversationId=${conversationId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(data.messages || []);
+      if (!res.ok) {
+        const body = await res.text();
+        console.error("Messages request failed:", res.status, body);
+        toast.error(`Failed to load messages (${res.status})`);
+        return;
       }
+      const data = await res.json();
+      setMessages(data.messages || []);
     } catch (error) {
       console.error("Failed to load messages:", error);
+      toast.error("Failed to load messages");
     } finally {
       setLoadingMessages(false);
     }

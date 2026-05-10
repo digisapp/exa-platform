@@ -67,29 +67,27 @@ export async function GET(request: NextRequest) {
       const page = parseInt(searchParams.get("page") || "1");
       const pageSize = parseInt(searchParams.get("pageSize") || "30");
       const search = searchParams.get("search") || "";
+      const offset = (page - 1) * pageSize;
 
-      let targetConversationIds: string[] | null = null;
+      let convos: Array<{ id: string; created_at: string | null; updated_at: string | null }> = [];
+      let totalCount = 0;
 
-      // If searching, first find matching fans/models
       if (search) {
+        // Search path: resolve to a (typically small) set of conversation IDs,
+        // then page over them in JS. Volume is bounded by search hits.
         const searchPattern = `%${escapeIlike(search)}%`;
 
-        // Search fans by display_name - fans.id IS the actor_id directly
         const { data: matchingFans } = await adminClient
           .from("fans")
           .select("id")
           .ilike("display_name", searchPattern);
 
-        // Search models by first_name or username - need user_id to find actor
         const { data: matchingModels } = await adminClient
           .from("models")
           .select("user_id")
           .or(`first_name.ilike.${searchPattern},username.ilike.${searchPattern}`);
 
-        // For fans, we already have actor_ids directly
         const fanActorIds = (matchingFans || []).map((f: any) => f.id);
-
-        // For models, look up actors by user_id to get actor_ids
         const modelUserIds = (matchingModels || []).map((m: any) => m.user_id).filter(Boolean);
         let modelActorIds: string[] = [];
         if (modelUserIds.length > 0) {
@@ -101,88 +99,90 @@ export async function GET(request: NextRequest) {
         }
 
         const matchingActorIds = [...fanActorIds, ...modelActorIds];
-
         if (matchingActorIds.length === 0) {
-          return NextResponse.json({
-            conversations: [],
-            totalCount: 0,
-          });
+          return NextResponse.json({ conversations: [], totalCount: 0 });
         }
 
-        // Find conversations with these actors
         const { data: participantConvos } = await adminClient
           .from("conversation_participants")
           .select("conversation_id")
           .in("actor_id", matchingActorIds);
 
-        targetConversationIds = [...new Set((participantConvos || []).map((p: any) => p.conversation_id))];
-
-        if (targetConversationIds.length === 0) {
-          return NextResponse.json({
-            conversations: [],
-            totalCount: 0,
-          });
+        const candidateIds = [...new Set((participantConvos || []).map((p: any) => p.conversation_id))];
+        if (candidateIds.length === 0) {
+          return NextResponse.json({ conversations: [], totalCount: 0 });
         }
-      }
 
-      // Only show conversations that have at least one message (filter ghost conversations)
-      const { data: msgConvoRows } = await adminClient
-        .from("messages")
-        .select("conversation_id");
+        // Drop ghosts (conversations with no messages) by intersecting with
+        // message rows for just the candidate set (small IN list, safe URL).
+        const { data: msgRows } = await adminClient
+          .from("messages")
+          .select("conversation_id")
+          .in("conversation_id", candidateIds);
+        const withMsgs = new Set((msgRows || []).map((m: any) => m.conversation_id));
+        const filtered = candidateIds.filter((id) => withMsgs.has(id));
 
-      const convoIdsWithMessages = [...new Set((msgConvoRows || []).map((m: any) => m.conversation_id))] as string[];
+        totalCount = filtered.length;
+        if (totalCount === 0) {
+          return NextResponse.json({ conversations: [], totalCount: 0 });
+        }
 
-      // Intersect with search results if applicable
-      if (targetConversationIds) {
-        const withMsgsSet = new Set(convoIdsWithMessages);
-        targetConversationIds = targetConversationIds.filter((id) => withMsgsSet.has(id));
-      }
+        // Sort first, then page in JS — search hit counts are bounded so the
+        // IN list stays well below the URL limit.
+        const { data: convoRows, error } = await adminClient
+          .from("conversations")
+          .select("id, created_at, updated_at")
+          .in("id", filtered)
+          .order("updated_at", { ascending: false });
 
-      // Get total count
-      let totalCount = 0;
-      if (targetConversationIds) {
-        totalCount = targetConversationIds.length;
+        if (error) {
+          console.error("Error loading conversations (search):", error);
+          return NextResponse.json({ error: "Failed to load conversations" }, { status: 500 });
+        }
+        convos = (convoRows || []).slice(offset, offset + pageSize);
       } else {
-        totalCount = convoIdsWithMessages.length;
+        // No-search path: a single RPC returns the paged window plus total.
+        // Avoids shipping every conversation_id through a PostgREST IN clause,
+        // which previously blew past the gateway URL limit and 500'd.
+        const { data: rpcRows, error: rpcError } = await adminClient.rpc(
+          "admin_list_conversations_with_messages",
+          { p_offset: offset, p_limit: pageSize }
+        );
+
+        if (rpcError) {
+          console.error("Error loading conversations (rpc):", rpcError);
+          return NextResponse.json({ error: "Failed to load conversations" }, { status: 500 });
+        }
+
+        const rows = (rpcRows || []) as Array<{
+          id: string;
+          created_at: string;
+          updated_at: string;
+          total_count: number;
+        }>;
+        totalCount = rows[0]?.total_count ? Number(rows[0].total_count) : 0;
+        convos = rows.map((r) => ({ id: r.id, created_at: r.created_at, updated_at: r.updated_at }));
       }
 
-      if (totalCount === 0) {
-        return NextResponse.json({ conversations: [], totalCount: 0 });
+      if (convos.length === 0) {
+        return NextResponse.json({ conversations: [], totalCount });
       }
 
-      // Get conversations
-      let query = adminClient
-        .from("conversations")
-        .select(`
-          id,
-          created_at,
-          updated_at,
-          conversation_participants (
-            actor_id
-          )
-        `)
-        .order("updated_at", { ascending: false });
+      // Pull participants for the page-sized conversation set.
+      const pageConvoIds = convos.map((c) => c.id);
+      const { data: participantRows } = await adminClient
+        .from("conversation_participants")
+        .select("conversation_id, actor_id")
+        .in("conversation_id", pageConvoIds);
 
-      // Always filter to conversations with messages
-      const filterIds = targetConversationIds ?? convoIdsWithMessages;
-      query = query.in("id", filterIds);
-
-      const { data: convos, error } = await query.range((page - 1) * pageSize, page * pageSize - 1);
-
-      if (error) {
-        console.error("Error loading conversations:", error);
-        return NextResponse.json({ error: "Failed to load conversations" }, { status: 500 });
-      }
-
-      // Get participant details
-      const actorIds = new Set<string>();
-      (convos || []).forEach((c: any) => {
-        c.conversation_participants?.forEach((p: any) => {
-          actorIds.add(p.actor_id);
-        });
+      const participantsByConvo = new Map<string, string[]>();
+      (participantRows || []).forEach((p: any) => {
+        const arr = participantsByConvo.get(p.conversation_id) || [];
+        arr.push(p.actor_id);
+        participantsByConvo.set(p.conversation_id, arr);
       });
 
-      const actorIdArray = Array.from(actorIds);
+      const actorIdArray = [...new Set([...participantsByConvo.values()].flat())];
       const { data: actors } = await adminClient
         .from("actors")
         .select("id, user_id, type")
@@ -191,13 +191,11 @@ export async function GET(request: NextRequest) {
       const actorLookup = new Map((actors || []).map((a: any) => [a.id, a]));
       const userIds = [...new Set((actors || []).map((a: any) => a.user_id).filter(Boolean))];
 
-      // Get fan details - fans.id = actors.id
       const { data: fans } = await adminClient
         .from("fans")
         .select("id, display_name, avatar_url")
         .in("id", actorIdArray);
 
-      // Get model details - models.user_id = actors.user_id
       const { data: models } = await adminClient
         .from("models")
         .select("user_id, first_name, last_name, username, profile_photo_url")
@@ -206,12 +204,10 @@ export async function GET(request: NextRequest) {
       const fanMap = new Map((fans || []).map((f: any) => [f.id, { ...f, type: "fan" }]));
       const modelMap = new Map((models || []).map((m: any) => [m.user_id, { ...m, type: "model" }]));
 
-      // Get last messages
-      const convoIds = (convos || []).map((c: any) => c.id);
       const { data: lastMessages } = await adminClient
         .from("messages")
         .select("conversation_id, content, created_at")
-        .in("conversation_id", convoIds)
+        .in("conversation_id", pageConvoIds)
         .order("created_at", { ascending: false });
 
       const lastMessageMap = new Map<string, { content: string | null; created_at: string }>();
@@ -221,30 +217,29 @@ export async function GET(request: NextRequest) {
         }
       });
 
-      // Get message counts
       const { data: messageCounts } = await adminClient
         .from("messages")
         .select("conversation_id")
-        .in("conversation_id", convoIds);
+        .in("conversation_id", pageConvoIds);
 
       const messageCountMap = new Map<string, number>();
       (messageCounts || []).forEach((m: any) => {
         messageCountMap.set(m.conversation_id, (messageCountMap.get(m.conversation_id) || 0) + 1);
       });
 
-      // Build enriched conversations
-      const enrichedConversations = (convos || []).map((c: any) => {
-        const participants = (c.conversation_participants || []).map((p: any) => {
-          const actor = actorLookup.get(p.actor_id);
+      const enrichedConversations = convos.map((c) => {
+        const participantActorIds = participantsByConvo.get(c.id) || [];
+        const participants = participantActorIds.map((actorId) => {
+          const actor = actorLookup.get(actorId);
           const userId = actor?.user_id;
           const actorType = actor?.type;
 
-          const fan = fanMap.get(p.actor_id);
+          const fan = fanMap.get(actorId);
           const model = userId ? modelMap.get(userId) : null;
 
           if (model || actorType === "model") {
             return {
-              actor_id: p.actor_id,
+              actor_id: actorId,
               display_name: model?.first_name || model?.username || "Model",
               type: "model",
               avatar_url: model?.profile_photo_url || null,
@@ -253,7 +248,7 @@ export async function GET(request: NextRequest) {
           }
           if (fan || actorType === "fan") {
             return {
-              actor_id: p.actor_id,
+              actor_id: actorId,
               display_name: fan?.display_name || "Fan",
               type: "fan",
               avatar_url: fan?.avatar_url || null,
@@ -261,7 +256,7 @@ export async function GET(request: NextRequest) {
             };
           }
           return {
-            actor_id: p.actor_id,
+            actor_id: actorId,
             display_name: actorType === "admin" ? "EXA Team" : "Unknown",
             type: actorType === "admin" ? "model" : "fan",
             avatar_url: null,
