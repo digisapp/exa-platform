@@ -254,17 +254,31 @@ function ApplicationCard({
                 </button>
               </>
             ) : app.status === "accepted" || app.status === "approved" ? (
-              <button
-                onClick={() => onApplicationAction(app.id, "cancelled")}
-                disabled={isProcessing}
-                className="flex-1 py-2 rounded-xl border border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-semibold transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
-              >
-                {isProcessing ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <><XCircle className="h-3.5 w-3.5" /> Cancel</>
-                )}
-              </button>
+              <>
+                <button
+                  onClick={() => onApplicationAction(app.id, "pending")}
+                  disabled={isProcessing}
+                  className="flex-1 py-2 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-xs font-semibold transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
+                  title="Revert to Pending"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <><RefreshCw className="h-3.5 w-3.5" /> Pending</>
+                  )}
+                </button>
+                <button
+                  onClick={() => onApplicationAction(app.id, "cancelled")}
+                  disabled={isProcessing}
+                  className="flex-1 py-2 rounded-xl border border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-semibold transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <><XCircle className="h-3.5 w-3.5" /> Cancel</>
+                  )}
+                </button>
+              </>
             ) : (
               <button
                 onClick={() => onApplicationAction(app.id, "pending")}

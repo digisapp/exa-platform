@@ -722,9 +722,24 @@ export default function GigApplicationsPanel({
                       <Button
                         size="sm"
                         variant="ghost"
+                        className="text-yellow-500 hover:text-yellow-600 hover:bg-yellow-500/10 h-7 px-2"
+                        onClick={() => onApplicationAction(app.id, "pending")}
+                        disabled={processingApp === app.id}
+                        title="Revert to Pending"
+                      >
+                        {processingApp === app.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         className="text-red-500 hover:text-red-600 hover:bg-red-500/10 h-7 px-2"
                         onClick={() => onApplicationAction(app.id, "cancelled")}
                         disabled={processingApp === app.id}
+                        title="Cancel acceptance"
                       >
                         {processingApp === app.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
