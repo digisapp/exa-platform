@@ -476,7 +476,7 @@ function CallRequestForm() {
       {/* Already have an account */}
       <p className="text-center text-sm text-muted-foreground mt-6">
         Already an EXA model?{" "}
-        <Link href="/login" className="text-pink-500 hover:underline">
+        <Link href="/signin" className="text-pink-500 hover:underline">
           Log in
         </Link>
       </p>

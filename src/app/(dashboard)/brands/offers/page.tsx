@@ -226,10 +226,10 @@ export default function BrandOffersPage() {
             <Gift className="h-16 w-16 text-muted-foreground/30 mb-4" />
             <h2 className="text-xl font-semibold mb-2">No offers yet</h2>
             <p className="text-muted-foreground mb-6 text-center">
-              Create a list of models and send them an offer to get started
+              Browse models and send them an offer to get started
             </p>
             <Button asChild>
-              <Link href="/lists">Go to Lists</Link>
+              <Link href="/models">Browse Models</Link>
             </Button>
           </CardContent>
         </Card>

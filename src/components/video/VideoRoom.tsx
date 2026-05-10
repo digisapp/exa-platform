@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { showTipSuccessToast } from "@/lib/tip-toast";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
-const TIP_AMOUNTS = [5, 10, 25, 50];
+const TIP_AMOUNTS = [100, 250, 500, 1000];
 
 interface VideoRoomProps {
   token: string;

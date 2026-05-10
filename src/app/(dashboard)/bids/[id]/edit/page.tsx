@@ -52,7 +52,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
     const loadAuction = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/auth/login");
+        router.push("/signin");
         return;
       }
 

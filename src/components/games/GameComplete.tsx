@@ -215,7 +215,7 @@ export function GameComplete({
                 Buy coins
               </span>
             </div>
-            <Link href="/fan/sign-up" className="block">
+            <Link href="/fan/signup" className="block">
               <Button
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg shadow-purple-500/25"
               >

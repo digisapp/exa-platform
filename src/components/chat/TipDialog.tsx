@@ -17,7 +17,7 @@ import { showTipSuccessToast } from "@/lib/tip-toast";
 import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 
-const TIP_AMOUNTS = [5, 10, 25, 50, 100, 500];
+const TIP_AMOUNTS = [100, 250, 500, 1000];
 
 interface TipDialogProps {
   recipientId: string;

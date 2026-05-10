@@ -24,7 +24,6 @@ import type { Metadata } from "next";
 import { HotelFloorPlan } from "@/components/shows/hotel-floor-plan";
 import {
   DigisTicketButton,
-  DigisCastingCallButton,
   DigisScheduleSection,
   DigisSponsorCard,
 } from "@/components/shows/digis-links";
@@ -431,7 +430,18 @@ export default async function EventPage({ params, searchParams }: Props) {
                 )}
 
                 {event.slug === "miami-swim-week-2026" && (
-                  <DigisCastingCallButton href="https://www.digis.cc/events/exa-swim-week-casting-call-0a3f7901" />
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="w-full border-pink-500/40 bg-pink-500/10 hover:bg-pink-500/20 text-pink-100 hover:text-white text-base py-5 rounded-xl shadow-[0_0_16px_rgba(236,72,153,0.2)] hover:shadow-[0_0_24px_rgba(236,72,153,0.35)] transition-all"
+                  >
+                    <Link href={`/gigs/${event.slug}`}>
+                      <Sparkles className="h-5 w-5 mr-2" />
+                      Model Casting Call — Apply Now
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Link>
+                  </Button>
                 )}
               </div>
 
