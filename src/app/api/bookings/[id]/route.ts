@@ -4,6 +4,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendBookingAcceptedEmail, sendBookingDeclinedEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import { z } from "zod";
+
+const bookingPatchSchema = z.object({
+  action: z.enum([
+    "accept",
+    "decline",
+    "counter",
+    "accept_counter",
+    "confirm",
+    "cancel",
+    "complete",
+    "no_show",
+  ]),
+  responseNotes: z.string().trim().max(2000).optional().nullable(),
+  counterAmount: z.number().int().positive().optional().nullable(),
+  counterNotes: z.string().trim().max(2000).optional().nullable(),
+  cancellationReason: z.string().trim().max(2000).optional().nullable(),
+});
 
 // Service type labels
 const SERVICE_LABELS: Record<string, string> = {
@@ -218,8 +236,14 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await request.json();
-    const { action, responseNotes, counterAmount, counterNotes, cancellationReason } = body;
+    const parsed = bookingPatchSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const { action, responseNotes, counterAmount, counterNotes, cancellationReason } = parsed.data;
 
     let updateData: any = {};
     let notificationData: any = null;

@@ -2,8 +2,18 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 const adminClient = createServiceRoleClient();
+
+const checkinSchema = z.object({
+  response_id: z.string().uuid(),
+  action: z.enum(["checkin", "noshow"]),
+});
+
+const checkinDeleteQuerySchema = z.object({
+  response_id: z.string().uuid(),
+});
 
 // POST /api/offers/[id]/checkin - Brand marks model as checked-in or no-show
 export async function POST(
@@ -49,14 +59,14 @@ export async function POST(
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
-    const body = await request.json();
-    const { response_id, action } = body;
-
-    if (!response_id || !["checkin", "noshow"].includes(action)) {
-      return NextResponse.json({
-        error: "response_id and action (checkin/noshow) required"
-      }, { status: 400 });
+    const parsed = checkinSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const { response_id, action } = parsed.data;
 
     // Verify response exists and belongs to this offer
     const { data: response } = await supabase
@@ -148,11 +158,16 @@ export async function DELETE(
     }
 
     const { searchParams } = new URL(request.url);
-    const responseId = searchParams.get("response_id");
-
-    if (!responseId) {
-      return NextResponse.json({ error: "response_id required" }, { status: 400 });
+    const queryParsed = checkinDeleteQuerySchema.safeParse({
+      response_id: searchParams.get("response_id"),
+    });
+    if (!queryParsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: queryParsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const { response_id: responseId } = queryParsed.data;
 
     // Reset check-in status
     const { error: updateError } = await adminClient

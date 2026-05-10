@@ -2,6 +2,21 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { z } from "zod";
+
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "video/mp4",
+  "video/quicktime",
+] as const;
+
+const uploadSchema = z.object({
+  filename: z.string().trim().min(1).max(255),
+  contentType: z.enum(ALLOWED_TYPES),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,25 +56,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
-    let body;
+    let raw;
     try {
-      body = await request.json();
+      raw = await request.json();
     } catch (parseError) {
       logger.error("Workshop upload: JSON parse error", parseError);
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const { filename, contentType } = body;
-
-    if (!filename || !contentType) {
-      return NextResponse.json({ error: "Missing filename or contentType" }, { status: 400 });
+    const parsed = uploadSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
-
-    // Validate file type
-    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/quicktime"];
-    if (!ALLOWED_TYPES.includes(contentType)) {
-      return NextResponse.json({ error: "File type not allowed" }, { status: 400 });
-    }
+    const { contentType } = parsed.data;
 
     // Generate unique path - derive extension from validated MIME type, not user filename
     const MIME_TO_EXT: Record<string, string> = {

@@ -3,6 +3,16 @@ import { createClient } from '@/lib/supabase/server';
 import { createLiveKitToken } from '@/lib/livekit';
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import { z } from "zod";
+
+const joinCallSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+const declineCallQuerySchema = z.object({
+  sessionId: z.string().uuid(),
+  reason: z.enum(["missed", "declined"]).optional().nullable(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,11 +27,14 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
     if (rateLimitResponse) return rateLimitResponse;
 
-    // Get request body
-    const { sessionId } = await request.json();
-    if (!sessionId) {
-      return NextResponse.json({ error: 'sessionId is required' }, { status: 400 });
+    const parsed = joinCallSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const { sessionId } = parsed.data;
 
     // Get joiner's actor
     const { data: joinerActor } = await supabase
@@ -121,12 +134,17 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const sessionId = searchParams.get('sessionId');
-    const reason = searchParams.get('reason'); // 'missed' or 'declined' (default)
-
-    if (!sessionId) {
-      return NextResponse.json({ error: 'sessionId is required' }, { status: 400 });
+    const queryParsed = declineCallQuerySchema.safeParse({
+      sessionId: searchParams.get("sessionId"),
+      reason: searchParams.get("reason"),
+    });
+    if (!queryParsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: queryParsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const { sessionId, reason } = queryParsed.data;
 
     // Get user's actor
     const { data: actor } = await supabase

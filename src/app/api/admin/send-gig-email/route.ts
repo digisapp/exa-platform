@@ -2,6 +2,17 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendGigApplicationAcceptedEmail, sendGigApplicationRejectedEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const sendGigEmailSchema = z.object({
+  type: z.enum(["accepted", "rejected"]),
+  to: z.string().trim().email(),
+  modelName: z.string().trim().min(1).max(200),
+  gigTitle: z.string().trim().min(1).max(500),
+  gigDate: z.string().trim().max(100).optional().nullable(),
+  gigLocation: z.string().trim().max(500).optional().nullable(),
+  eventName: z.string().trim().max(200).optional().nullable(),
+});
 
 // Send gig application email (server-side only)
 export async function POST(request: NextRequest) {
@@ -29,36 +40,30 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
     if (rateLimitResponse) return rateLimitResponse;
 
-    const body = await request.json();
-    const { type, to, modelName, gigTitle, gigDate, gigLocation, eventName } = body;
-
-    if (!type || !to || !modelName || !gigTitle) {
+    const parsed = sendGigEmailSchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+    const { type, to, modelName, gigTitle, gigDate, gigLocation, eventName } = parsed.data;
 
     if (type === "accepted") {
       await sendGigApplicationAcceptedEmail({
         to,
         modelName,
         gigTitle,
-        gigDate,
-        gigLocation,
-        eventName,
+        gigDate: gigDate ?? undefined,
+        gigLocation: gigLocation ?? undefined,
+        eventName: eventName ?? undefined,
       });
-    } else if (type === "rejected") {
+    } else {
       await sendGigApplicationRejectedEmail({
         to,
         modelName,
         gigTitle,
       });
-    } else {
-      return NextResponse.json(
-        { error: "Invalid email type" },
-        { status: 400 }
-      );
     }
 
     return NextResponse.json({ success: true });

@@ -2,6 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { rateLimitAsync, getClientIP } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const deleteAccountSchema = z.object({
+  reason: z.string().trim().max(500).optional().nullable(),
+});
 
 export async function DELETE(request: Request) {
   try {
@@ -58,13 +63,21 @@ export async function DELETE(request: Request) {
     const serviceClient = createServiceRoleClient();
     const now = new Date().toISOString();
 
-    // Parse optional reason from request body
+    // Parse optional reason from request body. Empty body / invalid JSON are
+    // both fine — caller may not include one.
     let reason: string | null = null;
     try {
-      const body = await request.json();
-      reason = body?.reason || null;
+      const raw = await request.json();
+      const parsed = deleteAccountSchema.safeParse(raw);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+          { status: 400 }
+        );
+      }
+      reason = parsed.data.reason || null;
     } catch {
-      // No body or invalid JSON — that's fine
+      // No body — proceed without reason
     }
 
     if (actor.type === "model") {

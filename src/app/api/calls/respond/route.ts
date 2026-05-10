@@ -3,6 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateToken } from "@/lib/livekit";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import { z } from "zod";
+
+const respondCallSchema = z.object({
+  sessionId: z.string().uuid(),
+  accept: z.boolean(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,11 +22,14 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
     if (rateLimitResponse) return rateLimitResponse;
 
-    const { sessionId, accept } = await request.json();
-
-    if (!sessionId) {
-      return NextResponse.json({ error: "Session ID required" }, { status: 400 });
+    const parsed = respondCallSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const { sessionId, accept } = parsed.data;
 
     // Get user's actor
     const { data: actor } = await supabase

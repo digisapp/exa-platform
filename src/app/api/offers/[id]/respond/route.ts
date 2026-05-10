@@ -2,8 +2,14 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 const adminClient = createServiceRoleClient();
+
+const respondOfferSchema = z.object({
+  status: z.enum(["accepted", "declined"]),
+  notes: z.string().trim().max(2000).optional().nullable(),
+});
 
 // POST /api/offers/[id]/respond - Model responds to offer (accept/decline)
 export async function POST(
@@ -81,12 +87,14 @@ export async function POST(
       return NextResponse.json({ error: "You were not invited to this offer" }, { status: 403 });
     }
 
-    const body = await request.json();
-    const { status, notes } = body;
-
-    if (!["accepted", "declined"].includes(status)) {
-      return NextResponse.json({ error: "Status must be 'accepted' or 'declined'" }, { status: 400 });
+    const parsed = respondOfferSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const { status, notes } = parsed.data;
 
     // Check if accepting and spots are full
     if (status === "accepted" && offer.spots_filled >= offer.spots) {
