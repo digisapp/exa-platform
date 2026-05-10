@@ -354,25 +354,53 @@ async function createFanAndApplication(
     throw new Error("Failed to create actor record");
   }
 
-  // Create fan profile
-  await adminClient.from("fans")
-    .upsert({
-      id: actorId,
-      user_id: userId,
-      email: email,
-      display_name: displayName,
-      coin_balance: 10,
-      preferred_language: preferredLanguage || "en",
-    } as any, { onConflict: "user_id" });
+  // Create fan profile — but never overwrite an existing balance, and never re-grant
+  // the welcome bonus on retries / re-entries to this codepath.
+  const { data: existingFan } = await adminClient
+    .from("fans")
+    .select("id, coin_balance")
+    .eq("user_id", userId)
+    .maybeSingle();
 
-  // Record welcome bonus
-  await adminClient.from("coin_transactions")
-    .insert({
-      actor_id: actorId,
-      amount: 10,
-      action: "signup_bonus",
-      metadata: { reason: "Welcome bonus for new signup" },
-    });
+  if (existingFan) {
+    // Update non-balance fields only.
+    await adminClient.from("fans")
+      .update({
+        email: email,
+        display_name: displayName,
+        preferred_language: preferredLanguage || "en",
+      } as any)
+      .eq("user_id", userId);
+  } else {
+    await adminClient.from("fans")
+      .insert({
+        id: actorId,
+        user_id: userId,
+        email: email,
+        display_name: displayName,
+        coin_balance: 10,
+        preferred_language: preferredLanguage || "en",
+      } as any);
+  }
+
+  // Record welcome bonus only if not already granted (idempotent on retries).
+  const { data: existingBonus } = await adminClient
+    .from("coin_transactions")
+    .select("id")
+    .eq("actor_id", actorId)
+    .eq("action", "signup_bonus")
+    .limit(1)
+    .maybeSingle();
+
+  if (!existingBonus) {
+    await adminClient.from("coin_transactions")
+      .insert({
+        actor_id: actorId,
+        amount: 10,
+        action: "signup_bonus",
+        metadata: { reason: "Welcome bonus for new signup" },
+      });
+  }
 
   // Check for existing application
   const { data: existingApp } = await adminClient

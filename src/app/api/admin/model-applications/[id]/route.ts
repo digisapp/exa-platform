@@ -106,6 +106,11 @@ export async function PATCH(
             status: "approved",
             claimed_at: new Date().toISOString(),
             ...(application.instagram_username ? { instagram_name: application.instagram_username } : {}),
+            ...(application.date_of_birth
+              ? { dob: application.date_of_birth, date_of_birth: application.date_of_birth }
+              : {}),
+            ...(application.phone ? { phone: application.phone } : {}),
+            ...(application.height ? { height: application.height } : {}),
           }).eq("id", existingModel.id),
           adminClient.from("actors").update({ type: "model" }).eq("user_id", application.user_id).select("id").single(),
         ]);
@@ -165,6 +170,10 @@ export async function PATCH(
           first_name: application.display_name,
           instagram_name: application.instagram_username || null,
           tiktok_username: application.tiktok_username || null,
+          dob: application.date_of_birth || null,
+          date_of_birth: application.date_of_birth || null,
+          phone: application.phone || null,
+          height: application.height || null,
           is_approved: true,
           status: "approved",
           show_location: true,

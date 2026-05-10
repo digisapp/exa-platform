@@ -61,6 +61,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Message too long (max 1600 characters)" }, { status: 400 });
     }
 
+    // Honor sms_opt_out — drop opted-out recipients before sending.
+    // Lookup is best-effort by both model_id (when provided) and phone number,
+    // since admin UIs may build the list from either source.
+    const optedOutIds = new Set<string>();
+    const optedOutPhones = new Set<string>();
+    {
+      const idsToCheck = (modelIds || []).filter(Boolean);
+      const phonesToCheck = phoneNumbers.filter(Boolean);
+
+      const checks: Promise<any>[] = [];
+      if (idsToCheck.length) {
+        checks.push(
+          (supabase.from("models") as any)
+            .select("id, phone")
+            .in("id", idsToCheck)
+            .eq("sms_opt_out", true)
+        );
+      }
+      if (phonesToCheck.length) {
+        checks.push(
+          (supabase.from("models") as any)
+            .select("id, phone")
+            .in("phone", phonesToCheck)
+            .eq("sms_opt_out", true)
+        );
+      }
+      const checkResults = await Promise.all(checks);
+      for (const r of checkResults) {
+        for (const row of (r?.data || []) as Array<{ id: string; phone: string | null }>) {
+          if (row.id) optedOutIds.add(row.id);
+          if (row.phone) optedOutPhones.add(row.phone);
+        }
+      }
+    }
+
     // Initialize Twilio client
     const client = twilio(accountSid, authToken);
 
@@ -68,6 +103,7 @@ export async function POST(request: NextRequest) {
     const results = {
       sent: 0,
       failed: 0,
+      skippedOptOut: 0,
       errors: [] as string[],
     };
 
@@ -89,6 +125,12 @@ export async function POST(request: NextRequest) {
     for (let i = 0; i < phoneNumbers.length; i++) {
       const phone = phoneNumbers[i];
       const modelId = modelIds?.[i];
+
+      // Skip opted-out recipients (TCPA compliance)
+      if ((modelId && optedOutIds.has(modelId)) || optedOutPhones.has(phone)) {
+        results.skippedOptOut++;
+        continue;
+      }
 
       try {
         // Normalize phone number
@@ -154,6 +196,7 @@ export async function POST(request: NextRequest) {
       success: true,
       sent: results.sent,
       failed: results.failed,
+      skippedOptOut: results.skippedOptOut,
       errors: results.errors.slice(0, 10), // Limit errors returned
     });
   } catch (error) {

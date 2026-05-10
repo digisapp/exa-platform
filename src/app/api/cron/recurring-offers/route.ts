@@ -2,6 +2,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendOfferReceivedEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
+import { listUserEmailsByIds } from "@/lib/auth/list-user-emails";
 
 const adminClient: any = createServiceRoleClient();
 
@@ -158,12 +159,10 @@ export async function GET(request: NextRequest) {
             .in("id", modelIds);
 
           if (models && models.length > 0) {
-            // Get user emails
-            const userIds = models.map((m: any) => m.user_id);
-            const { data: users } = await adminClient.auth.admin.listUsers();
-            const userEmails = new Map<string, string>(
-              users?.users?.filter((u: any) => userIds.includes(u.id)).map((u: any) => [u.id, u.email]) || []
-            );
+            // Get user emails (paginated — listUsers defaults to 50/page and silently
+            // truncates without explicit pagination)
+            const userIds: string[] = models.map((m: any) => m.user_id).filter(Boolean);
+            const userEmails = await listUserEmailsByIds(adminClient as any, userIds);
 
             // Build location string
             const locationParts = [offer.location_name, offer.location_city, offer.location_state].filter(Boolean);
