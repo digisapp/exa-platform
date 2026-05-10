@@ -2,7 +2,13 @@
  * Structured Logger
  * Provides consistent logging with levels, context, and production-safe output.
  * In production, debug/info logs are suppressed unless LOG_LEVEL is set.
+ *
+ * When SENTRY_DSN / NEXT_PUBLIC_SENTRY_DSN is configured, error- and warn-level
+ * calls also forward to Sentry. The Sentry SDK no-ops gracefully if no DSN is
+ * set, so this code is safe to ship before the Sentry project exists.
  */
+
+import * as Sentry from "@sentry/nextjs";
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -51,6 +57,10 @@ export const logger = {
     if (shouldLog("warn")) {
       console.warn(formatMessage("warn", message, context));
     }
+    Sentry.captureMessage(message, {
+      level: "warning",
+      extra: context,
+    });
   },
 
   error(message: string, error?: unknown, context?: Record<string, unknown>) {
@@ -63,6 +73,17 @@ export const logger = {
         errorContext.error = error;
       }
       console.error(formatMessage("error", message, errorContext));
+    }
+
+    if (error instanceof Error) {
+      Sentry.captureException(error, {
+        extra: { message, ...context },
+      });
+    } else {
+      Sentry.captureMessage(message, {
+        level: "error",
+        extra: { error, ...context },
+      });
     }
   },
 };

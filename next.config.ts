@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
@@ -162,4 +163,24 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withBundleAnalyzer(nextConfig);
+export default withSentryConfig(withBundleAnalyzer(nextConfig), {
+  // Suppress Sentry CLI logs during build.
+  silent: true,
+
+  // Org/project + auth token only matter when uploading source maps. If
+  // SENTRY_AUTH_TOKEN is unset (e.g. local dev, or before the Sentry project
+  // is created), the wrapper no-ops on upload steps and the build still
+  // succeeds. Wire these via Vercel env once you have a Sentry project.
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Source maps: hide from public bundles after upload (delete after build).
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+
+  // Suppress runtime Sentry SDK logger output in production.
+  disableLogger: true,
+  widenClientFileUpload: true,
+});
