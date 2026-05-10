@@ -12,18 +12,30 @@ export default async function AdminLayout({
 }) {
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  let user: { id: string; email?: string } | null = null;
+  let actor: { id: string; type: string } | null = null;
+
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (err) {
+    console.error("AdminLayout: getUser threw", err);
+  }
 
   if (!user) {
     redirect("/signin");
   }
 
-  // Check if admin
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("id, type")
-    .eq("user_id", user.id)
-    .single() as { data: { id: string; type: string } | null };
+  try {
+    const { data } = await supabase
+      .from("actors")
+      .select("id, type")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string; type: string } | null };
+    actor = data;
+  } catch (err) {
+    console.error("AdminLayout: actor lookup threw", err);
+  }
 
   if (!actor || actor.type !== "admin") {
     redirect("/dashboard");

@@ -157,10 +157,15 @@ export default function AdminGigsPage() {
 
   async function loadGigs() {
     setLoading(true);
-    const { data } = await (supabase
+    const { data, error } = await (supabase
       .from("gigs") as any)
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) {
+      console.error("Failed to load gigs:", error);
+      toast.error("Failed to load gigs");
+    }
     setGigs(data || []);
     setLoading(false);
   }
@@ -292,10 +297,16 @@ export default function AdminGigsPage() {
 
     setApplications(apps);
 
-    // Load badge status for this gig's event
-    const gig = gigs.find(g => g.id === gigId);
-    if (gig?.event_id) {
-      await loadBadgeStatus(gig.event_id, data || []);
+    // Load badge status for this gig's event. Query event_id directly so we
+    // don't rely on the `gigs` closure, which may be empty if the user
+    // selected a gig before loadGigs resolved.
+    const { data: gigRow } = await (supabase
+      .from("gigs") as any)
+      .select("event_id")
+      .eq("id", gigId)
+      .single();
+    if (gigRow?.event_id) {
+      await loadBadgeStatus(gigRow.event_id, data || []);
     } else {
       setModelBadges(new Set());
     }

@@ -16,7 +16,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/sponsors/miami-swim-week', request.url), 301)
   }
 
-  return await updateSession(request)
+  try {
+    return await updateSession(request)
+  } catch (err) {
+    console.error('middleware: updateSession threw', err)
+    // Don't 503 the request just because Supabase had a blip — let the
+    // request through and let server components / RLS enforce auth.
+    return NextResponse.next({ request: { headers: request.headers } })
+  }
 }
 
 export const config = {

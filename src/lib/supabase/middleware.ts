@@ -101,37 +101,48 @@ export async function updateSession(request: NextRequest) {
   )
 
   // IMPORTANT: Do not remove this - it refreshes the auth token
-  const { data: { user }, error } = await supabase.auth.getUser()
+  let user: { id: string } | null = null
+  let getUserError: unknown = null
+  try {
+    const result = await supabase.auth.getUser()
+    user = result.data.user
+    getUserError = result.error
+  } catch (err) {
+    // Network/Supabase blip — fall through with a null user. Protected routes
+    // below will redirect to signin instead of throwing a 503.
+    getUserError = err
+    console.error('middleware: getUser threw', err)
+  }
 
   // If there's an auth error but we have cookies, try to recover
   // This can happen when returning from external sites like Stripe
-  if (error && !user) {
-    // Check if we have auth cookies - if so, the session might just need refresh
+  if (getUserError && !user) {
     const hasAuthCookies = request.cookies.getAll().some(c =>
       c.name.includes('auth-token') || c.name.includes('sb-')
     )
 
     if (hasAuthCookies) {
-      // Try refreshing the session
-      const { data: { session } } = await supabase.auth.refreshSession()
-      if (session?.user) {
-        // Session recovered, continue with the user
-        const recoveredUser = session.user
+      try {
+        const { data: { session } } = await supabase.auth.refreshSession()
+        if (session?.user) {
+          const recoveredUser = session.user
 
-        // Check admin routes
-        if (request.nextUrl.pathname.startsWith('/admin')) {
-          const { data: actor } = await supabase
-            .from('actors')
-            .select('type, user_id')
-            .eq('user_id', recoveredUser.id)
-            .single()
+          if (request.nextUrl.pathname.startsWith('/admin')) {
+            const { data: actor } = await supabase
+              .from('actors')
+              .select('type, user_id')
+              .eq('user_id', recoveredUser.id)
+              .single()
 
-          if (actor?.type !== 'admin' || actor?.user_id !== recoveredUser.id) {
-            return NextResponse.redirect(new URL('/dashboard', request.url))
+            if (actor?.type !== 'admin' || actor?.user_id !== recoveredUser.id) {
+              return NextResponse.redirect(new URL('/dashboard', request.url))
+            }
           }
-        }
 
-        return response
+          return response
+        }
+      } catch (err) {
+        console.error('middleware: refreshSession threw', err)
       }
     }
   }
@@ -155,12 +166,16 @@ export async function updateSession(request: NextRequest) {
     (user && MODEL_APPROVED_PATHS.some(path => request.nextUrl.pathname.startsWith(path)))
 
   if (user && needsActor) {
-    const { data: actor } = await supabase
-      .from('actors')
-      .select('type, user_id')
-      .eq('user_id', user.id)
-      .single()
-    cachedActor = actor
+    try {
+      const { data: actor } = await supabase
+        .from('actors')
+        .select('type, user_id')
+        .eq('user_id', user.id)
+        .single()
+      cachedActor = actor
+    } catch (err) {
+      console.error('middleware: actor lookup threw', err)
+    }
   }
 
   // Check admin routes require admin actor type
@@ -176,22 +191,23 @@ export async function updateSession(request: NextRequest) {
   )
 
   if (user && isModelApprovedPath) {
-    // Don't redirect if already on pending-approval page
     if (request.nextUrl.pathname === '/pending-approval') {
       return response
     }
 
-    // Only check for models (fans and brands have different flows)
     if (cachedActor?.type === 'model') {
-      const { data: model } = await supabase
-        .from('models')
-        .select('is_approved')
-        .eq('user_id', user.id)
-        .single()
+      try {
+        const { data: model } = await supabase
+          .from('models')
+          .select('is_approved')
+          .eq('user_id', user.id)
+          .single()
 
-      // Redirect unapproved models to pending page
-      if (model && !model.is_approved) {
-        return NextResponse.redirect(new URL('/pending-approval', request.url))
+        if (model && !model.is_approved) {
+          return NextResponse.redirect(new URL('/pending-approval', request.url))
+        }
+      } catch (err) {
+        console.error('middleware: model approval lookup threw', err)
       }
     }
   }
