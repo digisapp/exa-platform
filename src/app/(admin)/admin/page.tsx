@@ -12,7 +12,6 @@ import {
   Banknote,
   AtSign,
   Send,
-  Calendar,
   GraduationCap,
   Phone,
   Flame,
@@ -125,7 +124,6 @@ export default async function AdminPage() {
     },
     { href: "/admin/crm?tab=brands", label: "Brand Outreach", icon: Megaphone, color: "pink" },
     { href: "/admin/offers", label: "Brand Offers", icon: Send, color: "cyan" },
-    { href: "/admin/calendar", label: "Calendar", icon: Calendar, color: "orange" },
     { href: "/admin/workshops", label: "Workshops", icon: GraduationCap, color: "rose" },
     {
       href: "/admin/crm",
@@ -140,7 +138,6 @@ export default async function AdminPage() {
     { href: "/admin/stickers", label: "EXA Stickers", icon: Sparkles, color: "violet", featured: true },
     { href: "/admin/messages", label: "Messages", icon: MessageCircle, color: "indigo" },
     { href: "/admin/email", label: "Email", icon: Mail, color: "blue" },
-    { href: "/admin/studio", label: "Studio", icon: Camera, color: "teal" },
     { href: "/admin/media-hub", label: "Media Hub", icon: FolderOpen, color: "amber" },
     { href: "/admin/comp-card-leads", label: "Comp Cards", icon: Camera, color: "rose" },
     { href: "/admin/print-queue", label: "Print Queue", icon: Printer, color: "purple" },

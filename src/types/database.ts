@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       academy_applications: {
@@ -8449,93 +8474,6 @@ export type Database = {
           },
         ]
       }
-      studio_bookings: {
-        Row: {
-          cancelled_at: string | null
-          cancelled_by: string | null
-          created_at: string
-          id: string
-          model_id: string
-          notes: string | null
-          slot_id: string
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          cancelled_at?: string | null
-          cancelled_by?: string | null
-          created_at?: string
-          id?: string
-          model_id: string
-          notes?: string | null
-          slot_id: string
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          cancelled_at?: string | null
-          cancelled_by?: string | null
-          created_at?: string
-          id?: string
-          model_id?: string
-          notes?: string | null
-          slot_id?: string
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "studio_bookings_model_id_fkey"
-            columns: ["model_id"]
-            isOneToOne: false
-            referencedRelation: "models"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "studio_bookings_slot_id_fkey"
-            columns: ["slot_id"]
-            isOneToOne: false
-            referencedRelation: "studio_slots"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      studio_slots: {
-        Row: {
-          created_at: string
-          date: string
-          end_time: string
-          id: string
-          is_available: boolean
-          max_bookings: number
-          notes: string | null
-          start_time: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          date: string
-          end_time: string
-          id?: string
-          is_available?: boolean
-          max_bookings?: number
-          notes?: string | null
-          start_time: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          end_time?: string
-          id?: string
-          is_available?: boolean
-          max_bookings?: number
-          notes?: string | null
-          start_time?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       swimcrown_competitions: {
         Row: {
           created_at: string
@@ -9880,12 +9818,12 @@ export type Database = {
         Returns: boolean
       }
       admin_list_conversations_with_messages: {
-        Args: { p_offset: number; p_limit: number }
+        Args: { p_limit: number; p_offset: number }
         Returns: {
-          id: string
           created_at: string
-          updated_at: string
+          id: string
           total_count: number
+          updated_at: string
         }[]
       }
       approve_model_verification: {
@@ -10895,6 +10833,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       booking_status: [
