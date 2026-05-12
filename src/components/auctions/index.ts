@@ -4,3 +4,4 @@ export { BidHistory } from "./BidHistory";
 export { CountdownTimer } from "./CountdownTimer";
 export { WatchlistButton } from "./WatchlistButton";
 export { ShareButton } from "./ShareButton";
+export { CoverImageUploader } from "./CoverImageUploader";

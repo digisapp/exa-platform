@@ -29,15 +29,16 @@ export function AuctionCard({ auction, isWatching, onAuctionEnd, myBid }: Auctio
   const currentPrice = auction.current_bid || auction.starting_price;
   const usdPrice = coinsToFanUsd(currentPrice);
   const hasEnded = new Date(auction.ends_at) <= new Date() || auction.status !== "active";
+  const cardImage = auction.cover_image_url || auction.model?.profile_image_url || null;
 
   return (
     <Link href={`/bids/${auction.id}`}>
       <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
         {/* Portrait Image with Overlay */}
         <div className="aspect-[3/4] relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
-          {auction.model?.profile_image_url ? (
+          {cardImage ? (
             <Image
-              src={auction.model.profile_image_url}
+              src={cardImage}
               alt={auction.title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"

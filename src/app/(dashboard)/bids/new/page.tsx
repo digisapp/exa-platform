@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CoverImageUploader } from "@/components/auctions";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import {
   Gavel,
@@ -171,6 +172,7 @@ export default function NewBidPage() {
   const [duration, setDuration] = useState("7");
   const [category, setCategory] = useState<AuctionCategory>("other");
   const [allowAutoBid, setAllowAutoBid] = useState(true);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -274,6 +276,7 @@ export default function NewBidPage() {
           title: title.trim(),
           description: description.trim() || undefined,
           deliverables: deliverables.trim() || undefined,
+          cover_image_url: coverImageUrl || undefined,
           category,
           starting_price: parsedStartingPrice,
           reserve_price: parsedReservePrice || undefined,
@@ -431,6 +434,10 @@ export default function NewBidPage() {
                 placeholder="List what the winner will receive..."
                 className="mt-1.5 min-h-[80px] bg-background/50 border-violet-500/20 focus:border-violet-500/50"
               />
+            </div>
+
+            <div className="pt-2 border-t border-violet-500/10">
+              <CoverImageUploader value={coverImageUrl} onChange={setCoverImageUrl} disabled={submitting} />
             </div>
 
           </div>

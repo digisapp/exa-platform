@@ -110,6 +110,48 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Auction covers: strip EXIF + resize, but don't create media_assets/content_items so the
+    // cover stays scoped to the auction and doesn't show up in the model's public portfolio.
+    if (uploadType === "auction-cover") {
+      let coverBuffer: Buffer | Uint8Array = inputBuffer;
+      let coverContentType = file.type;
+      if (isProcessableImage(file.type) && file.type !== "image/gif") {
+        try {
+          const processed = await processImage(inputBuffer, {
+            maxWidth: 1440,
+            maxHeight: 2560,
+            quality: 85,
+          });
+          coverBuffer = processed.buffer;
+          coverContentType = processed.contentType;
+        } catch (processError) {
+          logger.error("Auction cover processing error, uploading original", processError);
+        }
+      }
+
+      const coverStorageClient = createServiceRoleClient();
+      const { error: uploadError } = await coverStorageClient.storage
+        .from("portfolio")
+        .upload(filename, coverBuffer, {
+          contentType: coverContentType,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        logger.error("[Upload API] Auction cover upload error", uploadError);
+        return NextResponse.json(
+          { error: `Upload failed: ${uploadError.message}` },
+          { status: 500 }
+        );
+      }
+
+      const { data: { publicUrl } } = coverStorageClient.storage
+        .from("portfolio")
+        .getPublicUrl(filename);
+
+      return NextResponse.json({ success: true, url: publicUrl });
+    }
+
     // Process image to strip EXIF data (contains GPS, camera info, etc.)
     let processedBuffer: Buffer | Uint8Array = inputBuffer;
     let finalContentType = file.type;

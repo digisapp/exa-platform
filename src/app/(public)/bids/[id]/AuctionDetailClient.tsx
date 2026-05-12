@@ -20,6 +20,7 @@ import {
   Clock,
   Trophy,
   Loader2,
+  Radio,
 } from "lucide-react";
 import type { AuctionWithDetails, BidWithBidder } from "@/types/auctions";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -169,7 +170,18 @@ export function AuctionDetailClient({
             </span>
           )}
         </div>
-        <ShareButton title={auction.title} className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 transition-all shadow-[0_0_14px_rgba(236,72,153,0.4)]" />
+        <div className="shrink-0 flex items-center gap-2">
+          {!hasEnded && (
+            <Link
+              href={`/bids/${auction.id}/live`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-black bg-gradient-to-r from-amber-300 to-yellow-300 hover:from-amber-200 hover:to-yellow-200 transition-all shadow-[0_0_18px_rgba(251,191,36,0.5)] active:scale-95"
+            >
+              <Radio className="h-3.5 w-3.5" />
+              Go Live
+            </Link>
+          )}
+          <ShareButton title={auction.title} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 transition-all shadow-[0_0_14px_rgba(236,72,153,0.4)]" />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

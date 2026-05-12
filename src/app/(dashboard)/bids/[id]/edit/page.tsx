@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CoverImageUploader } from "@/components/auctions";
 import {
   Gavel,
   ArrowLeft,
@@ -47,6 +48,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
   const [category, setCategory] = useState<AuctionCategory>("other");
   const [allowAutoBid, setAllowAutoBid] = useState(true);
   const [antiSnipeMinutes, setAntiSnipeMinutes] = useState(2);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const loadAuction = async () => {
@@ -104,6 +106,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
       setBuyNowPrice(auction.buy_now_price?.toString() || "");
       setAllowAutoBid(auction.allow_auto_bid ?? true);
       setAntiSnipeMinutes(auction.anti_snipe_minutes ?? 2);
+      setCoverImageUrl(auction.cover_image_url ?? null);
       // Duration is always counted from publish time — default to 7 days
 
       setLoading(false);
@@ -151,6 +154,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
           title: title.trim(),
           description: description.trim() || undefined,
           deliverables: deliverables.trim() || undefined,
+          cover_image_url: coverImageUrl,
           category,
           starting_price: parsedStartingPrice,
           reserve_price: parsedReservePrice,
@@ -277,6 +281,10 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
                 placeholder="List what the winner will receive..."
                 className="mt-1.5 min-h-[80px] bg-background/50 border-violet-500/20 focus:border-violet-500/50"
               />
+            </div>
+
+            <div className="pt-2 border-t border-violet-500/10">
+              <CoverImageUploader value={coverImageUrl} onChange={setCoverImageUrl} disabled={submitting} />
             </div>
 
             <div>
