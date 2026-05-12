@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
     const { workshopId, quantity: requestedQuantity, buyerEmail, buyerName, buyerPhone, paymentType } = parsed.data;
     const quantity = paymentType === "installment" ? 1 : requestedQuantity;
 
-    // Get workshop info
-    const { data: workshop, error: workshopError } = await adminClient
+    // Get workshop info — cast because payment_plan_* columns not yet in generated types
+    const { data: workshop, error: workshopError } = await (adminClient as any)
       .from("workshops")
       .select("*")
       .eq("id", workshopId)
@@ -57,6 +57,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const isInstallment = paymentType === "installment";
+
+    // Validate installment plan is configured for this workshop
+    if (isInstallment) {
+      if (!workshop.payment_plan_enabled || !workshop.payment_plan_installments || !workshop.payment_plan_amount_cents) {
+        return NextResponse.json(
+          { error: "This workshop does not offer a payment plan" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Check availability
     if (workshop.spots_available !== null) {
       const spotsLeft = workshop.spots_available - (workshop.spots_sold ?? 0);
@@ -70,10 +82,10 @@ export async function POST(request: NextRequest) {
 
     // Calculate totals
     const unitPriceCents = workshop.price_cents;
-    const isInstallment = paymentType === "installment";
-    // Coaching program: $125/mo × 3 = $375 plan, $350 full — standard workshop: $125/mo × 3 = $375 plan
-    const installmentAmountCents = 12500; // $125 per month for all workshops
-    const installmentTotalCents = 37500;  // $375 total for 3-month plan
+    const installmentsTotal: number = isInstallment ? workshop.payment_plan_installments : 1;
+    const installmentAmountCents: number = isInstallment ? workshop.payment_plan_amount_cents : unitPriceCents;
+    const installmentIntervalDays: number = workshop.payment_plan_interval_days ?? 30;
+    const installmentTotalCents = installmentAmountCents * installmentsTotal;
     const totalPriceCents = isInstallment ? installmentTotalCents : unitPriceCents * quantity;
 
     // Format date for product description
@@ -110,10 +122,10 @@ export async function POST(request: NextRequest) {
             currency: "usd",
             product_data: {
               name: isInstallment
-                ? `${workshop.title} — Installment 1 of 3`
+                ? `${workshop.title} — Installment 1 of ${installmentsTotal}`
                 : workshop.title,
               description: isInstallment
-                ? `Payment plan: 3 x $125 — ${dateStr}${workshop.location_city ? ` — ${workshop.location_city}, ${workshop.location_state}` : ""}`
+                ? `Payment plan: ${installmentsTotal} x $${(installmentAmountCents / 100).toFixed(2)} — ${dateStr}${workshop.location_city ? ` — ${workshop.location_city}, ${workshop.location_state}` : ""}`
                 : `${quantity} spot${quantity > 1 ? "s" : ""} - ${dateStr}${workshop.location_city ? ` - ${workshop.location_city}, ${workshop.location_state}` : ""}`,
               images: workshop.cover_image_url ? [workshop.cover_image_url] : [],
             },
@@ -137,8 +149,9 @@ export async function POST(request: NextRequest) {
         payment_type: paymentType,
         ...(isInstallment && {
           installment_number: "1",
-          installments_total: "3",
+          installments_total: installmentsTotal.toString(),
           installment_amount: installmentAmountCents.toString(),
+          installment_interval_days: installmentIntervalDays.toString(),
           stripe_customer_id: stripeCustomerId || "",
         }),
       },
@@ -149,7 +162,7 @@ export async function POST(request: NextRequest) {
           payment_type: paymentType,
           ...(isInstallment && {
             installment_number: "1",
-            installments_total: "3",
+            installments_total: installmentsTotal.toString(),
           }),
         },
         ...(isInstallment && {
@@ -175,7 +188,7 @@ export async function POST(request: NextRequest) {
         total_price_cents: totalPriceCents,
         status: "pending",
         payment_type: paymentType,
-        installments_total: isInstallment ? 3 : 1,
+        installments_total: installmentsTotal,
         installments_paid: 0,
       });
 

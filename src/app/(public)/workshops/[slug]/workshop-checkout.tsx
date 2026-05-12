@@ -24,6 +24,11 @@ interface WorkshopCheckoutProps {
     originalPriceCents: number | null;
     spotsLeft: number | null;
     isSoldOut: boolean;
+    paymentPlan: {
+      installments: number;
+      amountCents: number;
+      intervalDays: number;
+    } | null;
   };
 }
 
@@ -36,9 +41,11 @@ export function WorkshopCheckout({ workshop }: WorkshopCheckoutProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Workshop installment pricing
-  const installmentAmount = 12500; // $125
-  const installmentTotal = 37500;  // $375
+  const plan = workshop.paymentPlan;
+  const installmentAmount = plan?.amountCents ?? 0;
+  const installmentCount = plan?.installments ?? 0;
+  const installmentTotal = installmentAmount * installmentCount;
+  const intervalDays = plan?.intervalDays ?? 30;
 
   const handleQuantityChange = (delta: number) => {
     if (paymentType === "installment") return;
@@ -132,48 +139,56 @@ export function WorkshopCheckout({ workshop }: WorkshopCheckoutProps) {
       <CardContent className="space-y-4">
 
         {/* Payment Type Toggle */}
-        <div className="space-y-2">
-          <Label className="text-sm text-muted-foreground">Payment Option</Label>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handlePaymentTypeChange("full")}
-              className={`p-3 rounded-lg border-2 text-left transition-colors ${
-                paymentType === "full"
-                  ? "border-pink-500 bg-pink-500/10"
-                  : "border-muted hover:border-muted-foreground/50"
-              }`}
-            >
-              <div className="font-semibold text-sm">Pay in Full</div>
-              <div className="text-lg font-bold text-pink-500">
-                ${(workshop.priceCents / 100).toFixed(0)}
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handlePaymentTypeChange("installment")}
-              className={`p-3 rounded-lg border-2 text-left transition-colors ${
-                paymentType === "installment"
-                  ? "border-pink-500 bg-pink-500/10"
-                  : "border-muted hover:border-muted-foreground/50"
-              }`}
-            >
-              <div className="font-semibold text-sm flex items-center gap-1">
-                <CalendarClock className="h-3.5 w-3.5" />
-                Payment Plan
-              </div>
-              <div className="text-lg font-bold text-pink-500">3 × $125</div>
-              <div className="text-xs text-muted-foreground">$375 total</div>
-            </button>
+        {plan && (
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Payment Option</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handlePaymentTypeChange("full")}
+                className={`p-3 rounded-lg border-2 text-left transition-colors ${
+                  paymentType === "full"
+                    ? "border-pink-500 bg-pink-500/10"
+                    : "border-muted hover:border-muted-foreground/50"
+                }`}
+              >
+                <div className="font-semibold text-sm">Pay in Full</div>
+                <div className="text-lg font-bold text-pink-500">
+                  ${(workshop.priceCents / 100).toFixed(0)}
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePaymentTypeChange("installment")}
+                className={`p-3 rounded-lg border-2 text-left transition-colors ${
+                  paymentType === "installment"
+                    ? "border-pink-500 bg-pink-500/10"
+                    : "border-muted hover:border-muted-foreground/50"
+                }`}
+              >
+                <div className="font-semibold text-sm flex items-center gap-1">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  Payment Plan
+                </div>
+                <div className="text-lg font-bold text-pink-500">{installmentCount} × ${(installmentAmount / 100).toFixed(0)}</div>
+                <div className="text-xs text-muted-foreground">${(installmentTotal / 100).toFixed(0)} total</div>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        {paymentType === "installment" && (
+        {paymentType === "installment" && plan && (
           <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 space-y-1">
             <p className="font-medium text-foreground">How it works:</p>
-            <p>1st payment of $125 due today</p>
-            <p>2nd payment of $125 due in 30 days</p>
-            <p>3rd payment of $125 due in 60 days</p>
+            {Array.from({ length: installmentCount }).map((_, i) => {
+              const ordinal = i === 0 ? "1st" : i === 1 ? "2nd" : i === 2 ? "3rd" : `${i + 1}th`;
+              const when = i === 0 ? "today" : `in ${i * intervalDays} days`;
+              return (
+                <p key={i}>
+                  {ordinal} payment of ${(installmentAmount / 100).toFixed(0)} due {when}
+                </p>
+              );
+            })}
           </div>
         )}
 
@@ -277,7 +292,7 @@ export function WorkshopCheckout({ workshop }: WorkshopCheckoutProps) {
                 <span className="text-pink-500">${(installmentAmount / 100).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Total (3 payments)</span>
+                <span>Total ({installmentCount} payments)</span>
                 <span>${(installmentTotal / 100).toFixed(2)}</span>
               </div>
             </>
@@ -310,7 +325,7 @@ export function WorkshopCheckout({ workshop }: WorkshopCheckoutProps) {
             ) : (
               <>
                 <CreditCard className="h-4 w-4 mr-2" />
-                {paymentType === "installment" ? "Pay $125 — First Installment" : "Register Now"}
+                {paymentType === "installment" ? `Pay $${(installmentAmount / 100).toFixed(0)} — First Installment` : "Register Now"}
               </>
             )}
           </Button>

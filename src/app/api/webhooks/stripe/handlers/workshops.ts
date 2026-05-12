@@ -10,6 +10,16 @@ export async function handleWorkshopRegistration(session: Stripe.Checkout.Sessio
   const buyerName = session.metadata?.buyer_name;
   const paymentType = session.metadata?.payment_type || "full";
   const isInstallment = paymentType === "installment";
+  const installmentsTotal = isInstallment
+    ? parseInt(session.metadata?.installments_total || "1", 10)
+    : 1;
+  const installmentAmountCents = isInstallment
+    ? parseInt(session.metadata?.installment_amount || "0", 10)
+    : 0;
+  const installmentIntervalDays = isInstallment
+    ? parseInt(session.metadata?.installment_interval_days || "30", 10)
+    : 30;
+  const installmentPlanTotal = installmentAmountCents * installmentsTotal;
 
   if (!workshopId || !buyerEmail) {
     logger.error("Missing workshop registration metadata", undefined, { sessionId: session.id });
@@ -46,7 +56,7 @@ export async function handleWorkshopRegistration(session: Stripe.Checkout.Sessio
     updateData.stripe_customer_id = stripeCustomerId;
     updateData.installments_paid = 1;
     updateData.payment_type = "installment";
-    updateData.installments_total = 3;
+    updateData.installments_total = installmentsTotal;
   }
 
   const { data: registration, error: updateError } = await supabaseAdmin
@@ -59,7 +69,6 @@ export async function handleWorkshopRegistration(session: Stripe.Checkout.Sessio
   if (updateError) {
     logger.error("Error updating workshop registration", updateError);
     // Try to create the registration if it doesn't exist
-    const installmentAmountCents = 12500;
     const { data: inserted, error: insertError } = await supabaseAdmin
       .from("workshop_registrations")
       .insert({
@@ -73,12 +82,12 @@ export async function handleWorkshopRegistration(session: Stripe.Checkout.Sessio
         unit_price_cents: isInstallment
           ? installmentAmountCents
           : Math.round((session.amount_total || 0) / quantity),
-        total_price_cents: isInstallment ? 37500 : (session.amount_total || 0),
+        total_price_cents: isInstallment ? installmentPlanTotal : (session.amount_total || 0),
         status: "completed",
         completed_at: new Date().toISOString(),
         payment_type: paymentType,
         stripe_customer_id: stripeCustomerId,
-        installments_total: isInstallment ? 3 : 1,
+        installments_total: installmentsTotal,
         installments_paid: isInstallment ? 1 : 0,
       })
       .select("id")
@@ -91,14 +100,14 @@ export async function handleWorkshopRegistration(session: Stripe.Checkout.Sessio
 
     // Create installment records for newly inserted registration
     if (isInstallment && inserted?.id) {
-      await createInstallmentRecords(inserted.id, paymentIntentId ?? null, supabaseAdmin);
+      await createInstallmentRecords(inserted.id, paymentIntentId ?? null, installmentsTotal, installmentAmountCents, installmentIntervalDays, supabaseAdmin);
     }
     return;
   }
 
   // Create installment records for existing registration
   if (isInstallment && registration?.id) {
-    await createInstallmentRecords(registration.id, paymentIntentId ?? null, supabaseAdmin);
+    await createInstallmentRecords(registration.id, paymentIntentId ?? null, installmentsTotal, installmentAmountCents, installmentIntervalDays, supabaseAdmin);
   }
 
   // Send workshop confirmation email (non-blocking)
@@ -129,7 +138,7 @@ export async function handleWorkshopRegistration(session: Stripe.Checkout.Sessio
       ].filter(Boolean);
       const locationFormatted = locationParts.length > 0 ? locationParts.join(", ") : "TBA";
 
-      const totalCents = isInstallment ? 37500 : (session.amount_total || 0);
+      const totalCents = isInstallment ? installmentPlanTotal : (session.amount_total || 0);
 
       sendWorkshopRegistrationConfirmationEmail({
         to: buyerEmail,
@@ -149,41 +158,29 @@ export async function handleWorkshopRegistration(session: Stripe.Checkout.Sessio
 export async function createInstallmentRecords(
   registrationId: string,
   firstPaymentIntentId: string | null,
+  installmentsTotal: number,
+  installmentAmountCents: number,
+  intervalDays: number,
   supabaseAdmin: SupabaseClient
 ) {
-  const installmentAmountCents = 12500;
   const now = new Date();
-  const dueDates = [
-    now.toISOString().split("T")[0], // Today (already paid)
-    new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // +30 days
-    new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // +60 days
-  ];
+  const dayMs = 24 * 60 * 60 * 1000;
 
-  const installments = [
-    {
+  const installments = Array.from({ length: installmentsTotal }, (_, i) => {
+    const dueDate = new Date(now.getTime() + i * intervalDays * dayMs).toISOString().split("T")[0];
+    const isFirst = i === 0;
+    return {
       registration_id: registrationId,
-      installment_number: 1,
+      installment_number: i + 1,
       amount_cents: installmentAmountCents,
-      status: "completed",
-      due_date: dueDates[0],
-      stripe_payment_intent_id: firstPaymentIntentId,
-      paid_at: now.toISOString(),
-    },
-    {
-      registration_id: registrationId,
-      installment_number: 2,
-      amount_cents: installmentAmountCents,
-      status: "pending",
-      due_date: dueDates[1],
-    },
-    {
-      registration_id: registrationId,
-      installment_number: 3,
-      amount_cents: installmentAmountCents,
-      status: "pending",
-      due_date: dueDates[2],
-    },
-  ];
+      status: isFirst ? "completed" : "pending",
+      due_date: dueDate,
+      ...(isFirst && {
+        stripe_payment_intent_id: firstPaymentIntentId,
+        paid_at: now.toISOString(),
+      }),
+    };
+  });
 
   // workshop_installments is a new table not yet in generated types
   const { error } = await (supabaseAdmin as any)

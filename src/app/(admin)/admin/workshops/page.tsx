@@ -62,6 +62,10 @@ interface Workshop {
   is_featured: boolean;
   meta_title: string | null;
   meta_description: string | null;
+  payment_plan_enabled: boolean;
+  payment_plan_installments: number | null;
+  payment_plan_amount_cents: number | null;
+  payment_plan_interval_days: number;
   created_at: string;
 }
 
@@ -118,6 +122,10 @@ export default function AdminWorkshopsPage() {
     is_featured: false,
     meta_title: "",
     meta_description: "",
+    payment_plan_enabled: false,
+    payment_plan_installments: "",
+    payment_plan_amount: "",
+    payment_plan_interval_days: "30",
   });
 
   const loadWorkshops = useCallback(async () => {
@@ -210,6 +218,10 @@ export default function AdminWorkshopsPage() {
       is_featured: false,
       meta_title: "",
       meta_description: "",
+      payment_plan_enabled: false,
+      payment_plan_installments: "",
+      payment_plan_amount: "",
+      payment_plan_interval_days: "30",
     });
     setEditingWorkshop(null);
   };
@@ -238,6 +250,10 @@ export default function AdminWorkshopsPage() {
       is_featured: workshop.is_featured,
       meta_title: workshop.meta_title || "",
       meta_description: workshop.meta_description || "",
+      payment_plan_enabled: workshop.payment_plan_enabled ?? false,
+      payment_plan_installments: workshop.payment_plan_installments?.toString() || "",
+      payment_plan_amount: workshop.payment_plan_amount_cents ? (workshop.payment_plan_amount_cents / 100).toString() : "",
+      payment_plan_interval_days: workshop.payment_plan_interval_days?.toString() || "30",
     });
     setShowForm(true);
   };
@@ -388,6 +404,16 @@ export default function AdminWorkshopsPage() {
       is_featured: formData.is_featured,
       meta_title: formData.meta_title || null,
       meta_description: formData.meta_description || null,
+      payment_plan_enabled: formData.payment_plan_enabled,
+      payment_plan_installments: formData.payment_plan_enabled && formData.payment_plan_installments
+        ? parseInt(formData.payment_plan_installments)
+        : null,
+      payment_plan_amount_cents: formData.payment_plan_enabled && formData.payment_plan_amount
+        ? Math.round(parseFloat(formData.payment_plan_amount) * 100)
+        : null,
+      payment_plan_interval_days: formData.payment_plan_interval_days
+        ? parseInt(formData.payment_plan_interval_days)
+        : 30,
     };
 
     try {
@@ -698,6 +724,65 @@ export default function AdminWorkshopsPage() {
                 />
               </div>
 
+              {/* Payment Plan Config */}
+              <div className="col-span-2 space-y-3 rounded-lg border border-pink-500/30 bg-pink-500/5 p-4">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="payment_plan_enabled"
+                    checked={formData.payment_plan_enabled}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, payment_plan_enabled: checked }))}
+                  />
+                  <Label htmlFor="payment_plan_enabled" className="cursor-pointer">
+                    Offer installment payment plan
+                  </Label>
+                </div>
+                {formData.payment_plan_enabled && (
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label htmlFor="payment_plan_installments" className="text-xs">Number of Payments</Label>
+                      <Input
+                        id="payment_plan_installments"
+                        type="number"
+                        min="2"
+                        max="12"
+                        value={formData.payment_plan_installments}
+                        onChange={(e) => setFormData(prev => ({ ...prev, payment_plan_installments: e.target.value }))}
+                        placeholder="2"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="payment_plan_amount" className="text-xs">Amount per Payment ($)</Label>
+                      <Input
+                        id="payment_plan_amount"
+                        type="number"
+                        min="1"
+                        step="0.01"
+                        value={formData.payment_plan_amount}
+                        onChange={(e) => setFormData(prev => ({ ...prev, payment_plan_amount: e.target.value }))}
+                        placeholder="175"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="payment_plan_interval_days" className="text-xs">Days Between Payments</Label>
+                      <Input
+                        id="payment_plan_interval_days"
+                        type="number"
+                        min="1"
+                        max="365"
+                        value={formData.payment_plan_interval_days}
+                        onChange={(e) => setFormData(prev => ({ ...prev, payment_plan_interval_days: e.target.value }))}
+                        placeholder="30"
+                      />
+                    </div>
+                    {formData.payment_plan_installments && formData.payment_plan_amount && (
+                      <div className="col-span-3 text-xs text-muted-foreground">
+                        Plan total: {formData.payment_plan_installments} × ${parseFloat(formData.payment_plan_amount || "0").toFixed(2)} = ${(parseInt(formData.payment_plan_installments || "0") * parseFloat(formData.payment_plan_amount || "0")).toFixed(2)}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div>
                 <Label htmlFor="spots_available">Spots Available</Label>
                 <Input
@@ -969,7 +1054,7 @@ export default function AdminWorkshopsPage() {
                           </Badge>
                           {reg.payment_type === "installment" ? (
                             <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-                              Plan {reg.installments_paid || 0}/{reg.installments_total || 3}
+                              Plan {reg.installments_paid || 0}/{reg.installments_total || 1}
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="text-xs">Full</Badge>

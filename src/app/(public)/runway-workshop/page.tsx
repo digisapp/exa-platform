@@ -432,6 +432,15 @@ export default async function RunwayWorkshopPage() {
                     originalPriceCents: workshop.original_price_cents,
                     spotsLeft: spotsLeft,
                     isSoldOut: isSoldOut,
+                    paymentPlan: (workshop as any).payment_plan_enabled
+                      && (workshop as any).payment_plan_installments
+                      && (workshop as any).payment_plan_amount_cents
+                      ? {
+                          installments: (workshop as any).payment_plan_installments,
+                          amountCents: (workshop as any).payment_plan_amount_cents,
+                          intervalDays: (workshop as any).payment_plan_interval_days ?? 30,
+                        }
+                      : null,
                   }}
                 />
               </div>

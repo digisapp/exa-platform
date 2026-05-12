@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
           stripe_customer_id,
           buyer_email,
           buyer_name,
+          installments_total,
           workshop_id,
           workshops!inner (
             title
@@ -86,6 +87,7 @@ export async function GET(request: NextRequest) {
 
         const paymentMethodId = paymentMethods.data[0].id;
         const workshopTitle = (registration as any).workshops?.title || "Workshop";
+        const installmentsTotal = (registration as any).installments_total || 1;
 
         // Create off-session payment intent
         const paymentIntent = await stripe.paymentIntents.create({
@@ -101,7 +103,7 @@ export async function GET(request: NextRequest) {
             registration_id: installment.registration_id,
             installment_number: installment.installment_number.toString(),
           },
-          description: `${workshopTitle} — Installment ${installment.installment_number} of 3`,
+          description: `${workshopTitle} — Installment ${installment.installment_number} of ${installmentsTotal}`,
         });
 
         if (paymentIntent.status === "succeeded") {

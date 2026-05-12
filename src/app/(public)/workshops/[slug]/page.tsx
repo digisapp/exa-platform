@@ -47,6 +47,10 @@ interface Workshop {
   status: string;
   meta_title: string | null;
   meta_description: string | null;
+  payment_plan_enabled: boolean | null;
+  payment_plan_installments: number | null;
+  payment_plan_amount_cents: number | null;
+  payment_plan_interval_days: number | null;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -400,6 +404,15 @@ export default async function WorkshopPage({ params }: Props) {
                     originalPriceCents: workshop.original_price_cents,
                     spotsLeft: spotsLeft,
                     isSoldOut: isSoldOut,
+                    paymentPlan: workshop.payment_plan_enabled
+                      && workshop.payment_plan_installments
+                      && workshop.payment_plan_amount_cents
+                      ? {
+                          installments: workshop.payment_plan_installments,
+                          amountCents: workshop.payment_plan_amount_cents,
+                          intervalDays: workshop.payment_plan_interval_days ?? 30,
+                        }
+                      : null,
                   }}
                 />
               </div>
