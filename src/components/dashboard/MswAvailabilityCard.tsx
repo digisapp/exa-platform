@@ -7,6 +7,7 @@ import { Check, Loader2, CalendarCheck } from "lucide-react";
 const MSW_DAYS = [
   { date: "2026-05-26", label: "Tue", full: "May 26" },
   { date: "2026-05-27", label: "Wed", full: "May 27" },
+  { date: "2026-05-28", label: "Thu", full: "May 28" },
   { date: "2026-05-29", label: "Fri", full: "May 29" },
   { date: "2026-05-30", label: "Sat", full: "May 30" },
   { date: "2026-05-31", label: "Sun", full: "May 31" },
@@ -86,7 +87,7 @@ export function MswAvailabilityCard({ gigId }: { gigId: string }) {
       </div>
 
       {/* Day toggles */}
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-6 gap-2">
         {MSW_DAYS.map(({ date, label, full }) => {
           const on = selected.has(date);
           return (

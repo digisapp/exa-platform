@@ -1589,12 +1589,12 @@ export default function AdminShowsPage() {
       {/* ── Availability Grid ───────────────────────────────────────────── */}
       {mainView === "availability" && (() => {
         const MSW_DAYS = [
-          { date: "2026-05-26", label: "Mon 5/26" },
-          { date: "2026-05-27", label: "Tue 5/27" },
-          { date: "2026-05-28", label: "Wed 5/28" },
-          { date: "2026-05-29", label: "Thu 5/29" },
-          { date: "2026-05-30", label: "Fri 5/30" },
-          { date: "2026-05-31", label: "Sat 5/31" },
+          { date: "2026-05-26", label: "Tue 5/26" },
+          { date: "2026-05-27", label: "Wed 5/27" },
+          { date: "2026-05-28", label: "Thu 5/28" },
+          { date: "2026-05-29", label: "Fri 5/29" },
+          { date: "2026-05-30", label: "Sat 5/30" },
+          { date: "2026-05-31", label: "Sun 5/31" },
         ];
         const filteredAvail = availFilterDay === "all"
           ? availModels

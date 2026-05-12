@@ -3731,6 +3731,400 @@ export async function sendNewGigAnnouncementEmail({
   }
 }
 
+export async function sendMswAvailabilityRequestEmail({
+  to,
+  modelName,
+}: {
+  to: string;
+  modelName: string;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const dashboardUrl = `${BASE_URL}/dashboard`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const greeting = modelName ? `Hey ${escapeHtml(modelName)},` : "Hey,";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: "Action needed: Confirm your Miami Swim Week availability",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #111111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(236, 72, 153, 0.15);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 44px 30px; text-align: center;">
+              <p style="margin: 0 0 12px; color: rgba(255,255,255,0.85); font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;">
+                Miami Swim Week 2026
+              </p>
+              <h1 style="margin: 0; color: white; font-size: 30px; font-weight: 800; letter-spacing: -0.5px;">
+                Lock in your dates
+              </h1>
+              <p style="margin: 14px 0 0; color: rgba(255,255,255,0.92); font-size: 15px;">
+                We need to know when you're available
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 18px; color: #ffffff; font-size: 18px; font-weight: 600;">
+                ${greeting}
+              </p>
+              <p style="margin: 0 0 22px; color: #a1a1aa; font-size: 16px; line-height: 1.65;">
+                You're <strong style="color: #ffffff;">confirmed for Miami Swim Week</strong> — congrats. We just shipped a new feature on your EXA profile so you can tell us exactly which days you're available to walk.
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.65;">
+                Designers are casting models against the schedule right now, so the sooner you mark your days, the better your chances of being placed in the shows you want.
+              </p>
+
+              <!-- How it works card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px; background: linear-gradient(180deg, rgba(236,72,153,0.08) 0%, rgba(139,92,246,0.05) 100%); border: 1px solid rgba(236, 72, 153, 0.25); border-radius: 12px;">
+                <tr>
+                  <td style="padding: 26px;">
+                    <p style="margin: 0 0 16px; color: #ec4899; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">
+                      How it works
+                    </p>
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="padding: 0 0 12px; color: #ffffff; font-size: 15px; line-height: 1.5;">
+                          <strong style="color: #ec4899;">1.</strong> &nbsp;Sign in to your EXA profile
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 0 0 12px; color: #ffffff; font-size: 15px; line-height: 1.5;">
+                          <strong style="color: #ec4899;">2.</strong> &nbsp;On your dashboard, find the <em style="color: #f9a8d4; font-style: normal;">Miami Swim Week availability</em> card
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 0 0 12px; color: #ffffff; font-size: 15px; line-height: 1.5;">
+                          <strong style="color: #ec4899;">3.</strong> &nbsp;Tap each day you're available on the week calendar
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 0; color: #ffffff; font-size: 15px; line-height: 1.5;">
+                          <strong style="color: #ec4899;">4.</strong> &nbsp;Hit <strong>Save Availability</strong> — that's it
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Day pills preview -->
+              <p style="margin: 0 0 12px; color: #71717a; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; text-align: center;">
+                Show days to choose from
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
+                <tr>
+                  <td align="center">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 0 4px;">
+                          <table cellpadding="0" cellspacing="0" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px;">
+                            <tr><td style="padding: 10px 14px; text-align: center;">
+                              <div style="color: #f9a8d4; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">Tue</div>
+                              <div style="color: #ffffff; font-size: 16px; font-weight: 700; margin-top: 2px;">26</div>
+                            </td></tr>
+                          </table>
+                        </td>
+                        <td style="padding: 0 4px;">
+                          <table cellpadding="0" cellspacing="0" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px;">
+                            <tr><td style="padding: 10px 14px; text-align: center;">
+                              <div style="color: #f9a8d4; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">Wed</div>
+                              <div style="color: #ffffff; font-size: 16px; font-weight: 700; margin-top: 2px;">27</div>
+                            </td></tr>
+                          </table>
+                        </td>
+                        <td style="padding: 0 4px;">
+                          <table cellpadding="0" cellspacing="0" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px;">
+                            <tr><td style="padding: 10px 14px; text-align: center;">
+                              <div style="color: #f9a8d4; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">Fri</div>
+                              <div style="color: #ffffff; font-size: 16px; font-weight: 700; margin-top: 2px;">29</div>
+                            </td></tr>
+                          </table>
+                        </td>
+                        <td style="padding: 0 4px;">
+                          <table cellpadding="0" cellspacing="0" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px;">
+                            <tr><td style="padding: 10px 14px; text-align: center;">
+                              <div style="color: #f9a8d4; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">Sat</div>
+                              <div style="color: #ffffff; font-size: 16px; font-weight: 700; margin-top: 2px;">30</div>
+                            </td></tr>
+                          </table>
+                        </td>
+                        <td style="padding: 0 4px;">
+                          <table cellpadding="0" cellspacing="0" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px;">
+                            <tr><td style="padding: 10px 14px; text-align: center;">
+                              <div style="color: #f9a8d4; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">Sun</div>
+                              <div style="color: #ffffff; font-size: 16px; font-weight: 700; margin-top: 2px;">31</div>
+                            </td></tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 44px; border-radius: 10px; font-weight: 700; font-size: 15px; letter-spacing: 0.3px;">
+                      Set My Availability →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 28px 0 0; color: #71717a; font-size: 13px; line-height: 1.55; text-align: center;">
+                Pick all the days that work — even one is fine. You can update this anytime before the show.
+              </p>
+
+              <p style="margin: 32px 0 0; color: #a1a1aa; font-size: 15px; line-height: 1.6;">
+                See you on the runway.<br/>
+                <span style="color: #ec4899; font-weight: 600;">— The EXA Team</span>
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendMswAvailabilityUrgentReselectEmail({
+  to,
+  modelName,
+}: {
+  to: string;
+  modelName: string;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const dashboardUrl = `${BASE_URL}/dashboard`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const greeting = modelName ? `Hey ${escapeHtml(modelName)},` : "Hey,";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: "URGENT: Reselect your Miami Swim Week availability",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #111111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(239, 68, 68, 0.25);">
+
+          <!-- Urgent badge header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ef4444 0%, #ec4899 60%, #8b5cf6 100%); padding: 44px 30px; text-align: center;">
+              <p style="margin: 0 0 12px; color: rgba(255,255,255,0.95); font-size: 11px; font-weight: 800; letter-spacing: 4px; text-transform: uppercase;">
+                ⚠ Urgent · Action required
+              </p>
+              <h1 style="margin: 0; color: white; font-size: 30px; font-weight: 800; letter-spacing: -0.5px;">
+                Reselect your MSW days
+              </h1>
+              <p style="margin: 14px 0 0; color: rgba(255,255,255,0.92); font-size: 15px;">
+                Miami Swim Week 2026 · Tue May 26 – Sun May 31
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 18px; color: #ffffff; font-size: 18px; font-weight: 600;">
+                ${greeting}
+              </p>
+              <p style="margin: 0 0 22px; color: #a1a1aa; font-size: 16px; line-height: 1.65;">
+                We had a labeling issue on the availability picker that caused some of the selected days to be saved incorrectly. To make sure designers cast you for the <strong style="color: #ffffff;">right days</strong>, we need you to <strong style="color: #ffffff;">sign in and reselect</strong> the days you're available to walk.
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.65;">
+                Designers are actively building their casts right now — the sooner you confirm, the more likely you land in the shows you want.
+              </p>
+
+              <!-- Day pills (current accurate schedule) -->
+              <p style="margin: 0 0 12px; color: #71717a; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; text-align: center;">
+                Current show days
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
+                <tr>
+                  <td align="center">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 0 4px;">
+                          <table cellpadding="0" cellspacing="0" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px;">
+                            <tr><td style="padding: 10px 14px; text-align: center;">
+                              <div style="color: #f9a8d4; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">Tue</div>
+                              <div style="color: #ffffff; font-size: 16px; font-weight: 700; margin-top: 2px;">26</div>
+                            </td></tr>
+                          </table>
+                        </td>
+                        <td style="padding: 0 4px;">
+                          <table cellpadding="0" cellspacing="0" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px;">
+                            <tr><td style="padding: 10px 14px; text-align: center;">
+                              <div style="color: #f9a8d4; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">Wed</div>
+                              <div style="color: #ffffff; font-size: 16px; font-weight: 700; margin-top: 2px;">27</div>
+                            </td></tr>
+                          </table>
+                        </td>
+                        <td style="padding: 0 4px;">
+                          <table cellpadding="0" cellspacing="0" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px;">
+                            <tr><td style="padding: 10px 14px; text-align: center;">
+                              <div style="color: #f9a8d4; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">Fri</div>
+                              <div style="color: #ffffff; font-size: 16px; font-weight: 700; margin-top: 2px;">29</div>
+                            </td></tr>
+                          </table>
+                        </td>
+                        <td style="padding: 0 4px;">
+                          <table cellpadding="0" cellspacing="0" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px;">
+                            <tr><td style="padding: 10px 14px; text-align: center;">
+                              <div style="color: #f9a8d4; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">Sat</div>
+                              <div style="color: #ffffff; font-size: 16px; font-weight: 700; margin-top: 2px;">30</div>
+                            </td></tr>
+                          </table>
+                        </td>
+                        <td style="padding: 0 4px;">
+                          <table cellpadding="0" cellspacing="0" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px;">
+                            <tr><td style="padding: 10px 14px; text-align: center;">
+                              <div style="color: #f9a8d4; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">Sun</div>
+                              <div style="color: #ffffff; font-size: 16px; font-weight: 700; margin-top: 2px;">31</div>
+                            </td></tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- How it works card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px; background: linear-gradient(180deg, rgba(239,68,68,0.08) 0%, rgba(139,92,246,0.05) 100%); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 12px;">
+                <tr>
+                  <td style="padding: 26px;">
+                    <p style="margin: 0 0 16px; color: #ef4444; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">
+                      How to reselect
+                    </p>
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="padding: 0 0 12px; color: #ffffff; font-size: 15px; line-height: 1.5;">
+                          <strong style="color: #ef4444;">1.</strong> &nbsp;Sign in to your EXA profile
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 0 0 12px; color: #ffffff; font-size: 15px; line-height: 1.5;">
+                          <strong style="color: #ef4444;">2.</strong> &nbsp;On your dashboard, open the <em style="color: #f9a8d4; font-style: normal;">Miami Swim Week availability</em> card
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 0 0 12px; color: #ffffff; font-size: 15px; line-height: 1.5;">
+                          <strong style="color: #ef4444;">3.</strong> &nbsp;Tap each day you're available — even if it looks already selected, please <strong>re-check</strong> it
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 0; color: #ffffff; font-size: 15px; line-height: 1.5;">
+                          <strong style="color: #ef4444;">4.</strong> &nbsp;Hit <strong>Save Availability</strong>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #ec4899 60%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 44px; border-radius: 10px; font-weight: 700; font-size: 15px; letter-spacing: 0.3px; box-shadow: 0 0 24px rgba(239, 68, 68, 0.35);">
+                      Reselect My Days →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 28px 0 0; color: #71717a; font-size: 13px; line-height: 1.55; text-align: center;">
+                Even one day is fine. Designers are casting right now — every hour matters.
+              </p>
+
+              <p style="margin: 32px 0 0; color: #a1a1aa; font-size: 15px; line-height: 1.6;">
+                Thank you for re-confirming.<br/>
+                <span style="color: #ec4899; font-weight: 600;">— The EXA Team</span>
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
 // ============================================
 // CONTENT PROGRAM EMAILS
 // ============================================
