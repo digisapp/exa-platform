@@ -62,7 +62,7 @@ export const en = {
     viewChats: "View Chats",
     coinTip: "coin tip",
     sentYouA: "sent you a",
-    startedFollowing: "started following you",
+    startedFollowing: "added you to their favorites",
     sentMessage: "sent you a message",
     allTime: "All time",
     new: "New",

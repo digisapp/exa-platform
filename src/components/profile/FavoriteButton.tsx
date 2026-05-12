@@ -57,27 +57,36 @@ export function FavoriteButton({ modelId, initialFavorited, isLoggedIn }: Favori
     }
   };
 
+  const label = isFavorited ? "Saved to favorites" : "Save to favorites";
+
   return (
-    <button
-      onClick={handleFavorite}
-      disabled={loading}
-      title={isFavorited ? "Remove from favorites" : "Add to favorites"}
-      aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-      className={cn(
-        "w-8 h-8 rounded-full flex items-center justify-center transition-all",
-        isFavorited
-          ? "bg-pink-500/80 hover:bg-pink-500 shadow-[0_0_12px_rgba(236,72,153,0.5)]"
-          : "bg-white/10 hover:bg-white/20",
-        loading && "opacity-50 cursor-not-allowed"
-      )}
-    >
-      <Heart
+    <div className="relative group">
+      <button
+        onClick={handleFavorite}
+        disabled={loading}
+        aria-label={label}
         className={cn(
-          "h-4 w-4 transition-transform",
-          isFavorited ? "fill-white text-white" : "text-white/70",
-          bouncing && "scale-125"
+          "w-11 h-11 rounded-full flex items-center justify-center transition-all",
+          isFavorited
+            ? "bg-pink-500/80 hover:bg-pink-500 shadow-[0_0_16px_rgba(236,72,153,0.6)]"
+            : "bg-white/10 hover:bg-white/20",
+          loading && "opacity-50 cursor-not-allowed"
         )}
-      />
-    </button>
+      >
+        <Heart
+          className={cn(
+            "h-5 w-5 transition-transform",
+            isFavorited ? "fill-white text-white" : "text-white/80",
+            bouncing && "scale-125"
+          )}
+        />
+      </button>
+      <div
+        role="tooltip"
+        className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2.5 py-1 rounded-md bg-black/90 border border-pink-500/30 text-[11px] font-medium text-white whitespace-nowrap opacity-0 translate-y-[-4px] group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150 shadow-[0_0_12px_rgba(236,72,153,0.25)] z-50"
+      >
+        {label}
+      </div>
+    </div>
   );
 }

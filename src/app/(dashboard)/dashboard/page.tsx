@@ -106,29 +106,10 @@ export default async function DashboardPage() {
 
   if (!model) redirect("/fan/signup");
 
-  // Stats queries: this month + previous month earnings + bookings + portfolio photos (parallel)
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  const twoMonthsAgo = new Date();
-  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-
   const [
-    { data: monthlyTransactions },
-    { data: previousMonthTransactions },
     { data: allBookings },
     { data: rawPortfolioPhotos },
   ] = await Promise.all([
-    (adminClient.from("coin_transactions") as any)
-      .select("amount, created_at")
-      .eq("actor_id", actor.id)
-      .gt("amount", 0)
-      .gte("created_at", oneMonthAgo.toISOString()),
-    (adminClient.from("coin_transactions") as any)
-      .select("amount")
-      .eq("actor_id", actor.id)
-      .gt("amount", 0)
-      .gte("created_at", twoMonthsAgo.toISOString())
-      .lt("created_at", oneMonthAgo.toISOString()),
     // Get pending bookings for this model - use adminClient to bypass RLS
     (adminClient.from("bookings") as any)
       .select("*")
@@ -145,12 +126,6 @@ export default async function DashboardPage() {
       .order("created_at", { ascending: false })
       .limit(50),
   ]);
-
-  const thisMonthEarnings = (monthlyTransactions || []).reduce((sum: number, t: any) => sum + t.amount, 0);
-  const prevMonthEarnings = (previousMonthTransactions || []).reduce((sum: number, t: any) => sum + t.amount, 0);
-  const monthDeltaPct = prevMonthEarnings > 0
-    ? Math.round(((thisMonthEarnings - prevMonthEarnings) / prevMonthEarnings) * 100)
-    : (thisMonthEarnings > 0 ? 100 : 0);
 
   // Filter for pending/counter bookings in JS
   const pendingBookings = (allBookings || []).filter(
@@ -307,10 +282,9 @@ export default async function DashboardPage() {
     (adminClient.from("coin_transactions") as any)
       .select("id, amount, created_at, metadata")
       .eq("actor_id", actor.id)
-      .eq("action", "tip_received")
+      .in("action", ["tip_received", "live_wall_tip_received"])
       .gte("created_at", sevenDaysAgo.toISOString())
-      .order("created_at", { ascending: false })
-      .limit(10),
+      .order("created_at", { ascending: false }),
     (adminClient.from("follows") as any)
       .select("follower_id, created_at")
       .eq("following_id", actor.id)
@@ -345,7 +319,7 @@ export default async function DashboardPage() {
 
   // Enrich activity data with user info
   const tipSenderIds = (recentTips || [])
-    .map((t: any) => t.metadata?.sender_id)
+    .map((t: any) => t.metadata?.sender_id || t.metadata?.tipper_actor_id)
     .filter(Boolean);
   const followerIds = (recentFollowers || [])
     .map((f: any) => f.follower_id)
@@ -430,7 +404,7 @@ export default async function DashboardPage() {
     ...(recentTips || []).map((tip: any) => ({
       id: `tip-${tip.id}`,
       type: "tip" as const,
-      actor: activityActorsMap.get(tip.metadata?.sender_id) || null,
+      actor: activityActorsMap.get(tip.metadata?.sender_id || tip.metadata?.tipper_actor_id) || null,
       amount: tip.amount,
       createdAt: tip.created_at,
     })),
@@ -460,7 +434,7 @@ export default async function DashboardPage() {
 
   const tipperTotals = new Map<string, number>();
   for (const tip of recentTips || []) {
-    const sid = tip.metadata?.sender_id;
+    const sid = tip.metadata?.sender_id || tip.metadata?.tipper_actor_id;
     if (!sid) continue;
     tipperTotals.set(sid, (tipperTotals.get(sid) || 0) + (tip.amount || 0));
   }
@@ -632,7 +606,7 @@ export default async function DashboardPage() {
             <div className="relative flex items-center gap-4 w-full">
               <TrendingUp className="h-5 w-5 text-emerald-400 shrink-0" />
               <span className="text-xs font-medium uppercase tracking-wider text-white/60">Views</span>
-              <p className="ml-auto text-2xl font-bold tracking-tight">{formatCoins(thisMonthEarnings)}</p>
+              <p className="ml-auto text-2xl font-bold tracking-tight">{(model.profile_views || 0).toLocaleString()}</p>
             </div>
           </Link>
 
@@ -872,7 +846,7 @@ export default async function DashboardPage() {
                       {item.type === "tip" ? (
                         <Coins className="h-4 w-4 text-amber-400" />
                       ) : item.type === "follower" ? (
-                        <UserPlus className="h-4 w-4 text-pink-400" />
+                        <Heart className="h-4 w-4 text-pink-400 fill-pink-400" />
                       ) : (
                         <MessageCircle className="h-4 w-4 text-blue-400" />
                       )}
@@ -886,7 +860,7 @@ export default async function DashboardPage() {
                           tipped <span className="text-amber-400 font-semibold">{item.amount}c</span>
                         </span>
                       )}
-                      {item.type === "follower" && <span className="text-white/60">followed you</span>}
+                      {item.type === "follower" && <span className="text-white/60">added you to their favorites</span>}
                       {item.type === "message" && <span className="text-white/60">sent a message</span>}
                     </p>
                     {item.type === "message" && item.messagePreview && (

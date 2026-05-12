@@ -64,7 +64,7 @@ export const es: Dictionary = {
     viewChats: "Ver Mensajes",
     coinTip: "propina de monedas",
     sentYouA: "te envió una",
-    startedFollowing: "comenzó a seguirte",
+    startedFollowing: "te añadió a sus favoritos",
     sentMessage: "te envió un mensaje",
     allTime: "Todo el tiempo",
     new: "Nuevo",

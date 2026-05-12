@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Bell, Coins, UserPlus, MessageCircle, Sparkles } from "lucide-react";
+import { Bell, Coins, Heart, MessageCircle, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatDistanceToNowStrict } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -54,7 +54,7 @@ function FeedRow({ item }: { item: FeedItem }) {
             item.type === "message" && "bg-blue-500/15 ring-1 ring-blue-500/30",
           )}>
             {item.type === "tip" && <Coins className="h-4 w-4 text-amber-400" />}
-            {item.type === "follower" && <UserPlus className="h-4 w-4 text-pink-400" />}
+            {item.type === "follower" && <Heart className="h-4 w-4 text-pink-400 fill-pink-400" />}
             {item.type === "message" && <MessageCircle className="h-4 w-4 text-blue-400" />}
           </div>
         )}
@@ -73,7 +73,7 @@ function FeedRow({ item }: { item: FeedItem }) {
             </span>
           )}
           {item.type === "follower" && (
-            <span className="text-white/60">followed you</span>
+            <span className="text-white/60">added you to their favorites</span>
           )}
           {item.type === "message" && (
             <span className="text-white/60">sent a message</span>

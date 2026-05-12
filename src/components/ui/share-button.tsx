@@ -31,11 +31,12 @@ export function ShareButton({ title, url }: ShareButtonProps) {
 
   return (
     <button
-      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+      className="w-7 h-7 rounded-full bg-white/8 hover:bg-white/15 flex items-center justify-center transition-colors"
       onClick={handleShare}
       title="Share"
+      aria-label="Share"
     >
-      <Share2 className="h-4 w-4 text-white/70" />
+      <Share2 className="h-3.5 w-3.5 text-white/50" />
     </button>
   );
 }

@@ -191,6 +191,13 @@ export async function POST(request: NextRequest) {
           .eq("id", actor.id)
           .single();
         followerName = brand?.company_name || "A brand";
+      } else if (followerActor?.type === "model") {
+        const { data: followerModel } = await supabase
+          .from("models")
+          .select("first_name, username")
+          .eq("user_id", user.id)
+          .single();
+        followerName = followerModel?.first_name || followerModel?.username || "A model";
       }
 
       // Create notification for the model
