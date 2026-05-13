@@ -547,7 +547,7 @@ export default function AdminWorkshopsPage() {
                     <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        {format(new Date(workshop.date), "MMM d, yyyy")}
+                        {format(new Date(`${workshop.date}T00:00:00`), "MMM d, yyyy")}
                         {workshop.start_time && ` at ${format(new Date(`2000-01-01T${workshop.start_time}`), "h:mm a")}`}
                       </span>
                       {workshop.location_city && (
