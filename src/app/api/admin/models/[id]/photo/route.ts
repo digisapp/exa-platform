@@ -107,6 +107,7 @@ export async function POST(
       .from("avatars")
       .upload(filename, processedBuffer, {
         contentType: finalContentType,
+        cacheControl: "31536000",
         upsert: false,
       });
 

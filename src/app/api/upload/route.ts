@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
         .from("portfolio")
         .upload(filename, inputBuffer, {
           contentType: file.type,
+          cacheControl: "31536000",
           upsert: false,
         });
 
@@ -134,6 +135,7 @@ export async function POST(request: NextRequest) {
         .from("portfolio")
         .upload(filename, coverBuffer, {
           contentType: coverContentType,
+          cacheControl: "31536000",
           upsert: false,
         });
 
@@ -189,6 +191,7 @@ export async function POST(request: NextRequest) {
       .from(bucket)
       .upload(filename, processedBuffer, {
         contentType: finalContentType,
+        cacheControl: "31536000",
         upsert: false,
       });
 

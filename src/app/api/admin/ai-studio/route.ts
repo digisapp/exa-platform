@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
 
             const { error: uploadError } = await admin.storage
               .from("portfolio")
-              .upload(storagePath, buffer, { contentType, upsert: true });
+              .upload(storagePath, buffer, { contentType, cacheControl: "31536000", upsert: true });
 
             if (!uploadError) {
               const {

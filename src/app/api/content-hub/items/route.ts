@@ -146,6 +146,7 @@ export async function POST(request: NextRequest) {
           .from("portfolio")
           .upload(mediaUrl, processed.buffer, {
             contentType: processed.contentType,
+            cacheControl: "31536000",
             upsert: true,
           });
         if (upErr) throw upErr;

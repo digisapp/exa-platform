@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
         .from("portfolio")
         .upload(storagePath, buffer, {
           contentType: isVideoContent ? "video/mp4" : contentType,
+          cacheControl: "31536000",
           upsert: true,
         });
 
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
 
           const { error: uploadError } = await admin.storage
             .from("portfolio")
-            .upload(storagePath, buffer, { contentType: contentType || "video/mp4", upsert: true });
+            .upload(storagePath, buffer, { contentType: contentType || "video/mp4", cacheControl: "31536000", upsert: true });
 
           if (!uploadError) {
             const {

@@ -71,7 +71,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
         const supabase = createClient();
         const { data, error } = await supabase.storage
           .from("public-uploads")
-          .upload(fileName, imageFile, { cacheControl: "3600", upsert: false });
+          .upload(fileName, imageFile, { cacheControl: "2592000", upsert: false });
 
         if (!error && data) {
           const { data: urlData } = supabase.storage

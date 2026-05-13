@@ -121,6 +121,7 @@ export async function POST(request: NextRequest) {
           .from(bucket)
           .upload(storagePath, processed.buffer, {
             contentType: processed.contentType,
+            cacheControl: "31536000",
             upsert: true,
           });
         if (upErr) throw upErr;

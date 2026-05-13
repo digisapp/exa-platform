@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
         const admin = createServiceRoleClient();
         const { error: uploadError } = await admin.storage
           .from("portfolio")
-          .upload(storagePath, buffer, { contentType: upscaledType, upsert: true });
+          .upload(storagePath, buffer, { contentType: upscaledType, cacheControl: "31536000", upsert: true });
 
         if (uploadError) {
           console.error("[Upscale] Storage error:", uploadError);

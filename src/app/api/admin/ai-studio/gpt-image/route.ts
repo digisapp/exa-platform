@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
             const contentType = img.content_type || `image/${output_format}`;
             const { error: uploadError } = await admin.storage
               .from("portfolio")
-              .upload(storagePath, buffer, { contentType, upsert: true });
+              .upload(storagePath, buffer, { contentType, cacheControl: "31536000", upsert: true });
 
             if (!uploadError) {
               const {
@@ -170,7 +170,7 @@ async function resolveDataUri(input: string): Promise<string> {
   const admin = createServiceRoleClient();
   const { error } = await admin.storage
     .from("portfolio")
-    .upload(storagePath, buffer, { contentType, upsert: true });
+    .upload(storagePath, buffer, { contentType, cacheControl: "31536000", upsert: true });
 
   if (error) throw new Error(`Failed to upload source image: ${error.message}`);
 

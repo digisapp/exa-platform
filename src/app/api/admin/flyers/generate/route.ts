@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
 
     const { error: uploadError } = await admin.storage
       .from("portfolio")
-      .upload(storagePath, flyerBytes, { contentType: "image/png", upsert: true });
+      .upload(storagePath, flyerBytes, { contentType: "image/png", cacheControl: "31536000", upsert: true });
 
     if (uploadError) {
       throw new Error(`Upload failed: ${uploadError.message}`);

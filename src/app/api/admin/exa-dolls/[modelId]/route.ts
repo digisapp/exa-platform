@@ -247,6 +247,7 @@ async function saveToStorage(
       .from("portfolio")
       .upload(path, buffer, {
         contentType: "image/jpeg",
+        cacheControl: "31536000",
         upsert: true,
       });
 

@@ -214,6 +214,7 @@ export async function PATCH(
           .from("portfolio")
           .upload(storagePath, pdfBuffer, {
             contentType: "application/pdf",
+            cacheControl: "31536000",
             upsert: true,
           });
         if (uploadError) {

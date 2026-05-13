@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       .from("portfolio")
       .upload(storagePath, buffer, {
         contentType: "application/pdf",
+        cacheControl: "31536000",
         upsert: false,
       });
 

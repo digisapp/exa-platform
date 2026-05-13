@@ -105,6 +105,7 @@ export async function POST(
       .from("portfolio")
       .upload(storagePath, processedBuffer, {
         contentType: finalContentType,
+        cacheControl: "31536000",
         upsert: false,
       });
 
