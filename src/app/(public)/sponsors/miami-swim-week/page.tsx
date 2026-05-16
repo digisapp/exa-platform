@@ -1,7 +1,6 @@
 export const revalidate = 60;
 
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +12,6 @@ import {
   Check,
   ArrowRight,
   Star,
-  Mail,
   Megaphone,
   Gift,
   Wine,
@@ -32,7 +30,6 @@ import {
   Sparkles,
   Target,
   ChevronDown,
-  PlayCircle,
 } from "lucide-react";
 import { Footer } from "@/components/layout/footer";
 import { HotelFloorPlan } from "@/components/shows/hotel-floor-plan";
@@ -596,9 +593,6 @@ export default async function SponsorMswPage() {
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 mb-16 items-start">
           {/* Left — Pitch + Stats */}
           <div>
-            <span className="inline-flex items-center mb-4 px-4 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold shadow-[0_0_12px_rgba(245,158,11,0.2)]">
-              Full Hotel Takeover · 7 Days · Global Exposure
-            </span>
             <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
               The pitch
             </p>
@@ -606,43 +600,9 @@ export default async function SponsorMswPage() {
               <span className="exa-gradient-text">Position Your Brand at the Center of EXA&apos;s Miami Swim Week</span>
             </h2>
             <p className="text-white/70 text-lg leading-relaxed mb-8">
-              A full 7-day takeover of The Alexander Hotel with creators whose audiences range from 5K to 5M. <span className="text-white font-semibold">Six evening runway shows, each featuring global designers and 100+ models on the runway.</span> From a Monday ticketed day party and sunset beach runway to a 120ft yacht and on-site content production all week, your brand is seamlessly integrated into every moment — captured, shared, and distributed across millions of viewers worldwide.
+              A full 6-day takeover of The Alexander Hotel featuring creators and influencers with audiences ranging from 5K to 5M followers. <span className="text-white font-semibold">The week includes six evening runway shows showcasing global designers and 100+ models walking the runway each night.</span> From our Monday ticketed day party and sunset beach runway experience to a 120ft yacht activation and nonstop on-site content production throughout the week, your brand becomes organically woven into every moment — captured, shared, and amplified across millions of viewers worldwide.
             </p>
 
-            {/* Model ladder — honest breakdown by role */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-              <div className="text-center p-3 rounded-xl bg-white/[0.03] border border-white/10">
-                <p className="text-xl font-bold text-amber-300">600+</p>
-                <p className="text-[10px] text-white/55 mt-0.5 uppercase tracking-wider">At Casting</p>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-white/[0.03] border border-white/10">
-                <p className="text-xl font-bold text-pink-300">300+</p>
-                <p className="text-[10px] text-white/55 mt-0.5 uppercase tracking-wider">Curated Roster</p>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-white/[0.03] border border-white/10">
-                <p className="text-xl font-bold text-violet-300">150+</p>
-                <p className="text-[10px] text-white/55 mt-0.5 uppercase tracking-wider">On The Runway</p>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-white/[0.03] border border-white/10">
-                <p className="text-xl font-bold text-cyan-300">100+</p>
-                <p className="text-[10px] text-white/55 mt-0.5 uppercase tracking-wider">Onsite All Week</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="text-center p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-amber-500/30 transition-colors">
-                <p className="text-2xl md:text-3xl font-bold text-amber-300">50M+</p>
-                <p className="text-xs text-white/60 mt-1">Combined Reach</p>
-              </div>
-              <div className="text-center p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-pink-500/30 transition-colors">
-                <p className="text-2xl md:text-3xl font-bold text-pink-300">6</p>
-                <p className="text-xs text-white/60 mt-1">Runway Shows</p>
-              </div>
-              <div className="text-center p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-cyan-500/30 transition-colors">
-                <p className="text-2xl md:text-3xl font-bold text-cyan-300">7 Days</p>
-                <p className="text-xs text-white/60 mt-1">May 25–31</p>
-              </div>
-            </div>
           </div>
 
           {/* Right — Compact Schedule */}
@@ -657,61 +617,10 @@ export default async function SponsorMswPage() {
           </div>
         </div>
 
-        {/* Past Year Videos — Social Proof */}
-        <div className="mb-20">
-          <Link
-            href="/tv"
-            className="group block relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-pink-500/10 via-violet-500/10 to-cyan-500/10 p-8 md:p-10 transition-all hover:border-pink-500/40 hover:shadow-[0_0_40px_rgba(236,72,153,0.25)]"
-          >
-            <div className="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-pink-500/15 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-cyan-500/15 blur-3xl" />
-
-            <div className="relative flex flex-col md:flex-row md:items-center gap-6 md:gap-8">
-              <div className="flex-shrink-0">
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-2xl bg-pink-500/40 blur-2xl opacity-60" />
-                  <div className="relative flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-pink-500/30 to-violet-500/30 ring-1 ring-white/20 group-hover:scale-105 transition-transform">
-                    <PlayCircle className="h-10 w-10 text-white" />
-                  </div>
-                </div>
-              </div>
-              <div className="flex-1">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-pink-300 font-bold mb-2">
-                  Watch past years
-                </p>
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                  See what EXA&apos;s Miami Swim Week looks like
-                </h3>
-                <p className="text-white/70 leading-relaxed mb-4 max-w-2xl">
-                  Full runway shows, backstage content, brand activations, and casting footage from past EXA Swim Weeks. The complete library — 4K, free to watch.
-                </p>
-                <div className="flex items-center gap-2 text-white/90 font-semibold group-hover:text-pink-300 transition-colors">
-                  <span>Watch at examodels.com/tv</span>
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-
         {/* Venue Floor Plan — Where Your Activation Lives */}
         <div className="mb-20">
           <HotelFloorPlan />
         </div>
-
-        {/* Confirmed Model Roster — Credibility Section */}
-        {eventModels.length > 0 && (
-          <div className="mb-20">
-            <p className="text-center text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
-              The lineup
-            </p>
-            <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
-              <span className="exa-gradient-text">Confirmed Models</span>
-            </h2>
-
-            <ModelGrid models={eventModels} />
-          </div>
-        )}
 
         {/* All Sponsorship Packages — Accordion Layout */}
         {[
@@ -811,124 +720,20 @@ export default async function SponsorMswPage() {
           </div>
         ))}
 
-        {/* Custom Influencer Campaign */}
-        <div className="mb-20">
-          <div className="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 via-blue-500/5 to-violet-500/5 p-8 md:p-12">
-            <div className="absolute top-6 right-6 text-7xl opacity-10 select-none pointer-events-none">🎯</div>
-
-            <Badge className="mb-5 bg-cyan-500/10 text-cyan-400 border-cyan-500/20 px-4 py-1">
-              Flexible
-            </Badge>
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 max-w-xl">
-              Build a Custom Influencer Campaign
-            </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              Don&apos;t see a package that fits? Work directly with our team to build a custom campaign using our confirmed EXA&apos;s Miami Swim Week models. Choose your deliverables, pick your models, and set your budget.
+        {/* Confirmed Model Roster — Credibility Section */}
+        {eventModels.length > 0 && (
+          <div className="mb-20">
+            <p className="text-center text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+              The lineup
             </p>
-
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-              {[
-                { icon: <Camera className="h-5 w-5 text-cyan-400" />, title: "Content Creation", desc: "Reels, TikToks, Stories, and photo content from professional models — shot during EXA&apos;s Swim Week" },
-                { icon: <Target className="h-5 w-5 text-cyan-400" />, title: "Affiliate & Swipe-Up Links", desc: "Tracked affiliate campaigns with swipe-up links — measure real ROI from model-driven traffic" },
-                { icon: <Megaphone className="h-5 w-5 text-cyan-400" />, title: "Product Reviews & Unboxing", desc: "Authentic product reviews and unboxing content from models your target audience follows" },
-                { icon: <Zap className="h-5 w-5 text-cyan-400" />, title: "Story Takeovers", desc: "Models take over your brand&apos;s Instagram Stories live from EXA&apos;s Miami Swim Week — real-time engagement" },
-                { icon: <Users className="h-5 w-5 text-cyan-400" />, title: "Pick Your Models", desc: "Hand-select models from our confirmed roster based on follower count, aesthetic, niche, or audience demo" },
-                { icon: <ShoppingBag className="h-5 w-5 text-cyan-400" />, title: "Product Seeding", desc: "Get your product into the hands of specific models — they wear it, use it, and post about it organically" },
-              ].map((item) => (
-                <div key={item.title} className="p-5 rounded-2xl bg-black/20 border border-white/5">
-                  <div className="mb-3">{item.icon}</div>
-                  <p className="font-semibold text-sm mb-1">{item.title}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            <a
-              href="mailto:nathan@examodels.com?subject=Custom%20Influencer%20Campaign%20—%20EXA%27s%20Miami%20Swim%20Week%202026&body=Hi%20Nathan%2C%0A%0AI%27m%20interested%20in%20building%20a%20custom%20influencer%20campaign%20for%20EXA%27s%20Miami%20Swim%20Week%202026.%0A%0ABrand%3A%20%0AWebsite%3A%20%0AGoal%3A%20%0ABudget%20range%3A%20%0ADeliverables%20I%27m%20interested%20in%3A%20%0A%0ALooking%20forward%20to%20connecting."
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold px-8 py-4 rounded-xl transition-all hover:shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02]"
-            >
-              <Mail className="h-5 w-5" />
-              Build Your Campaign
-              <ArrowRight className="h-4 w-4" />
-            </a>
-          </div>
-        </div>
-
-
-
-        {/* Cross-links — Also Participating in EXA's Miami Swim Week? */}
-        <div className="mb-14">
-          <p className="text-center text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
-            Also participating in EXA&apos;s Miami Swim Week?
-          </p>
-          <h3 className="text-center text-xl md:text-2xl font-bold mb-6">
-            <span className="exa-gradient-text">Explore the full week</span>
-          </h3>
-          <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto">
-            <Link
-              href="/designers/miami-swim-week"
-              className="group flex items-center justify-between gap-4 px-6 py-5 rounded-2xl border border-violet-500/30 bg-violet-500/5 hover:border-violet-500/60 hover:bg-violet-500/10 transition-all hover:shadow-[0_0_20px_rgba(167,139,250,0.25)]"
-            >
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-violet-300 font-bold mb-1">For Designers</p>
-                <p className="font-semibold text-white">Book a Runway Show</p>
-                <p className="text-xs text-white/55 mt-0.5">Showcase your collection — from $1,000</p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-violet-300 transition-colors flex-shrink-0" />
-            </Link>
-            <Link
-              href="/shows/miami-swim-week-2026"
-              className="group flex items-center justify-between gap-4 px-6 py-5 rounded-2xl border border-pink-500/30 bg-pink-500/5 hover:border-pink-500/60 hover:bg-pink-500/10 transition-all hover:shadow-[0_0_20px_rgba(236,72,153,0.25)]"
-            >
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-pink-300 font-bold mb-1">For Fans &amp; Press</p>
-                <p className="font-semibold text-white">View the Shows &amp; Get Tickets</p>
-                <p className="text-xs text-white/55 mt-0.5">Confirmed lineup · venue map · ticket tiers</p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-pink-300 transition-colors flex-shrink-0" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Bottom CTA */}
-        <div className="relative overflow-hidden text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-amber-500/12 via-orange-500/12 to-pink-500/12 border border-amber-500/40 shadow-[0_0_32px_rgba(245,158,11,0.15)]">
-          <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-amber-500/25 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-pink-500/25 blur-3xl" />
-          <div className="relative">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-white/60 font-semibold mb-2">
-              Final step
-            </p>
-            <h2 className="text-2xl md:text-3xl font-bold mb-5">
-              <span className="exa-gradient-text">Secure Your Sponsorship</span>
+            <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
+              <span className="exa-gradient-text">Confirmed Models</span>
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-xl mx-auto mb-8">
-              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                <p className="text-lg font-bold text-amber-300">300+</p>
-                <p className="text-xs text-white/60">Curated Creators</p>
-              </div>
-              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                <p className="text-lg font-bold text-pink-300">7 Days</p>
-                <p className="text-xs text-white/60">Of Content</p>
-              </div>
-              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                <p className="text-lg font-bold text-violet-300">6</p>
-                <p className="text-xs text-white/60">Runway Shows</p>
-              </div>
-              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                <p className="text-lg font-bold text-cyan-300">50M+</p>
-                <p className="text-xs text-white/60">Combined Reach</p>
-              </div>
-            </div>
-            <a
-              href="mailto:nathan@examodels.com?subject=EXA%27s%20Miami%20Swim%20Week%202026%20—%20Reserve%20My%20Spot&body=Hi%20Nathan%2C%0A%0AI%20want%20to%20secure%20a%20sponsorship%20for%20EXA%27s%20Miami%20Swim%20Week%202026.%0A%0ABrand%3A%20%0AWebsite%3A%20%0APackage(s)%20of%20interest%3A%20%0ABudget%20range%3A%20%0A%0ALooking%20forward%20to%20connecting."
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-400 hover:via-orange-400 hover:to-pink-400 text-white font-bold px-8 py-4 rounded-full transition-all shadow-[0_0_24px_rgba(245,158,11,0.5)] hover:shadow-[0_0_32px_rgba(245,158,11,0.7)] active:scale-[0.98]"
-            >
-              <Mail className="h-5 w-5" />
-              Reserve Your Spot
-              <ArrowRight className="h-4 w-4" />
-            </a>
+
+            <ModelGrid models={eventModels} />
           </div>
-        </div>
+        )}
+
       </main>
       <Footer />
     </div>
