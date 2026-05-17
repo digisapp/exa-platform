@@ -12,8 +12,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   ArrowRight,
   Instagram,
-  Flame,
-  Trophy,
   Gavel,
   Coins,
   Tv,
@@ -152,23 +150,6 @@ export default async function HomePage() {
     supabase as any,
     rawLiveWallMessages || []
   )) as any[];
-
-  // Get actual EXA Boost leaderboard from top_model_leaderboard table
-  const { data: leaderboardModels } = await (supabase as any)
-    .from("top_model_leaderboard")
-    .select(`
-      model_id,
-      today_points,
-      total_points,
-      total_likes,
-      total_boosts,
-      models!inner (
-        id, first_name, username, profile_photo_url
-      )
-    `)
-    .gt("total_points", 0)
-    .order("total_points", { ascending: false })
-    .limit(5);
 
   return (
     <div className="min-h-screen relative">
@@ -332,7 +313,7 @@ export default async function HomePage() {
           <TopModelsCarousel models={topModels || []} showRank={false} showCategories={true} />
         </section>
 
-        {/* EXA Boost & EXA Bids Banners */}
+        {/* EXA Bids & EXA TV Banners */}
         <section className="container px-8 md:px-16 py-8">
           <div className="grid md:grid-cols-2 gap-6">
             {/* EXA Bids */}
@@ -424,96 +405,86 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* EXA Boost */}
-            <Link href="/boost" className="block group">
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 p-[2px] h-full">
-                <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full">
+            {/* EXA TV */}
+            <Link href="/tv" className="block group h-full">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 via-pink-600 to-cyan-600 p-[2px] h-full">
+                <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full flex flex-col">
                   {/* Header */}
                   <div className="flex items-center gap-4 mb-5">
                     <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-                      <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
-                        <Flame className="h-7 w-7 text-white" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-pink-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+                      <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
+                        <Tv className="h-7 w-7 text-white" />
                       </div>
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-xl md:text-2xl font-bold text-white">
-                        EXA Boost
-                      </h3>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h3 className="text-xl md:text-2xl font-bold text-white">EXA TV</h3>
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-violet-500/20 border border-violet-500/30">
+                          <span className="text-[10px] text-violet-300 font-bold tracking-wide">
+                            57 SHOWS
+                          </span>
+                        </div>
+                      </div>
                       <p className="text-white/60 text-xs md:text-sm">
-                        Swipe, like & boost models to the top!
+                        Runway shows, backstage & highlights
                       </p>
                     </div>
                   </div>
 
-                  {/* Leaderboard Preview */}
-                  {(leaderboardModels?.length ?? 0) > 0 && (
-                    <div className="space-y-2 mb-5">
-                      {(leaderboardModels || []).map((entry: any, i: number) => (
-                        <div key={entry.model_id} className="flex items-center gap-3 p-2 rounded-xl bg-white/5">
-                          <span className="w-5 text-center text-xs font-bold text-white/50">
-                            {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`}
-                          </span>
-                          <Avatar className="h-8 w-8 border border-orange-500/30">
-                            <AvatarImage src={entry.models?.profile_photo_url} />
-                            <AvatarFallback className="bg-orange-500/20 text-orange-300 text-xs">
-                              {entry.models?.first_name?.[0] || "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm text-white font-medium truncate flex-1">
-                            {entry.models?.first_name || entry.models?.username}
-                          </span>
-                          <span className="text-xs text-white/40">
-                            {(entry.total_points || 0).toLocaleString()} pts
-                          </span>
+                  {/* Category Preview */}
+                  <div className="flex-1 mb-5">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-pink-500/30 to-violet-500/30 border border-pink-500/30 flex items-center justify-center shrink-0">
+                          <Play className="h-4 w-4 text-pink-300" fill="currentColor" />
                         </div>
-                      ))}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-white font-medium truncate">
+                            Miami Swim Week
+                          </p>
+                          <p className="text-xs text-white/40">Full runway shows in 4K</p>
+                        </div>
+                        <span className="text-xs text-white/40 shrink-0">44 shows</span>
+                      </div>
+                      <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500/30 to-cyan-500/30 border border-violet-500/30 flex items-center justify-center shrink-0">
+                          <Play className="h-4 w-4 text-violet-300" fill="currentColor" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-white font-medium truncate">
+                            Behind the Scenes
+                          </p>
+                          <p className="text-xs text-white/40">Backstage with the models</p>
+                        </div>
+                        <span className="text-xs text-white/40 shrink-0">6 videos</span>
+                      </div>
+                      <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500/30 to-pink-500/30 border border-cyan-500/30 flex items-center justify-center shrink-0">
+                          <Play className="h-4 w-4 text-cyan-300" fill="currentColor" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-white font-medium truncate">
+                            Miami Art Week & NYFW
+                          </p>
+                          <p className="text-xs text-white/40">Editorial highlights</p>
+                        </div>
+                        <span className="text-xs text-white/40 shrink-0">7 videos</span>
+                      </div>
                     </div>
-                  )}
+                  </div>
 
                   {/* CTA */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-white/50">
-                      <Trophy className="h-4 w-4 text-yellow-400" />
-                      <span className="text-xs">Live Leaderboard</span>
-                    </div>
-                    <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
-                      Play Now
-                      <ArrowRight className="h-4 w-4" />
+                  <div className="flex justify-end">
+                    <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-violet-500 to-pink-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
+                      <Play className="h-4 w-4" fill="white" />
+                      Watch Now
                     </div>
                   </div>
                 </div>
               </div>
             </Link>
           </div>
-        </section>
-
-        {/* EXA TV Banner */}
-        <section className="container px-8 md:px-16 py-4">
-          <Link href="/tv" className="block group">
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 via-pink-600 to-cyan-600 p-[2px]">
-              <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl px-6 py-5 md:px-8 md:py-6 flex items-center gap-4 md:gap-6">
-                <div className="relative flex-shrink-0">
-                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-pink-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-                  <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
-                    <Tv className="h-6 w-6 md:h-7 md:w-7 text-white" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg md:text-xl font-bold text-white">
-                    EXA TV
-                  </h3>
-                  <p className="text-white/50 text-xs md:text-sm">
-                    Watch 59 runway shows, backstage footage & highlights
-                  </p>
-                </div>
-                <div className="flex-shrink-0 px-5 py-2.5 rounded-full bg-gradient-to-r from-violet-500 to-pink-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
-                  <Play className="h-4 w-4" fill="white" />
-                  Watch Now
-                </div>
-              </div>
-            </div>
-          </Link>
         </section>
 
         {/* Runway Workshop Flyer */}
