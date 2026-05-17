@@ -22,6 +22,7 @@ interface Event {
 
 interface UpcomingEventsCarouselProps {
   events: Event[];
+  scrollPadding?: string;
 }
 
 const typeIcons: Record<string, any> = {
@@ -46,7 +47,7 @@ const typeGradients: Record<string, string> = {
   other: "from-gray-500 to-slate-500",
 };
 
-export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) {
+export function UpcomingEventsCarousel({ events, scrollPadding = "px-8 md:px-16" }: UpcomingEventsCarouselProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -69,7 +70,7 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
 
   if (events.length === 0) {
     return (
-      <div className="container px-8 md:px-16 text-center py-12 text-muted-foreground">
+      <div className={`${scrollPadding} text-center py-12 text-muted-foreground`}>
         No upcoming events at the moment. Check back soon!
       </div>
     );
@@ -102,7 +103,7 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex gap-4 overflow-x-auto scrollbar-hide px-8 md:px-16 pb-4"
+          className={`flex gap-4 overflow-x-auto scrollbar-hide ${scrollPadding} pb-4`}
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {events.map((event) => {

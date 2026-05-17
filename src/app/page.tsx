@@ -281,26 +281,29 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* EXA Live Wall */}
+        {/* Upcoming Shows + EXA Live Wall (side-by-side on desktop, stacked on mobile) */}
         <section className="container px-8 md:px-16 py-6">
-          <LiveWall
-            initialMessages={liveWallMessages || []}
-            currentUser={
-              currentActor
-                ? { actorId: currentActor.id, actorType: currentActor.type, coinBalance: currentActor.coinBalance }
-                : null
-            }
-          />
-        </section>
+          <div className="grid lg:grid-cols-2 gap-6 lg:items-start">
+            {/* Upcoming Shows — left on desktop, top on mobile */}
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text mb-6">
+                Upcoming Shows
+              </h2>
+              <UpcomingEventsCarousel events={upcomingEvents || []} scrollPadding="px-0" />
+            </div>
 
-        {/* Upcoming Shows Section */}
-        <section className="py-8">
-          <div className="container px-8 md:px-16 mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text">
-              Upcoming Shows
-            </h2>
+            {/* EXA Live Wall — right on desktop, below on mobile */}
+            <div>
+              <LiveWall
+                initialMessages={liveWallMessages || []}
+                currentUser={
+                  currentActor
+                    ? { actorId: currentActor.id, actorType: currentActor.type, coinBalance: currentActor.coinBalance }
+                    : null
+                }
+              />
+            </div>
           </div>
-          <UpcomingEventsCarousel events={upcomingEvents || []} />
         </section>
 
         {/* Book Top Models Section */}
