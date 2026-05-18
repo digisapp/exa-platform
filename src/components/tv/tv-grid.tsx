@@ -263,7 +263,7 @@ export function TVGrid({ videos }: { videos: Video[] }) {
         </div>
         {normalizedQuery && (
           <p className="text-xs text-white/50 mt-2">
-            {filteredVideos.length} result{filteredVideos.length === 1 ? "" : "s"} for "{query}"
+            {filteredVideos.length} result{filteredVideos.length === 1 ? "" : "s"} for &ldquo;{query}&rdquo;
           </p>
         )}
       </div>
@@ -284,7 +284,7 @@ export function TVGrid({ videos }: { videos: Video[] }) {
         <div className="text-center py-20 text-muted-foreground">
           {normalizedQuery ? (
             <>
-              <p className="text-white/60 mb-2">No videos match "{query}"</p>
+              <p className="text-white/60 mb-2">No videos match &ldquo;{query}&rdquo;</p>
               <button
                 onClick={() => onQueryChange("")}
                 className="text-sm text-pink-400 hover:text-pink-300 underline underline-offset-4"
