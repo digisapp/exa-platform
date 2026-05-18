@@ -298,7 +298,7 @@ export default function MediaTab() {
                         </TableCell>
                         <TableCell>
                           {contact.notes ? (
-                            <p className="text-sm text-muted-foreground max-w-[200px] truncate" title={contact.notes}>{contact.notes}</p>
+                            <p className="text-sm text-muted-foreground max-w-[360px] whitespace-pre-wrap break-words line-clamp-6" title={contact.notes}>{contact.notes}</p>
                           ) : <span className="text-muted-foreground text-sm">&mdash;</span>}
                         </TableCell>
                         <TableCell className="text-right">
