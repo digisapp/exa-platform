@@ -66,9 +66,14 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-icons",
     ],
   },
-  // Redirect old /events URLs to /shows
   async redirects() {
     return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'examodels.com' }],
+        destination: 'https://www.examodels.com/:path*',
+        permanent: true,
+      },
       {
         source: '/events',
         destination: '/shows',
@@ -101,7 +106,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/castingcall',
-        destination: 'https://www.digis.cc/events/exa-swim-week-casting-call-0a3f7901',
+        destination: '/shows/miami-swim-week-2026',
         permanent: false,
       },
     ];
