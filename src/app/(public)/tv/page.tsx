@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
@@ -138,7 +139,9 @@ export default async function TVPage() {
         </div>
 
         <main className="container px-4 md:px-8 py-10">
-          <TVGrid videos={TV_VIDEOS} />
+          <Suspense fallback={<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({ length: 9 }).map((_, i) => (<div key={i} className="aspect-video rounded-xl bg-white/5 animate-pulse" />))}</div>}>
+            <TVGrid videos={TV_VIDEOS} />
+          </Suspense>
         </main>
 
         {/* Footer */}
