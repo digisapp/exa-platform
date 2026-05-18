@@ -14,7 +14,6 @@ import {
   Instagram,
   Gavel,
   Coins,
-  Tv,
   Play,
   Calendar,
   MapPin,
@@ -174,22 +173,32 @@ export default async function HomePage() {
                 priority
               />
             </Link>
-            {user ? (
+            <div className="flex items-center gap-2 md:gap-3">
               <Link
-                href={currentActor?.type === "admin" ? "/admin" : "/dashboard"}
-                aria-label="Go to dashboard"
-                className="relative flex items-center justify-center h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/40 text-white/60 hover:text-pink-300 shadow-[0_0_0_0_rgba(236,72,153,0)] hover:shadow-[0_0_16px_rgba(236,72,153,0.4)] transition-all"
+                href="/tv"
+                className="group/tv inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 rounded-full bg-gradient-to-r from-violet-600/20 via-pink-600/20 to-cyan-600/20 hover:from-violet-600/40 hover:via-pink-600/40 hover:to-cyan-600/40 border border-violet-500/30 hover:border-pink-500/60 text-white/90 hover:text-white text-xs md:text-sm font-semibold transition-all shadow-[0_0_0_0_rgba(236,72,153,0)] hover:shadow-[0_0_16px_rgba(236,72,153,0.4)]"
               >
-                <Home className="h-5 w-5" />
+                <Play className="h-3.5 w-3.5 md:h-4 md:w-4 text-pink-300 group-hover/tv:text-white transition-colors" fill="currentColor" />
+                <span className="hidden sm:inline">Watch EXA TV</span>
+                <span className="sm:hidden">EXA TV</span>
               </Link>
-            ) : (
-              <Link
-                href="/signin"
-                className="px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/40 text-white/80 hover:text-white text-sm font-semibold transition-all shadow-[0_0_0_0_rgba(236,72,153,0)] hover:shadow-[0_0_16px_rgba(236,72,153,0.35)]"
-              >
-                Sign In
-              </Link>
-            )}
+              {user ? (
+                <Link
+                  href={currentActor?.type === "admin" ? "/admin" : "/dashboard"}
+                  aria-label="Go to dashboard"
+                  className="relative flex items-center justify-center h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/40 text-white/60 hover:text-pink-300 shadow-[0_0_0_0_rgba(236,72,153,0)] hover:shadow-[0_0_16px_rgba(236,72,153,0.4)] transition-all"
+                >
+                  <Home className="h-5 w-5" />
+                </Link>
+              ) : (
+                <Link
+                  href="/signin"
+                  className="px-3 md:px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/40 text-white/80 hover:text-white text-xs md:text-sm font-semibold transition-all shadow-[0_0_0_0_rgba(236,72,153,0)] hover:shadow-[0_0_16px_rgba(236,72,153,0.35)]"
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
           </div>
         </nav>
 
@@ -316,10 +325,85 @@ export default async function HomePage() {
           <TopModelsCarousel models={topModels || []} showRank={false} showCategories={true} />
         </section>
 
-        {/* EXA Bids & EXA TV Banners */}
+        {/* Runway Workshop Flyer & EXA Bids */}
         <section className="container px-8 md:px-16 py-8">
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* EXA Bids */}
+          <div className={`grid gap-6 ${upcomingWorkshop?.cover_image_url ? "md:grid-cols-2" : "md:grid-cols-1"}`}>
+            {/* Runway Workshop Flyer (left) */}
+            {upcomingWorkshop?.cover_image_url && (
+              <Link href={`/workshops/${upcomingWorkshop.slug}`} className="block group h-full">
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 p-[2px] h-full">
+                  <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full flex flex-col">
+                    {/* Header */}
+                    <div className="flex items-center gap-4 mb-5">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-cyan-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+                        <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-cyan-500 flex items-center justify-center">
+                          <Calendar className="h-7 w-7 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h3 className="text-xl md:text-2xl font-bold text-white truncate">{upcomingWorkshop.title}</h3>
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-pink-500/20 border border-pink-500/30 shrink-0">
+                            <span className="text-[10px] text-pink-300 font-bold tracking-wide">
+                              WORKSHOP
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-white/60 text-xs md:text-sm truncate">
+                          {upcomingWorkshop.subtitle || "Runway training with EXA"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Flyer image */}
+                    <div className="relative flex-1 mb-5 rounded-2xl overflow-hidden border border-white/5 min-h-[180px]">
+                      <Image
+                        src={upcomingWorkshop.cover_image_url}
+                        alt={upcomingWorkshop.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                      />
+                      {/* Details overlay */}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 space-y-1.5">
+                        <div className="flex items-center gap-2 text-white/90 text-sm">
+                          <Calendar className="h-4 w-4 text-pink-300 shrink-0" />
+                          <span className="font-medium">{format(new Date(upcomingWorkshop.date), "EEEE, MMMM d, yyyy")}</span>
+                        </div>
+                        {(upcomingWorkshop.location_city || upcomingWorkshop.location_state) && (
+                          <div className="flex items-center gap-2 text-white/80 text-sm">
+                            <MapPin className="h-4 w-4 text-pink-300 shrink-0" />
+                            <span>
+                              {upcomingWorkshop.location_city && upcomingWorkshop.location_state
+                                ? `${upcomingWorkshop.location_city}, ${upcomingWorkshop.location_state}`
+                                : upcomingWorkshop.location_city || upcomingWorkshop.location_state}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* CTA */}
+                    <div className="flex items-center justify-between gap-3">
+                      {upcomingWorkshop.spots_available ? (
+                        <span className="text-xs text-white/40">
+                          {upcomingWorkshop.spots_available - upcomingWorkshop.spots_sold} spots left
+                        </span>
+                      ) : (
+                        <span />
+                      )}
+                      <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-cyan-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
+                        Register — ${(upcomingWorkshop.price_cents / 100).toFixed(0)}
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            {/* EXA Bids (right) */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 via-violet-500 to-indigo-600 p-[2px] h-full">
               <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full flex flex-col">
                 {/* Header */}
@@ -408,150 +492,8 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* EXA TV */}
-            <Link href="/tv" className="block group h-full">
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 via-pink-600 to-cyan-600 p-[2px] h-full">
-                <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full flex flex-col">
-                  {/* Header */}
-                  <div className="flex items-center gap-4 mb-5">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-pink-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-                      <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
-                        <Tv className="h-7 w-7 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h3 className="text-xl md:text-2xl font-bold text-white">EXA TV</h3>
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-violet-500/20 border border-violet-500/30">
-                          <span className="text-[10px] text-violet-300 font-bold tracking-wide">
-                            57 SHOWS
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-white/60 text-xs md:text-sm">
-                        Runway shows, backstage & highlights
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Category Preview */}
-                  <div className="flex-1 mb-5">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-pink-500/30 to-violet-500/30 border border-pink-500/30 flex items-center justify-center shrink-0">
-                          <Play className="h-4 w-4 text-pink-300" fill="currentColor" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-white font-medium truncate">
-                            Miami Swim Week
-                          </p>
-                          <p className="text-xs text-white/40">Full runway shows in 4K</p>
-                        </div>
-                        <span className="text-xs text-white/40 shrink-0">44 shows</span>
-                      </div>
-                      <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500/30 to-cyan-500/30 border border-violet-500/30 flex items-center justify-center shrink-0">
-                          <Play className="h-4 w-4 text-violet-300" fill="currentColor" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-white font-medium truncate">
-                            Behind the Scenes
-                          </p>
-                          <p className="text-xs text-white/40">Backstage with the models</p>
-                        </div>
-                        <span className="text-xs text-white/40 shrink-0">6 videos</span>
-                      </div>
-                      <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500/30 to-pink-500/30 border border-cyan-500/30 flex items-center justify-center shrink-0">
-                          <Play className="h-4 w-4 text-cyan-300" fill="currentColor" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-white font-medium truncate">
-                            Miami Art Week & NYFW
-                          </p>
-                          <p className="text-xs text-white/40">Editorial highlights</p>
-                        </div>
-                        <span className="text-xs text-white/40 shrink-0">7 videos</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* CTA */}
-                  <div className="flex justify-end">
-                    <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-violet-500 to-pink-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
-                      <Play className="h-4 w-4" fill="white" />
-                      Watch Now
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
           </div>
         </section>
-
-        {/* Runway Workshop Flyer */}
-        {upcomingWorkshop?.cover_image_url && (
-          <section className="container px-8 md:px-16 py-6">
-            <Link href={`/workshops/${upcomingWorkshop.slug}`} className="block group">
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 p-[2px]">
-                <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl overflow-hidden">
-                  <div className="grid md:grid-cols-2 gap-0">
-                    {/* Flyer Image */}
-                    <div className="relative aspect-[3/4] md:aspect-auto md:min-h-[500px] overflow-hidden">
-                      <Image
-                        src={upcomingWorkshop.cover_image_url}
-                        alt={upcomingWorkshop.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    {/* Details */}
-                    <div className="p-8 md:p-12 flex flex-col justify-center">
-                      <span className="inline-block w-fit px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white mb-6">
-                        Workshop
-                      </span>
-                      <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-                        {upcomingWorkshop.title}
-                      </h2>
-                      {upcomingWorkshop.subtitle && (
-                        <p className="text-lg text-white/60 mb-6">{upcomingWorkshop.subtitle}</p>
-                      )}
-                      <div className="space-y-3 mb-8">
-                        <div className="flex items-center gap-3 text-white/70">
-                          <Calendar className="h-5 w-5 text-pink-400" />
-                          <span>{format(new Date(upcomingWorkshop.date), "EEEE, MMMM d, yyyy")}</span>
-                        </div>
-                        {(upcomingWorkshop.location_city || upcomingWorkshop.location_state) && (
-                          <div className="flex items-center gap-3 text-white/70">
-                            <MapPin className="h-5 w-5 text-pink-400" />
-                            <span>
-                              {upcomingWorkshop.location_city && upcomingWorkshop.location_state
-                                ? `${upcomingWorkshop.location_city}, ${upcomingWorkshop.location_state}`
-                                : upcomingWorkshop.location_city || upcomingWorkshop.location_state}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-base font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
-                          Register Now — ${(upcomingWorkshop.price_cents / 100).toFixed(0)}
-                          <ArrowRight className="h-5 w-5" />
-                        </div>
-                        {upcomingWorkshop.spots_available && (
-                          <span className="text-sm text-white/40">
-                            {upcomingWorkshop.spots_available - upcomingWorkshop.spots_sold} spots left
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </section>
-        )}
 
         {/* Footer */}
         <footer className="relative mt-16 border-t border-violet-500/15 bg-gradient-to-b from-transparent to-[#0a0014]/60 backdrop-blur-sm">
