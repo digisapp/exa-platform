@@ -459,7 +459,13 @@ export default async function EventPage({ params, searchParams }: Props) {
             <div className="sticky top-24 space-y-4">
               {/* Countdown Timer */}
               {event.start_date && (
-                <EventCountdown startsAt={event.start_date} />
+                <EventCountdown
+                  startsAt={
+                    event.slug === "miami-swim-week-2026"
+                      ? "2026-05-26T17:00:00-04:00"
+                      : event.start_date
+                  }
+                />
               )}
               {event.start_date && new Date(event.start_date) <= new Date() && event.end_date && new Date(event.end_date) >= new Date() && (
                 <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-500/15 border border-emerald-500/40 shadow-[0_0_16px_rgba(52,211,153,0.3)]">
