@@ -1199,6 +1199,43 @@ export default function AdminShowsPage() {
     setAvailLoading(false);
   }
 
+  async function toggleAvailDay(modelId: string, date: string, nextAvailable: boolean) {
+    if (!availGigId) return;
+    const prev = availModels;
+    // Optimistic update
+    setAvailModels((current) =>
+      current.map((m) => {
+        if (m.id !== modelId) return m;
+        const set = new Set(m.available_dates);
+        if (nextAvailable) set.add(date); else set.delete(date);
+        const dates = Array.from(set).sort();
+        return { ...m, available_dates: dates, has_responded: m.has_responded || dates.length > 0 };
+      })
+    );
+    setAvailResponded((r) => {
+      const before = prev.find((m) => m.id === modelId);
+      if (!before) return r;
+      const wasResponded = before.has_responded;
+      const willBeResponded = nextAvailable || before.available_dates.some((d) => d !== date);
+      if (!wasResponded && willBeResponded) return r + 1;
+      if (wasResponded && !willBeResponded) return Math.max(0, r - 1);
+      return r;
+    });
+
+    const res = await fetch("/api/admin/gig-availability", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gig_id: availGigId, model_id: modelId, date, available: nextAvailable }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.error || "Failed to update availability");
+      // Revert
+      setAvailModels(prev);
+      setAvailResponded(prev.filter((m) => m.has_responded).length);
+    }
+  }
+
   async function createShow() {
     if (!newShowName) return;
     setSavingShow(true);
@@ -1714,20 +1751,25 @@ export default function AdminShowsPage() {
                           </div>
                         </div>
 
-                        {/* Day cells */}
+                        {/* Day cells — admin can click to toggle */}
                         {MSW_DAYS.map((d) => {
                           const avail = m.available_dates.includes(d.date);
                           return (
                             <div key={d.date} className="flex-1 flex items-center justify-center">
-                              {!m.has_responded ? (
-                                <span className="h-2 w-2 rounded-full bg-white/[0.08]" title="No response" />
-                              ) : avail ? (
-                                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-emerald-500/20 border border-emerald-500/40 shadow-[0_0_8px_rgba(34,197,94,0.25)]">
-                                  <Check className="h-3 w-3 text-emerald-400" />
-                                </span>
-                              ) : (
-                                <span className="h-1 w-1 rounded-full bg-white/10" title="Unavailable" />
-                              )}
+                              <button
+                                type="button"
+                                onClick={() => toggleAvailDay(m.id, d.date, !avail)}
+                                title={`${m.first_name ?? ""} ${m.last_name ?? ""} — ${d.label} · click to ${avail ? "remove" : "mark available"}`}
+                                className={`flex items-center justify-center h-6 w-6 rounded-full border transition-all ${
+                                  avail
+                                    ? "bg-emerald-500/20 border-emerald-500/40 shadow-[0_0_8px_rgba(34,197,94,0.25)] hover:bg-emerald-500/30"
+                                    : !m.has_responded
+                                      ? "border-white/10 bg-white/[0.02] hover:border-amber-400/40 hover:bg-amber-400/10"
+                                      : "border-white/10 bg-transparent hover:border-emerald-500/40 hover:bg-emerald-500/10"
+                                }`}
+                              >
+                                {avail && <Check className="h-3 w-3 text-emerald-400" />}
+                              </button>
                             </div>
                           );
                         })}
