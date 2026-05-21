@@ -296,8 +296,8 @@ export default function FreeCompCardPage() {
     return photoBase64;
   };
 
-  // Generate PDF and return as base64 string (for print order upload)
-  const generatePdfBase64 = async (): Promise<string> => {
+  // Generate PDF and return as Blob (for direct upload to Supabase Storage)
+  const generatePdfBlob = async (): Promise<Blob> => {
     const photoBase64 = await buildPhotoBase64();
     const { pdf } = await import("@react-pdf/renderer");
     const { default: CompCardPDF } = await import(
@@ -309,18 +309,9 @@ export default function FreeCompCardPage() {
       instagram: instagramName || undefined,
       website: website || undefined,
     };
-    const blob = await pdf(
+    return pdf(
       CompCardPDF({ model, photos: photoBase64, logoColor, nameColor, nameFontScale, contactInfo })
     ).toBlob();
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        resolve(dataUrl.split(",")[1]); // Strip data:application/pdf;base64, prefix
-      };
-      reader.onerror = () => reject(new Error("Failed to read PDF"));
-      reader.readAsDataURL(blob);
-    });
   };
 
   const startPrintOrder = () => {
@@ -1035,7 +1026,7 @@ export default function FreeCompCardPage() {
         firstName={firstName}
         lastName={lastName}
         phone={phoneNumber}
-        onGeneratePdf={generatePdfBase64}
+        onGeneratePdf={generatePdfBlob}
       />
     </div>
   );

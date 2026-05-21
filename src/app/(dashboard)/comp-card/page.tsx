@@ -399,7 +399,7 @@ export default function CompCardPage() {
     }
   };
 
-  const generatePdfBase64 = async (): Promise<string> => {
+  const generatePdfBlob = async (): Promise<Blob> => {
     if (!model || selectedIds.length === 0) throw new Error("No photos selected");
     const photoBase64: string[] = [];
     for (let idx = 0; idx < selectedIds.length; idx++) {
@@ -414,15 +414,9 @@ export default function CompCardPage() {
     const qrCodeBase64 = await QRCode.toDataURL(profileUrl, { width: 200, margin: 1 });
     const { pdf } = await import("@react-pdf/renderer");
     const { default: CompCardPDF } = await import("@/components/comp-card/CompCardPDF");
-    const blob = await pdf(
+    return pdf(
       CompCardPDF({ model, photos: photoBase64, logoColor, nameColor, nameFontScale, qrCodeUrl: qrCodeBase64 })
     ).toBlob();
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve((reader.result as string).split(",")[1]);
-      reader.onerror = () => reject(new Error("Failed to read PDF"));
-      reader.readAsDataURL(blob);
-    });
   };
 
   const handleExportJPEG = async () => {
@@ -1226,7 +1220,7 @@ export default function CompCardPage() {
         firstName={model?.first_name || ""}
         lastName={model?.last_name || ""}
         phone=""
-        onGeneratePdf={generatePdfBase64}
+        onGeneratePdf={generatePdfBlob}
       />
     </div>
   );

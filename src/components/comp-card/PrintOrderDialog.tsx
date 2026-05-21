@@ -22,7 +22,7 @@ interface PrintOrderDialogProps {
   firstName: string;
   lastName: string;
   phone: string;
-  onGeneratePdf: () => Promise<string>;
+  onGeneratePdf: () => Promise<Blob>;
 }
 
 export default function PrintOrderDialog({
@@ -56,23 +56,51 @@ export default function PrintOrderDialog({
     setSubmitting(true);
     try {
       toast.info("Generating your comp card PDF...");
-      const pdfBase64 = await onGeneratePdf();
+      const pdfBlob = await onGeneratePdf();
 
+      // Step 1: get a signed upload URL + order ID
+      const uploadUrlRes = await fetch(
+        "/api/comp-card-creator/print-order/upload-url",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        }
+      );
+      if (!uploadUrlRes.ok) {
+        const data = await uploadUrlRes.json().catch(() => ({}));
+        toast.error(data.error || "Could not start order");
+        return;
+      }
+      const { orderId, signedUrl } = await uploadUrlRes.json();
+
+      // Step 2: upload PDF directly to Supabase Storage (bypasses Vercel body limit)
+      const uploadRes = await fetch(signedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": "application/pdf" },
+        body: pdfBlob,
+      });
+      if (!uploadRes.ok) {
+        toast.error("Failed to upload PDF. Please try again.");
+        return;
+      }
+
+      // Step 3: create the order record + Stripe checkout session
       const res = await fetch("/api/comp-card-creator/print-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          orderId,
           quantity,
           email: email.trim(),
           firstName,
           lastName: lastName || undefined,
           phone: phone?.trim() || undefined,
-          pdfBase64,
         }),
       });
 
       if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         toast.error(data.error || "Something went wrong");
         return;
       }

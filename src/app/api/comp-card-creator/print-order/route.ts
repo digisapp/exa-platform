@@ -7,12 +7,12 @@ import { z } from "zod";
 import { logger } from "@/lib/logger";
 
 const schema = z.object({
+  orderId: z.string().uuid(),
   quantity: z.number().int().min(PRINT_MIN_QUANTITY).max(500),
   email: z.string().email().max(254),
   firstName: z.string().min(1).max(100),
   lastName: z.string().max(100).optional(),
   phone: z.string().max(30).optional(),
-  pdfBase64: z.string().min(1),
 });
 
 export async function POST(request: NextRequest) {
@@ -29,29 +29,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { quantity } = parsed.data;
+    const { orderId, quantity } = parsed.data;
     const totalCents = quantity * PRINT_PRICE_PER_CARD;
-
-    const supabase: any = createServiceRoleClient();
-    const orderId = crypto.randomUUID();
     const storagePath = `comp-card-prints/${orderId}.pdf`;
 
-    // Upload PDF to Supabase Storage
-    const pdfBuffer = Buffer.from(parsed.data.pdfBase64, "base64");
+    const supabase: any = createServiceRoleClient();
 
-    const { error: uploadError } = await supabase.storage
+    // Verify the client successfully uploaded the PDF to storage
+    const { data: listed, error: listError } = await supabase.storage
       .from("portfolio")
-      .upload(storagePath, pdfBuffer, {
-        contentType: "application/pdf",
-        cacheControl: "31536000",
-        upsert: false,
-      });
+      .list("comp-card-prints", { search: `${orderId}.pdf` });
 
-    if (uploadError) {
-      logger.error("PDF upload error", uploadError);
+    if (listError || !listed?.some((f: any) => f.name === `${orderId}.pdf`)) {
+      logger.error("Comp card print PDF missing", listError, { orderId });
       return NextResponse.json(
-        { error: "Failed to upload PDF" },
-        { status: 500 }
+        { error: "PDF upload not found. Please try again." },
+        { status: 400 }
       );
     }
 
@@ -59,7 +52,6 @@ export async function POST(request: NextRequest) {
       data: { publicUrl },
     } = supabase.storage.from("portfolio").getPublicUrl(storagePath);
 
-    // Create pending order record
     const { error: insertError } = await supabase
       .from("comp_card_print_orders")
       .insert({
@@ -84,7 +76,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Stripe checkout session
     const baseUrl =
       process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
 
@@ -115,7 +106,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Update order with Stripe session ID
     await supabase
       .from("comp_card_print_orders")
       .update({ stripe_checkout_session_id: session.id })
