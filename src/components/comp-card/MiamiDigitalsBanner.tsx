@@ -3,7 +3,6 @@
 import { Camera, MapPin, Calendar, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { DigisInlineLink } from "@/components/shows/digis-links";
 
 export function MiamiDigitalsBanner() {
   return (
@@ -47,13 +46,6 @@ export function MiamiDigitalsBanner() {
               <ArrowRight className="ml-1.5 h-3 w-3" />
             </Link>
           </Button>
-          <p className="text-[10px] text-emerald-400/70 font-medium">
-            FREE with{" "}
-            <DigisInlineLink className="underline hover:text-emerald-300 transition-colors">
-              Digis.cc
-            </DigisInlineLink>{" "}
-            account
-          </p>
         </div>
       </div>
     </div>
