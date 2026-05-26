@@ -22,7 +22,7 @@ export async function GET(
         designer_name,
         designer_order,
         models:event_show_models(
-          id, model_id, walk_order, outfit_notes, status,
+          id, model_id, guest_name, walk_order, outfit_notes, status,
           model:models(id, username, first_name, last_name, height, bust, hips, dress_size, shoe_size, instagram_url)
         )
       )
@@ -46,6 +46,18 @@ export async function GET(
     const models = (d.models || []).sort((a: any, b: any) => a.walk_order - b.walk_order);
     const rows = models.map((lm: any, i: number) => {
       const m = lm.model;
+      const isGuest = !m && !!lm.guest_name;
+      if (isGuest) {
+        return `<tr>
+          <td class="walk-num">${i + 1}</td>
+          <td><div class="model-name">${lm.guest_name}</div><div class="model-username">walk-in</div></td>
+          <td>\u2014</td>
+          <td>\u2014</td>
+          <td>\u2014</td>
+          <td>\u2014</td>
+          <td class="notes">${lm.outfit_notes || ""}</td>
+        </tr>`;
+      }
       const measurements = [m?.bust, m?.hips].filter(Boolean).join(" / ") || "\u2014";
       const ig = m?.instagram_url
         ? m.instagram_url.replace(/https?:\/\/(www\.)?instagram\.com\//, "@").replace(/\/$/, "")

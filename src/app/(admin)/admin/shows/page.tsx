@@ -62,12 +62,13 @@ interface ModelInfo {
 
 interface ShowModel {
   id: string;
-  model_id: string;
+  model_id: string | null;
+  guest_name: string | null;
   walk_order: number;
   outfit_notes: string | null;
   status: string;
   check_in_status?: string;
-  model: ModelInfo;
+  model: ModelInfo | null;
 }
 
 interface DesignerEntry {
@@ -113,9 +114,13 @@ function SortableModelCard({
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState(showModel.outfit_notes || "");
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: showModel.model_id });
+    useSortable({ id: showModel.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1 };
   const m = showModel.model;
+  const isGuest = !m && !!showModel.guest_name;
+  const guestInitials = isGuest
+    ? showModel.guest_name!.trim().split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase()
+    : "";
 
   function saveNotes() { onUpdateNotes(notesValue); setEditingNotes(false); }
 
@@ -138,18 +143,33 @@ function SortableModelCard({
           <GripVertical className="h-4 w-4" />
         </button>
         <span className="text-[10px] font-mono text-white/25 w-6 text-center shrink-0">#{walkNumber}</span>
-        <div className="relative h-9 w-9 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
-          {m.profile_photo_url ? (
+        <div className={`relative h-9 w-9 rounded-full overflow-hidden ring-1 shrink-0 ${
+          isGuest ? "bg-amber-500/15 ring-amber-500/30" : "bg-white/5 ring-white/10"
+        }`}>
+          {isGuest ? (
+            <div className="h-full w-full flex items-center justify-center text-[10px] font-semibold text-amber-300/80">
+              {guestInitials || "?"}
+            </div>
+          ) : m?.profile_photo_url ? (
             <Image src={m.profile_photo_url} alt={m.first_name || ""} fill className="object-cover" />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-[10px] text-white/30">
-              {m.first_name?.[0]}{m.last_name?.[0]}
+              {m?.first_name?.[0]}{m?.last_name?.[0]}
             </div>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate text-white/85">{m.first_name} {m.last_name}</p>
-          <p className="text-[11px] text-white/30 truncate">@{m.username}{m.height ? ` · ${m.height}` : ""}</p>
+          {isGuest ? (
+            <>
+              <p className="text-sm font-medium truncate text-white/85">{showModel.guest_name}</p>
+              <p className="text-[11px] text-amber-400/60 truncate uppercase tracking-wide">Walk-in</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-medium truncate text-white/85">{m?.first_name} {m?.last_name}</p>
+              <p className="text-[11px] text-white/30 truncate">@{m?.username}{m?.height ? ` · ${m.height}` : ""}</p>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {multiWalkInfo && multiWalkInfo.count > 1 && (
@@ -243,18 +263,19 @@ function ModelPoolCard({ model, assignedCount, isSelected, onToggle, isPick }: {
 
 function SortableDesignerPanel({
   designer, showId, onRemoveModel, onReorder, onDeleteDesigner, onUpdateOutfitNotes,
-  onRenameDesigner, onMoveDesigner, onBulkRemove, onBulkMove,
+  onRenameDesigner, onMoveDesigner, onBulkRemove, onBulkMove, onAddWalkIn,
   modelConflicts, isActive, onActivate, otherShows, allDesigners, showModelWalkMap,
 }: {
   designer: DesignerEntry; showId: string;
-  onRemoveModel: (designerEntryId: string, modelId: string) => void;
-  onReorder: (designerEntryId: string, modelIds: string[]) => void;
+  onRemoveModel: (designerEntryId: string, rowId: string) => void;
+  onReorder: (designerEntryId: string, rowIds: string[]) => void;
   onDeleteDesigner: (designerEntryId: string) => void;
-  onUpdateOutfitNotes: (designerEntryId: string, modelId: string, notes: string) => void;
+  onUpdateOutfitNotes: (designerEntryId: string, rowId: string, notes: string) => void;
   onRenameDesigner: (designerEntryId: string, showId: string, newName: string) => void;
   onMoveDesigner: (designerEntryId: string, fromShowId: string, toShowId: string) => void;
-  onBulkRemove: (designerEntryId: string, modelIds: string[]) => void;
-  onBulkMove: (fromDesignerEntryId: string, toDesignerEntryId: string, modelIds: string[]) => void;
+  onBulkRemove: (designerEntryId: string, rowIds: string[]) => void;
+  onBulkMove: (fromDesignerEntryId: string, toDesignerEntryId: string, rowIds: string[]) => void;
+  onAddWalkIn: (designerEntryId: string, name: string) => Promise<void>;
   modelConflicts: Record<string, string>;
   isActive: boolean; onActivate: () => void;
   otherShows: { id: string; name: string; show_date: string | null }[];
@@ -267,6 +288,9 @@ function SortableDesignerPanel({
   const [showMoveMenu, setShowMoveMenu] = useState(false);
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
   const [showBulkMoveMenu, setShowBulkMoveMenu] = useState(false);
+  const [addingWalkIn, setAddingWalkIn] = useState(false);
+  const [walkInName, setWalkInName] = useState("");
+  const [walkInSaving, setWalkInSaving] = useState(false);
 
   const {
     attributes: sortableAttributes, listeners: sortableListeners,
@@ -279,15 +303,15 @@ function SortableDesignerPanel({
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
-  const modelIds = designer.models.map((m) => m.model_id);
+  const rowIds = designer.models.map((m) => m.id);
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = modelIds.indexOf(active.id as string);
-    const newIndex = modelIds.indexOf(over.id as string);
-    onReorder(designer.id, arrayMove(modelIds, oldIndex, newIndex));
+    const oldIndex = rowIds.indexOf(active.id as string);
+    const newIndex = rowIds.indexOf(over.id as string);
+    onReorder(designer.id, arrayMove(rowIds, oldIndex, newIndex));
   }
 
   function saveName() {
@@ -297,10 +321,10 @@ function SortableDesignerPanel({
     setEditingName(false);
   }
 
-  function toggleBulkSelect(modelId: string) {
+  function toggleBulkSelect(rowId: string) {
     setBulkSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(modelId)) { next.delete(modelId); } else { next.add(modelId); }
+      if (next.has(rowId)) { next.delete(rowId); } else { next.add(rowId); }
       return next;
     });
   }
@@ -318,7 +342,20 @@ function SortableDesignerPanel({
     setShowBulkMoveMenu(false);
   }
 
-  const activeModel = activeId ? designer.models.find((m) => m.model_id === activeId) : null;
+  async function saveWalkIn() {
+    const name = walkInName.trim();
+    if (!name || walkInSaving) return;
+    setWalkInSaving(true);
+    try {
+      await onAddWalkIn(designer.id, name);
+      setWalkInName("");
+      setAddingWalkIn(false);
+    } finally {
+      setWalkInSaving(false);
+    }
+  }
+
+  const activeModel = activeId ? designer.models.find((m) => m.id === activeId) : null;
   const moveTargetDesigners = allDesigners.filter((d) => d.id !== designer.id);
 
   return (
@@ -453,7 +490,7 @@ function SortableDesignerPanel({
 
           {designer.models.length === 0 ? (
             <p className="text-xs text-white/25 text-center py-4 mt-2">
-              Select models from the pool and click &quot;Add to Lineup&quot;
+              Select models from the pool and click &quot;Add to Lineup&quot;, or add a walk-in extra below
             </p>
           ) : (
             <DndContext
@@ -461,19 +498,19 @@ function SortableDesignerPanel({
               collisionDetection={closestCenter}
               onDragStart={(e: DragStartEvent) => setActiveId(e.active.id as string)}
               onDragEnd={handleDragEnd}>
-              <SortableContext items={modelIds} strategy={verticalListSortingStrategy}>
+              <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
                 <div className="space-y-1 pt-1.5">
                   {designer.models.map((sm, i) => (
                     <SortableModelCard
-                      key={sm.model_id}
+                      key={sm.id}
                       showModel={sm}
                       walkNumber={i + 1}
-                      onRemove={() => onRemoveModel(designer.id, sm.model_id)}
-                      onUpdateNotes={(notes) => onUpdateOutfitNotes(designer.id, sm.model_id, notes)}
-                      conflictWarning={modelConflicts[sm.model_id] || null}
-                      isBulkSelected={bulkSelected.has(sm.model_id)}
-                      onBulkToggle={() => toggleBulkSelect(sm.model_id)}
-                      multiWalkInfo={showModelWalkMap[sm.model_id]}
+                      onRemove={() => onRemoveModel(designer.id, sm.id)}
+                      onUpdateNotes={(notes) => onUpdateOutfitNotes(designer.id, sm.id, notes)}
+                      conflictWarning={sm.model_id ? (modelConflicts[sm.model_id] || null) : null}
+                      isBulkSelected={bulkSelected.has(sm.id)}
+                      onBulkToggle={() => toggleBulkSelect(sm.id)}
+                      multiWalkInfo={sm.model_id ? showModelWalkMap[sm.model_id] : undefined}
                     />
                   ))}
                 </div>
@@ -483,16 +520,62 @@ function SortableDesignerPanel({
                   <div className="flex items-center gap-3 p-2.5 rounded-lg bg-zinc-900 border border-pink-500/60 shadow-[0_0_20px_rgba(236,72,153,0.2)]">
                     <GripVertical className="h-4 w-4 text-white/30" />
                     <div className="relative h-9 w-9 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
-                      {activeModel.model.profile_photo_url
+                      {activeModel.model?.profile_photo_url
                         ? <Image src={activeModel.model.profile_photo_url} alt={activeModel.model.first_name || ""} fill className="object-cover" />
-                        : <div className="h-full w-full flex items-center justify-center text-xs text-white/30">{activeModel.model.first_name?.[0]}{activeModel.model.last_name?.[0]}</div>}
+                        : <div className="h-full w-full flex items-center justify-center text-xs text-white/30">
+                            {activeModel.model
+                              ? `${activeModel.model.first_name?.[0] ?? ""}${activeModel.model.last_name?.[0] ?? ""}`
+                              : (activeModel.guest_name || "?").slice(0, 2).toUpperCase()}
+                          </div>}
                     </div>
-                    <p className="text-sm font-medium text-white/90">{activeModel.model.first_name} {activeModel.model.last_name}</p>
+                    <p className="text-sm font-medium text-white/90">
+                      {activeModel.model
+                        ? `${activeModel.model.first_name ?? ""} ${activeModel.model.last_name ?? ""}`
+                        : activeModel.guest_name}
+                    </p>
                   </div>
                 ) : null}
               </DragOverlay>
             </DndContext>
           )}
+
+          {/* Walk-in extra (name only, no DB account) */}
+          <div className="mt-2 pt-2 border-t border-white/[0.04]">
+            {addingWalkIn ? (
+              <div className="flex items-center gap-1.5">
+                <Input
+                  placeholder="Walk-in model name"
+                  value={walkInName}
+                  onChange={(e) => setWalkInName(e.target.value)}
+                  className="h-7 text-xs flex-1 bg-amber-500/[0.04] border-amber-500/20 text-white/85 placeholder:text-white/25"
+                  autoFocus
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); saveWalkIn(); }
+                    if (e.key === "Escape") { setAddingWalkIn(false); setWalkInName(""); }
+                  }}
+                />
+                <Button
+                  size="sm"
+                  className="h-7 text-xs px-2.5 bg-amber-500 hover:bg-amber-600 text-black border-0"
+                  onClick={saveWalkIn}
+                  disabled={!walkInName.trim() || walkInSaving}>
+                  {walkInSaving ? "…" : "Add"}
+                </Button>
+                <button
+                  className="text-white/30 hover:text-white/60 transition-colors"
+                  onClick={() => { setAddingWalkIn(false); setWalkInName(""); }}>
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); setAddingWalkIn(true); }}
+                className="w-full flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wide font-medium text-white/30 hover:text-amber-300 border border-dashed border-white/[0.08] hover:border-amber-500/30 rounded-md py-1.5 transition-all">
+                <Plus className="h-3 w-3" /> Walk-in extra (name only)
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -549,6 +632,7 @@ function ModelMapPanel({
   const modelIndices = useMemo(() => {
     const map: Record<string, number[]> = {};
     sequence.forEach((item, i) => {
+      if (!item.sm.model_id) return;
       if (!map[item.sm.model_id]) map[item.sm.model_id] = [];
       map[item.sm.model_id].push(i);
     });
@@ -556,10 +640,9 @@ function ModelMapPanel({
   }, [sequence]);
 
   const itemGaps = useMemo(() => sequence.map((item, i) => {
-    const idxs = modelIndices[item.sm.model_id] || [];
+    const idxs = item.sm.model_id ? (modelIndices[item.sm.model_id] || []) : [];
     const pos = idxs.indexOf(i);
     const prevI = idxs[pos - 1] ?? null;
-    const nextI = idxs[pos + 1] ?? null;
     return {
       gapBefore: prevI !== null ? i - prevI - 1 : null,
       prevDesigner: prevI !== null ? sequence[prevI].d.designer_name : null,
@@ -567,8 +650,13 @@ function ModelMapPanel({
   }), [sequence, modelIndices]);
 
   const q = search.toLowerCase();
-  const matches = (m: ModelInfo) =>
-    !q || [m.first_name, m.last_name, m.username].some((v) => v?.toLowerCase().includes(q));
+  const matches = (sm: ShowModel) => {
+    if (!q) return true;
+    if (sm.model) {
+      return [sm.model.first_name, sm.model.last_name, sm.model.username].some((v) => v?.toLowerCase().includes(q));
+    }
+    return sm.guest_name?.toLowerCase().includes(q) ?? false;
+  };
 
   const totalSlots = sequence.length;
   const multiCount = Object.values(walkMap).filter((v) => v.count > 1).length;
@@ -581,7 +669,7 @@ function ModelMapPanel({
   // ── Sequence / Timeline ──────────────────────────────────────────────────
 
   function renderSequence(withTime: boolean) {
-    const items = q ? sequence.filter((it) => matches(it.sm.model)) : sequence;
+    const items = q ? sequence.filter((it) => matches(it.sm)) : sequence;
     if (items.length === 0) return (
       <p className="text-xs text-white/25 text-center py-8">No models match &ldquo;{search}&rdquo;</p>
     );
@@ -590,9 +678,10 @@ function ModelMapPanel({
         {items.map((item) => {
           const seqI = sequence.indexOf(item);
           const gaps = itemGaps[seqI];
-          const wInfo = walkMap[item.sm.model_id];
+          const wInfo = item.sm.model_id ? walkMap[item.sm.model_id] : undefined;
           const isMulti = (wInfo?.count ?? 1) > 1;
           const isB2B = wInfo?.hasBackToBack ?? false;
+          const isGuest = !item.sm.model && !!item.sm.guest_name;
           const ciKey = (item.sm.check_in_status || "not_arrived") as CheckInStatus;
           const ci = CI[ciKey] || CI.not_arrived;
           const isCancelled = item.sm.status === "cancelled";
@@ -605,7 +694,7 @@ function ModelMapPanel({
           const showBanner = gb !== null && gb <= 8;
 
           return (
-            <div key={`${item.d.id}-${item.sm.model_id}`}>
+            <div key={item.sm.id}>
               {showBanner && (
                 <div className={`flex items-center justify-between mx-0.5 my-1 rounded-md px-3 py-1.5 border text-[10px] font-medium ${gapBadge(gb!).cls}`}>
                   <span>⚡ Quick change — from {gaps.prevDesigner}</span>
@@ -628,19 +717,29 @@ function ModelMapPanel({
                   {item.d.designer_name}
                 </span>
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="relative h-7 w-7 rounded-full overflow-hidden bg-white/5 ring-1 ring-white/10 shrink-0">
-                    {item.sm.model.profile_photo_url
-                      ? <Image src={item.sm.model.profile_photo_url} alt="" fill className="object-cover" />
-                      : <div className="h-full w-full flex items-center justify-center text-[8px] text-white/25">
-                          {item.sm.model.first_name?.[0]}{item.sm.model.last_name?.[0]}
-                        </div>}
+                  <div className={`relative h-7 w-7 rounded-full overflow-hidden ring-1 shrink-0 ${
+                    isGuest ? "bg-amber-500/15 ring-amber-500/30" : "bg-white/5 ring-white/10"
+                  }`}>
+                    {isGuest ? (
+                      <div className="h-full w-full flex items-center justify-center text-[8px] font-semibold text-amber-300/80">
+                        {(item.sm.guest_name || "?").trim().split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase()}
+                      </div>
+                    ) : item.sm.model?.profile_photo_url ? (
+                      <Image src={item.sm.model.profile_photo_url} alt="" fill className="object-cover" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-[8px] text-white/25">
+                        {item.sm.model?.first_name?.[0]}{item.sm.model?.last_name?.[0]}
+                      </div>
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className={`text-xs font-medium truncate leading-tight ${
                       isCancelled ? "line-through text-white/30" :
                       isStandby ? "text-amber-300/70" : "text-white/80"
                     }`}>
-                      {item.sm.model.first_name} {item.sm.model.last_name}
+                      {isGuest
+                        ? <>{item.sm.guest_name} <span className="ml-1 text-[9px] text-amber-400/60 font-normal uppercase tracking-wide">walk-in</span></>
+                        : <>{item.sm.model?.first_name} {item.sm.model?.last_name}</>}
                       {isStandby && <span className="ml-1 text-[9px] text-amber-400/50 font-normal">standby</span>}
                     </p>
                     {item.sm.outfit_notes && (
@@ -649,15 +748,19 @@ function ModelMapPanel({
                   </div>
                 </div>
                 {isMulti && <Repeat className={`h-3 w-3 shrink-0 ${isB2B ? "text-red-400" : "text-blue-400/50"}`} />}
-                <button
-                  onClick={() => onUpdateCheckInStatus(show.id, item.sm.model_id, nextCheckIn(item.sm.check_in_status))}
-                  title={`${ci.label} — click to advance`}
-                  className="flex items-center gap-1.5 rounded-full px-2 py-0.5 border border-transparent hover:border-white/12 hover:bg-white/[0.04] transition-all shrink-0">
-                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${ci.dot}`} />
-                  <span className={`text-[10px] font-medium ${ciKey === "not_arrived" ? "text-white/15" : "text-white/50"}`}>
-                    {ci.short}
-                  </span>
-                </button>
+                {item.sm.model_id ? (
+                  <button
+                    onClick={() => onUpdateCheckInStatus(show.id, item.sm.model_id!, nextCheckIn(item.sm.check_in_status))}
+                    title={`${ci.label} — click to advance`}
+                    className="flex items-center gap-1.5 rounded-full px-2 py-0.5 border border-transparent hover:border-white/12 hover:bg-white/[0.04] transition-all shrink-0">
+                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${ci.dot}`} />
+                    <span className={`text-[10px] font-medium ${ciKey === "not_arrived" ? "text-white/15" : "text-white/50"}`}>
+                      {ci.short}
+                    </span>
+                  </button>
+                ) : (
+                  <span className="text-[10px] font-medium text-amber-400/40 px-2 py-0.5 shrink-0">—</span>
+                )}
               </div>
             </div>
           );
@@ -678,6 +781,7 @@ function ModelMapPanel({
     const rows: GridRow[] = [];
     show.designers.forEach((d, dIdx) => {
       d.models.forEach((sm) => {
+        if (!sm.model_id || !sm.model) return; // grid view ignores walk-in guests
         if (!seen.has(sm.model_id)) {
           seen.add(sm.model_id);
           rows.push({
@@ -697,7 +801,9 @@ function ModelMapPanel({
       if (a.isMulti !== b.isMulti) return a.isMulti ? -1 : 1;
       return (a.model.first_name || "").localeCompare(b.model.first_name || "");
     });
-    const filtered = q ? rows.filter((r) => matches(r.model)) : rows;
+    const filtered = q
+      ? rows.filter((r) => [r.model.first_name, r.model.last_name, r.model.username].some((v) => v?.toLowerCase().includes(q)))
+      : rows;
     if (filtered.length === 0) return (
       <p className="text-xs text-white/25 text-center py-8">No models match &ldquo;{search}&rdquo;</p>
     );
@@ -1062,7 +1168,10 @@ export default function AdminShowsPage() {
 
   const modelAssignmentCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    shows.forEach((s) => s.designers.forEach((d) => d.models.forEach((m) => { counts[m.model_id] = (counts[m.model_id] || 0) + 1; })));
+    shows.forEach((s) => s.designers.forEach((d) => d.models.forEach((m) => {
+      if (!m.model_id) return;
+      counts[m.model_id] = (counts[m.model_id] || 0) + 1;
+    })));
     return counts;
   }, [shows]);
 
@@ -1070,6 +1179,7 @@ export default function AdminShowsPage() {
     const modelAssignments: Record<string, { showId: string; showName: string; showDate: string | null; showTime: string | null; designerName: string }[]> = {};
     shows.forEach((s) => {
       s.designers.forEach((d) => d.models.forEach((m) => {
+        if (!m.model_id) return;
         if (!modelAssignments[m.model_id]) modelAssignments[m.model_id] = [];
         modelAssignments[m.model_id].push({ showId: s.id, showName: s.name, showDate: s.show_date, showTime: s.show_time, designerName: d.designer_name });
       }));
@@ -1079,6 +1189,7 @@ export default function AdminShowsPage() {
       s.designers.forEach((d) => {
         const conflicts: Record<string, string> = {};
         d.models.forEach((m) => {
+          if (!m.model_id) return;
           const assignments = modelAssignments[m.model_id] || [];
           const warnings: string[] = [];
           const byDate: Record<string, typeof assignments> = {};
@@ -1125,6 +1236,7 @@ export default function AdminShowsPage() {
       const walkMap: Record<string, { count: number; designers: string[]; designerIndices: number[] }> = {};
       show.designers.forEach((d, dIdx) => {
         d.models.forEach((m) => {
+          if (!m.model_id) return;
           if (!walkMap[m.model_id]) walkMap[m.model_id] = { count: 0, designers: [], designerIndices: [] };
           walkMap[m.model_id].count++;
           walkMap[m.model_id].designers.push(d.designer_name);
@@ -1398,72 +1510,100 @@ export default function AdminShowsPage() {
     } else { toast.error("Failed to add models"); }
   }
 
-  async function removeModel(designerEntryId: string, modelId: string) {
+  async function removeModel(designerEntryId: string, rowId: string) {
     const res = await fetch(`/api/admin/lineups/${designerEntryId}/models`, {
       method: "DELETE", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model_ids: [modelId] }),
+      body: JSON.stringify({ row_ids: [rowId] }),
     });
     if (res.ok) {
       setShows((prev) => prev.map((s) => ({
-        ...s, designers: s.designers.map((d) => d.id === designerEntryId ? { ...d, models: d.models.filter((m) => m.model_id !== modelId) } : d),
+        ...s, designers: s.designers.map((d) => d.id === designerEntryId ? { ...d, models: d.models.filter((m) => m.id !== rowId) } : d),
       })));
       toast.success("Model removed");
     }
   }
 
-  async function bulkRemoveModels(designerEntryId: string, modelIds: string[]) {
+  async function bulkRemoveModels(designerEntryId: string, rowIds: string[]) {
     const res = await fetch(`/api/admin/lineups/${designerEntryId}/models`, {
       method: "DELETE", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model_ids: modelIds }),
+      body: JSON.stringify({ row_ids: rowIds }),
     });
     if (res.ok) {
       setShows((prev) => prev.map((s) => ({
-        ...s, designers: s.designers.map((d) => d.id === designerEntryId ? { ...d, models: d.models.filter((m) => !modelIds.includes(m.model_id)) } : d),
+        ...s, designers: s.designers.map((d) => d.id === designerEntryId ? { ...d, models: d.models.filter((m) => !rowIds.includes(m.id)) } : d),
       })));
-      toast.success(`${modelIds.length} model(s) removed`);
+      toast.success(`${rowIds.length} model(s) removed`);
     }
   }
 
-  async function bulkMoveModels(fromDesignerEntryId: string, toDesignerEntryId: string, modelIds: string[]) {
+  async function bulkMoveModels(fromDesignerEntryId: string, toDesignerEntryId: string, rowIds: string[]) {
+    // Resolve the rows we're moving so we can re-insert real models and walk-ins separately.
+    const fromDesigner = shows.flatMap((s) => s.designers).find((d) => d.id === fromDesignerEntryId);
+    const rowsToMove = (fromDesigner?.models || []).filter((m) => rowIds.includes(m.id));
+    const modelIds = rowsToMove.filter((m) => m.model_id).map((m) => m.model_id!) as string[];
+    const guestNames = rowsToMove.filter((m) => !m.model_id && m.guest_name).map((m) => m.guest_name!) as string[];
+
     const delRes = await fetch(`/api/admin/lineups/${fromDesignerEntryId}/models`, {
       method: "DELETE", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model_ids: modelIds }),
+      body: JSON.stringify({ row_ids: rowIds }),
     });
     if (!delRes.ok) { toast.error("Failed to remove models"); return; }
     const addRes = await fetch(`/api/admin/lineups/${toDesignerEntryId}/models`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model_ids: modelIds }),
+      body: JSON.stringify({ model_ids: modelIds, guest_names: guestNames }),
     });
     if (addRes.ok) {
       const newModels = await addRes.json();
       setShows((prev) => prev.map((s) => ({
         ...s,
         designers: s.designers.map((d) => {
-          if (d.id === fromDesignerEntryId) return { ...d, models: d.models.filter((m) => !modelIds.includes(m.model_id)) };
+          if (d.id === fromDesignerEntryId) return { ...d, models: d.models.filter((m) => !rowIds.includes(m.id)) };
           if (d.id === toDesignerEntryId) return { ...d, models: [...d.models, ...newModels].sort((a, b) => a.walk_order - b.walk_order) };
           return d;
         }),
       })));
-      toast.success(`${modelIds.length} model(s) moved`);
+      toast.success(`${rowIds.length} model(s) moved`);
     } else { toast.error("Failed to add models to target"); }
   }
 
-  const reorderModels = useCallback(async (designerEntryId: string, orderedModelIds: string[]) => {
+  const reorderModels = useCallback(async (designerEntryId: string, orderedRowIds: string[]) => {
     setShows((prev) => prev.map((s) => ({
       ...s, designers: s.designers.map((d) => {
         if (d.id !== designerEntryId) return d;
-        const modelMap = new Map(d.models.map((m) => [m.model_id, m]));
-        return { ...d, models: orderedModelIds.map((id, i) => { const m = modelMap.get(id); return m ? { ...m, walk_order: i } : null; }).filter(Boolean) as ShowModel[] };
+        const rowMap = new Map(d.models.map((m) => [m.id, m]));
+        return { ...d, models: orderedRowIds.map((id, i) => { const m = rowMap.get(id); return m ? { ...m, walk_order: i } : null; }).filter(Boolean) as ShowModel[] };
       }),
     })));
-    await fetch(`/api/admin/lineups/${designerEntryId}/models`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ordered_model_ids: orderedModelIds }) });
+    await fetch(`/api/admin/lineups/${designerEntryId}/models`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ordered_ids: orderedRowIds }) });
   }, []);
 
-  async function updateOutfitNotes(designerEntryId: string, modelId: string, notes: string) {
+  async function updateOutfitNotes(designerEntryId: string, rowId: string, notes: string) {
     setShows((prev) => prev.map((s) => ({
-      ...s, designers: s.designers.map((d) => d.id === designerEntryId ? { ...d, models: d.models.map((m) => m.model_id === modelId ? { ...m, outfit_notes: notes || null } : m) } : d),
+      ...s, designers: s.designers.map((d) => d.id === designerEntryId ? { ...d, models: d.models.map((m) => m.id === rowId ? { ...m, outfit_notes: notes || null } : m) } : d),
     })));
-    await fetch(`/api/admin/lineups/${designerEntryId}/models/notes`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model_id: modelId, outfit_notes: notes }) });
+    await fetch(`/api/admin/lineups/${designerEntryId}/models/notes`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ row_id: rowId, outfit_notes: notes }) });
+  }
+
+  async function addWalkInExtra(designerEntryId: string, name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const res = await fetch(`/api/admin/lineups/${designerEntryId}/models`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ guest_names: [trimmed] }),
+    });
+    if (res.ok) {
+      const newModels = await res.json();
+      setShows((prev) => prev.map((s) => ({
+        ...s,
+        designers: s.designers.map((d) => d.id === designerEntryId
+          ? { ...d, models: [...d.models, ...newModels].sort((a, b) => a.walk_order - b.walk_order) }
+          : d),
+      })));
+      toast.success(`Walk-in added: ${trimmed}`);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.error || "Failed to add walk-in");
+    }
   }
 
   async function exportShowPdf(showId: string) {
@@ -1541,7 +1681,9 @@ export default function AdminShowsPage() {
   }
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
-  const totalModelsAssigned = new Set(shows.flatMap((s) => s.designers.flatMap((d) => d.models.map((m) => m.model_id)))).size;
+  const totalModelsAssigned = new Set(
+    shows.flatMap((s) => s.designers.flatMap((d) => d.models.map((m) => m.model_id).filter((id): id is string => !!id)))
+  ).size;
   const totalDesigners = shows.reduce((sum, s) => sum + s.designers.length, 0);
   const activeDesignerShow = activeDesignerEntryId ? shows.find((s) => s.designers.some((d) => d.id === activeDesignerEntryId)) : null;
   const activeDesigner = activeDesignerShow?.designers.find((d) => d.id === activeDesignerEntryId);
@@ -2116,6 +2258,7 @@ export default function AdminShowsPage() {
                                     onMoveDesigner={moveDesigner}
                                     onBulkRemove={bulkRemoveModels}
                                     onBulkMove={bulkMoveModels}
+                                    onAddWalkIn={addWalkInExtra}
                                     onUpdateOutfitNotes={updateOutfitNotes}
                                     modelConflicts={modelConflictsByDesigner[d.id] || {}}
                                     otherShows={shows.filter((s) => s.id !== show.id).map((s) => ({ id: s.id, name: s.name, show_date: s.show_date }))}

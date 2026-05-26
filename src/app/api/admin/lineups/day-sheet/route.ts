@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       designers:event_show_designers(
         id, designer_name, designer_order,
         models:event_show_models(
-          id, model_id, walk_order, outfit_notes, status,
+          id, model_id, guest_name, walk_order, outfit_notes, status,
           model:models(id, username, first_name, last_name, height, bust, hips, shoe_size, instagram_url)
         )
       )
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
     (s.designers || []).forEach((d: any) => {
       totalDesigners++;
       (d.models || []).forEach((m: any) => {
-        allModels.add(m.model_id);
+        if (m.model_id) allModels.add(m.model_id);
         totalSlots++;
       });
     });
@@ -77,6 +77,17 @@ export async function GET(req: NextRequest) {
       const designerBlocks = (s.designers || []).map((d: any) => {
         const rows = (d.models || []).map((lm: any, i: number) => {
           const m = lm.model;
+          if (!m && lm.guest_name) {
+            return `<tr>
+              <td class="walk-num">${i + 1}</td>
+              <td><strong>${lm.guest_name}</strong><br><span class="muted">walk-in</span></td>
+              <td>\u2014</td>
+              <td>\u2014</td>
+              <td>\u2014</td>
+              <td>\u2014</td>
+              <td class="notes">${lm.outfit_notes || ""}</td>
+            </tr>`;
+          }
           const measurements = [m?.bust, m?.hips].filter(Boolean).join(" / ") || "\u2014";
           const ig = m?.instagram_url
             ? m.instagram_url.replace(/https?:\/\/(www\.)?instagram\.com\//, "@").replace(/\/$/, "")

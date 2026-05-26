@@ -4,7 +4,18 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 
 // Note: [id] here is the designer_entry_id (event_show_designers.id)
 
-// POST /api/admin/lineups/[id]/models — assign models to a designer entry
+const ROW_SELECT = `
+  id,
+  model_id,
+  guest_name,
+  walk_order,
+  outfit_notes,
+  status,
+  check_in_status,
+  model:models(id, username, first_name, last_name, profile_photo_url, height, bust, waist, hips, dress_size, shoe_size, instagram_followers)
+`;
+
+// POST /api/admin/lineups/[id]/models — assign models (and/or walk-in guests) to a designer entry
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -14,15 +25,17 @@ export async function POST(
 
   const { id: designerEntryId } = await params;
   const body = await req.json();
-  const { model_ids } = body as { model_ids: string[] };
+  const { model_ids, guest_names } = body as {
+    model_ids?: string[];
+    guest_names?: string[];
+  };
 
-  if (!model_ids?.length) {
-    return NextResponse.json({ error: "model_ids required" }, { status: 400 });
+  if (!model_ids?.length && !guest_names?.length) {
+    return NextResponse.json({ error: "model_ids or guest_names required" }, { status: 400 });
   }
 
   const supabase: any = createServiceRoleClient();
 
-  // Get current max walk_order
   const { data: existing } = await supabase
     .from("event_show_models")
     .select("walk_order")
@@ -32,32 +45,49 @@ export async function POST(
 
   let nextOrder = (existing?.[0]?.walk_order ?? -1) + 1;
 
-  const inserts = model_ids.map((model_id) => ({
-    designer_entry_id: designerEntryId,
-    model_id,
-    walk_order: nextOrder++,
-  }));
+  const inserted: any[] = [];
 
-  const { data, error } = await supabase
-    .from("event_show_models")
-    .upsert(inserts, { onConflict: "designer_entry_id,model_id", ignoreDuplicates: true })
-    .select(`
-      id,
+  if (model_ids?.length) {
+    const inserts = model_ids.map((model_id) => ({
+      designer_entry_id: designerEntryId,
       model_id,
-      walk_order,
-      outfit_notes,
-      status,
-      model:models(id, username, first_name, last_name, profile_photo_url, height, instagram_followers)
-    `);
+      walk_order: nextOrder++,
+    }));
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const { data, error } = await supabase
+      .from("event_show_models")
+      .upsert(inserts, { onConflict: "designer_entry_id,model_id", ignoreDuplicates: true })
+      .select(ROW_SELECT);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (data) inserted.push(...data);
   }
 
-  return NextResponse.json(data, { status: 201 });
+  if (guest_names?.length) {
+    const inserts = guest_names
+      .map((n) => (n || "").trim())
+      .filter(Boolean)
+      .map((name) => ({
+        designer_entry_id: designerEntryId,
+        guest_name: name,
+        walk_order: nextOrder++,
+      }));
+
+    if (inserts.length) {
+      const { data, error } = await supabase
+        .from("event_show_models")
+        .insert(inserts)
+        .select(ROW_SELECT);
+
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (data) inserted.push(...data);
+    }
+  }
+
+  return NextResponse.json(inserted, { status: 201 });
 }
 
-// DELETE /api/admin/lineups/[id]/models — remove models from a designer entry
+// DELETE /api/admin/lineups/[id]/models — remove rows by row id (preferred) or by model_id
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -67,28 +97,40 @@ export async function DELETE(
 
   const { id: designerEntryId } = await params;
   const body = await req.json();
-  const { model_ids } = body as { model_ids: string[] };
+  const { model_ids, row_ids } = body as {
+    model_ids?: string[];
+    row_ids?: string[];
+  };
 
-  if (!model_ids?.length) {
-    return NextResponse.json({ error: "model_ids required" }, { status: 400 });
+  if (!model_ids?.length && !row_ids?.length) {
+    return NextResponse.json({ error: "model_ids or row_ids required" }, { status: 400 });
   }
 
   const supabase: any = createServiceRoleClient();
 
-  const { error } = await supabase
-    .from("event_show_models")
-    .delete()
-    .eq("designer_entry_id", designerEntryId)
-    .in("model_id", model_ids);
+  if (row_ids?.length) {
+    const { error } = await supabase
+      .from("event_show_models")
+      .delete()
+      .eq("designer_entry_id", designerEntryId)
+      .in("id", row_ids);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (model_ids?.length) {
+    const { error } = await supabase
+      .from("event_show_models")
+      .delete()
+      .eq("designer_entry_id", designerEntryId)
+      .in("model_id", model_ids);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });
 }
 
-// PATCH /api/admin/lineups/[id]/models — reorder models within a designer entry
+// PATCH /api/admin/lineups/[id]/models — reorder rows within a designer entry
+// Accepts ordered_ids (row ids — preferred) or ordered_model_ids (legacy, real models only)
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -98,28 +140,40 @@ export async function PATCH(
 
   const { id: designerEntryId } = await params;
   const body = await req.json();
-  const { ordered_model_ids } = body as { ordered_model_ids: string[] };
-
-  if (!ordered_model_ids?.length) {
-    return NextResponse.json({ error: "ordered_model_ids required" }, { status: 400 });
-  }
+  const { ordered_ids, ordered_model_ids } = body as {
+    ordered_ids?: string[];
+    ordered_model_ids?: string[];
+  };
 
   const supabase: any = createServiceRoleClient();
 
-  const updates = ordered_model_ids.map((model_id, index) =>
-    supabase
-      .from("event_show_models")
-      .update({ walk_order: index })
-      .eq("designer_entry_id", designerEntryId)
-      .eq("model_id", model_id)
-  );
-
-  const results = await Promise.all(updates);
-  const failed = results.find((r: any) => r.error);
-
-  if (failed?.error) {
-    return NextResponse.json({ error: failed.error.message }, { status: 500 });
+  if (ordered_ids?.length) {
+    const updates = ordered_ids.map((row_id, index) =>
+      supabase
+        .from("event_show_models")
+        .update({ walk_order: index })
+        .eq("designer_entry_id", designerEntryId)
+        .eq("id", row_id)
+    );
+    const results = await Promise.all(updates);
+    const failed = results.find((r: any) => r.error);
+    if (failed?.error) return NextResponse.json({ error: failed.error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
   }
 
-  return NextResponse.json({ success: true });
+  if (ordered_model_ids?.length) {
+    const updates = ordered_model_ids.map((model_id, index) =>
+      supabase
+        .from("event_show_models")
+        .update({ walk_order: index })
+        .eq("designer_entry_id", designerEntryId)
+        .eq("model_id", model_id)
+    );
+    const results = await Promise.all(updates);
+    const failed = results.find((r: any) => r.error);
+    if (failed?.error) return NextResponse.json({ error: failed.error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  return NextResponse.json({ error: "ordered_ids or ordered_model_ids required" }, { status: 400 });
 }

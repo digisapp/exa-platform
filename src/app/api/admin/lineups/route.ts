@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
         models:event_show_models(
           id,
           model_id,
+          guest_name,
           walk_order,
           outfit_notes,
           status,
