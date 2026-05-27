@@ -100,12 +100,16 @@ export default async function HomePage() {
   // Randomize the order
   const topModels = shuffleArray(topModelsData || []) as any[];
 
-  // Fetch upcoming events/gigs
+  // Fetch upcoming + currently-running events/gigs.
+  // Multi-day events (e.g. Miami Swim Week) should keep showing on the homepage
+  // while they're in progress, not vanish once start_at passes — so we include
+  // anything whose end_at is still in the future, in addition to future starts.
+  const nowIso = new Date().toISOString();
   const { data: upcomingEvents } = await (supabase
     .from("gigs") as any)
     .select("id, slug, title, type, location_city, location_state, start_at, end_at, cover_image_url, spots, spots_filled")
     .eq("status", "open")
-    .gte("start_at", new Date().toISOString())
+    .or(`start_at.gte.${nowIso},end_at.gte.${nowIso}`)
     .neq("title", "EXA Models Creator House - Trip 3")
     .order("start_at", { ascending: true })
     .limit(20);
