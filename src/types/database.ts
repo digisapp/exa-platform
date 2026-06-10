@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       academy_applications: {
@@ -3839,6 +3814,9 @@ export type Database = {
           created_at: string | null
           display_name: string | null
           email: string | null
+          flagged_for_review: boolean
+          flagged_for_review_at: string | null
+          flagged_for_review_reason: string | null
           id: string
           is_suspended: boolean | null
           phone: string | null
@@ -3858,6 +3836,9 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           email?: string | null
+          flagged_for_review?: boolean
+          flagged_for_review_at?: string | null
+          flagged_for_review_reason?: string | null
           id?: string
           is_suspended?: boolean | null
           phone?: string | null
@@ -3877,6 +3858,9 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           email?: string | null
+          flagged_for_review?: boolean
+          flagged_for_review_at?: string | null
+          flagged_for_review_reason?: string | null
           id?: string
           is_suspended?: boolean | null
           phone?: string | null
@@ -9634,6 +9618,10 @@ export type Database = {
           meta_description: string | null
           meta_title: string | null
           original_price_cents: number | null
+          payment_plan_amount_cents: number | null
+          payment_plan_enabled: boolean
+          payment_plan_installments: number | null
+          payment_plan_interval_days: number
           price_cents: number
           slug: string
           spots_available: number | null
@@ -9664,6 +9652,10 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           original_price_cents?: number | null
+          payment_plan_amount_cents?: number | null
+          payment_plan_enabled?: boolean
+          payment_plan_installments?: number | null
+          payment_plan_interval_days?: number
           price_cents: number
           slug: string
           spots_available?: number | null
@@ -9694,6 +9686,10 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           original_price_cents?: number | null
+          payment_plan_amount_cents?: number | null
+          payment_plan_enabled?: boolean
+          payment_plan_installments?: number | null
+          payment_plan_interval_days?: number
           price_cents?: number
           slug?: string
           spots_available?: number | null
@@ -10833,9 +10829,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       booking_status: [
