@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import {
   Dialog, DialogContent, DialogTitle,
 } from "@/components/ui/dialog";
@@ -88,9 +90,9 @@ export function RosterGallery({
       {/* Header */}
       <header className="border-b border-white/10 bg-gradient-to-b from-pink-500/10 to-transparent">
         <div className="max-w-7xl mx-auto px-6 py-10">
-          <div className="text-sm font-bold tracking-widest uppercase bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent mb-4">
-            EXA Models
-          </div>
+          <Link href="/" className="inline-block mb-5" aria-label="EXA Models home">
+            <Image src="/exa-logo-white.png" alt="EXA Models" width={120} height={48} className="h-10 w-auto" priority />
+          </Link>
           <h1 className="text-3xl md:text-4xl font-bold">{title}</h1>
           <div className="mt-2 text-white/60">
             {clientName && <span>Prepared for {clientName} · </span>}
