@@ -190,15 +190,29 @@ export function RosterGallery({
                   )}
                 </div>
 
-                {active.focus_tags && active.focus_tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {active.focus_tags.slice(0, 4).map((t) => (
-                      <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/20 capitalize">
-                        {t.replace(/_/g, " ")}
+                {/* Social links first — clients want to reach Instagram/TikTok fast */}
+                <div className="flex flex-col gap-2">
+                  {active.instagram_name && (
+                    <a href={igUrl(active.instagram_name)} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 transition-colors">
+                      <span className="flex items-center gap-2 font-medium"><Instagram className="h-4 w-4 text-pink-400" />Instagram</span>
+                      <span className="text-white/60 text-sm">
+                        @{active.instagram_name.replace(/^@/, "")}
+                        {formatFollowers(active.instagram_followers) && ` · ${formatFollowers(active.instagram_followers)}`}
                       </span>
-                    ))}
-                  </div>
-                )}
+                    </a>
+                  )}
+                  {active.tiktok_username && (
+                    <a href={ttUrl(active.tiktok_username)} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+                      <span className="flex items-center gap-2 font-medium">TikTok</span>
+                      <span className="text-white/60 text-sm">
+                        @{active.tiktok_username.replace(/^@/, "")}
+                        {formatFollowers(active.tiktok_followers) && ` · ${formatFollowers(active.tiktok_followers)}`}
+                      </span>
+                    </a>
+                  )}
+                </div>
 
                 <div>
                   <MeasureRow label="Height" value={active.height} />
@@ -209,29 +223,6 @@ export function RosterGallery({
                   <MeasureRow label="Shoe" value={active.shoe_size} />
                   <MeasureRow label="Hair" value={active.hair_color} />
                   <MeasureRow label="Eyes" value={active.eye_color} />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  {active.instagram_name && (
-                    <a href={igUrl(active.instagram_name)} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
-                      <span className="flex items-center gap-2"><Instagram className="h-4 w-4 text-pink-400" />Instagram</span>
-                      <span className="text-white/50 text-sm">
-                        @{active.instagram_name.replace(/^@/, "")}
-                        {formatFollowers(active.instagram_followers) && ` · ${formatFollowers(active.instagram_followers)}`}
-                      </span>
-                    </a>
-                  )}
-                  {active.tiktok_username && (
-                    <a href={ttUrl(active.tiktok_username)} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
-                      <span className="flex items-center gap-2 font-medium">TikTok</span>
-                      <span className="text-white/50 text-sm">
-                        @{active.tiktok_username.replace(/^@/, "")}
-                        {formatFollowers(active.tiktok_followers) && ` · ${formatFollowers(active.tiktok_followers)}`}
-                      </span>
-                    </a>
-                  )}
                 </div>
               </div>
             </div>
