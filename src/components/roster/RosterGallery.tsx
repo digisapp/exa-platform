@@ -26,7 +26,7 @@ export interface RosterModel {
   is_verified: boolean | null;
   instagram_name: string | null;
   instagram_followers: number | null;
-  tiktok_handle: string | null;
+  tiktok_username: string | null;
   tiktok_followers: number | null;
   photos: string[];
 }
@@ -222,12 +222,12 @@ export function RosterGallery({
                       </span>
                     </a>
                   )}
-                  {active.tiktok_handle && (
-                    <a href={ttUrl(active.tiktok_handle)} target="_blank" rel="noopener noreferrer"
+                  {active.tiktok_username && (
+                    <a href={ttUrl(active.tiktok_username)} target="_blank" rel="noopener noreferrer"
                       className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
                       <span className="flex items-center gap-2 font-medium">TikTok</span>
                       <span className="text-white/50 text-sm">
-                        @{active.tiktok_handle.replace(/^@/, "")}
+                        @{active.tiktok_username.replace(/^@/, "")}
                         {formatFollowers(active.tiktok_followers) && ` · ${formatFollowers(active.tiktok_followers)}`}
                       </span>
                     </a>

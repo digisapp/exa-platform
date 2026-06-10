@@ -11,7 +11,7 @@ const MODEL_FIELDS = `
   id, username, first_name, last_name, profile_photo_url,
   height, hair_color, eye_color, bust, waist, hips, dress_size, shoe_size,
   city, state, focus_tags, is_verified,
-  instagram_name, instagram_followers, tiktok_handle, tiktok_followers
+  instagram_name, instagram_followers, tiktok_username, tiktok_followers
 `;
 
 const resolveMediaUrl = (url: string | null) =>
@@ -74,10 +74,11 @@ export default async function RosterPage({ params }: PageProps) {
 
   let models: RosterModel[] = [];
   if (orderedIds.length > 0) {
-    const { data: modelRows } = await admin
+    const { data: modelRows, error: modelErr } = await admin
       .from("models")
       .select(MODEL_FIELDS)
       .in("id", orderedIds);
+    if (modelErr) console.error("Roster models fetch failed:", modelErr);
 
     // Portfolio images for all models in one query
     const { data: photos } = await admin
