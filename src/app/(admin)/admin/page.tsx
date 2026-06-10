@@ -27,6 +27,7 @@ import {
   Ticket,
   Image as ImageIcon,
   Wand2,
+  Share2,
 } from "lucide-react";
 
 type Color =
@@ -106,6 +107,7 @@ export default async function AdminPage() {
       color: "pink",
       subtitle: pendingTotal > 0 ? `${pendingTotal} pending` : undefined,
     },
+    { href: "/admin/rosters", label: "Client Rosters", icon: Share2, color: "cyan" },
     { href: "/admin/traffic", label: "Traffic", icon: BarChart3, color: "blue" },
     { href: "/admin/transactions", label: "Purchases", icon: Coins, color: "amber" },
     { href: "/admin/payouts", label: "Payouts", icon: Banknote, color: "emerald" },

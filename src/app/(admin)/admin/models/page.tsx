@@ -41,10 +41,12 @@ import {
   CheckCircle,
   MessageSquare,
   Phone,
+  Share2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModelActionsDropdown } from "@/components/admin/AdminActions";
 import { SMSBroadcastModal } from "@/components/admin/SMSBroadcastModal";
+import { CreateRosterModal } from "@/components/admin/CreateRosterModal";
 
 function ModelAvatar({ url, name }: { url: string | null; name: string }) {
   const [error, setError] = useState(false);
@@ -190,6 +192,10 @@ interface Model {
   coin_balance: number;
   instagram_name: string | null;
   instagram_followers: number | null;
+  tiktok_followers: number | null;
+  height: string | null;
+  hair_color: string | null;
+  focus_tags: string[] | null;
   admin_rating: number | null;
   new_face: boolean;
   created_at: string;
@@ -234,6 +240,42 @@ const US_STATES: { abbr: string; name: string }[] = [
   { abbr: "WI", name: "Wisconsin" }, { abbr: "WY", name: "Wyoming" }
 ];
 
+// Attribute filter options (mirror the fan explore page)
+const FOLLOWER_TIERS = [
+  { value: "1k", label: "1K+" }, { value: "10k", label: "10K+" },
+  { value: "50k", label: "50K+" }, { value: "100k", label: "100K+" },
+  { value: "500k", label: "500K+" }, { value: "1m", label: "1M+" },
+];
+
+const HEIGHT_RANGES = [
+  { value: "under54", label: "5'3\" and under" },
+  { value: "54up", label: "5'4\" and up" },
+  { value: "57up", label: "5'7\" and up" },
+  { value: "510up", label: "5'10\" and up" },
+];
+
+const HAIR_COLORS = [
+  { value: "blonde", label: "Blonde" },
+  { value: "brown", label: "Brown" },
+  { value: "black", label: "Black" },
+  { value: "red", label: "Red" },
+  { value: "auburn", label: "Auburn" },
+  { value: "gray", label: "Gray/Silver" },
+];
+
+const FOCUS_OPTIONS = [
+  { value: "fashion", label: "Fashion" }, { value: "commercial", label: "Commercial" },
+  { value: "fitness", label: "Fitness" }, { value: "athlete", label: "Athlete" },
+  { value: "swimwear", label: "Swimwear" }, { value: "beauty", label: "Beauty" },
+  { value: "editorial", label: "Editorial" }, { value: "ecommerce", label: "E-Commerce" },
+  { value: "promo", label: "Promo/Event" }, { value: "lifestyle", label: "Lifestyle" },
+  { value: "runway", label: "Runway" }, { value: "lingerie", label: "Lingerie" },
+  { value: "influencer", label: "Influencer" }, { value: "print", label: "Print" },
+  { value: "streamer", label: "Streamer" }, { value: "ugc", label: "UGC" },
+  { value: "live_shopping", label: "Live Shopping" }, { value: "acting", label: "Acting" },
+  { value: "cosplay", label: "Cosplay" },
+];
+
 export default function AdminModelsPage() {
   const pageSize = 50;
 
@@ -248,6 +290,11 @@ export default function AdminModelsPage() {
   const [approvalFilter, setApprovalFilter] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("active");
+  const [focusFilter, setFocusFilter] = useState<string>("all");
+  const [heightFilter, setHeightFilter] = useState<string>("all");
+  const [hairColorFilter, setHairColorFilter] = useState<string>("all");
+  const [igFollowersFilter, setIgFollowersFilter] = useState<string>("all");
+  const [ttFollowersFilter, setTtFollowersFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<ModelSortField>("joined_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
@@ -255,6 +302,7 @@ export default function AdminModelsPage() {
   const [selectedModels, setSelectedModels] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showSMSModal, setShowSMSModal] = useState(false);
+  const [showRosterModal, setShowRosterModal] = useState(false);
 
   // Toggle single model selection
   const toggleModelSelection = (modelId: string) => {
@@ -354,7 +402,8 @@ export default function AdminModelsPage() {
 
     const headers = [
       "Username", "First Name", "Last Name", "Email", "City", "State",
-      "Approved", "Instagram", "IG Followers", "Rating", "Profile Views",
+      "Height", "Hair Color", "Focus",
+      "Approved", "Instagram", "IG Followers", "TT Followers", "Rating", "Profile Views",
       "Followers", "Pics", "Videos", "PPV", "Earned", "Referrals", "Joined"
     ];
 
@@ -365,9 +414,13 @@ export default function AdminModelsPage() {
       m.email || "",
       m.city || "",
       m.state || "",
+      m.height || "",
+      m.hair_color || "",
+      (m.focus_tags || []).join("; "),
       m.is_approved ? "Yes" : "No",
       m.instagram_name || "",
       m.instagram_followers || 0,
+      m.tiktok_followers || 0,
       m.admin_rating || "",
       m.profile_views || 0,
       m.followers_count || 0,
@@ -408,6 +461,11 @@ export default function AdminModelsPage() {
         rating: ratingFilter,
         claim: "claimed",
         status: statusFilter,
+        focus: focusFilter,
+        height: heightFilter,
+        hairColor: hairColorFilter,
+        igFollowers: igFollowersFilter,
+        ttFollowers: ttFollowersFilter,
         sortField,
         sortDirection,
       });
@@ -424,7 +482,7 @@ export default function AdminModelsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, stateFilter, approvalFilter, ratingFilter, statusFilter, sortField, sortDirection]);
+  }, [page, debouncedSearch, stateFilter, approvalFilter, ratingFilter, statusFilter, focusFilter, heightFilter, hairColorFilter, igFollowersFilter, ttFollowersFilter, sortField, sortDirection]);
 
   useEffect(() => {
     loadModels();
@@ -475,6 +533,12 @@ export default function AdminModelsPage() {
             </p>
           </div>
         </div>
+        <Button variant="outline" asChild>
+          <Link href="/admin/rosters">
+            <Share2 className="h-4 w-4 mr-2" />
+            Client Rosters
+          </Link>
+        </Button>
       </div>
 
       {/* Filters */}
@@ -526,6 +590,66 @@ export default function AdminModelsPage() {
                 <SelectItem value="all">All</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={hairColorFilter} onValueChange={(v) => { setHairColorFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Hair color" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any Hair</SelectItem>
+                {HAIR_COLORS.map(h => (
+                  <SelectItem key={h.value} value={h.value}>{h.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={heightFilter} onValueChange={(v) => { setHeightFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-[170px]"><SelectValue placeholder="Height" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any Height</SelectItem>
+                {HEIGHT_RANGES.map(h => (
+                  <SelectItem key={h.value} value={h.value}>{h.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={focusFilter} onValueChange={(v) => { setFocusFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Focus" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any Focus</SelectItem>
+                {FOCUS_OPTIONS.map(f => (
+                  <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={igFollowersFilter} onValueChange={(v) => { setIgFollowersFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="IG followers" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any IG</SelectItem>
+                {FOLLOWER_TIERS.map(t => (
+                  <SelectItem key={t.value} value={t.value}>IG {t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={ttFollowersFilter} onValueChange={(v) => { setTtFollowersFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="TT followers" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any TT</SelectItem>
+                {FOLLOWER_TIERS.map(t => (
+                  <SelectItem key={t.value} value={t.value}>TT {t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(focusFilter !== "all" || heightFilter !== "all" || hairColorFilter !== "all" || igFollowersFilter !== "all" || ttFollowersFilter !== "all" || stateFilter !== "all" || approvalFilter !== "all" || ratingFilter !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setFocusFilter("all"); setHeightFilter("all"); setHairColorFilter("all");
+                  setIgFollowersFilter("all"); setTtFollowersFilter("all");
+                  setStateFilter("all"); setApprovalFilter("all"); setRatingFilter("all");
+                  setPage(1);
+                }}
+                className="text-muted-foreground hover:text-pink-500"
+              >
+                Clear filters
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -587,6 +711,15 @@ export default function AdminModelsPage() {
                   >
                     <MessageSquare className="h-4 w-4 mr-1" />
                     Send SMS
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowRosterModal(true)}
+                    className="text-pink-500 border-pink-500/50 hover:bg-pink-500/10"
+                  >
+                    <Share2 className="h-4 w-4 mr-1" />
+                    Create roster ({selectedModels.size})
                   </Button>
                 </>
               )}
@@ -680,6 +813,11 @@ export default function AdminModelsPage() {
                               @{model.username}
                               {model.deleted_at && <span className="ml-1 text-red-500 text-xs font-medium">(deleted {new Date(model.deleted_at).toLocaleDateString()})</span>}
                             </p>
+                            {(model.height || model.hair_color) && (
+                              <p className="text-xs text-muted-foreground/70 truncate">
+                                {[model.height, model.hair_color].filter(Boolean).join(" · ")}
+                              </p>
+                            )}
                           </div>
                         </Link>
                       </TableCell>
@@ -731,6 +869,13 @@ export default function AdminModelsPage() {
         isOpen={showSMSModal}
         onClose={() => setShowSMSModal(false)}
         recipients={getSelectedModelsWithPhones()}
+      />
+
+      {/* Create Client Roster Modal */}
+      <CreateRosterModal
+        isOpen={showRosterModal}
+        onClose={() => setShowRosterModal(false)}
+        modelIds={Array.from(selectedModels)}
       />
     </div>
   );

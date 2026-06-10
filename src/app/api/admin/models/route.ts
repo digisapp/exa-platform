@@ -59,8 +59,26 @@ export async function GET(request: NextRequest) {
     const ratingFilter = searchParams.get("rating") || "all";
     const claimFilter = searchParams.get("claim") || "all";
     const statusFilter = searchParams.get("status") || "active";
+    const focusFilter = searchParams.get("focus") || "all";
+    const heightFilter = searchParams.get("height") || "all";
+    const hairColorFilter = searchParams.get("hairColor") || "all";
+    const igFollowersFilter = searchParams.get("igFollowers") || "all";
+    const ttFollowersFilter = searchParams.get("ttFollowers") || "all";
     const sortField = searchParams.get("sortField") || "joined_at";
     const sortDirection = searchParams.get("sortDirection") || "desc";
+
+    // Follower tier → minimum value (mirrors the fan explore page)
+    const followerMinMap: Record<string, number> = {
+      "1k": 1_000, "10k": 10_000, "50k": 50_000,
+      "100k": 100_000, "500k": 500_000, "1m": 1_000_000,
+    };
+    // Height range → ilike patterns against the free-text `height` column (mirrors fan explore)
+    const heightPatterns: Record<string, string[]> = {
+      under54:  ["4'%", "5'0%", "5'1\"", "5'1", "5'2%", "5'3%"],
+      "54up":   ["5'4%", "5'5%", "5'6%", "5'7%", "5'8%", "5'9%", "5'10%", "5'11%", "6'%"],
+      "57up":   ["5'7%", "5'8%", "5'9%", "5'10%", "5'11%", "6'%"],
+      "510up":  ["5'10%", "5'11%", "6'%"],
+    };
 
     // Computed fields that require fetching all models first, then sorting
     const computedFields = ["total_earned", "content_count", "image_count", "video_count", "ppv_count", "last_post", "last_seen", "message_count", "followers_count", "joined_at", "referral_count"];
@@ -93,6 +111,19 @@ export async function GET(request: NextRequest) {
       }
       if (statusFilter === "active") q = q.is("deleted_at", null);
       else if (statusFilter === "deleted") q = q.not("deleted_at", "is", null);
+      // Attribute filters (mirror the fan explore page)
+      if (focusFilter !== "all") q = q.contains("focus_tags", [focusFilter]);
+      if (heightFilter !== "all") {
+        const patterns = heightPatterns[heightFilter];
+        if (patterns) q = q.or(patterns.map(p => `height.ilike.${p}`).join(","));
+      }
+      if (hairColorFilter !== "all") q = q.ilike("hair_color", `%${hairColorFilter}%`);
+      if (igFollowersFilter !== "all" && followerMinMap[igFollowersFilter]) {
+        q = q.gte("instagram_followers", followerMinMap[igFollowersFilter]);
+      }
+      if (ttFollowersFilter !== "all" && followerMinMap[ttFollowersFilter]) {
+        q = q.gte("tiktok_followers", followerMinMap[ttFollowersFilter]);
+      }
       return q;
     };
 
@@ -291,7 +322,8 @@ export async function GET(request: NextRequest) {
         .select(`
           id, username, first_name, last_name, email, phone, city, state, is_approved,
           profile_photo_url, profile_views, coin_balance, instagram_name,
-          instagram_followers, admin_rating, new_face, created_at, user_id, invite_token,
+          instagram_followers, tiktok_followers, height, hair_color, focus_tags,
+          admin_rating, new_face, created_at, user_id, invite_token,
           claimed_at, last_active_at, deleted_at
         `)
         .in("id", paginatedIds);
@@ -312,7 +344,8 @@ export async function GET(request: NextRequest) {
         .select(`
           id, username, first_name, last_name, email, phone, city, state, is_approved,
           profile_photo_url, profile_views, coin_balance, instagram_name,
-          instagram_followers, admin_rating, new_face, created_at, user_id, invite_token,
+          instagram_followers, tiktok_followers, height, hair_color, focus_tags,
+          admin_rating, new_face, created_at, user_id, invite_token,
           claimed_at, last_active_at, deleted_at
         `, { count: "exact" });
 
