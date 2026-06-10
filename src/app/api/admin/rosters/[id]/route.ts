@@ -13,7 +13,7 @@ async function requireAdmin() {
 }
 
 const MODEL_FIELDS =
-  "id, username, first_name, last_name, profile_photo_url, state, height, hair_color, is_verified, instagram_name, instagram_followers";
+  "id, username, first_name, last_name, profile_photo_url, state, height, hair_color, dob, is_verified, instagram_name, instagram_followers";
 
 // GET /api/admin/rosters/[id] — roster meta + its models in display order
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

@@ -24,6 +24,7 @@ interface RosterModel {
   state: string | null;
   height: string | null;
   hair_color: string | null;
+  dob: string | null;
   is_verified?: boolean | null;
   instagram_name: string | null;
   instagram_followers: number | null;
@@ -43,6 +44,31 @@ interface RosterMeta {
 
 function name(m: RosterModel) {
   return [m.first_name, m.last_name].filter(Boolean).join(" ").trim() || m.username;
+}
+
+function formatFollowers(n: number | null): string | null {
+  if (!n) return null;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+  return n.toLocaleString();
+}
+
+function ageFromDob(dob: string | null): number | null {
+  if (!dob) return null;
+  const d = new Date(dob);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age >= 0 && age < 120 ? age : null;
+}
+
+// "@user · 24 · 5'9" · Blonde · CA" — sub-line shown under a model's name (admin only)
+function metaLine(m: RosterModel): string {
+  const age = ageFromDob(m.dob);
+  const parts = [age != null ? `${age}` : null, m.height, m.hair_color, m.state].filter(Boolean);
+  return `@${m.username}${parts.length ? " · " + parts.join(" · ") : ""}`;
 }
 
 function Avatar({ m, size = 44 }: { m: RosterModel; size?: number }) {
@@ -323,9 +349,14 @@ export default function RosterDetailPage() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{name(m)}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      @{m.username}{[m.height, m.hair_color, m.state].filter(Boolean).length ? " · " + [m.height, m.hair_color, m.state].filter(Boolean).join(" · ") : ""}
+                      {metaLine(m)}
                     </p>
                   </div>
+                  {formatFollowers(m.instagram_followers) && (
+                    <span className="hidden sm:flex items-center gap-1 text-xs text-pink-500 shrink-0" title="Instagram followers">
+                      <Instagram className="h-3.5 w-3.5" />{formatFollowers(m.instagram_followers)}
+                    </span>
+                  )}
                   <Button size="sm" variant="outline" onClick={() => addModel(m)} className="text-pink-500 border-pink-500/40">
                     <Plus className="h-4 w-4 mr-1" />Add
                   </Button>
@@ -362,13 +393,17 @@ export default function RosterDetailPage() {
                       {m.is_verified && <BadgeCheck className="h-3.5 w-3.5 text-pink-400" />}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                      @{m.username}{[m.height, m.hair_color, m.state].filter(Boolean).length ? " · " + [m.height, m.hair_color, m.state].filter(Boolean).join(" · ") : ""}
+                      {metaLine(m)}
                     </p>
                   </div>
                   {m.instagram_name && (
                     <a href={`https://instagram.com/${m.instagram_name.replace(/^@/, "").replace(/\s+/g, "")}`}
-                      target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:text-pink-400 hidden sm:block" title="Instagram">
+                      target="_blank" rel="noopener noreferrer"
+                      className="text-pink-500 hover:text-pink-400 hidden sm:flex items-center gap-1 shrink-0" title={`@${m.instagram_name.replace(/^@/, "")} on Instagram`}>
                       <Instagram className="h-4 w-4" />
+                      {formatFollowers(m.instagram_followers) && (
+                        <span className="text-xs tabular-nums">{formatFollowers(m.instagram_followers)}</span>
+                      )}
                     </a>
                   )}
                   <div className="flex items-center gap-0.5">
