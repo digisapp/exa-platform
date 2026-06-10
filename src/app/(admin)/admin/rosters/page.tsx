@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, Loader2, Copy, Check, ExternalLink, Trash2, Eye, EyeOff,
-  Users, Share2,
+  Users, Share2, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -132,7 +132,9 @@ export default function AdminRostersPage() {
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div className="min-w-0">
                       <CardTitle className="flex items-center gap-2 flex-wrap">
-                        {r.title}
+                        <Link href={`/admin/rosters/${r.id}`} className="hover:text-pink-500 transition-colors">
+                          {r.title}
+                        </Link>
                         {statusBadge(r)}
                       </CardTitle>
                       <CardDescription className="mt-1">
@@ -152,6 +154,11 @@ export default function AdminRostersPage() {
                     </Button>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
+                    <Button variant="outline" size="sm" asChild className="text-pink-500 border-pink-500/40 hover:bg-pink-500/10">
+                      <Link href={`/admin/rosters/${r.id}`}>
+                        <Pencil className="h-4 w-4 mr-1" />Edit models
+                      </Link>
+                    </Button>
                     <Button variant="outline" size="sm" asChild>
                       <a href={input} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-4 w-4 mr-1" />Open
