@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, Loader2, Copy, Check, ExternalLink, Trash2, Eye, EyeOff,
-  ChevronUp, ChevronDown, X, Search, Plus, Save, Instagram, BadgeCheck,
+  ChevronUp, ChevronDown, ChevronsUp, X, Search, Plus, Save, Instagram, BadgeCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -78,6 +78,9 @@ export default function RosterDetailPage() {
   const [addResults, setAddResults] = useState<RosterModel[]>([]);
   const [addLoading, setAddLoading] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  // Current member ids, kept in a ref so the search effect doesn't re-fetch on every reorder.
+  const memberIdsRef = useRef<Set<string>>(new Set());
+  memberIdsRef.current = new Set(models.map((m) => m.id));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -155,8 +158,7 @@ export default function RosterDetailPage() {
         });
         const res = await fetch(`/api/admin/models?${params}`);
         const { models: found } = await res.json();
-        const existing = new Set(models.map((m) => m.id));
-        setAddResults((found || []).filter((m: RosterModel) => !existing.has(m.id)));
+        setAddResults((found || []).filter((m: RosterModel) => !memberIdsRef.current.has(m.id)));
       } catch {
         setAddResults([]);
       } finally {
@@ -164,7 +166,20 @@ export default function RosterDetailPage() {
       }
     }, 350);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [addQuery, models]);
+  }, [addQuery]);
+
+  // Drop any result that is now in the roster (without re-fetching).
+  useEffect(() => {
+    setAddResults((prev) => prev.filter((r) => !memberIdsRef.current.has(r.id)));
+  }, [models]);
+
+  // Warn before leaving with unsaved changes.
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty]);
 
   // ----- save -----
   const save = async () => {
@@ -358,7 +373,7 @@ export default function RosterDetailPage() {
                   )}
                   <div className="flex items-center gap-0.5">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveTop(i)} disabled={i === 0} title="Move to top">
-                      <ChevronUp className="h-4 w-4" /><ChevronUp className="h-4 w-4 -ml-3" />
+                      <ChevronsUp className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => move(i, -1)} disabled={i === 0} title="Move up">
                       <ChevronUp className="h-4 w-4" />

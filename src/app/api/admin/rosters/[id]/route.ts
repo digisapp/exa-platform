@@ -84,22 +84,41 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: "Failed to update roster" }, { status: 500 });
   }
 
-  // Membership replacement (ordered) — only when model_ids is provided
+  // Membership replacement (ordered) — only when model_ids is provided.
+  // Non-destructive: upsert the new set FIRST (so a failure never empties the
+  // roster), then delete only the models that are no longer present.
   if (Array.isArray(body.model_ids)) {
     const ids = [...new Set(body.model_ids.filter(Boolean))];
     if (ids.length === 0) {
       return NextResponse.json({ error: "A roster must contain at least one model" }, { status: 400 });
     }
-    const { error: delErr } = await admin.from("roster_models").delete().eq("roster_id", id);
-    if (delErr) {
-      console.error("Clear roster members error:", delErr);
+
+    const rows = ids.map((model_id, i) => ({ roster_id: id, model_id, position: i }));
+    const { error: upErr } = await admin
+      .from("roster_models")
+      .upsert(rows, { onConflict: "roster_id,model_id" });
+    if (upErr) {
+      // Roster is still intact at this point — nothing was removed.
+      console.error("Upsert roster members error:", upErr);
       return NextResponse.json({ error: "Failed to update models" }, { status: 500 });
     }
-    const rows = ids.map((model_id, i) => ({ roster_id: id, model_id, position: i }));
-    const { error: insErr } = await admin.from("roster_models").insert(rows);
-    if (insErr) {
-      console.error("Set roster members error:", insErr);
-      return NextResponse.json({ error: "Failed to update models" }, { status: 500 });
+
+    const { data: current } = await admin
+      .from("roster_models").select("model_id").eq("roster_id", id);
+    const keep = new Set(ids);
+    const toDelete = (current || [])
+      .map((r: { model_id: string }) => r.model_id)
+      .filter((mid: string) => !keep.has(mid));
+
+    // Chunk deletes to keep the IN(...) filter well under URL length limits.
+    for (let i = 0; i < toDelete.length; i += 100) {
+      const batch = toDelete.slice(i, i + 100);
+      const { error: delErr } = await admin
+        .from("roster_models").delete().eq("roster_id", id).in("model_id", batch);
+      if (delErr) {
+        console.error("Prune roster members error:", delErr);
+        return NextResponse.json({ error: "Failed to update models" }, { status: 500 });
+      }
     }
   }
 
