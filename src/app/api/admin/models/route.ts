@@ -322,7 +322,7 @@ export async function GET(request: NextRequest) {
         .select(`
           id, username, first_name, last_name, email, phone, city, state, is_approved,
           profile_photo_url, profile_views, coin_balance, instagram_name,
-          instagram_followers, tiktok_followers, height, hair_color, focus_tags,
+          instagram_followers, tiktok_followers, height, hair_color, dob, focus_tags,
           admin_rating, new_face, created_at, user_id, invite_token,
           claimed_at, last_active_at, deleted_at
         `)
@@ -344,7 +344,7 @@ export async function GET(request: NextRequest) {
         .select(`
           id, username, first_name, last_name, email, phone, city, state, is_approved,
           profile_photo_url, profile_views, coin_balance, instagram_name,
-          instagram_followers, tiktok_followers, height, hair_color, focus_tags,
+          instagram_followers, tiktok_followers, height, hair_color, dob, focus_tags,
           admin_rating, new_face, created_at, user_id, invite_token,
           claimed_at, last_active_at, deleted_at
         `, { count: "exact" });
