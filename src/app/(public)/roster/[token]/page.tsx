@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import { RosterGallery, type RosterModel } from "@/components/roster/RosterGallery";
@@ -53,9 +55,9 @@ export default async function RosterPage({ params }: PageProps) {
   if (isRevoked || isExpired) {
     return (
       <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center px-6 text-center">
-        <div className="text-2xl font-bold bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent mb-3">
-          EXA Models
-        </div>
+        <Link href="/" className="mb-5" aria-label="EXA Models home">
+          <Image src="/exa-logo-white.png" alt="EXA Models" width={120} height={48} className="h-10 w-auto" priority />
+        </Link>
         <p className="text-white/70 max-w-sm">
           This roster link is no longer active. Please reach out to your EXA contact for an updated link.
         </p>
