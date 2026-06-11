@@ -9,6 +9,13 @@ const withBundleAnalyzer = bundleAnalyzer({
 const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {
+  // ESLint runs in CI (.github/workflows/ci.yml), not during `next build`.
+  // Inline linting was the slow, memory-heavy part of the build's silent
+  // type-check phase and only produced warnings here. Type-checking still
+  // runs during the build as the safety net.
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {
