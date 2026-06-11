@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated build artifacts and one-off operational scripts — not app code.
+    ".vercel/**",
+    "scripts/**",
   ]),
   {
     rules: {
