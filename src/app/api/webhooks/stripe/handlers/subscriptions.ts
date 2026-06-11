@@ -87,8 +87,10 @@ export async function grantMonthlyCoins(invoice: Stripe.Invoice, supabaseAdmin: 
     return;
   }
 
-  // Grant monthly coins
-  const { error } = await supabaseAdmin.rpc("add_coins", {
+  // Grant monthly coins — atomic idempotent credit. The RPC inserts the ledger
+  // row with the idempotency_key first, so concurrent redeliveries collide on
+  // the unique index instead of double-crediting.
+  const { data: grantResult, error } = await (supabaseAdmin as any).rpc("add_coins", {
     p_actor_id: actorId,
     p_amount: tierConfig.monthlyCoins,
     p_action: "subscription_renewal",
@@ -97,18 +99,18 @@ export async function grantMonthlyCoins(invoice: Stripe.Invoice, supabaseAdmin: 
       invoice_id: invoice.id,
       stripe_subscription_id: subscriptionId,
     },
+    p_idempotency_key: `renewal_${invoice.id}`,
   });
 
   if (error) {
     logger.error("Error granting renewal coins", error);
   } else {
-    // Set idempotency_key for DB-level duplicate prevention
-    await supabaseAdmin
-      .from("coin_transactions")
-      .update({ idempotency_key: `renewal_${invoice.id}` })
-      .eq("actor_id", actorId)
-      .eq("action", "subscription_renewal")
-      .contains("metadata", { invoice_id: invoice.id });
+    const grant = grantResult as { success: boolean; duplicate?: boolean; error?: string };
+    if (!grant?.success) {
+      logger.error("Renewal grant RPC rejected", undefined, { reason: grant?.error, invoiceId: invoice.id });
+    } else if (grant.duplicate) {
+      logger.info("Duplicate webhook ignored - renewal coins already granted for invoice", { invoiceId: invoice.id });
+    }
   }
 
   // Update coins_granted_at

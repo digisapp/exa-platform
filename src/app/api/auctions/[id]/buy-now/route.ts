@@ -1,7 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import type { BuyNowResponse } from "@/types/auctions";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+
+const adminClient = createServiceRoleClient();
 
 // POST - Buy now on an auction
 export async function POST(
@@ -31,8 +34,11 @@ export async function POST(
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
 
-    // Call the RPC function to buy now
-    const { data: result, error } = await supabase.rpc("buy_now_auction", {
+    // Call the RPC function to buy now.
+    // Uses the service-role client: the route has already authenticated the user
+    // and derived the buyer actor id server-side, and EXECUTE on this SECURITY
+    // DEFINER money function is revoked from authenticated/anon.
+    const { data: result, error } = await adminClient.rpc("buy_now_auction", {
       p_auction_id: auctionId,
       p_buyer_id: actor.id,
     });

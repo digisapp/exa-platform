@@ -189,7 +189,10 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session, supa
       return;
     }
 
-    const { error: coinError } = await supabaseAdmin.rpc("add_coins", {
+    // Atomic idempotent credit — the RPC inserts the ledger row with the
+    // idempotency_key first, so concurrent redeliveries collide on the unique
+    // index instead of double-crediting.
+    const { data: grantResult, error: coinError } = await (supabaseAdmin as any).rpc("add_coins", {
       p_actor_id: actorId,
       p_amount: monthlyCoins,
       p_action: "subscription_grant",
@@ -198,18 +201,19 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session, supa
         billing_cycle: billingCycle,
         stripe_subscription_id: subscriptionId,
       },
+      p_idempotency_key: `sub_${subscriptionId}`,
     });
 
     if (coinError) {
       logger.error("Error granting subscription coins", coinError);
-    } else {
-      // Set idempotency_key for DB-level duplicate prevention
-      await supabaseAdmin
-        .from("coin_transactions")
-        .update({ idempotency_key: `sub_${subscriptionId}` })
-        .eq("actor_id", actorId)
-        .eq("action", "subscription_grant")
-        .contains("metadata", { stripe_subscription_id: subscriptionId });
+      return;
+    }
+
+    const grant = grantResult as { success: boolean; duplicate?: boolean; error?: string };
+    if (!grant?.success) {
+      logger.error("Subscription grant RPC rejected", undefined, { reason: grant?.error, subscriptionId });
+    } else if (grant.duplicate) {
+      logger.info("Duplicate webhook ignored - subscription coins already granted for", { subscriptionId });
     }
   }
 }
@@ -224,8 +228,9 @@ async function handleTripPayment(session: Stripe.Checkout.Session, supabaseAdmin
     return;
   }
 
-  // Update the gig application with payment success
-  const { error } = await supabaseAdmin
+  // Update the gig application with payment success. Guard on the pending
+  // payment_status so webhook redeliveries can't double-increment spots below.
+  const { data: paidRows, error } = await supabaseAdmin
     .from("gig_applications")
     .update({
       payment_status: "paid",
@@ -233,13 +238,21 @@ async function handleTripPayment(session: Stripe.Checkout.Session, supabaseAdmin
         ? session.payment_intent
         : session.payment_intent?.id,
       amount_paid: session.amount_total,
-      status: "approved", // Auto-approve paid spots
+      status: "accepted", // Auto-accept paid spots (matches status CHECK constraint)
     })
     .eq("gig_id", gigId)
-    .eq("model_id", modelId);
+    .eq("model_id", modelId)
+    .eq("payment_status", "pending")
+    .select("id");
 
   if (error) {
     logger.error("Error updating trip payment", error);
+    return;
+  }
+
+  if (!paidRows || paidRows.length === 0) {
+    // Already paid — duplicate webhook delivery, nothing to do.
+    logger.info("Trip payment already recorded, skipping", { gigId, modelId });
     return;
   }
 

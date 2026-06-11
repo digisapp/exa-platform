@@ -71,6 +71,26 @@ export async function GET(request: NextRequest) {
       }
 
       try {
+        // Claim the installment before charging: atomically flip pending -> processing
+        // so a crash, retry, or overlapping cron run can never double-charge the card.
+        const { data: claimed, error: claimError } = await supabaseAdmin
+          .from("workshop_installments")
+          .update({ status: "processing", updated_at: new Date().toISOString() })
+          .eq("id", installment.id)
+          .eq("status", "pending")
+          .select();
+
+        if (claimError) {
+          logger.error("Failed to claim installment", claimError, { installmentId: installment.id });
+          failed++;
+          continue;
+        }
+
+        if (!claimed || claimed.length === 0) {
+          // Another run already claimed this installment — skip it.
+          continue;
+        }
+
         // Get the customer's default payment method
         const paymentMethods = await stripe.paymentMethods.list({
           customer: customerId,
@@ -89,7 +109,8 @@ export async function GET(request: NextRequest) {
         const workshopTitle = (registration as any).workshops?.title || "Workshop";
         const installmentsTotal = (registration as any).installments_total || 1;
 
-        // Create off-session payment intent
+        // Create off-session payment intent. The Stripe idempotency key ensures
+        // a retried/duplicated request can't re-charge the card.
         const paymentIntent = await stripe.paymentIntents.create({
           amount: installment.amount_cents,
           currency: "usd",
@@ -104,37 +125,16 @@ export async function GET(request: NextRequest) {
             installment_number: installment.installment_number.toString(),
           },
           description: `${workshopTitle} — Installment ${installment.installment_number} of ${installmentsTotal}`,
-        });
+        }, { idempotencyKey: `workshop_installment_${installment.id}` });
 
         if (paymentIntent.status === "succeeded") {
-          // Mark installment as completed
-          await supabaseAdmin
-            .from("workshop_installments")
-            .update({
-              status: "completed",
-              stripe_payment_intent_id: paymentIntent.id,
-              paid_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", installment.id);
-
-          // Increment installments_paid on registration
-          const { data: reg } = await supabaseAdmin
-            .from("workshop_registrations")
-            .select("installments_paid")
-            .eq("id", installment.registration_id)
-            .single();
-
-          if (reg) {
-            await supabaseAdmin
-              .from("workshop_registrations")
-              .update({
-                installments_paid: (reg.installments_paid || 0) + 1,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", installment.registration_id);
-          }
-
+          // Leave the row in 'processing' — the payment_intent.succeeded webhook
+          // (handleWorkshopInstallmentSuccess) is the single owner of marking the
+          // installment completed and incrementing installments_paid.
+          logger.info("Workshop installment charged, awaiting webhook completion", {
+            installmentId: installment.id,
+            paymentIntentId: paymentIntent.id,
+          });
           succeeded++;
         } else {
           // Payment requires action or failed — increment retry
@@ -239,10 +239,12 @@ async function handleInstallmentRetryFailed(
 
     logger.info("Workshop registration cancelled due to payment failure", { registrationId });
   } else {
-    // Increment retry count
+    // Increment retry count and release the 'processing' claim back to
+    // 'pending' so the next cron run picks the installment up again.
     await supabaseAdmin
       .from("workshop_installments")
       .update({
+        status: "pending",
         retry_count: newRetryCount,
         updated_at: new Date().toISOString(),
       })

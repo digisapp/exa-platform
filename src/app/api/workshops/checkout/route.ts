@@ -10,7 +10,7 @@ const workshopCheckoutSchema = z.object({
   quantity: z.number().int().min(1).max(5),
   buyerEmail: z.string().email(),
   buyerName: z.string().min(1),
-  buyerPhone: z.string().optional(),
+  buyerPhone: z.string().optional().nullable(),
   paymentType: z.enum(["full", "installment"]).default("full"),
 });
 

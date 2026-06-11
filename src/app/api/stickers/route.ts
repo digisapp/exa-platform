@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { sanitizeOrFilterTerm } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -29,10 +30,12 @@ export async function GET(request: NextRequest) {
 
     if (category) query = query.eq("category", category);
 
-    if (search) {
+    const safeSearch = sanitizeOrFilterTerm(search);
+    if (safeSearch) {
       // Match on name or any tag containing the search term
+      // (sanitized — commas/parens/dots/braces/quotes are .or() / array-literal syntax)
       query = query.or(
-        `name.ilike.%${search}%,tags.cs.{${search}}`
+        `name.ilike.%${safeSearch}%,tags.cs.{"${safeSearch}"}`
       );
     }
 

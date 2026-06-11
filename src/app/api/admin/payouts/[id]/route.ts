@@ -88,8 +88,10 @@ export async function PATCH(
         .eq("id", id)
         .single() as { data: { coins: number; payout_method: string | null; model_id: string; bank_account_id: string | null; models: { user_id: string; first_name: string | null; last_name: string | null; zelle_info: string | null } } | null };
 
-      // Complete withdrawal - removes from withheld balance
-      const { error: completeError } = await supabase.rpc("complete_withdrawal", {
+      // Complete withdrawal - removes from withheld balance.
+      // Must use the service-role client: EXECUTE on complete_withdrawal was
+      // revoked from authenticated in 20260207000007_high_priority_fixes.sql.
+      const { error: completeError } = await adminClient.rpc("complete_withdrawal", {
         p_withdrawal_id: id,
       });
 

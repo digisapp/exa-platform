@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+
+const adminClient = createServiceRoleClient();
 
 const voteSchema = z.object({
   contestant_id: z.string().uuid("Invalid contestant ID"),
@@ -109,8 +112,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Cast vote via RPC (atomically deducts coins and records vote)
-    const { data: voteResult, error: voteError } = await (supabase as any).rpc(
+    // Cast vote via RPC (atomically deducts coins and records vote).
+    // Uses the service-role client: the route has already authenticated the user
+    // and derived the voter actor id server-side, and EXECUTE on this SECURITY
+    // DEFINER money function is revoked from authenticated/anon.
+    const { data: voteResult, error: voteError } = await (adminClient as any).rpc(
       "cast_swimcrown_vote",
       {
         p_voter_actor_id: actorId,

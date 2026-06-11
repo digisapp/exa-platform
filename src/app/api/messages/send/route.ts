@@ -5,7 +5,14 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { escapeIlike } from "@/lib/utils";
 import { sendNewMessageNotificationEmail } from "@/lib/email";
+import { detectInPersonRequest } from "@/lib/in-person-request";
 import { logger } from "@/lib/logger";
+
+// Virtual-first policy: a fan with this many flagged messages in the last 7 days
+// gets their account flagged for trust & safety review. Soft warning + auto-flag
+// is the primary lever; account-level flag is the escalation for repeat offenders.
+const ACCOUNT_FLAG_THRESHOLD = 3;
+const ACCOUNT_FLAG_WINDOW_DAYS = 7;
 
 const DEFAULT_MESSAGE_COST = 5; // Default coins if model hasn't set a rate
 
@@ -316,6 +323,58 @@ export async function POST(request: NextRequest) {
       .select("id, conversation_id, sender_id, content, media_url, media_type, media_price, media_viewed_by, is_system, created_at")
       .eq("id", result.message_id)
       .single();
+
+    // ─── Virtual-first auto-flag ────────────────────────────────────────
+    // Only check fan/brand → model direction. Models are exempt (they may
+    // legitimately discuss real-world bookings/shoots).
+    if (
+      result.message_id &&
+      (sender.type === "fan" || sender.type === "brand") &&
+      content
+    ) {
+      const detection = detectInPersonRequest(content);
+      if (detection.matched) {
+        try {
+          const { error: flagError } = await adminClient
+            .from("messages")
+            .update({ is_flagged: true, flagged_reason: `in_person_request:${detection.phrase}` })
+            .eq("id", result.message_id);
+          if (flagError) {
+            logger.error("Failed to flag in-person request message", flagError);
+          }
+
+          // Repeat-offender escalation — only fans have an account flag column.
+          if (sender.type === "fan") {
+            const windowStart = new Date(
+              Date.now() - ACCOUNT_FLAG_WINDOW_DAYS * 24 * 60 * 60 * 1000
+            ).toISOString();
+            const { count } = await adminClient
+              .from("messages")
+              .select("id", { count: "exact", head: true })
+              .eq("sender_id", sender.id)
+              .eq("is_flagged", true)
+              .gte("created_at", windowStart);
+
+            if ((count ?? 0) >= ACCOUNT_FLAG_THRESHOLD) {
+              const { error: fanFlagError } = await adminClient
+                .from("fans")
+                .update({
+                  flagged_for_review: true,
+                  flagged_for_review_at: new Date().toISOString(),
+                  flagged_for_review_reason: "repeated_in_person_requests",
+                })
+                .eq("user_id", user.id)
+                .eq("flagged_for_review", false);
+              if (fanFlagError) {
+                logger.error("Failed to flag fan account for review", fanFlagError);
+              }
+            }
+          }
+        } catch (moderationErr) {
+          logger.error("Virtual-first moderation error", moderationErr);
+        }
+      }
+    }
 
     // ─── First-message email notification ───────────────────────────────
     // Send email only on the FIRST message from this sender in this conversation.

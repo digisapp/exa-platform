@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+
+const adminClient = createServiceRoleClient();
 
 const BOOST_COST = 5;
 const REVEAL_COST = 10;
@@ -147,9 +150,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Deduct coins if needed
+    // Deduct coins if needed.
+    // Uses the service-role client: the route has already authenticated the user
+    // and derived actorId server-side, and EXECUTE on deduct_coins is revoked
+    // from authenticated/anon.
     if (coinsToSpend > 0 && actorId) {
-      const { data: deductResult, error: deductError } = await supabase.rpc(
+      const { data: deductResult, error: deductError } = await adminClient.rpc(
         "deduct_coins",
         {
           p_actor_id: actorId,
