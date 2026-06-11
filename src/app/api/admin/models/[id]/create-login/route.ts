@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import type { User } from "@supabase/supabase-js";
 
 import crypto from "crypto";
 
@@ -66,8 +67,18 @@ export async function POST(
     const serviceSupabase = createServiceRoleClient();
 
     // Check if user already exists in auth
-    const { data: existingUsers } = await serviceSupabase.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(u => u.email === model.email);
+    let existingUser: User | null = null;
+    if (model.user_id) {
+      const { data: userData } = await serviceSupabase.auth.admin.getUserById(model.user_id);
+      existingUser = userData?.user ?? null;
+    } else {
+      for (let page = 1; ; page++) {
+        const { data: existingUsers } = await serviceSupabase.auth.admin.listUsers({ page, perPage: 1000 });
+        const users = existingUsers?.users ?? [];
+        existingUser = users.find(u => u.email === model.email) ?? null;
+        if (existingUser || users.length === 0) break;
+      }
+    }
 
     let userId: string;
 

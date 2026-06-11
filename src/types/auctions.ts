@@ -7,7 +7,7 @@ export type AuctionCategory = 'video_call' | 'custom_content' | 'meet_greet' | '
 export const AUCTION_CATEGORIES: { value: AuctionCategory; label: string }[] = [
   { value: 'video_call', label: 'Video Call' },
   { value: 'custom_content', label: 'Custom Content' },
-  { value: 'meet_greet', label: 'Meet & Greet' },
+  { value: 'meet_greet', label: 'Live Video Meet & Greet' },
   { value: 'shoutout', label: 'Shoutout' },
   { value: 'experience', label: 'Experience' },
   { value: 'other', label: 'Other' },

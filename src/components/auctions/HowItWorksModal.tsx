@@ -56,19 +56,19 @@ export function HowItWorksModal({ isModel, variant = "link" }: HowItWorksModalPr
             <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
               <p className="text-sm font-semibold text-white mb-2">Are you a model?</p>
               <p className="text-sm text-zinc-400 leading-relaxed mb-4">
-                List your services — custom content, video calls, meet &amp; greets — and let fans bid or buy now.
+                List your services — custom content, video calls, live virtual meet &amp; greets — and let fans bid or buy now.
               </p>
               {isModel ? (
                 <div className="flex gap-2">
                   <Link
-                    href="/dashboard/bids/new"
+                    href="/bids/new"
                     onClick={() => setOpen(false)}
                     className="text-xs font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
                   >
                     + Create a Listing
                   </Link>
                   <Link
-                    href="/dashboard/bids/manage"
+                    href="/bids/manage"
                     onClick={() => setOpen(false)}
                     className="text-xs font-semibold bg-zinc-700 text-zinc-200 px-4 py-2 rounded-lg hover:bg-zinc-600 transition-colors"
                   >
@@ -77,7 +77,7 @@ export function HowItWorksModal({ isModel, variant = "link" }: HowItWorksModalPr
                 </div>
               ) : (
                 <Link
-                  href="/dashboard/bids/new"
+                  href="/bids/new"
                   onClick={() => setOpen(false)}
                   className="inline-block text-xs font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
                 >

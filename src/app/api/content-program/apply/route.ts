@@ -1,8 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { sendContentProgramApplicationEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
+
+// Service role client: this is a public (anon-capable) application form, and
+// content_program_applications has no anon policies and no longer has a broad
+// authenticated SELECT policy. Inputs are validated server-side and the
+// endpoint is rate limited.
+const adminClient = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for existing pending application by email
-    const { data: existing } = await supabase
+    const { data: existing } = await adminClient
       .from("content_program_applications")
       .select("id, status")
       .eq("email", email.toLowerCase())
@@ -67,7 +74,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     // Insert application
-    const { data: application, error } = await supabase
+    const { data: application, error } = await adminClient
       .from("content_program_applications")
       .insert({
         brand_name: brand_name.trim(),

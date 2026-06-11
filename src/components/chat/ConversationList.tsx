@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -86,6 +86,10 @@ function formatMessageTime(dateStr: string): string {
 export function ConversationList({ conversations: initialConversations, actorType, compact, currentActorId }: ConversationListProps) {
   const pathname = usePathname();
   const selectedId = pathname.startsWith("/chats/") ? pathname.split("/chats/")[1] : null;
+  const selectedIdRef = useRef(selectedId);
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [conversations, setConversations] = useState(initialConversations);
@@ -135,7 +139,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
               is_system: msg.is_system,
             },
             // Only increment unread for other people's messages, and not for the currently open conversation
-            unread_count: !isOwnMessage && conv.conversation_id !== selectedId
+            unread_count: !isOwnMessage && conv.conversation_id !== selectedIdRef.current
               ? (conv.unread_count || 0) + 1
               : conv.unread_count,
           };

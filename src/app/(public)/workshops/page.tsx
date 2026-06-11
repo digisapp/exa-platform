@@ -152,11 +152,10 @@ export default async function WorkshopsPage() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {workshops.map((workshop) => {
                 const workshopDate = new Date(workshop.date);
-                const spotsLeft = workshop.spots_available
+                const spotsLeft = workshop.spots_available != null
                   ? workshop.spots_available - workshop.spots_sold
                   : null;
                 const isSoldOut = spotsLeft !== null && spotsLeft <= 0;
-                const isLimitedSpots = spotsLeft !== null && spotsLeft <= 5 && spotsLeft > 0;
 
                 return (
                   <Link key={workshop.id} href={`/workshops/${workshop.slug}`} className="group">
@@ -186,11 +185,6 @@ export default async function WorkshopsPage() {
                         {isSoldOut && (
                           <Badge className="bg-red-500/90 text-white border-0 backdrop-blur-sm">
                             Sold Out
-                          </Badge>
-                        )}
-                        {isLimitedSpots && (
-                          <Badge className="bg-amber-500/90 text-white border-0 backdrop-blur-sm animate-pulse">
-                            Only {spotsLeft} spots left!
                           </Badge>
                         )}
                       </div>

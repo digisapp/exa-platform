@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+
+// Service role client: shop_carts/shop_cart_items are service-role-only under
+// RLS (guest carts are keyed by a client session id, which RLS cannot scope) —
+// ownership is enforced in this route via user_id / x-session-id checks.
+// Also used for the affiliate click-count bump.
+const supabaseAdmin = createServiceRoleClient();
 
 // GET - Fetch current cart
 export async function GET(request: Request) {
@@ -17,7 +24,7 @@ export async function GET(request: Request) {
     }
 
     // Find cart
-    let cartQuery = supabase
+    let cartQuery = supabaseAdmin
       .from("shop_carts")
       .select(`
         id,
@@ -177,7 +184,7 @@ export async function POST(request: Request) {
     }
 
     // Find or create cart
-    let cartQuery = supabase
+    let cartQuery = supabaseAdmin
       .from("shop_carts")
       .select("id, affiliate_code")
       .gt("expires_at", new Date().toISOString());
@@ -210,21 +217,22 @@ export async function POST(request: Request) {
         if (affiliateData) {
           affiliateModelId = affiliateData.model_id;
 
-          // Increment click count atomically via RPC
-          const { data: currentCode } = await supabase
+          // Increment click count (service role — guests/buyers must not have
+          // UPDATE rights on shop_affiliate_codes)
+          const { data: currentCode } = await supabaseAdmin
             .from("shop_affiliate_codes")
             .select("click_count")
             .eq("code", affiliateCode.toUpperCase())
             .single();
 
-          await supabase
+          await supabaseAdmin
             .from("shop_affiliate_codes")
             .update({ click_count: (currentCode?.click_count || 0) + 1 })
             .eq("code", affiliateCode.toUpperCase());
         }
       }
 
-      const { data: newCart, error: createError } = await supabase
+      const { data: newCart, error: createError } = await supabaseAdmin
         .from("shop_carts")
         .insert({
           user_id: user?.id || null,
@@ -247,7 +255,7 @@ export async function POST(request: Request) {
     }
 
     // Check if item already in cart
-    const { data: existingItem } = await supabase
+    const { data: existingItem } = await supabaseAdmin
       .from("shop_cart_items")
       .select("id, quantity")
       .eq("cart_id", cart.id)
@@ -265,13 +273,13 @@ export async function POST(request: Request) {
         );
       }
 
-      await supabase
+      await supabaseAdmin
         .from("shop_cart_items")
         .update({ quantity: newQuantity })
         .eq("id", existingItem.id);
     } else {
       // Add new item
-      await supabase
+      await supabaseAdmin
         .from("shop_cart_items")
         .insert({
           cart_id: cart.id,
@@ -311,7 +319,7 @@ export async function PATCH(request: Request) {
     const { itemId, quantity } = parsedPatch.data;
 
     // Verify cart ownership
-    const { data: item } = await supabase
+    const { data: item } = await supabaseAdmin
       .from("shop_cart_items")
       .select(`
         id,
@@ -338,7 +346,7 @@ export async function PATCH(request: Request) {
 
     if (quantity <= 0) {
       // Remove item
-      await supabase
+      await supabaseAdmin
         .from("shop_cart_items")
         .delete()
         .eq("id", itemId);
@@ -352,7 +360,7 @@ export async function PATCH(request: Request) {
       }
 
       // Update quantity
-      await supabase
+      await supabaseAdmin
         .from("shop_cart_items")
         .update({ quantity })
         .eq("id", itemId);
@@ -386,7 +394,7 @@ export async function DELETE(request: Request) {
     }
 
     // Verify cart ownership
-    const { data: item } = await supabase
+    const { data: item } = await supabaseAdmin
       .from("shop_cart_items")
       .select(`
         id,
@@ -411,7 +419,7 @@ export async function DELETE(request: Request) {
     }
 
     // Remove item
-    await supabase
+    await supabaseAdmin
       .from("shop_cart_items")
       .delete()
       .eq("id", itemId);

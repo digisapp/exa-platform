@@ -80,8 +80,11 @@ export async function POST(
     const auctionBefore = auctionBeforeResult.data as { title: string; current_bid: number } | null;
     const leadingBidderId = (leadingBidResult.data as { bidder_id: string } | null)?.bidder_id ?? null;
 
-    // Call the RPC function to place the bid
-    const { data: result, error } = await supabase.rpc("place_auction_bid", {
+    // Call the RPC function to place the bid.
+    // Uses the service-role client: the route has already authenticated the user
+    // and derived the bidder actor id server-side, and EXECUTE on this SECURITY
+    // DEFINER money function is revoked from authenticated/anon.
+    const { data: result, error } = await adminClient.rpc("place_auction_bid", {
       p_auction_id: auctionId,
       p_bidder_id: actor.id,
       p_amount: amount,

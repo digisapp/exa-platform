@@ -204,8 +204,10 @@ export async function handleWorkshopInstallmentSuccess(
     return;
   }
 
-  // Mark installment as completed (workshop_installments not yet in generated types)
-  const { error: installmentError } = await (supabaseAdmin as any)
+  // Mark installment as completed (workshop_installments not yet in generated types).
+  // Guard on status so webhook redeliveries (or a cron-charged installment already
+  // completed) can't double-increment installments_paid below.
+  const { data: completedRows, error: installmentError } = await (supabaseAdmin as any)
     .from("workshop_installments")
     .update({
       status: "completed",
@@ -213,10 +215,18 @@ export async function handleWorkshopInstallmentSuccess(
       paid_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq("id", installmentId);
+    .eq("id", installmentId)
+    .in("status", ["pending", "processing"])
+    .select();
 
   if (installmentError) {
     logger.error("Error updating installment", installmentError);
+    return;
+  }
+
+  if (!completedRows || completedRows.length === 0) {
+    // Already completed — duplicate webhook delivery, nothing to do.
+    logger.info("Workshop installment already completed, skipping", { installmentId });
     return;
   }
 

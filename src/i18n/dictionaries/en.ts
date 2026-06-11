@@ -197,7 +197,7 @@ export const en = {
     brandAmbassador: "Brand Ambassador",
     socialCompanion: "Social Companion",
     privateEvent: "Private Event",
-    meetAndGreet: "Meet & Greet",
+    meetAndGreet: "Live Video Meet & Greet",
   },
 
   // Followers

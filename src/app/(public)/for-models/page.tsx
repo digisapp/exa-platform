@@ -382,8 +382,8 @@ export default async function ForModelsPage() {
         >
           <p className="text-muted-foreground mb-4">A retreat wants:</p>
           <ul className="mb-4 space-y-1">
-            <li>• meet & greet</li>
-            <li>• class host</li>
+            <li>• virtual class host</li>
+            <li>• live video session</li>
             <li>• content day</li>
           </ul>
           <p className="mb-2">They send a booking with:</p>

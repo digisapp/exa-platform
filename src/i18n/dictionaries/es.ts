@@ -199,7 +199,7 @@ export const es: Dictionary = {
     brandAmbassador: "Embajadora de Marca",
     socialCompanion: "Acompañante Social",
     privateEvent: "Evento Privado",
-    meetAndGreet: "Meet & Greet",
+    meetAndGreet: "Videollamada en Vivo",
   },
 
   // Followers

@@ -25,7 +25,7 @@ export function BidsCategoryFilter({ auctions, watchedIds, myBids = {} }: BidsCa
           Be the first — models can create an auction for custom content, video calls, and more.
         </p>
         <Link
-          href="/dashboard/bids/new"
+          href="/bids/new"
           className="inline-block mt-2 text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
         >
           Create a Listing →

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import { sanitizeOrFilterTerm } from "@/lib/utils";
 
 // GET - Fetch approved, paid contestants for current competition (public)
 export async function GET(request: NextRequest) {
@@ -59,10 +60,11 @@ export async function GET(request: NextRequest) {
       .eq("status", "approved")
       .eq("payment_status", "paid");
 
-    // Apply search filter
-    if (search) {
+    // Apply search filter (sanitized — commas/parens/dots are .or() syntax)
+    const safeSearch = sanitizeOrFilterTerm(search);
+    if (safeSearch) {
       query = query.or(
-        `tagline.ilike.%${search}%,models.first_name.ilike.%${search}%,models.username.ilike.%${search}%`
+        `tagline.ilike.%${safeSearch}%,models.first_name.ilike.%${safeSearch}%,models.username.ilike.%${safeSearch}%`
       );
     }
 
