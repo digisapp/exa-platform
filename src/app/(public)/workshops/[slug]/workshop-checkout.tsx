@@ -11,7 +11,6 @@ import {
   Minus,
   Plus,
   CreditCard,
-  Users,
   AlertCircle,
   CalendarClock,
 } from "lucide-react";
@@ -70,7 +69,7 @@ export function WorkshopCheckout({ workshop }: WorkshopCheckoutProps) {
   const savings = paymentType === "full" && originalTotal ? originalTotal - total : 0;
 
   const handleCheckout = async () => {
-    if (!buyerEmail || !buyerEmail.includes("@")) {
+    if (!buyerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) {
       setError("Please enter a valid email address");
       return;
     }
@@ -91,13 +90,14 @@ export function WorkshopCheckout({ workshop }: WorkshopCheckoutProps) {
           quantity,
           buyerEmail,
           buyerName,
-          buyerPhone: buyerPhone || null,
+          buyerPhone: buyerPhone || undefined,
           paymentType,
         }),
       });
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to create checkout");
+      if (!data.checkoutUrl) throw new Error("Checkout could not be started. Please try again.");
       window.location.href = data.checkoutUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -128,12 +128,6 @@ export function WorkshopCheckout({ workshop }: WorkshopCheckoutProps) {
       <CardHeader className="rounded-t-xl pb-3 bg-pink-500/5">
         <CardTitle className="flex items-center justify-between">
           <span className="text-pink-500">Register</span>
-          {workshop.spotsLeft !== null && (
-            <span className="text-sm font-normal text-muted-foreground flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              {workshop.spotsLeft} spots left
-            </span>
-          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

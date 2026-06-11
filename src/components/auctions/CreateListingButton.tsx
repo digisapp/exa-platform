@@ -30,7 +30,7 @@ export function CreateListingButton({ isLoggedIn, actorType, className, children
   const handleClick = () => {
     if (isLoggedIn) {
       if (actorType === "model" || actorType === "admin") {
-        router.push("/dashboard/bids/new");
+        router.push("/bids/new");
       } else {
         toast.error("Only models can create listings. Sign up as a model to get started!");
       }
@@ -50,7 +50,7 @@ export function CreateListingButton({ isLoggedIn, actorType, className, children
       if (error) throw error;
       if (data.user) {
         setOpen(false);
-        window.location.href = "/dashboard/bids/new";
+        window.location.href = "/bids/new";
       }
     } catch (err: any) {
       toast.error(err.message || "Invalid email or password");

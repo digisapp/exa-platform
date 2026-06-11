@@ -14,6 +14,17 @@ import { EmojiPicker } from "./EmojiPicker";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { LibraryPicker } from "./LibraryPicker";
 import { hapticFeedback } from "@/hooks/useHapticFeedback";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { detectInPersonRequest, IN_PERSON_WARNING_COPY } from "@/lib/in-person-request";
 
 const DRAFT_PREFIX = "chat_draft_";
 
@@ -60,6 +71,7 @@ export function MessageInput({
   } | null>(null);
   const [mediaPrice, setMediaPrice] = useState<number | null>(null);
   const [showPriceInput, setShowPriceInput] = useState(false);
+  const [virtualFirstWarningOpen, setVirtualFirstWarningOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const draftKey = conversationId ? `${DRAFT_PREFIX}${conversationId}` : null;
 
@@ -108,9 +120,7 @@ export function MessageInput({
   const canSend = (content.trim() || attachedMedia) && !disabled && !sending && !uploading;
   const hasEnoughCoins = coinCost === 0 || coinBalance >= coinCost;
 
-  const handleSend = async () => {
-    if (!canSend || !hasEnoughCoins) return;
-
+  const performSend = async () => {
     // Haptic feedback on send
     hapticFeedback("light");
 
@@ -151,6 +161,19 @@ export function MessageInput({
       setSending(false);
       textareaRef.current?.focus();
     }
+  };
+
+  const handleSend = () => {
+    if (!canSend || !hasEnoughCoins) return;
+
+    // Virtual-first guardrail: warn fans/brands before sending in-person meetup
+    // requests. Models can DM about real-life shoots without a prompt.
+    if (!isModel && detectInPersonRequest(content).matched) {
+      setVirtualFirstWarningOpen(true);
+      return;
+    }
+
+    performSend();
   };
 
   // Handle content change with typing indicator
@@ -625,6 +648,27 @@ export function MessageInput({
           modelId={modelId}
         />
       )}
+
+      {/* Virtual-first warning — soft nudge before sending in-person meetup requests */}
+      <AlertDialog open={virtualFirstWarningOpen} onOpenChange={setVirtualFirstWarningOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{IN_PERSON_WARNING_COPY.title}</AlertDialogTitle>
+            <AlertDialogDescription>{IN_PERSON_WARNING_COPY.body}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{IN_PERSON_WARNING_COPY.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setVirtualFirstWarningOpen(false);
+                performSend();
+              }}
+            >
+              {IN_PERSON_WARNING_COPY.confirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

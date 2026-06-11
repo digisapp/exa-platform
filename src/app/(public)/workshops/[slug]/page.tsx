@@ -8,7 +8,6 @@ import {
   MapPin,
   Calendar,
   Clock,
-  Users,
   ArrowLeft,
   CheckCircle,
   Briefcase,
@@ -149,7 +148,7 @@ export default async function WorkshopPage({ params }: Props) {
       : profileData?.username || undefined;
 
   // Calculate availability
-  const spotsLeft = workshop.spots_available
+  const spotsLeft = workshop.spots_available != null
     ? workshop.spots_available - workshop.spots_sold
     : null;
   const isSoldOut = spotsLeft !== null && spotsLeft <= 0;
@@ -283,18 +282,6 @@ export default async function WorkshopPage({ params }: Props) {
                         {workshop.location_city && workshop.location_state
                           ? `${workshop.location_city}, ${workshop.location_state}`
                           : workshop.location_city || workshop.location_state}
-                      </span>
-                    </div>
-                  )}
-                  {spotsLeft !== null && spotsLeft > 0 && (
-                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs ${
-                      spotsLeft <= 5
-                        ? "bg-amber-500/10 border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
-                        : "bg-white/5 border-white/10"
-                    }`}>
-                      <Users className={`h-3.5 w-3.5 ${spotsLeft <= 5 ? "text-amber-300" : "text-emerald-400"}`} />
-                      <span className={`font-semibold ${spotsLeft <= 5 ? "text-amber-200" : "text-white"}`}>
-                        {spotsLeft <= 5 ? `Only ${spotsLeft} spots left!` : `${spotsLeft} spots remaining`}
                       </span>
                     </div>
                   )}
