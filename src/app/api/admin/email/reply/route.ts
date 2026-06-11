@@ -3,7 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is not configured");
+  }
+  return new Resend(apiKey);
+}
 
 /**
  * POST /api/admin/email/reply
@@ -68,7 +74,7 @@ export async function POST(request: NextRequest) {
 
   try {
     // Send via Resend
-    const { data: resendResponse, error: resendError } = await resend.emails.send({
+    const { data: resendResponse, error: resendError } = await getResend().emails.send({
       from: "EXA Models <hello@examodels.com>",
       to: [to],
       subject,
