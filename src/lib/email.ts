@@ -259,6 +259,154 @@ export async function sendModelApprovalEmail({
   }
 }
 
+export async function sendModelApplicationReceivedEmail({
+  to,
+  modelName,
+  language = "en",
+}: {
+  to: string;
+  modelName: string;
+  language?: string;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const statusUrl = `${BASE_URL}/pending-approval`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const isSpanish = language?.startsWith("es");
+
+    const subject = isSpanish
+      ? "Recibimos tu Solicitud - EXA Models"
+      : "We Got Your Application - EXA Models";
+
+    const headerTitle = isSpanish ? "Solicitud Recibida" : "Application Received";
+    const headerSubtitle = isSpanish
+      ? "Tu solicitud está en revisión"
+      : "Your application is being reviewed";
+    const greeting = isSpanish ? `Hola ${escapeHtml(modelName)},` : `Hey ${escapeHtml(modelName)},`;
+    const bodyText = isSpanish
+      ? "¡Gracias por aplicar a EXA Models! Recibimos tu solicitud y nuestro equipo la está revisando. Normalmente respondemos dentro de 24-48 horas."
+      : "Thanks for applying to EXA Models! We received your application and our team is reviewing it now. You'll typically hear back within 24-48 hours.";
+    const whileYouWaitTitle = isSpanish ? "Mientras Tanto" : "While You Wait";
+    const checkStatusText = isSpanish ? "Ver Estado de tu Solicitud" : "Check Application Status";
+
+    const steps = isSpanish ? [
+      { title: "Prepara Tus Mejores Fotos", desc: "Ten listas tus fotos de portafolio para subirlas en cuanto seas aprobada." },
+      { title: "Piensa en Tu Bio", desc: "Una bio auténtica ayuda a marcas y fans a conocerte mejor." },
+      { title: "Explora la Plataforma", desc: "Mira los perfiles de otras modelos para inspirarte." },
+    ] : [
+      { title: "Get Your Best Photos Ready", desc: "Have your portfolio shots ready to upload the moment you're approved." },
+      { title: "Think About Your Bio", desc: "An authentic bio helps brands and fans get to know you." },
+      { title: "Explore the Platform", desc: "Check out other model profiles for inspiration." },
+    ];
+
+    const stepsHtml = steps.map((step, i) => `
+                <tr>
+                  <td style="padding: 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width: 40px; vertical-align: top;">
+                          <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border-radius: 50%; text-align: center; line-height: 28px; color: white; font-weight: bold;">${i + 1}</div>
+                        </td>
+                        <td style="vertical-align: top;">
+                          <p style="margin: 0 0 5px; color: #ffffff; font-weight: 600;">${step.title}</p>
+                          <p style="margin: 0; color: #a1a1aa; font-size: 14px;">${step.desc}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="height: 10px;"></td></tr>`).join("");
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                ${headerTitle}
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                ${headerSubtitle}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                ${greeting}
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                ${bodyText}
+              </p>
+
+              <!-- Status Link -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td align="center">
+                    <a href="${statusUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      ${checkStatusText}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- While You Wait -->
+              <h2 style="margin: 0 0 20px; color: #ffffff; font-size: 20px; font-weight: 600;">
+                ${whileYouWaitTitle}
+              </h2>
+
+              <table width="100%" cellpadding="0" cellspacing="0">
+                ${stepsHtml}
+              </table>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendBrandApprovalEmail({
   to,
   companyName,
