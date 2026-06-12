@@ -379,6 +379,9 @@ async function handleTicketPurchase(session: Stripe.Checkout.Session, supabaseAd
       const coinsToAward = 10 * quantity;
       const purchaseId = purchase?.id;
 
+      // Keyed on the checkout session so Stripe webhook redeliveries don't
+      // re-award coins (the 4-arg add_coins has no dedupe; the 5-arg overload
+      // inserts the ledger row under the unique idempotency_key first).
       await supabaseAdmin.rpc("add_coins", {
         p_actor_id: fan.id,
         p_amount: coinsToAward,
@@ -389,6 +392,7 @@ async function handleTicketPurchase(session: Stripe.Checkout.Session, supabaseAd
           quantity,
           coins_per_ticket: 10,
         },
+        p_idempotency_key: `ticket_fan:${session.id}`,
       }).then(({ error }) => {
         if (error) logger.error("Error awarding fan ticket coins", error);
       });
@@ -456,6 +460,23 @@ export async function processAffiliateCommission(
   // models.id references actors.id, so modelId IS the actor ID
   const actorId = modelId;
 
+  // Idempotency: a Stripe webhook redelivery would otherwise insert a duplicate
+  // commission row and re-credit the model. One commission per purchase.
+  const { data: existingCommission } = await supabaseAdmin
+    .from("affiliate_commissions")
+    .select("id")
+    .eq("order_id", purchaseId)
+    .eq("event_id", eventId)
+    .maybeSingle();
+
+  if (existingCommission?.id) {
+    logger.info("Affiliate commission already recorded for purchase, skipping", {
+      purchaseId,
+      eventId,
+    });
+    return;
+  }
+
   // Create commission record with 14-day hold (matches shop affiliate behavior)
   const availableAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
   const { data: commission, error: commissionError } = await supabaseAdmin
@@ -505,6 +526,7 @@ export async function processAffiliateCommission(
       commission_cents: commissionCents,
       commission_id: commission?.id,
     },
+    p_idempotency_key: `ticket_aff:${purchaseId}`,
   });
 
   if (coinError) {
