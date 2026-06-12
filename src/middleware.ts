@@ -16,6 +16,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/sponsors/miami-swim-week', request.url), 301)
   }
 
+  // POS is on hold (no in-store sales currently). The POS routes authenticate
+  // only via an unauthenticated x-pos-staff-id header, so we disable the whole
+  // surface at the edge rather than leave it reachable. Re-enable by setting
+  // POS_ENABLED=true once a real staff credential (PIN/device token) is added.
+  const { pathname } = request.nextUrl
+  const isPosPath =
+    pathname === '/pos' ||
+    pathname.startsWith('/pos/') ||
+    pathname === '/api/pos' ||
+    pathname.startsWith('/api/pos/')
+  if (isPosPath && process.env.POS_ENABLED !== 'true') {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { error: 'POS is currently disabled' },
+        { status: 503 }
+      )
+    }
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
   try {
     return await updateSession(request)
   } catch (err) {
