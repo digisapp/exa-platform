@@ -6,6 +6,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Provided by Next's bundler at build time; not resolvable by Vite.
+      "server-only": path.resolve(__dirname, "./src/test/empty-module.ts"),
+      "client-only": path.resolve(__dirname, "./src/test/empty-module.ts"),
     },
   },
   test: {
