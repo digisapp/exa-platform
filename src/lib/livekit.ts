@@ -1,3 +1,4 @@
+import "server-only";
 import { AccessToken } from "livekit-server-sdk";
 
 const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY;

@@ -29,7 +29,7 @@ export function FanCoinGate({ currentBalance = 0 }: FanCoinGateProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {currentBalance > 0 && (
+          {currentBalance !== 0 && (
             <div className="text-center p-3 rounded-lg bg-muted/50 border">
               <p className="text-sm text-muted-foreground">Your balance</p>
               <p className="text-xl font-bold">{currentBalance} coins</p>

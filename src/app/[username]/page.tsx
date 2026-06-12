@@ -165,6 +165,28 @@ export default async function ModelProfilePage({ params }: Props) {
     notFound();
   }
 
+  // Redact never-public PII before the row can reach any client component.
+  // This page selects models.* on a public, unauthenticated route; today only
+  // safe scalar fields are rendered, but stripping these here means a future
+  // edit that forwards `model` to a client component can't leak them. (email is
+  // intentionally surfaced as a mailto only when the model enables
+  // show_social_media, so it is gated in the JSX rather than redacted here.)
+  if (!isOwner && !isAdmin) {
+    for (const field of [
+      "date_of_birth",
+      "phone",
+      "zelle_info",
+      "invite_token",
+      "stripe_account_id",
+      "stripe_customer_id",
+      "payout_method",
+      "bank_account",
+      "tax_id",
+    ]) {
+      if (field in model) model[field] = null;
+    }
+  }
+
   // Get model's event badges (using separate queries due to FK relationship issue)
   const { data: modelBadgesRaw } = await supabase
     .from("model_badges")
