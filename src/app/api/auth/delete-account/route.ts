@@ -108,40 +108,39 @@ export async function DELETE(request: Request) {
         message: "Account deactivated. You have 30 days to contact support to recover your account.",
       });
     } else if (actor.type === "fan") {
-      // Hard delete fans (no recovery needed)
-      const { error } = await serviceClient.from("fans").delete().eq("id", actor.id);
-      if (error) throw new Error(`Failed to delete fan record: ${error.message}`);
+      // Soft delete (do NOT hard-delete). A fan's coin ledger lives on
+      // coin_transactions (actor_id) and fans can be in debt — hard-deleting the
+      // actor cascade-wiped the balance + audit trail, letting a debtor erase
+      // what they owe. Keep the row; the purge cron anonymizes PII after the
+      // retention window and then removes the login.
+      const { error: fanError } = await (serviceClient
+        .from("fans") as any)
+        .update({ deleted_at: now, deleted_reason: reason })
+        .eq("id", actor.id);
+      if (fanError) throw new Error(`Failed to deactivate fan: ${fanError.message}`);
 
-      const { error: actorError } = await serviceClient.from("actors").delete().eq("id", actor.id);
-      if (actorError) throw new Error(`Failed to delete actor record: ${actorError.message}`);
+      await (serviceClient
+        .from("actors") as any)
+        .update({ deactivated_at: now })
+        .eq("id", actor.id);
 
-      const { error: authError } = await serviceClient.auth.admin.deleteUser(user.id);
-      if (authError) {
-        await supabase.auth.signOut();
-        return NextResponse.json(
-          { error: "Account partially deleted. Please contact support." },
-          { status: 500 }
-        );
-      }
-
+      await supabase.auth.signOut();
       return NextResponse.json({ success: true });
     } else if (actor.type === "brand") {
-      // Hard delete brands
-      const { error } = await serviceClient.from("brands").delete().eq("id", actor.id);
-      if (error) throw new Error(`Failed to delete brand record: ${error.message}`);
+      // Soft delete (do NOT hard-delete) — same ledger-preservation reasoning
+      // as fans. Purge cron anonymizes PII and removes the login later.
+      const { error: brandError } = await (serviceClient
+        .from("brands") as any)
+        .update({ deleted_at: now, deleted_reason: reason })
+        .eq("id", actor.id);
+      if (brandError) throw new Error(`Failed to deactivate brand: ${brandError.message}`);
 
-      const { error: actorError } = await serviceClient.from("actors").delete().eq("id", actor.id);
-      if (actorError) throw new Error(`Failed to delete actor record: ${actorError.message}`);
+      await (serviceClient
+        .from("actors") as any)
+        .update({ deactivated_at: now })
+        .eq("id", actor.id);
 
-      const { error: authError } = await serviceClient.auth.admin.deleteUser(user.id);
-      if (authError) {
-        await supabase.auth.signOut();
-        return NextResponse.json(
-          { error: "Account partially deleted. Please contact support." },
-          { status: 500 }
-        );
-      }
-
+      await supabase.auth.signOut();
       return NextResponse.json({ success: true });
     }
 
