@@ -83,7 +83,7 @@ export async function PATCH(
         (adminClient as any).from("fans").select("preferred_language").eq("user_id", application.user_id).single(),
         adminClient.from("models").select("id, username, user_id").eq("user_id", application.user_id).single(),
         application.instagram_username
-          ? adminClient.from("models").select("id, username, user_id").ilike("instagram_name", escapeIlike(application.instagram_username)).single()
+          ? adminClient.from("models").select("id, username, user_id, email").ilike("instagram_name", escapeIlike(application.instagram_username)).single()
           : Promise.resolve({ data: null }),
         application.email
           ? adminClient.from("models").select("id, username, user_id").ilike("email", escapeIlike(application.email)).single()
@@ -91,7 +91,12 @@ export async function PATCH(
       ]);
 
       const preferredLanguage = fanRecord?.preferred_language || "en";
-      const existingModelByInstagram = igModel && !igModel.user_id && !existingModelByUser ? igModel : null;
+      // Only hand over an unclaimed profile matched by Instagram when the emails
+      // agree (or the stub has none on file) — otherwise an applicant could claim
+      // an imported model's profile just by submitting their handle.
+      const igEmailMatches = !((igModel as any)?.email) ||
+        (igModel as any).email.toLowerCase() === application.email?.toLowerCase();
+      const existingModelByInstagram = igModel && !igModel.user_id && !existingModelByUser && igEmailMatches ? igModel : null;
       const existingModelByEmail = emailModel && !emailModel.user_id && !existingModelByUser && !existingModelByInstagram ? emailModel : null;
       const existingModel = existingModelByUser || existingModelByInstagram || existingModelByEmail;
 

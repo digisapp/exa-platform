@@ -39,6 +39,7 @@ import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { ProfilePhotoBanner } from "@/components/dashboard/ProfilePhotoBanner";
+import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 
 // Helper function to format relative time
@@ -106,9 +107,15 @@ export default async function DashboardPage() {
 
   if (!model) redirect("/fan/signup");
 
+  // Unapproved models (e.g. imported profiles signed in before review)
+  // wait on the pending page like every other applicant.
+  if (!model.is_approved) redirect("/pending-approval");
+
   const [
     { data: allBookings },
     { data: rawPortfolioPhotos },
+    { data: bankAccount },
+    { data: payoneerAccount },
   ] = await Promise.all([
     // Get pending bookings for this model - use adminClient to bypass RLS
     (adminClient.from("bookings") as any)
@@ -125,6 +132,18 @@ export default async function DashboardPage() {
       .eq("media_type", "image")
       .order("created_at", { ascending: false })
       .limit(50),
+    // Payout methods — drive the getting-started checklist
+    (adminClient.from("bank_accounts") as any)
+      .select("id")
+      .eq("model_id", model.id)
+      .limit(1)
+      .maybeSingle(),
+    (adminClient.from("payoneer_accounts") as any)
+      .select("id")
+      .eq("model_id", model.id)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   // Filter for pending/counter bookings in JS
@@ -567,6 +586,37 @@ export default async function DashboardPage() {
     ? `${model.first_name} ${model.last_name || ""}`.trim()
     : model.username || "Model";
 
+  const checklistSteps = [
+    {
+      key: "profile",
+      title: "Complete your profile",
+      description: "Add your bio and a profile photo so brands and fans can find you.",
+      href: "/settings",
+      done: Boolean(model.bio && model.profile_photo_url),
+    },
+    {
+      key: "portfolio",
+      title: "Upload portfolio photos",
+      description: "Your best shots power your public profile and gig applications.",
+      href: "/content",
+      done: portfolioPhotos.length > 0,
+    },
+    {
+      key: "identity",
+      title: "Verify your identity",
+      description: "A one-time ID check that unlocks payouts.",
+      href: "/verify-identity",
+      done: Boolean(model.identity_verified_at),
+    },
+    {
+      key: "payout",
+      title: "Add a payout method",
+      description: "Zelle, bank account, or Payoneer — so you can cash out your earnings.",
+      href: "/wallet",
+      done: Boolean(model.zelle_info || bankAccount || payoneerAccount),
+    },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* ══════════════════════════════════════════════════════
@@ -620,6 +670,11 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </section>
+
+      {/* ──────────────────────────────────────────────────────
+          GETTING STARTED — renders only while steps remain
+         ────────────────────────────────────────────────────── */}
+      <GettingStartedChecklist steps={checklistSteps} />
 
       {/* ──────────────────────────────────────────────────────
           GIGS FOR YOU — full-width, prominent placement

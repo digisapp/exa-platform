@@ -2,7 +2,10 @@ import crypto from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
-import { sendPasswordResetEmail as sendCustomPasswordResetEmail } from "@/lib/email";
+import {
+  sendPasswordResetEmail as sendCustomPasswordResetEmail,
+  sendModelApplicationReceivedEmail,
+} from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { escapeIlike } from "@/lib/utils";
 import { z } from "zod";
@@ -428,6 +431,19 @@ async function createFanAndApplication(
       height: height || null,
       status: "pending",
     });
+
+  // Fire-and-forget: confirm receipt so the applicant has a record of their submission
+  sendModelApplicationReceivedEmail({
+    to: email,
+    modelName: displayName,
+    language: preferredLanguage || "en",
+  }).then((result) => {
+    if (!result.success) {
+      console.error("Failed to send application-received email:", result.error);
+    }
+  }).catch((e) => {
+    console.error("Failed to send application-received email:", e);
+  });
 
   return false; // New application, not imported
 }
