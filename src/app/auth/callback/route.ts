@@ -111,6 +111,9 @@ async function createModelApplication(
       instagram_username: instagramUsername,
       tiktok_username: tiktokUsername,
       status: "pending",
+      // This path only runs after the user clicked an emailed auth link,
+      // which already proves ownership of the address.
+      email_confirmed_at: new Date().toISOString(),
     });
 
   if (error) {

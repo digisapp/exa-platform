@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       academy_applications: {
@@ -1150,11 +1175,14 @@ export type Database = {
           company_name: string
           contact_name: string | null
           created_at: string | null
+          deleted_at: string | null
+          deleted_reason: string | null
           email: string | null
           id: string
           is_verified: boolean | null
           logo_url: string | null
           phone: string | null
+          purged_at: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_ends_at: string | null
@@ -1172,11 +1200,14 @@ export type Database = {
           company_name: string
           contact_name?: string | null
           created_at?: string | null
+          deleted_at?: string | null
+          deleted_reason?: string | null
           email?: string | null
           id: string
           is_verified?: boolean | null
           logo_url?: string | null
           phone?: string | null
+          purged_at?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_ends_at?: string | null
@@ -1194,11 +1225,14 @@ export type Database = {
           company_name?: string
           contact_name?: string | null
           created_at?: string | null
+          deleted_at?: string | null
+          deleted_reason?: string | null
           email?: string | null
           id?: string
           is_verified?: boolean | null
           logo_url?: string | null
           phone?: string | null
+          purged_at?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_ends_at?: string | null
@@ -3483,8 +3517,9 @@ export type Database = {
           check_in_status: string
           created_at: string
           designer_entry_id: string
+          guest_name: string | null
           id: string
-          model_id: string
+          model_id: string | null
           outfit_notes: string | null
           status: string
           walk_order: number
@@ -3493,8 +3528,9 @@ export type Database = {
           check_in_status?: string
           created_at?: string
           designer_entry_id: string
+          guest_name?: string | null
           id?: string
-          model_id: string
+          model_id?: string | null
           outfit_notes?: string | null
           status?: string
           walk_order?: number
@@ -3503,8 +3539,9 @@ export type Database = {
           check_in_status?: string
           created_at?: string
           designer_entry_id?: string
+          guest_name?: string | null
           id?: string
-          model_id?: string
+          model_id?: string | null
           outfit_notes?: string | null
           status?: string
           walk_order?: number
@@ -3812,6 +3849,8 @@ export type Database = {
           bio: string | null
           coin_balance: number | null
           created_at: string | null
+          deleted_at: string | null
+          deleted_reason: string | null
           display_name: string | null
           email: string | null
           flagged_for_review: boolean
@@ -3821,6 +3860,7 @@ export type Database = {
           is_suspended: boolean | null
           phone: string | null
           preferred_language: string | null
+          purged_at: string | null
           referred_by_model_id: string | null
           state: string | null
           total_coins_purchased: number | null
@@ -3834,6 +3874,8 @@ export type Database = {
           bio?: string | null
           coin_balance?: number | null
           created_at?: string | null
+          deleted_at?: string | null
+          deleted_reason?: string | null
           display_name?: string | null
           email?: string | null
           flagged_for_review?: boolean
@@ -3843,6 +3885,7 @@ export type Database = {
           is_suspended?: boolean | null
           phone?: string | null
           preferred_language?: string | null
+          purged_at?: string | null
           referred_by_model_id?: string | null
           state?: string | null
           total_coins_purchased?: number | null
@@ -3856,6 +3899,8 @@ export type Database = {
           bio?: string | null
           coin_balance?: number | null
           created_at?: string | null
+          deleted_at?: string | null
+          deleted_reason?: string | null
           display_name?: string | null
           email?: string | null
           flagged_for_review?: boolean
@@ -3865,6 +3910,7 @@ export type Database = {
           is_suspended?: boolean | null
           phone?: string | null
           preferred_language?: string | null
+          purged_at?: string | null
           referred_by_model_id?: string | null
           state?: string | null
           total_coins_purchased?: number | null
@@ -4979,6 +5025,8 @@ export type Database = {
           date_of_birth: string | null
           display_name: string
           email: string
+          email_confirm_token: string
+          email_confirmed_at: string | null
           fan_id: string | null
           height: string | null
           id: string
@@ -4997,6 +5045,8 @@ export type Database = {
           date_of_birth?: string | null
           display_name: string
           email: string
+          email_confirm_token?: string
+          email_confirmed_at?: string | null
           fan_id?: string | null
           height?: string | null
           id?: string
@@ -5015,6 +5065,8 @@ export type Database = {
           date_of_birth?: string | null
           display_name?: string
           email?: string
+          email_confirm_token?: string
+          email_confirmed_at?: string | null
           fan_id?: string | null
           height?: string | null
           id?: string
@@ -5508,6 +5560,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      model_rosters: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          note: string | null
+          revoked_at: string | null
+          share_token: string
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          note?: string | null
+          revoked_at?: string | null
+          share_token: string
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          note?: string | null
+          revoked_at?: string | null
+          share_token?: string
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
       }
       model_spotlights: {
         Row: {
@@ -7554,6 +7648,39 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roster_models: {
+        Row: {
+          model_id: string
+          position: number
+          roster_id: string
+        }
+        Insert: {
+          model_id: string
+          position?: number
+          roster_id: string
+        }
+        Update: {
+          model_id?: string
+          position?: number
+          roster_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roster_models_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roster_models_roster_id_fkey"
+            columns: ["roster_id"]
+            isOneToOne: false
+            referencedRelation: "model_rosters"
             referencedColumns: ["id"]
           },
         ]
@@ -9898,6 +10025,17 @@ export type Database = {
         Args: { p_email: string; p_instagram_name: string; p_user_id: string }
         Returns: Json
       }
+      clawback_coins: {
+        Args: {
+          p_action: string
+          p_actor_id: string
+          p_allow_negative?: boolean
+          p_amount: number
+          p_idempotency_key: string
+          p_metadata: Json
+        }
+        Returns: Json
+      }
       cleanup_expired_media_direct: { Args: never; Returns: undefined }
       cleanup_old_page_views: { Args: never; Returns: undefined }
       cleanup_rate_limits: {
@@ -10325,6 +10463,7 @@ export type Database = {
         Args: { p_product_id: string; p_quantity: number }
         Returns: undefined
       }
+      increment_roster_view: { Args: { p_token: string }; Returns: undefined }
       increment_total_sold: {
         Args: { p_product_id: string; p_quantity: number }
         Returns: undefined
@@ -10829,6 +10968,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       booking_status: [
@@ -10915,7 +11057,6 @@ export const Constants = {
     },
   },
 } as const
-
 // Convenience aliases for table Row types — preserved across `supabase gen types`
 // regenerations. Add new ones as needed; the generated file above is the
 // source of truth.

@@ -54,6 +54,16 @@ export async function PATCH(
       );
     }
 
+    // Approval requires proven email ownership — the confirm link in the
+    // application-received email. Pre-feature applications were backfilled
+    // as confirmed, so this only gates post-feature applicants.
+    if (status === "approved" && !(application as any).email_confirmed_at) {
+      return NextResponse.json(
+        { error: "Applicant hasn't confirmed their email yet. Ask them to click the link in their application email (resend available on their pending page)." },
+        { status: 400 }
+      );
+    }
+
     // Update application status
     const { error: updateError } = await supabase
       .from("model_applications")
