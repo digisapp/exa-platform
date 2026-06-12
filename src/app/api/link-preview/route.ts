@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Cache previews for 1 hour
 const CACHE_TTL = 60 * 60;
@@ -29,6 +30,38 @@ function isPrivateHostname(hostname: string): boolean {
   return false;
 }
 
+// Fetch following redirects manually so EVERY hop's hostname is re-checked
+// against the private-host blocklist. fetch()'s default redirect:"follow" would
+// only validate the original URL, letting a public URL 302 to an internal host
+// (e.g. 169.254.169.254 cloud metadata) — a classic SSRF bypass.
+async function safeFetch(
+  startUrl: string,
+  init: RequestInit,
+  maxRedirects = 4
+): Promise<Response | { error: string }> {
+  let current = startUrl;
+  for (let i = 0; i <= maxRedirects; i++) {
+    let parsed: URL;
+    try {
+      parsed = new URL(current);
+    } catch {
+      return { error: "Invalid redirect URL" };
+    }
+    if (!["http:", "https:"].includes(parsed.protocol) || isPrivateHostname(parsed.hostname)) {
+      return { error: "Blocked redirect target" };
+    }
+    const res = await fetch(current, { ...init, redirect: "manual" });
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("location");
+      if (!location) return res;
+      current = new URL(location, current).toString();
+      continue;
+    }
+    return res;
+  }
+  return { error: "Too many redirects" };
+}
+
 export async function GET(request: NextRequest) {
   // Require authentication to prevent open proxy abuse
   const supabase = await createClient();
@@ -36,6 +69,10 @@ export async function GET(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit: this route performs an outbound fetch on the caller's behalf.
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   const url = request.nextUrl.searchParams.get("url");
 
@@ -63,7 +100,7 @@ export async function GET(request: NextRequest) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
 
-    const response = await fetch(url, {
+    const fetchResult = await safeFetch(url, {
       signal: controller.signal,
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; EXABot/1.0)",
@@ -72,6 +109,11 @@ export async function GET(request: NextRequest) {
     });
 
     clearTimeout(timeout);
+
+    if ("error" in fetchResult) {
+      return NextResponse.json({ error: fetchResult.error }, { status: 400 });
+    }
+    const response = fetchResult;
 
     if (!response.ok) {
       return NextResponse.json({ error: "Failed to fetch URL" }, { status: 502 });

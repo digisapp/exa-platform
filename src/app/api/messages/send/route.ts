@@ -277,8 +277,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Use atomic function for message sending with coin transfer
-    // Pass the actual model ID (not actor ID) for coin crediting
-    const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
+    // Pass the actual model ID (not actor ID) for coin crediting.
+    // Called via service-role client: send_message_with_coins is REVOKEd from
+    // authenticated/anon; sender.id is derived from the authenticated session.
+    const { data: rpcData, error: rpcError } = await (adminClient.rpc as any)(
       "send_message_with_coins",
       {
         p_conversation_id: conversationId,

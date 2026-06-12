@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { calculateCallCost } from "@/lib/livekit";
 import { z } from "zod";
@@ -91,7 +92,41 @@ export async function POST(request: NextRequest) {
       : (recipientModel?.video_call_rate || 0);
     const coinsToCharge = calculateCallCost(durationSeconds, ratePerMinute);
 
-    // Charge coins atomically via RPC (fan caller -> model recipient)
+    const adminClient = createServiceRoleClient();
+
+    // Atomically claim the session as ended BEFORE charging. The conditional
+    // `status != 'ended'` makes this a compare-and-set: only the first of two
+    // concurrent end-call requests claims the row, so the fan is charged once.
+    // (end_call_transfer has no per-session idempotency guard of its own.)
+    const { data: claimedRows, error: claimError } = await adminClient
+      .from("video_call_sessions")
+      .update({
+        status: "ended",
+        ended_at: now.toISOString(),
+        duration_seconds: durationSeconds,
+        coins_charged: coinsToCharge,
+      })
+      .eq("id", sessionId)
+      .neq("status", "ended")
+      .select("id");
+
+    if (claimError) {
+      console.error("CRITICAL: Session claim update failed:", sessionId, claimError);
+      return NextResponse.json({ error: "Failed to end call" }, { status: 500 });
+    }
+
+    // Another concurrent request already ended (and charged for) this session.
+    if (!claimedRows || claimedRows.length === 0) {
+      return NextResponse.json({
+        success: true,
+        duration: session.duration_seconds || durationSeconds,
+        coinsCharged: session.coins_charged || 0,
+        message: "Call already ended",
+      });
+    }
+
+    // We won the claim — safe to charge exactly once.
+    // Service-role client: end_call_transfer is REVOKEd from authenticated/anon.
     if (coinsToCharge > 0 && session.initiated_by !== session.recipient_id) {
       // Get caller's actor type
       const { data: callerActor } = await supabase
@@ -101,7 +136,7 @@ export async function POST(request: NextRequest) {
         .single() as { data: { type: string } | null };
 
       if (callerActor?.type === "fan" && recipientModel?.user_id) {
-        const { data: transferResult, error: transferError } = await supabase.rpc(
+        const { data: transferResult, error: transferError } = await adminClient.rpc(
           "end_call_transfer",
           {
             p_session_id: sessionId,
@@ -119,20 +154,6 @@ export async function POST(request: NextRequest) {
           console.error("Call coin transfer failed:", (transferResult as Record<string, unknown>).error);
         }
       }
-    }
-
-    // Update session
-    const { error: sessionUpdateError } = await supabase.from("video_call_sessions")
-      .update({
-        status: "ended",
-        ended_at: now.toISOString(),
-        duration_seconds: durationSeconds,
-        coins_charged: coinsToCharge,
-      })
-      .eq("id", sessionId);
-
-    if (sessionUpdateError) {
-      console.error("CRITICAL: Session update failed after coin transfer. Session:", sessionId, "Coins charged:", coinsToCharge, "Error:", sessionUpdateError);
     }
 
     // Add system message to conversation

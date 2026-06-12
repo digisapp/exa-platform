@@ -81,8 +81,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Call atomic unlock RPC
-    const { data: rpcData, error: rpcError } = await supabase.rpc(
+    // Call atomic unlock RPC via service-role client: unlock_message_media is
+    // REVOKEd from authenticated/anon; buyer.id is derived from the session.
+    const adminDb = createServiceRoleClient();
+    const { data: rpcData, error: rpcError } = await adminDb.rpc(
       "unlock_message_media",
       {
         p_buyer_id: buyer.id,

@@ -179,8 +179,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Record the vote
-    const { data: voteRpcData, error: voteError } = await supabase.rpc(
+    // Record the vote via service-role client: record_top_model_vote is REVOKEd
+    // from authenticated/anon so the leaderboard points/coins_spent can't be
+    // forged by calling the RPC directly. Points are computed server-side above.
+    const { data: voteRpcData, error: voteError } = await adminClient.rpc(
       "record_top_model_vote",
       {
         p_voter_id: actorId || "",

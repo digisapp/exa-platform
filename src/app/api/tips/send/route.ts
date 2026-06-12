@@ -73,8 +73,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use atomic RPC function for tip transfer (prevents race conditions)
-    const { data: rpcData, error: rpcError } = await supabase.rpc(
+    // Use atomic RPC function for tip transfer (prevents race conditions).
+    // Called via service-role client: send_tip is REVOKEd from authenticated/anon;
+    // sender.id is derived from the authenticated session above.
+    const { data: rpcData, error: rpcError } = await adminClient.rpc(
       "send_tip",
       {
         p_sender_id: sender.id,

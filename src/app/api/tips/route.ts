@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
 import { z } from "zod";
@@ -57,6 +58,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Sender not found" }, { status: 400 });
     }
 
+    const suspended = await assertNotSuspended(sender.id);
+    if (suspended) return suspended;
+
     // Can't tip yourself
     if (sender.id === recipientId) {
       return NextResponse.json(
@@ -79,8 +83,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Transfer coins using the database function
-    const { data: rpcData, error: transferError } = await supabase.rpc(
+    // Transfer coins using the database function.
+    // Called via the service-role client: transfer_coins is REVOKEd from
+    // authenticated/anon (money RPC lockdown), and sender.id is derived from
+    // the authenticated session above, so this cannot be used to drain others.
+    const { data: rpcData, error: transferError } = await adminClient.rpc(
       "transfer_coins",
       {
         p_sender_id: sender.id,

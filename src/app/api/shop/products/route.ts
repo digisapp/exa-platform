@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
-import { escapeIlike } from "@/lib/utils";
+import { sanitizeOrFilterTerm } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -68,7 +68,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      query = query.or(`name.ilike.%${escapeIlike(search)}%,description.ilike.%${escapeIlike(search)}%`);
+      const term = sanitizeOrFilterTerm(search);
+      query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%`);
     }
 
     if (featured) {

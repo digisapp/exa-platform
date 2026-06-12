@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
@@ -53,6 +54,9 @@ export async function POST(request: NextRequest) {
     if (!sender) {
       return NextResponse.json({ error: "Sender not found" }, { status: 400 });
     }
+
+    const suspended = await assertNotSuspended(sender.id);
+    if (suspended) return suspended;
 
     // Check if brand has active subscription
     if (sender.type === "brand") {
@@ -213,12 +217,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const { data: rpcData, error: rpcError } = await supabase.rpc(
+    // Called via service-role client: send_message_with_coins is REVOKEd from
+    // authenticated/anon; sender.id is derived from the authenticated session.
+    const { data: rpcData, error: rpcError } = await (adminClient.rpc as any)(
       "send_message_with_coins",
       {
         p_conversation_id: conversation.id,
         p_sender_id: sender.id,
-        p_recipient_id: recipientModelId || "",
+        p_recipient_id: recipientModelId ?? null,
         p_content: initialMessage,
         p_media_url: undefined,
         p_media_type: undefined,
