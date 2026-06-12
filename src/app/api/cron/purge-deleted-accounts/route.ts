@@ -95,12 +95,92 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    logger.info("Purge complete", { purgedCount, total: modelsToPurge.length });
+    // ── Fans: anonymize PII, keep the row + coin ledger ──────────────────
+    let fansPurged = 0;
+    const { data: fansToPurge } = await adminClient
+      .from("fans")
+      .select("id, user_id")
+      .not("deleted_at", "is", null)
+      .is("purged_at", null)
+      .lt("deleted_at", cutoffDate.toISOString())
+      .limit(50);
+
+    for (const fan of (fansToPurge as { id: string; user_id: string | null }[] | null) ?? []) {
+      try {
+        await (adminClient.from("fans") as any)
+          .update({
+            display_name: `deleted_${fan.id.substring(0, 8)}`,
+            email: null,
+            avatar_url: null,
+            purged_at: new Date().toISOString(),
+          })
+          .eq("id", fan.id);
+
+        // Remove the login (FK is now SET NULL, so the fan row + ledger survive)
+        if (fan.user_id) {
+          await adminClient.auth.admin.deleteUser(fan.user_id);
+        }
+        fansPurged++;
+      } catch (err) {
+        logger.error("Failed to purge fan", err, { fanId: fan.id });
+      }
+    }
+
+    // ── Brands: anonymize PII, keep the row + coin ledger ─────────────────
+    let brandsPurged = 0;
+    const { data: brandsToPurge } = await adminClient
+      .from("brands")
+      .select("id")
+      .not("deleted_at", "is", null)
+      .is("purged_at", null)
+      .lt("deleted_at", cutoffDate.toISOString())
+      .limit(50);
+
+    for (const brand of (brandsToPurge as { id: string }[] | null) ?? []) {
+      try {
+        // brands have no user_id column — resolve the login via the actor row
+        const { data: brandActor } = await adminClient
+          .from("actors")
+          .select("user_id")
+          .eq("id", brand.id)
+          .maybeSingle() as { data: { user_id: string | null } | null };
+
+        await (adminClient.from("brands") as any)
+          .update({
+            company_name: `deleted_${brand.id.substring(0, 8)}`,
+            contact_name: null,
+            email: null,
+            phone: null,
+            website: null,
+            logo_url: null,
+            bio: null,
+            username: null,
+            purged_at: new Date().toISOString(),
+          })
+          .eq("id", brand.id);
+
+        if (brandActor?.user_id) {
+          await adminClient.auth.admin.deleteUser(brandActor.user_id);
+        }
+        brandsPurged++;
+      } catch (err) {
+        logger.error("Failed to purge brand", err, { brandId: brand.id });
+      }
+    }
+
+    logger.info("Purge complete", {
+      purgedCount,
+      total: modelsToPurge.length,
+      fansPurged,
+      brandsPurged,
+    });
 
     return NextResponse.json({
       success: true,
       purged: purgedCount,
       total: modelsToPurge.length,
+      fansPurged,
+      brandsPurged,
     });
   } catch (error) {
     logger.error("Cron purge-deleted-accounts error", error);

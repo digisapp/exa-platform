@@ -18,6 +18,7 @@ async function getBrand(username: string) {
   const { data } = await (db.from("brands") as any)
     .select("id, company_name, contact_name, bio, website, logo_url, is_verified, subscription_tier, username, created_at")
     .eq("username", username)
+    .is("deleted_at", null) // hide soft-deleted brands from public view
     .single();
   return data;
 }
