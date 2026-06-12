@@ -115,13 +115,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Fetch approved models
+  // Fetch approved models. Skip profiles without a photo — stub/incomplete
+  // profiles stay reachable by direct link but shouldn't be indexed.
   const { data: models } = await supabase
     .from("models")
     .select("username, updated_at")
     .eq("is_approved", true)
     .is("deleted_at", null)
-    .not("username", "is", null);
+    .not("username", "is", null)
+    .not("profile_photo_url", "is", null);
 
   const modelPages: MetadataRoute.Sitemap = (models || []).map((model) => ({
     url: `${baseUrl}/${model.username}`,

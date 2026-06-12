@@ -704,7 +704,7 @@ async function handleModelOnboardingPayment(session: Stripe.Checkout.Session, su
       }
     }
 
-    const { error: updateError } = await (supabaseAdmin as any)
+    const { data: updatedBooking, error: updateError } = await (supabaseAdmin as any)
       .from("model_onboarding_bookings")
       .update({
         status: "partial",
@@ -713,10 +713,15 @@ async function handleModelOnboardingPayment(session: Stripe.Checkout.Session, su
         updated_at: new Date().toISOString(),
       })
       .eq("stripe_session_id", stripeSessionId)
-      .eq("status", "pending");
+      .eq("status", "pending")
+      .select("email, name, amount_cents")
+      .maybeSingle();
 
     if (updateError) {
       logger.error("Error updating model onboarding split booking", updateError);
+    } else if (updatedBooking?.email) {
+      // Row transitioned pending -> partial, so webhook retries won't re-send
+      await sendOnboardingPaymentEmail(updatedBooking, "split", 1);
     }
   } else {
     // Full payment — mark as paid immediately
@@ -725,7 +730,7 @@ async function handleModelOnboardingPayment(session: Stripe.Checkout.Session, su
         ? session.payment_intent
         : session.payment_intent?.id;
 
-    const { error: updateError } = await (supabaseAdmin as any)
+    const { data: updatedBooking, error: updateError } = await (supabaseAdmin as any)
       .from("model_onboarding_bookings")
       .update({
         status: "paid",
@@ -734,11 +739,35 @@ async function handleModelOnboardingPayment(session: Stripe.Checkout.Session, su
         updated_at: new Date().toISOString(),
       })
       .eq("stripe_session_id", stripeSessionId)
-      .eq("status", "pending");
+      .eq("status", "pending")
+      .select("email, name, amount_cents")
+      .maybeSingle();
 
     if (updateError) {
       logger.error("Error updating model onboarding booking", updateError);
+    } else if (updatedBooking?.email) {
+      // Row transitioned pending -> paid, so webhook retries won't re-send
+      await sendOnboardingPaymentEmail(updatedBooking, "full", 1);
     }
+  }
+}
+
+async function sendOnboardingPaymentEmail(
+  booking: { email: string; name: string | null; amount_cents: number | null },
+  paymentPlan: "full" | "split",
+  paymentsCompleted: number
+) {
+  try {
+    const { sendModelOnboardingPaymentEmail } = await import("@/lib/email");
+    await sendModelOnboardingPaymentEmail({
+      to: booking.email,
+      name: booking.name || "there",
+      paymentPlan,
+      paymentsCompleted,
+      totalCents: booking.amount_cents || 55000,
+    });
+  } catch (emailError) {
+    logger.error("Failed to send model onboarding payment email", emailError);
   }
 }
 
@@ -757,7 +786,7 @@ export async function handleModelOnboardingSplitPayment(
   // Check if this subscription belongs to a model onboarding booking
   const { data: booking, error: fetchError } = await (supabaseAdmin as any)
     .from("model_onboarding_bookings")
-    .select("id, status, payment_plan, payments_completed")
+    .select("id, status, payment_plan, payments_completed, email, name, amount_cents")
     .eq("stripe_subscription_id", subscriptionId)
     .eq("payment_plan", "split")
     .eq("status", "partial")
@@ -768,17 +797,24 @@ export async function handleModelOnboardingSplitPayment(
   const newCount = (booking.payments_completed || 0) + 1;
   const isFullyPaid = newCount >= 3;
 
-  const { error: updateError } = await (supabaseAdmin as any)
+  const { data: updatedBooking, error: updateError } = await (supabaseAdmin as any)
     .from("model_onboarding_bookings")
     .update({
       status: isFullyPaid ? "paid" : "partial",
       payments_completed: newCount,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", booking.id);
+    .eq("id", booking.id)
+    // Guard on the previous count so a concurrent/retried webhook can't
+    // double-increment or double-send the milestone email
+    .eq("payments_completed", booking.payments_completed || 0)
+    .select("id")
+    .maybeSingle();
 
   if (updateError) {
     logger.error("Error updating model onboarding split payment", updateError);
+  } else if (updatedBooking && booking.email) {
+    await sendOnboardingPaymentEmail(booking, "split", newCount);
   }
 }
 

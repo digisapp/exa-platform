@@ -407,6 +407,132 @@ export async function sendModelApplicationReceivedEmail({
   }
 }
 
+export async function sendModelOnboardingPaymentEmail({
+  to,
+  name,
+  paymentPlan,
+  paymentsCompleted,
+  totalCents,
+}: {
+  to: string;
+  name: string;
+  paymentPlan: "full" | "split";
+  paymentsCompleted: number;
+  totalCents: number;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const totalUsd = (totalCents / 100).toFixed(2);
+    const installmentUsd = (Math.ceil(totalCents / 3) / 100).toFixed(2);
+    const isComplete = paymentPlan === "full" || paymentsCompleted >= 3;
+
+    const subject = isComplete
+      ? "Payment Confirmed - You're Booked! - EXA Models"
+      : `Payment ${paymentsCompleted} of 3 Received - EXA Models`;
+
+    const headerTitle = isComplete ? "You're All Set!" : "Payment Received";
+    const headerSubtitle = isComplete
+      ? "Runway Workshop + Swimwear Digitals confirmed"
+      : `Payment ${paymentsCompleted} of 3 on your payment plan`;
+
+    const bodyText = isComplete
+      ? (paymentPlan === "full"
+          ? `Your payment of $${totalUsd} is confirmed and your spot in the Runway Workshop + Swimwear Digitals is locked in. We'll reach out with scheduling details soon.`
+          : `Your final payment is confirmed — you've now paid the full $${totalUsd} and your spot in the Runway Workshop + Swimwear Digitals is locked in. We'll reach out with scheduling details soon.`)
+      : `We received payment ${paymentsCompleted} of 3 ($${installmentUsd}) toward your Runway Workshop + Swimwear Digitals booking. The remaining ${3 - paymentsCompleted === 1 ? "payment" : "payments"} will be charged automatically every 18 days — nothing else to do right now.`;
+
+    const summaryRows = [
+      ["Program", "Runway Workshop + Swimwear Digitals"],
+      ["Total", `$${totalUsd}`],
+      ...(paymentPlan === "split"
+        ? [["Plan", `3 payments of $${installmentUsd}`], ["Progress", `${Math.min(paymentsCompleted, 3)} of 3 paid`]]
+        : [["Plan", "Paid in full"]]),
+    ].map(([label, value]) => `
+                <tr>
+                  <td style="padding: 10px 15px; color: #a1a1aa; font-size: 14px; border-bottom: 1px solid #333;">${label}</td>
+                  <td style="padding: 10px 15px; color: #ffffff; font-size: 14px; font-weight: 600; text-align: right; border-bottom: 1px solid #333;">${value}</td>
+                </tr>`).join("");
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                ${headerTitle}
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                ${headerSubtitle}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${escapeHtml(name)},
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                ${bodyText}
+              </p>
+
+              <!-- Payment summary -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 8px; overflow: hidden;">
+                ${summaryRows}
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 13px; line-height: 1.6;">
+                Keep this email for your records. Questions about your booking? Just reply to this email.
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendBrandApprovalEmail({
   to,
   companyName,
