@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendBookingRequestEmail } from "@/lib/email";
@@ -264,6 +265,9 @@ export async function POST(request: NextRequest) {
       }
       actor = newActor;
     }
+
+    const suspended = await assertNotSuspended(actor.id);
+    if (suspended) return suspended;
 
     // Check if brand has active subscription
     if (actor.type === "brand") {

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
@@ -55,6 +56,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Sender not found" }, { status: 400 });
     }
 
+    const suspended = await assertNotSuspended(sender.id);
+    if (suspended) return suspended;
+
     // Get recipient model by username
     const { data: recipientModel } = await supabase
       .from("models")
@@ -69,8 +73,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use atomic RPC function for tip transfer (prevents race conditions)
-    const { data: rpcData, error: rpcError } = await supabase.rpc(
+    // Use atomic RPC function for tip transfer (prevents race conditions).
+    // Called via service-role client: send_tip is REVOKEd from authenticated/anon;
+    // sender.id is derived from the authenticated session above.
+    const { data: rpcData, error: rpcError } = await adminClient.rpc(
       "send_tip",
       {
         p_sender_id: sender.id,

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -85,6 +86,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const suspended = await assertNotSuspended(sender.id);
+    if (suspended) return suspended;
 
     // Only models can set a media price, and only when media is attached
     if (mediaPrice && (sender.type !== "model" || !mediaUrl)) {
@@ -273,8 +277,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Use atomic function for message sending with coin transfer
-    // Pass the actual model ID (not actor ID) for coin crediting
-    const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
+    // Pass the actual model ID (not actor ID) for coin crediting.
+    // Called via service-role client: send_message_with_coins is REVOKEd from
+    // authenticated/anon; sender.id is derived from the authenticated session.
+    const { data: rpcData, error: rpcError } = await (adminClient.rpc as any)(
       "send_message_with_coins",
       {
         p_conversation_id: conversationId,

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { NextRequest, NextResponse } from "next/server";
 import { generateRoomName, generateToken } from "@/lib/livekit";
 import { sendVideoCallRequestEmail } from "@/lib/email";
@@ -51,6 +52,9 @@ export async function POST(request: NextRequest) {
     if (!callerActor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
+
+    const suspended = await assertNotSuspended(callerActor.id);
+    if (suspended) return suspended;
 
     let recipientActor: { id: string } | null = null;
     let recipientModel: { id: string; username: string | null; first_name: string | null; user_id: string | null; video_call_rate: number | null; voice_call_rate: number | null; email?: string | null } | null = null;

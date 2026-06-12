@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendBookingAcceptedEmail, sendBookingDeclinedEmail } from "@/lib/email";
@@ -197,6 +198,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
     debugInfo.actor = actor;
+
+    const suspended = await assertNotSuspended(actor.id);
+    if (suspended) return suspended;
 
     // Get existing booking
     const { data: booking, error: bookingError } = await adminClient

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 
@@ -60,6 +61,11 @@ export async function POST(request: NextRequest) {
         .single();
 
       actorId = actor?.id;
+
+      if (actorId) {
+        const suspended = await assertNotSuspended(actorId);
+        if (suspended) return suspended;
+      }
 
       // Get coin balance based on actor type
       if (actor?.type === "model") {
@@ -173,8 +179,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Record the vote
-    const { data: voteRpcData, error: voteError } = await supabase.rpc(
+    // Record the vote via service-role client: record_top_model_vote is REVOKEd
+    // from authenticated/anon so the leaderboard points/coins_spent can't be
+    // forged by calling the RPC directly. Points are computed server-side above.
+    const { data: voteRpcData, error: voteError } = await adminClient.rpc(
       "record_top_model_vote",
       {
         p_voter_id: actorId || "",

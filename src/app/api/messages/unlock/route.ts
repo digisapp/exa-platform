@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -55,6 +56,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const suspended = await assertNotSuspended(buyer.id);
+    if (suspended) return suspended;
+
     // Admins can unlock any media for free
     if (buyer.type === "admin") {
       const adminDb = createServiceRoleClient();
@@ -77,8 +81,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Call atomic unlock RPC
-    const { data: rpcData, error: rpcError } = await supabase.rpc(
+    // Call atomic unlock RPC via service-role client: unlock_message_media is
+    // REVOKEd from authenticated/anon; buyer.id is derived from the session.
+    const adminDb = createServiceRoleClient();
+    const { data: rpcData, error: rpcError } = await adminDb.rpc(
       "unlock_message_media",
       {
         p_buyer_id: buyer.id,

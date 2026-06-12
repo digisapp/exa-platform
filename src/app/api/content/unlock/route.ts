@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendContentPurchaseEmail } from "@/lib/email";
@@ -47,8 +48,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
 
-    // Call the unified unlock function (content_items system)
-    const { data: rpcData, error: unlockError } = await (supabase as any).rpc(
+    const suspended = await assertNotSuspended(actor.id);
+    if (suspended) return suspended;
+
+    // Call the unified unlock function (content_items system) via service-role
+    // client: unlock_content_item is REVOKEd from authenticated/anon; actor.id
+    // is derived from the authenticated session.
+    const service = createServiceRoleClient();
+    const { data: rpcData, error: unlockError } = await (service as any).rpc(
       "unlock_content_item",
       {
         p_buyer_id: actor.id,
@@ -135,7 +142,6 @@ export async function POST(request: NextRequest) {
         ? mediaUrl.match(/\/object\/(?:sign|public)\/[^/]+\/(.+?)(?:\?|$)/)?.[1] ?? null
         : mediaUrl;
       if (rawPath) {
-        const service = createServiceRoleClient();
         const { data } = await service.storage.from("portfolio").createSignedUrl(rawPath, 3600);
         if (data?.signedUrl) mediaUrl = data.signedUrl;
       }

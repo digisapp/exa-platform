@@ -1,8 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+
+const adminClient = createServiceRoleClient();
 
 const tipSchema = z.object({
   messageId: z.string().uuid("Invalid message ID"),
@@ -53,8 +57,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
 
-    // Call atomic tip function
-    const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
+    const suspended = await assertNotSuspended(actor.id);
+    if (suspended) return suspended;
+
+    // Call atomic tip function via service-role client: tip_live_wall_message is
+    // REVOKEd from authenticated/anon; actor.id is derived from the session.
+    const { data: rpcData, error: rpcError } = await (adminClient.rpc as any)(
       "tip_live_wall_message",
       {
         p_tipper_actor_id: actor.id,

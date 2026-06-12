@@ -11,7 +11,7 @@ import { ModelsGrid } from "@/components/models/models-grid";
 import { BrandPaywallWrapper } from "@/components/brands/BrandPaywallWrapper";
 import { FanCoinGateWrapper } from "@/components/fans/FanCoinGate";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { escapeIlike } from "@/lib/utils";
+import { sanitizeOrFilterTerm } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Browse Models",
@@ -77,7 +77,8 @@ export default async function ModelsPage({
   // Helper to apply all active filters to a query
   function applyFilters(q: any): any {
     if (params.q) {
-      q = q.or(`username.ilike.%${escapeIlike(params.q)}%,first_name.ilike.%${escapeIlike(params.q)}%,last_name.ilike.%${escapeIlike(params.q)}%`);
+      const term = sanitizeOrFilterTerm(params.q);
+      q = q.or(`username.ilike.%${term}%,first_name.ilike.%${term}%,last_name.ilike.%${term}%`);
     }
     if (params.state) q = q.eq("state", params.state);
     if (params.level === "verified") q = q.eq("is_verified", true);

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
-import { escapeIlike } from "@/lib/utils";
+import { sanitizeOrFilterTerm } from "@/lib/utils";
 import { requirePosAuth, isPosAuthError } from "@/lib/pos-auth";
 import { logger } from "@/lib/logger";
 
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq("is_active", true)
-      .or(`name.ilike.%${escapeIlike(query)}%,shop_product_variants.sku.ilike.%${escapeIlike(query)}%`)
+      .or(`name.ilike.%${sanitizeOrFilterTerm(query)}%,shop_product_variants.sku.ilike.%${sanitizeOrFilterTerm(query)}%`)
       .limit(20);
 
     if (error) {
