@@ -4,6 +4,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { sendContentProgramApplicationEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
+import { z } from "zod";
+
+// Bounded field lengths so this public, anon-reachable form can't be used to
+// store oversized payloads.
+const optionalText = (max: number) =>
+  z.string().trim().max(max).optional().nullable();
+
+const applySchema = z.object({
+  brand_name: z.string().trim().min(1, "Brand name is required").max(200),
+  contact_name: z.string().trim().min(1, "Contact name is required").max(200),
+  email: z.string().trim().toLowerCase().email("Invalid email address").max(254),
+  phone: optionalText(40),
+  website_url: optionalText(500),
+  instagram_handle: optionalText(100),
+  tiktok_handle: optionalText(100),
+  collection_name: optionalText(200),
+  collection_description: optionalText(5000),
+  collection_pieces_count: z.coerce.number().int().min(0).max(1_000_000).optional().nullable(),
+});
 
 // Service role client: this is a public (anon-capable) application form, and
 // content_program_applications has no anon policies and no longer has a broad
@@ -20,8 +39,14 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
-    const body = await request.json();
 
+    const parsed = applySchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Invalid input" },
+        { status: 400 }
+      );
+    }
     const {
       brand_name,
       contact_name,
@@ -33,24 +58,7 @@ export async function POST(request: NextRequest) {
       collection_name,
       collection_description,
       collection_pieces_count,
-    } = body;
-
-    // Validation
-    if (!brand_name || !contact_name || !email) {
-      return NextResponse.json(
-        { error: "Brand name, contact name, and email are required" },
-        { status: 400 }
-      );
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Invalid email address" },
-        { status: 400 }
-      );
-    }
+    } = parsed.data;
 
     // Check for existing pending application by email
     const { data: existing } = await adminClient
