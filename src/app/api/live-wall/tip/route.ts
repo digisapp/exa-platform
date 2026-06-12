@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
@@ -52,6 +53,9 @@ export async function POST(request: NextRequest) {
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
+
+    const suspended = await assertNotSuspended(actor.id);
+    if (suspended) return suspended;
 
     // Call atomic tip function
     const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(

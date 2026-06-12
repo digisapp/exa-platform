@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { getActorId } from "@/lib/ids";
@@ -42,6 +43,9 @@ export async function POST(request: NextRequest) {
     if (!actorId) {
       return NextResponse.json({ error: "Account not found" }, { status: 403 });
     }
+
+    const suspended = await assertNotSuspended(actorId);
+    if (suspended) return suspended;
 
     const rawBody = await request.json();
     const parsed = purchaseSchema.safeParse(rawBody);

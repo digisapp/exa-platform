@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
@@ -51,6 +52,9 @@ export async function POST(request: NextRequest) {
     if (!actor) {
       return NextResponse.json({ error: "No actor found" }, { status: 400 });
     }
+
+    const suspended = await assertNotSuspended(actor.id);
+    if (suspended) return suspended;
 
     const actorId = actor.id;
 

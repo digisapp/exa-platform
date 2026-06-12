@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 
@@ -60,6 +61,11 @@ export async function POST(request: NextRequest) {
         .single();
 
       actorId = actor?.id;
+
+      if (actorId) {
+        const suspended = await assertNotSuspended(actorId);
+        if (suspended) return suspended;
+      }
 
       // Get coin balance based on actor type
       if (actor?.type === "model") {

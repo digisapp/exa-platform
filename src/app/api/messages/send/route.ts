@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -85,6 +86,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const suspended = await assertNotSuspended(sender.id);
+    if (suspended) return suspended;
 
     // Only models can set a media price, and only when media is attached
     if (mediaPrice && (sender.type !== "model" || !mediaUrl)) {

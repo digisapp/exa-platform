@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -54,6 +55,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const suspended = await assertNotSuspended(buyer.id);
+    if (suspended) return suspended;
 
     // Admins can unlock any media for free
     if (buyer.type === "admin") {

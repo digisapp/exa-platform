@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { NextRequest, NextResponse } from "next/server";
 import type { BuyNowResponse } from "@/types/auctions";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -33,6 +34,9 @@ export async function POST(
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
+
+    const suspended = await assertNotSuspended(actor.id);
+    if (suspended) return suspended;
 
     // Call the RPC function to buy now.
     // Uses the service-role client: the route has already authenticated the user

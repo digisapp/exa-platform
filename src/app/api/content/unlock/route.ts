@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendContentPurchaseEmail } from "@/lib/email";
@@ -46,6 +47,9 @@ export async function POST(request: NextRequest) {
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
+
+    const suspended = await assertNotSuspended(actor.id);
+    if (suspended) return suspended;
 
     // Call the unified unlock function (content_items system)
     const { data: rpcData, error: unlockError } = await (supabase as any).rpc(

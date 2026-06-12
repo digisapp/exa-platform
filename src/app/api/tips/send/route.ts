@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
@@ -54,6 +55,9 @@ export async function POST(request: NextRequest) {
     if (!sender) {
       return NextResponse.json({ error: "Sender not found" }, { status: 400 });
     }
+
+    const suspended = await assertNotSuspended(sender.id);
+    if (suspended) return suspended;
 
     // Get recipient model by username
     const { data: recipientModel } = await supabase
