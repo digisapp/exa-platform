@@ -65,8 +65,12 @@ export function PendingApprovalView({ application }: { application: PendingAppli
 
     // Safety net: if the server-side guard missed (e.g. cached response, stale session),
     // re-check approval status client-side and redirect away if approved.
+    // Re-check every 30s (max 30 min) so approval lands without a manual refresh.
     let cancelled = false;
-    (async () => {
+    let checks = 0;
+    const MAX_CHECKS = 60;
+
+    const checkApproval = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || cancelled) return;
       const { data: model } = await (supabase
@@ -77,8 +81,22 @@ export function PendingApprovalView({ application }: { application: PendingAppli
       if (!cancelled && model?.is_approved) {
         window.location.href = "/dashboard";
       }
-    })();
-    return () => { cancelled = true; };
+    };
+
+    checkApproval();
+    const interval = setInterval(() => {
+      checks++;
+      if (checks >= MAX_CHECKS) {
+        clearInterval(interval);
+        return;
+      }
+      checkApproval();
+    }, 30_000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [supabase]);
 
   const handleLogout = async () => {

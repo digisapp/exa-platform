@@ -148,7 +148,8 @@ export async function PATCH(
           }
           attempt++;
           if (attempt > 100) {
-            finalUsername = `${finalUsername}${Date.now()}`;
+            // Short random suffix instead of a 13-digit timestamp
+            finalUsername = `${finalUsername}${Math.floor(1000 + Math.random() * 9000)}`;
             break;
           }
         }
