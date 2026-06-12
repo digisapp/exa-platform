@@ -175,6 +175,7 @@ interface ModelApplication {
   height: string | null;
   status: string;
   created_at: string;
+  email_confirmed_at: string | null;
 }
 
 export default function AdminCommunityPage() {
@@ -419,7 +420,14 @@ export default function AdminCommunityPage() {
                               {app.display_name?.charAt(0).toUpperCase() || "?"}
                             </div>
                             <div>
-                              <p className="font-medium">{app.display_name}</p>
+                              <p className="font-medium flex items-center gap-2">
+                                {app.display_name}
+                                {!app.email_confirmed_at && (
+                                  <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                                    email unconfirmed
+                                  </span>
+                                )}
+                              </p>
                               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                                 {app.instagram_username && (
                                   <a

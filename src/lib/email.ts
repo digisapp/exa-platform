@@ -263,10 +263,12 @@ export async function sendModelApplicationReceivedEmail({
   to,
   modelName,
   language = "en",
+  confirmUrl,
 }: {
   to: string;
   modelName: string;
   language?: string;
+  confirmUrl?: string | null;
 }) {
   try {
     if (await isEmailUnsubscribed(to, "notification")) {
@@ -291,6 +293,10 @@ export async function sendModelApplicationReceivedEmail({
     const bodyText = isSpanish
       ? "¡Gracias por aplicar a EXA Models! Recibimos tu solicitud y nuestro equipo la está revisando. Normalmente respondemos dentro de 24-48 horas."
       : "Thanks for applying to EXA Models! We received your application and our team is reviewing it now. You'll typically hear back within 24-48 hours.";
+    const confirmText = isSpanish ? "Confirma tu Correo" : "Confirm Your Email";
+    const confirmNote = isSpanish
+      ? "Un paso rápido: confirma tu correo para que podamos aprobar tu solicitud."
+      : "One quick step: confirm your email so we can approve your application.";
     const whileYouWaitTitle = isSpanish ? "Mientras Tanto" : "While You Wait";
     const checkStatusText = isSpanish ? "Ver Estado de tu Solicitud" : "Check Application Status";
 
@@ -358,10 +364,32 @@ export async function sendModelApplicationReceivedEmail({
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
                 ${greeting}
               </p>
-              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+              <p style="margin: 0 0 ${confirmUrl ? "16px" : "30px"}; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
                 ${bodyText}
               </p>
+              ${confirmUrl ? `
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 15px; line-height: 1.6;">
+                ${confirmNote}
+              </p>
 
+              <!-- Confirm Email (primary CTA) -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
+                <tr>
+                  <td align="center">
+                    <a href="${confirmUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      ${confirmText}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Status link (secondary) -->
+              <p style="margin: 0 0 30px; text-align: center;">
+                <a href="${statusUrl}" style="color: #a78bfa; font-size: 14px; text-decoration: underline;">
+                  ${checkStatusText}
+                </a>
+              </p>
+              ` : `
               <!-- Status Link -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
                 <tr>
@@ -372,7 +400,7 @@ export async function sendModelApplicationReceivedEmail({
                   </td>
                 </tr>
               </table>
-
+              `}
               <!-- While You Wait -->
               <h2 style="margin: 0 0 20px; color: #ffffff; font-size: 20px; font-weight: 600;">
                 ${whileYouWaitTitle}

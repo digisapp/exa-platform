@@ -418,7 +418,7 @@ async function createFanAndApplication(
   }
 
   // Create model application
-  await adminClient.from("model_applications")
+  const { data: newApp } = await adminClient.from("model_applications")
     .insert({
       user_id: userId,
       fan_id: actorId,
@@ -430,13 +430,21 @@ async function createFanAndApplication(
       date_of_birth: dateOfBirth || null,
       height: height || null,
       status: "pending",
-    });
+    })
+    .select("email_confirm_token")
+    .single();
+
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://www.examodels.com";
+  const confirmUrl = (newApp as any)?.email_confirm_token
+    ? `${origin}/api/auth/confirm-application?token=${(newApp as any).email_confirm_token}`
+    : null;
 
   // Fire-and-forget: confirm receipt so the applicant has a record of their submission
   sendModelApplicationReceivedEmail({
     to: email,
     modelName: displayName,
     language: preferredLanguage || "en",
+    confirmUrl,
   }).then((result) => {
     if (!result.success) {
       console.error("Failed to send application-received email:", result.error);

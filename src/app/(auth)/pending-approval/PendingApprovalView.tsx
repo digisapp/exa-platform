@@ -6,7 +6,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, Instagram, LogOut } from "lucide-react";
+import { Clock, Instagram, LogOut, MailCheck, MailWarning } from "lucide-react";
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
 
 const t = {
@@ -25,6 +25,11 @@ const t = {
     learnExa: "Learn EXA",
     learnDesc: "How it works",
     signOut: "Sign out",
+    emailConfirmed: "Email confirmed",
+    confirmEmail: "Confirm your email",
+    confirmEmailDesc: "Click the link we sent you — we need it before we can approve you.",
+    resend: "Resend email",
+    resent: "Sent! Check your inbox",
   },
   es: {
     title: "Solicitud Pendiente",
@@ -41,6 +46,11 @@ const t = {
     learnExa: "Conoce EXA",
     learnDesc: "Cómo funciona",
     signOut: "Cerrar sesión",
+    emailConfirmed: "Correo confirmado",
+    confirmEmail: "Confirma tu correo",
+    confirmEmailDesc: "Haz clic en el enlace que te enviamos — lo necesitamos antes de poder aprobarte.",
+    resend: "Reenviar correo",
+    resent: "¡Enviado! Revisa tu bandeja",
   },
 };
 
@@ -54,11 +64,23 @@ export type PendingApplication = {
   instagram_username?: string | null;
   tiktok_username?: string | null;
   created_at?: string | null;
+  email_confirmed_at?: string | null;
 };
 
 export function PendingApprovalView({ application }: { application: PendingApplication | null }) {
   const [lang, setLang] = useState<"en" | "es">("en");
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
   const supabase = createClient();
+
+  const handleResend = async () => {
+    setResendState("sending");
+    try {
+      const res = await fetch("/api/auth/resend-application-confirmation", { method: "POST" });
+      setResendState(res.ok ? "sent" : "idle");
+    } catch {
+      setResendState("idle");
+    }
+  };
 
   useEffect(() => {
     setLang(getLanguage());
@@ -129,6 +151,31 @@ export function PendingApprovalView({ application }: { application: PendingAppli
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {application && (
+            application.email_confirmed_at ? (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-400">
+                <MailCheck className="h-4 w-4 shrink-0" />
+                <span>{s.emailConfirmed}</span>
+              </div>
+            ) : (
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-amber-400">
+                  <MailWarning className="h-4 w-4 shrink-0" />
+                  <span>{s.confirmEmail}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{s.confirmEmailDesc}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleResend}
+                  disabled={resendState !== "idle"}
+                >
+                  {resendState === "sent" ? s.resent : s.resend}
+                </Button>
+              </div>
+            )
+          )}
           {application && (
             <div className="p-4 rounded-lg bg-muted/50 space-y-2">
               <p className="text-sm text-muted-foreground">{s.yourApp}</p>
