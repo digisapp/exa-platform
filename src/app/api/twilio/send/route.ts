@@ -3,16 +3,28 @@ import { createClient } from "@/lib/supabase/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import twilio from "twilio";
 import { logger } from "@/lib/logger";
+import { z } from "zod";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
-interface SendSMSRequest {
-  phoneNumbers: string[];
-  message: string;
-  modelIds?: string[]; // For logging purposes
-}
+// Cap broadcast size so a single (or compromised) admin call can't fan out
+// unbounded Twilio spend. Comfortably above the full model roster.
+const MAX_RECIPIENTS = 10_000;
+
+const sendSmsSchema = z.object({
+  phoneNumbers: z
+    .array(z.string().min(1).max(32))
+    .min(1, "No phone numbers provided")
+    .max(MAX_RECIPIENTS, `Too many recipients (max ${MAX_RECIPIENTS})`),
+  message: z
+    .string()
+    .trim()
+    .min(1, "Message is required")
+    .max(1600, "Message too long (max 1600 characters)"),
+  modelIds: z.array(z.string()).max(MAX_RECIPIENTS).optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,20 +58,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body: SendSMSRequest = await request.json();
-    const { phoneNumbers, message, modelIds } = body;
-
-    if (!phoneNumbers || phoneNumbers.length === 0) {
-      return NextResponse.json({ error: "No phone numbers provided" }, { status: 400 });
+    const parsed = sendSmsSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Invalid input" },
+        { status: 400 }
+      );
     }
-
-    if (!message || message.trim().length === 0) {
-      return NextResponse.json({ error: "Message is required" }, { status: 400 });
-    }
-
-    if (message.length > 1600) {
-      return NextResponse.json({ error: "Message too long (max 1600 characters)" }, { status: 400 });
-    }
+    const { phoneNumbers, message, modelIds } = parsed.data;
 
     // Honor sms_opt_out — drop opted-out recipients before sending.
     // Lookup is best-effort by both model_id (when provided) and phone number,
