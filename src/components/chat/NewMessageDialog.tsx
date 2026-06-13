@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { messageCoinCost } from "@/lib/coin-config";
 import {
   Dialog,
   DialogContent,
@@ -39,9 +40,8 @@ export function NewMessageDialog({
   const router = useRouter();
   const supabase = createClient();
 
-  // Determine if coins are required (use model's rate, minimum 10)
-  const modelRate = (selectedModel as any)?.message_rate || 10;
-  const coinCost = currentActorType === "model" || currentActorType === "admin" ? 0 : Math.max(10, modelRate);
+  // Determine if coins are required (use model's rate, minimum 5)
+  const coinCost = currentActorType === "model" || currentActorType === "admin" ? 0 : messageCoinCost((selectedModel as any)?.message_rate);
   const hasEnoughCoins = coinCost === 0 || coinBalance >= coinCost;
 
   // Search for models
@@ -212,7 +212,7 @@ export function NewMessageDialog({
                         {currentActorType !== "model" && currentActorType !== "admin" && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Coins className="h-3 w-3" />
-                            <span>{Math.max(10, (model as any).message_rate || 10)}/msg</span>
+                            <span>{messageCoinCost((model as any).message_rate)}/msg</span>
                           </div>
                         )}
                       </button>

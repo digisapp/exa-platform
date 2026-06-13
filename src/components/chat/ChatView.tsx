@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { messageCoinCost } from "@/lib/coin-config";
 import { MessageInput } from "./MessageInput";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages, ChatMessagesHandle } from "./ChatMessages";
@@ -210,8 +211,7 @@ export function ChatView({
   // Determine if messages cost coins
   const isModelToModel =
     currentActor.type === "model" && otherParticipant.actor.type === "model";
-  const modelMessageRate = otherParticipant.model?.message_rate || 10;
-  const coinCost = isModelToModel || currentActor.type === "model" || currentActor.type === "admin" ? 0 : Math.max(10, modelMessageRate);
+  const coinCost = isModelToModel || currentActor.type === "model" || currentActor.type === "admin" ? 0 : messageCoinCost(otherParticipant.model?.message_rate);
 
   // Can tip if the other participant is a model and we're not a model
   const canTip = otherParticipant.actor.type === "model" && currentActor.type !== "model";

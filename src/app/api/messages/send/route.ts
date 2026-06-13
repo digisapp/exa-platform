@@ -8,14 +8,13 @@ import { escapeIlike } from "@/lib/utils";
 import { sendNewMessageNotificationEmail } from "@/lib/email";
 import { detectInPersonRequest } from "@/lib/in-person-request";
 import { logger } from "@/lib/logger";
+import { messageCoinCost } from "@/lib/coin-config";
 
 // Virtual-first policy: a fan with this many flagged messages in the last 7 days
 // gets their account flagged for trust & safety review. Soft warning + auto-flag
 // is the primary lever; account-level flag is the escalation for repeat offenders.
 const ACCOUNT_FLAG_THRESHOLD = 3;
 const ACCOUNT_FLAG_WINDOW_DAYS = 7;
-
-const DEFAULT_MESSAGE_COST = 5; // Default coins if model hasn't set a rate
 
 // Service role client for creating conversations (bypasses RLS)
 const adminClient = createServiceRoleClient();
@@ -269,9 +268,7 @@ export async function POST(request: NextRequest) {
 
         if (recipientModel) {
           recipientModelId = recipientModel.id;
-          // Use model's rate or default, with minimum of DEFAULT_MESSAGE_COST
-          const modelRate = recipientModel.message_rate ?? DEFAULT_MESSAGE_COST;
-          coinsRequired = Math.max(DEFAULT_MESSAGE_COST, modelRate);
+          coinsRequired = messageCoinCost(recipientModel.message_rate);
         }
       }
     }

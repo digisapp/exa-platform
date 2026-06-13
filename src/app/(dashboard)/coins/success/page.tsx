@@ -6,10 +6,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Coins, MessageCircle, Loader2, ArrowRight } from "lucide-react";
+import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 export default function CoinSuccessPage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const [loading, setLoading] = useState(true);
+  // refreshBalance is a stable useCallback, safe as an effect dependency
+  const refreshBalance = useCoinBalanceOptional()?.refreshBalance;
 
   useEffect(() => {
     // Trigger confetti on mount
@@ -48,10 +51,17 @@ export default function CoinSuccessPage() {
     // Simulate verification delay (in production, you'd verify the session)
     const timer = setTimeout(() => {
       setLoading(false);
+      refreshBalance?.();
     }, 1500);
 
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [sessionId]);
+    // Webhook credit can lag the redirect; refresh again so the navbar
+    // balance is correct before the user navigates away
+    const retryTimer = setTimeout(() => {
+      refreshBalance?.();
+    }, 5000);
+
+    return () => { cancelled = true; clearTimeout(timer); clearTimeout(retryTimer); };
+  }, [sessionId, refreshBalance]);
 
   return (
     <div className="max-w-lg mx-auto py-12">

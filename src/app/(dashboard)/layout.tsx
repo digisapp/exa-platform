@@ -7,6 +7,7 @@ import { DashboardClientWrapper } from "@/components/layout/DashboardClientWrapp
 import { ActivityTracker } from "@/components/ActivityTracker";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { RouteFocusManager } from "@/components/layout/RouteFocusManager";
+import { SuspensionBanner } from "@/components/layout/SuspensionBanner";
 import { I18nProvider } from "@/i18n";
 
 // Prevent caching to ensure fresh auth state on every request
@@ -55,7 +56,7 @@ export default async function DashboardLayout({
     // Fans use actor.id as their id
     const { data } = await supabase
       .from("fans")
-      .select("display_name, username, avatar_url, coin_balance")
+      .select("display_name, username, avatar_url, coin_balance, is_suspended")
       .eq("id", actor.id)
       .single() as { data: any };
     profileData = data;
@@ -204,6 +205,7 @@ export default async function DashboardLayout({
           notificationCount={notificationCount}
           bellCount={bellCount}
         />
+        {actor?.type === "fan" && profileData?.is_suspended && <SuspensionBanner />}
         <DashboardClientWrapper actorId={actor?.id || null} actorType={actor?.type || null}>
           <main className="container px-4 md:px-8 py-8 pb-24 md:pb-8">{children}</main>
         </DashboardClientWrapper>
