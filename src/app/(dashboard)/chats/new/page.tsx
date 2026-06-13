@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { messageCoinCost } from "@/lib/coin-config";
 
 export default function NewChatPage() {
   const searchParams = useSearchParams();
@@ -107,7 +108,7 @@ export default function NewChatPage() {
   }
 
   const displayName = modelInfo?.first_name || modelUsername;
-  const coinCost = modelInfo?.message_rate || 10;
+  const coinCost = messageCoinCost(modelInfo?.message_rate);
 
   return (
     <div className="flex flex-col h-full">

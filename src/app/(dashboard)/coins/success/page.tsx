@@ -6,10 +6,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Coins, MessageCircle, Loader2, ArrowRight } from "lucide-react";
+import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 export default function CoinSuccessPage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const [loading, setLoading] = useState(true);
+  const coinBalance = useCoinBalanceOptional();
 
   useEffect(() => {
     // Trigger confetti on mount
@@ -48,9 +50,17 @@ export default function CoinSuccessPage() {
     // Simulate verification delay (in production, you'd verify the session)
     const timer = setTimeout(() => {
       setLoading(false);
+      coinBalance?.refreshBalance();
     }, 1500);
 
-    return () => { cancelled = true; clearTimeout(timer); };
+    // Webhook credit can lag the redirect; refresh again so the navbar
+    // balance is correct before the user navigates away
+    const retryTimer = setTimeout(() => {
+      coinBalance?.refreshBalance();
+    }, 5000);
+
+    return () => { cancelled = true; clearTimeout(timer); clearTimeout(retryTimer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
   return (

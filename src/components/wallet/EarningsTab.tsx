@@ -44,9 +44,21 @@ interface EarningsTabProps {
   earningsByMonth: Record<string, number>;
   earningsByType: Record<string, number>;
   transactions: Transaction[];
+  counterpartyNames?: Record<string, string>;
   hasMoreTransactions: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
+}
+
+/** "to <model>" context for spend rows, resolved from transaction metadata */
+function getCounterpartyLabel(
+  tx: Transaction,
+  names: Record<string, string>
+): string | null {
+  const m = tx.metadata as Record<string, unknown> | null | undefined;
+  const id = (m?.recipient_id || m?.model_id || m?.creator_id) as string | undefined;
+  if (!id || !names[id]) return null;
+  return `${tx.amount < 0 ? "to" : "from"} ${names[id]}`;
 }
 
 function getActionMeta(action: string) {
@@ -176,6 +188,7 @@ export default function EarningsTab({
   earningsByMonth,
   earningsByType,
   transactions,
+  counterpartyNames = {},
   hasMoreTransactions,
   loadingMore,
   onLoadMore,
@@ -402,6 +415,7 @@ export default function EarningsTab({
               {transactions.map((tx) => {
                 const meta = getActionMeta(tx.action);
                 const Icon = meta.icon;
+                const counterparty = getCounterpartyLabel(tx, counterpartyNames);
                 return (
                   <div
                     key={tx.id}
@@ -416,6 +430,9 @@ export default function EarningsTab({
                       <div className="min-w-0">
                         <p className="font-medium text-sm text-white truncate">
                           {getActionLabel(tx.action)}
+                          {counterparty && (
+                            <span className="font-normal text-white/50"> {counterparty}</span>
+                          )}
                         </p>
                         <p className="text-[11px] text-white/40">
                           {new Date(tx.created_at).toLocaleDateString("en-US", {

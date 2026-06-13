@@ -92,8 +92,8 @@ export default function FanSignupPage() {
         window.location.href = "/dashboard";
       } else {
         // New user - create auth account first
-        if (password.length < 6) {
-          toast.error("Password must be at least 6 characters");
+        if (password.length < 8) {
+          toast.error("Password must be at least 8 characters");
           setLoading(false);
           return;
         }

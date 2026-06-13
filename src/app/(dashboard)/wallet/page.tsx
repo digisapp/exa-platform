@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,6 +42,7 @@ export interface Transaction {
   amount: number;
   action: string;
   created_at: string;
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface BankAccount {
@@ -99,6 +100,8 @@ export default function WalletPage() {
   const [coinBalance, setCoinBalance] = useState(0);
   const [withheldBalance, setWithheldBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  // model id → display name, for "to @model" context on spend transactions
+  const [counterpartyNames, setCounterpartyNames] = useState<Record<string, string>>({});
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [thisMonthEarnings, setThisMonthEarnings] = useState(0);
   const [earningsByMonth, setEarningsByMonth] = useState<Record<string, number>>({});
@@ -150,6 +153,35 @@ export default function WalletPage() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
 
   const supabase = createClient();
+
+  // Resolve "to @model" names for spend transactions. Metadata only stores
+  // IDs; RLS lets any signed-in user read approved models, so this resolves
+  // for fans auditing where their coins went. Unresolvable IDs degrade to no
+  // context line.
+  const resolveCounterparties = useCallback(async (txs: Transaction[]) => {
+    const ids = Array.from(
+      new Set(
+        txs
+          .map((t) => {
+            const m = t.metadata as Record<string, unknown> | null | undefined;
+            return (m?.recipient_id || m?.model_id || m?.creator_id) as string | undefined;
+          })
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+    if (ids.length === 0) return;
+    const { data } = await supabase
+      .from("models")
+      .select("id, username, first_name")
+      .in("id", ids) as { data: { id: string; username: string; first_name: string | null }[] | null };
+    if (data && data.length > 0) {
+      setCounterpartyNames((prev) => {
+        const next = { ...prev };
+        data.forEach((m) => { next[m.id] = m.first_name || m.username; });
+        return next;
+      });
+    }
+  }, [supabase]);
 
   useEffect(() => {
     async function loadWallet() {
@@ -261,6 +293,9 @@ export default function WalletPage() {
 
       setTransactions(txs || []);
       setHasMoreTransactions((txs || []).length >= 20);
+      if (txs && txs.length > 0) {
+        resolveCounterparties(txs);
+      }
 
       // Derive analytics from RPC results (replaces loading 500 rows)
       if (summaryData && Array.isArray(summaryData)) {
@@ -293,7 +328,7 @@ export default function WalletPage() {
     }
 
     loadWallet();
-  }, [supabase]);
+  }, [supabase, resolveCounterparties]);
 
   const loadMoreTransactions = async () => {
     if (loadingMore || !hasMoreTransactions || transactions.length === 0 || !actorId) return;
@@ -309,6 +344,7 @@ export default function WalletPage() {
     if (moreTxs && moreTxs.length > 0) {
       setTransactions(prev => [...prev, ...moreTxs]);
       setHasMoreTransactions(moreTxs.length >= 20);
+      resolveCounterparties(moreTxs);
     } else {
       setHasMoreTransactions(false);
     }
@@ -621,10 +657,15 @@ export default function WalletPage() {
                 <>
                   <p className="text-sm text-green-500 mt-1">${(coinBalance * 0.10).toFixed(2)} USD</p>
                   {withheldBalance > 0 && (
-                    <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {withheldBalance.toLocaleString()} coins pending payout (${(withheldBalance * 0.10).toFixed(2)})
-                    </p>
+                    <div className="mt-2">
+                      <p className="text-xs text-yellow-500 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {withheldBalance.toLocaleString()} coins on hold (${(withheldBalance * 0.10).toFixed(2)})
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Held while a recent payment is in its dispute window — released automatically once it clears.
+                      </p>
+                    </div>
                   )}
                   <Link href="/wallet" className="inline-flex items-center gap-1 text-xs text-pink-400 hover:text-pink-300 mt-2 transition-colors">
                     <BarChart3 className="h-3 w-3" />
@@ -743,6 +784,7 @@ export default function WalletPage() {
               earningsByMonth={earningsByMonth}
               earningsByType={earningsByType}
               transactions={transactions}
+              counterpartyNames={counterpartyNames}
               hasMoreTransactions={hasMoreTransactions}
               loadingMore={loadingMore}
               onLoadMore={loadMoreTransactions}

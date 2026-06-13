@@ -6,10 +6,9 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { sendNewMessageNotificationEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
+import { messageCoinCost } from "@/lib/coin-config";
 
 const adminClient = createServiceRoleClient();
-
-const DEFAULT_MESSAGE_COST = 5; // Default coins if model hasn't set a rate
 
 const newConversationSchema = z.object({
   recipientId: z.string().uuid("Invalid recipient ID"),
@@ -211,8 +210,7 @@ export async function POST(request: NextRequest) {
 
         if (recipientModel) {
           recipientModelId = recipientModel.id;
-          const modelRate = recipientModel.message_rate ?? DEFAULT_MESSAGE_COST;
-          coinsRequired = Math.max(DEFAULT_MESSAGE_COST, modelRate);
+          coinsRequired = messageCoinCost(recipientModel.message_rate);
         }
       }
     }

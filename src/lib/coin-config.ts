@@ -21,6 +21,18 @@ export const COIN_USD_RATE = 0.10;
 // Coin purchase rate shown to fans (what they pay per coin)
 export const FAN_COIN_USD_RATE = 0.15;
 
+// Paid messaging (fan/brand → model)
+export const DEFAULT_MESSAGE_COST = 5;
+
+/**
+ * Coins charged per message sent to a model. Single source of truth shared by
+ * the send route and every UI that previews the cost — keep them identical or
+ * fans see one price and get charged another.
+ */
+export function messageCoinCost(modelRate: number | null | undefined): number {
+  return Math.max(DEFAULT_MESSAGE_COST, modelRate ?? DEFAULT_MESSAGE_COST);
+}
+
 // Minimum withdrawal amounts
 export const MIN_WITHDRAWAL_COINS = 500;
 export const MIN_WITHDRAWAL_USD = MIN_WITHDRAWAL_COINS * COIN_USD_RATE; // $50
