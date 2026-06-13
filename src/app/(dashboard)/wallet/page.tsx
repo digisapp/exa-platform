@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
-import { MIN_WITHDRAWAL_COINS, coinsToUsd, formatUsd } from "@/lib/coin-config";
+import { MIN_WITHDRAWAL_COINS, coinsToUsd, counterpartyIdOf, formatUsd } from "@/lib/coin-config";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -160,14 +160,7 @@ export default function WalletPage() {
   // context line.
   const resolveCounterparties = useCallback(async (txs: Transaction[]) => {
     const ids = Array.from(
-      new Set(
-        txs
-          .map((t) => {
-            const m = t.metadata as Record<string, unknown> | null | undefined;
-            return (m?.recipient_id || m?.model_id || m?.creator_id) as string | undefined;
-          })
-          .filter((id): id is string => Boolean(id))
-      )
+      new Set(txs.map(counterpartyIdOf).filter((id): id is string => Boolean(id)))
     );
     if (ids.length === 0) return;
     const { data } = await supabase

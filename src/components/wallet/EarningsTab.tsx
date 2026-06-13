@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import type { Transaction } from "@/app/(dashboard)/wallet/page";
+import { counterpartyIdOf } from "@/lib/coin-config";
 
 const EARNING_TYPE_META: Record<
   string,
@@ -55,8 +56,7 @@ function getCounterpartyLabel(
   tx: Transaction,
   names: Record<string, string>
 ): string | null {
-  const m = tx.metadata as Record<string, unknown> | null | undefined;
-  const id = (m?.recipient_id || m?.model_id || m?.creator_id) as string | undefined;
+  const id = counterpartyIdOf(tx);
   if (!id || !names[id]) return null;
   return `${tx.amount < 0 ? "to" : "from"} ${names[id]}`;
 }

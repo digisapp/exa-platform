@@ -261,7 +261,7 @@ export default function FanSignupPage() {
                     </button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Must be at least 6 characters
+                    Must be at least 8 characters
                   </p>
                 </div>
               </>

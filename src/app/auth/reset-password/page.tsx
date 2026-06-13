@@ -138,8 +138,8 @@ function ResetPasswordForm() {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -250,7 +250,7 @@ function ResetPasswordForm() {
                 disabled={loading}
               />
               <p className="text-xs text-muted-foreground">
-                Must be at least 6 characters
+                Must be at least 8 characters
               </p>
             </div>
             <div className="space-y-2">
