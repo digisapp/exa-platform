@@ -52,19 +52,6 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-// Round a real count down to a clean "social proof" number (e.g. 1543 -> "1,500+").
-// Always rounds DOWN so the figure is never overstated.
-function roundDownNice(n: number): string {
-  let step: number;
-  if (n < 100) step = 10;
-  else if (n < 500) step = 50;
-  else if (n < 1000) step = 100;
-  else if (n < 5000) step = 500;
-  else step = 1000;
-  const rounded = Math.floor(n / step) * step;
-  return `${rounded.toLocaleString()}+`;
-}
-
 export default async function HomePage() {
   const supabase = await createClient();
 
@@ -189,23 +176,6 @@ export default async function HomePage() {
   const showEventsWallSection = hasUpcomingEvents || liveWallIsFresh;
   const eventsWallTwoColumn = hasUpcomingEvents && liveWallIsFresh;
 
-  // Live liquidity counts for the hero social-proof strip. Each stat only shows
-  // once it clears a floor (so a brand-new, tiny number never reads as weak),
-  // and the strip itself only renders when at least two stats qualify.
-  const [modelCountRes, showCountRes, brandCountRes] = await Promise.all([
-    (supabase.from("models") as any).select("id", { count: "exact", head: true }).eq("is_approved", true),
-    (supabase.from("gigs") as any).select("id", { count: "exact", head: true }),
-    (supabase.from("brands") as any).select("id", { count: "exact", head: true }),
-  ]);
-  const proofStats = [
-    { count: modelCountRes.count ?? 0, floor: 50, label: "Models" },
-    { count: showCountRes.count ?? 0, floor: 10, label: "Castings" },
-    { count: brandCountRes.count ?? 0, floor: 5, label: "Brands" },
-  ]
-    .filter((s) => s.count >= s.floor)
-    .map((s) => ({ value: roundDownNice(s.count), label: s.label }));
-  const showProofStrip = proofStats.length >= 2;
-
   return (
     <div className="min-h-screen relative">
       {/* Floating Orbs Background */}
@@ -260,33 +230,6 @@ export default async function HomePage() {
 
         {/* Split Hero Section */}
         <section id="signup" className="container px-8 md:px-16 py-6 md:py-10 scroll-mt-20">
-          {/* Headline + live social-proof strip — frames the audience grid below */}
-          <div className="text-center max-w-3xl mx-auto mb-8 md:mb-12">
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
-              Where Models Get{" "}
-              <span className="exa-gradient-text">Booked, Discovered &amp; Paid</span>
-            </h1>
-            <p className="mt-4 md:mt-5 text-base md:text-lg text-white/60 max-w-2xl mx-auto">
-              The marketplace connecting fashion models, fans, and brands — runway shows,
-              bookings, and direct connections, all in one place.
-            </p>
-
-            {showProofStrip && (
-              <div className="mt-7 md:mt-9 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 md:gap-x-14">
-                {proofStats.map((s) => (
-                  <div key={s.label} className="flex flex-col items-center">
-                    <span className="text-2xl md:text-3xl font-bold exa-gradient-text">
-                      {s.value}
-                    </span>
-                    <span className="mt-0.5 text-[11px] md:text-xs uppercase tracking-wider text-white/40">
-                      {s.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
             {/* Models Side — full width on mobile */}
             <div className="col-span-2 lg:col-span-1 relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
