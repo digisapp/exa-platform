@@ -36,21 +36,13 @@ async function createFanProfile(supabase: any, userId: string, email: string, di
       user_id: userId,
       email: email,
       display_name: displayName,
-      coin_balance: 10, // Welcome bonus
+      coin_balance: 0,
     }, { onConflict: "user_id" });
 
   if (fanError) {
     console.error("Fan creation error:", fanError);
     return null;
   }
-
-  // Record welcome bonus
-  await (supabase.from("coin_transactions") as any).insert({
-    actor_id: actorId,
-    amount: 10,
-    action: "signup_bonus",
-    metadata: { reason: "Welcome bonus for new signup" },
-  });
 
   return actorId;
 }

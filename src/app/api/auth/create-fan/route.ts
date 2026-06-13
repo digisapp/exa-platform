@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
           user_id: user.id,
           email: user.email,
           display_name: displayName.trim(),
-          coin_balance: 10,
+          coin_balance: 0,
           referred_by_model_id: validReferrerId,
         }, { onConflict: "user_id" });
 
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         email: user.email,
         display_name: displayName.trim(),
-        coin_balance: 10, // Welcome bonus!
+        coin_balance: 0,
         referred_by_model_id: validReferrerId,
       }, { onConflict: "user_id" });
 
@@ -150,14 +150,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    // Record the welcome bonus transaction (only if new)
-    await supabase.from("coin_transactions").insert({
-      actor_id: actorId,
-      amount: 10,
-      action: "signup_bonus",
-      metadata: { reason: "Welcome bonus for new signup" },
-    });
 
     return NextResponse.json({
       success: true,
