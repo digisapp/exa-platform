@@ -52,6 +52,19 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+// Round a real count down to a clean "social proof" number (e.g. 1543 -> "1,500+").
+// Always rounds DOWN so the figure is never overstated.
+function roundDownNice(n: number): string {
+  let step: number;
+  if (n < 100) step = 10;
+  else if (n < 500) step = 50;
+  else if (n < 1000) step = 100;
+  else if (n < 5000) step = 500;
+  else step = 1000;
+  const rounded = Math.floor(n / step) * step;
+  return `${rounded.toLocaleString()}+`;
+}
+
 export default async function HomePage() {
   const supabase = await createClient();
 
@@ -138,13 +151,15 @@ export default async function HomePage() {
     .limit(1)
     .single();
 
-  // Fetch live wall messages (last 50, newest last)
-  const { data: rawLiveWallMessages } = await (supabase as any)
+  // Fetch the 50 most recent messages (newest-first from the DB), then reverse
+  // so the wall renders oldest-first / newest-last.
+  const { data: rawLiveWallMessagesDesc } = await (supabase as any)
     .from("live_wall_messages")
     .select("id, actor_id, actor_type, display_name, avatar_url, profile_slug, content, message_type, reactions, image_url, image_type, is_pinned, tip_total, created_at")
     .eq("is_deleted", false)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(50);
+  const rawLiveWallMessages = (rawLiveWallMessagesDesc || []).slice().reverse();
 
   // Re-resolve avatars from current profile data — the column on
   // live_wall_messages is captured at insert time and goes stale
@@ -153,6 +168,43 @@ export default async function HomePage() {
     supabase as any,
     rawLiveWallMessages || []
   )) as any[];
+
+  // The Live Wall only earns its homepage slot when it looks alive. Show it
+  // only if there are enough recent messages; otherwise a quiet wall reads as a
+  // dead platform to visitors.
+  const LIVE_WALL_FRESH_WINDOW_MS = 72 * 60 * 60 * 1000;
+  const LIVE_WALL_MIN_RECENT_MESSAGES = 3;
+  const liveWallIsFresh =
+    liveWallMessages.filter(
+      (m) =>
+        Date.now() - new Date(m.created_at).getTime() < LIVE_WALL_FRESH_WINDOW_MS
+    ).length >= LIVE_WALL_MIN_RECENT_MESSAGES;
+
+  // Upcoming Shows only shows when there's an active/upcoming event (the query
+  // already filters to open gigs whose start or end is still in the future).
+  const hasUpcomingEvents = (upcomingEvents?.length || 0) > 0;
+
+  // Layout for the shared row: render the whole section only if at least one of
+  // the two blocks qualifies, and use two columns only when both do.
+  const showEventsWallSection = hasUpcomingEvents || liveWallIsFresh;
+  const eventsWallTwoColumn = hasUpcomingEvents && liveWallIsFresh;
+
+  // Live liquidity counts for the hero social-proof strip. Each stat only shows
+  // once it clears a floor (so a brand-new, tiny number never reads as weak),
+  // and the strip itself only renders when at least two stats qualify.
+  const [modelCountRes, showCountRes, brandCountRes] = await Promise.all([
+    (supabase.from("models") as any).select("id", { count: "exact", head: true }).eq("is_approved", true),
+    (supabase.from("gigs") as any).select("id", { count: "exact", head: true }),
+    (supabase.from("brands") as any).select("id", { count: "exact", head: true }),
+  ]);
+  const proofStats = [
+    { count: modelCountRes.count ?? 0, floor: 50, label: "Models" },
+    { count: showCountRes.count ?? 0, floor: 10, label: "Castings" },
+    { count: brandCountRes.count ?? 0, floor: 5, label: "Brands" },
+  ]
+    .filter((s) => s.count >= s.floor)
+    .map((s) => ({ value: roundDownNice(s.count), label: s.label }));
+  const showProofStrip = proofStats.length >= 2;
 
   return (
     <div className="min-h-screen relative">
@@ -208,6 +260,33 @@ export default async function HomePage() {
 
         {/* Split Hero Section */}
         <section id="signup" className="container px-8 md:px-16 py-6 md:py-10 scroll-mt-20">
+          {/* Headline + live social-proof strip — frames the audience grid below */}
+          <div className="text-center max-w-3xl mx-auto mb-8 md:mb-12">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
+              Where Models Get{" "}
+              <span className="exa-gradient-text">Booked, Discovered &amp; Paid</span>
+            </h1>
+            <p className="mt-4 md:mt-5 text-base md:text-lg text-white/60 max-w-2xl mx-auto">
+              The marketplace connecting fashion models, fans, and brands — runway shows,
+              bookings, and direct connections, all in one place.
+            </p>
+
+            {showProofStrip && (
+              <div className="mt-7 md:mt-9 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 md:gap-x-14">
+                {proofStats.map((s) => (
+                  <div key={s.label} className="flex flex-col items-center">
+                    <span className="text-2xl md:text-3xl font-bold exa-gradient-text">
+                      {s.value}
+                    </span>
+                    <span className="mt-0.5 text-[11px] md:text-xs uppercase tracking-wider text-white/40">
+                      {s.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
             {/* Models Side — full width on mobile */}
             <div className="col-span-2 lg:col-span-1 relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
@@ -216,7 +295,7 @@ export default async function HomePage() {
 
               <div className="relative z-10">
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
-                  Swim Week. Bookings.
+                  Fashion Shows. Bookings.
                   <br />
                   <span className="exa-gradient-text">Get Discovered.</span>
                 </h2>
@@ -294,30 +373,40 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Upcoming Shows + EXA Live Wall (side-by-side on desktop, stacked on mobile) */}
-        <section className="container px-8 md:px-16 py-6">
-          <div className="grid lg:grid-cols-2 gap-6 lg:items-start">
-            {/* Upcoming Shows — left on desktop, top on mobile */}
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text mb-6">
-                Upcoming Shows
-              </h2>
-              <UpcomingEventsCarousel events={upcomingEvents || []} scrollPadding="px-0" />
-            </div>
+        {/* Upcoming Shows + EXA Live Wall (side-by-side on desktop, stacked on
+            mobile). Each block renders only when it has something to show:
+            Upcoming Shows needs an active/upcoming event, the Live Wall needs
+            recent activity. Two columns only when both qualify; the whole
+            section is omitted when neither does. */}
+        {showEventsWallSection && (
+          <section className="container px-8 md:px-16 py-6">
+            <div className={eventsWallTwoColumn ? "grid lg:grid-cols-2 gap-6 lg:items-start" : ""}>
+              {/* Upcoming Shows — left on desktop, top on mobile */}
+              {hasUpcomingEvents && (
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text mb-6">
+                    Upcoming Shows
+                  </h2>
+                  <UpcomingEventsCarousel events={upcomingEvents || []} scrollPadding="px-0" />
+                </div>
+              )}
 
-            {/* EXA Live Wall — right on desktop, below on mobile */}
-            <div>
-              <LiveWall
-                initialMessages={liveWallMessages || []}
-                currentUser={
-                  currentActor
-                    ? { actorId: currentActor.id, actorType: currentActor.type, coinBalance: currentActor.coinBalance }
-                    : null
-                }
-              />
+              {/* EXA Live Wall — right on desktop, below on mobile. Hidden when quiet. */}
+              {liveWallIsFresh && (
+                <div>
+                  <LiveWall
+                    initialMessages={liveWallMessages || []}
+                    currentUser={
+                      currentActor
+                        ? { actorId: currentActor.id, actorType: currentActor.type, coinBalance: currentActor.coinBalance }
+                        : null
+                    }
+                  />
+                </div>
+              )}
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Book Top Models Section */}
         <section className="py-8">
