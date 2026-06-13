@@ -264,13 +264,19 @@ export default function WalletPage() {
         }
       }
 
-      // Fetch transactions (20 for display) + RPC aggregates for models (in parallel)
-      const txPromise = supabase
-        .from("coin_transactions")
-        .select("*")
-        .eq("actor_id", actor.id)
-        .order("created_at", { ascending: false })
-        .limit(20) as unknown as Promise<{ data: Transaction[] | null }>;
+      // Fetch transactions (20 for display) + RPC aggregates for models (in parallel).
+      // Models/admins only: the earnings tab is the sole consumer, and fans
+      // intentionally have no transaction history view (product decision —
+      // don't surface a fan's own spending back at them).
+      const isEarningsViewer = actor.type === "model" || actor.type === "admin";
+      const txPromise = isEarningsViewer
+        ? supabase
+            .from("coin_transactions")
+            .select("*")
+            .eq("actor_id", actor.id)
+            .order("created_at", { ascending: false })
+            .limit(20) as unknown as Promise<{ data: Transaction[] | null }>
+        : Promise.resolve({ data: null as Transaction[] | null });
 
       const summaryPromise = actor.type === "model"
         ? (supabase.rpc as any)("get_earnings_summary", { p_actor_id: actor.id })

@@ -137,7 +137,7 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
         }),
       });
 
-      toast.success("Welcome to EXA! You got 10 free coins!");
+      toast.success("Welcome to EXA!");
       window.location.href = "/dashboard";
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Something went wrong";

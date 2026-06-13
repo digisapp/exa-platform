@@ -381,28 +381,9 @@ async function createFanAndApplication(
         user_id: userId,
         email: email,
         display_name: displayName,
-        coin_balance: 10,
+        coin_balance: 0,
         preferred_language: preferredLanguage || "en",
       } as any);
-  }
-
-  // Record welcome bonus only if not already granted (idempotent on retries).
-  const { data: existingBonus } = await adminClient
-    .from("coin_transactions")
-    .select("id")
-    .eq("actor_id", actorId)
-    .eq("action", "signup_bonus")
-    .limit(1)
-    .maybeSingle();
-
-  if (!existingBonus) {
-    await adminClient.from("coin_transactions")
-      .insert({
-        actor_id: actorId,
-        amount: 10,
-        action: "signup_bonus",
-        metadata: { reason: "Welcome bonus for new signup" },
-      });
   }
 
   // Check for existing application

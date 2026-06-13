@@ -88,7 +88,7 @@ export default function FanSignupPage() {
           throw new Error(data.error || "Failed to create profile");
         }
 
-        toast.success("Welcome to EXA! You got 10 free coins!");
+        toast.success("Welcome to EXA!");
         window.location.href = "/dashboard";
       } else {
         // New user - create auth account first
@@ -147,7 +147,7 @@ export default function FanSignupPage() {
             }),
           });
 
-          toast.success("Welcome to EXA! You got 10 free coins!");
+          toast.success("Welcome to EXA!");
           window.location.href = "/dashboard";
         }
       }
