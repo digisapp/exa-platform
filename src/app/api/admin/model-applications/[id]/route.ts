@@ -4,6 +4,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendModelApprovalEmail } from "@/lib/email";
 import { escapeIlike } from "@/lib/utils";
 
+// Carries the fan's coin balance onto the model row and removes the fan
+// record in one transaction — replaces the old bare DELETE FROM fans, which
+// dropped the balance (and let clawback debt escape) on conversion.
+async function migrateFanWallet(
+  adminClient: ReturnType<typeof createServiceRoleClient>,
+  userId: string
+) {
+  const { data, error } = await (adminClient.rpc as any)(
+    "convert_fan_wallet_to_model",
+    { p_user_id: userId }
+  );
+  const result = data as { success?: boolean; error?: string } | null;
+  if (error || !result?.success) {
+    console.error("Fan wallet migration failed:", error || result?.error);
+  }
+}
+
 // Update model application status (approve/reject)
 export async function PATCH(
   request: NextRequest,
@@ -131,8 +148,8 @@ export async function PATCH(
         ]);
 
         if (linkError) console.error("Error linking model:", linkError);
-        // Always clean up fan record by user_id (more reliable than by id convention)
-        await adminClient.from("fans").delete().eq("user_id", application.user_id);
+        // Transfer fan wallet to the linked model and remove the fan record
+        await migrateFanWallet(adminClient, application.user_id);
       } else if (!existingModel) {
         // No existing model found - create new one
         const looksLikeEmail = (s: string) => s.includes("@") || /\.(com|net|org|io|co|edu|gov|me|info|biz)$/i.test(s) || /[a-z0-9](gmail|yahoo|hotmail|outlook|icloud|aol|protonmail|mail)/i.test(s);
@@ -198,12 +215,14 @@ export async function PATCH(
           preferred_language: preferredLanguage,
         });
 
-        const [modelResult] = await Promise.all([
-          modelInsert,
-          // Always clean up fan record by user_id (more reliable than by id convention)
-          adminClient.from("fans").delete().eq("user_id", application.user_id),
-        ]);
-        if (modelResult?.error) console.error("Error creating model:", modelResult.error);
+        // Model must exist before the wallet transfer — the RPC refuses to
+        // drop a fan wallet with no model row to receive the balance
+        const modelResult = await modelInsert;
+        if (modelResult?.error) {
+          console.error("Error creating model:", modelResult.error);
+        } else {
+          await migrateFanWallet(adminClient, application.user_id);
+        }
       } else {
         // Model already exists by user_id, just approve it
         modelUsername = existingModelByUser!.username || "";
@@ -213,8 +232,8 @@ export async function PATCH(
           adminClient.from("actors").update({ type: "model" }).eq("user_id", application.user_id).select("id").single(),
         ]);
 
-        // Always clean up fan record by user_id (more reliable than by id convention)
-        await adminClient.from("fans").delete().eq("user_id", application.user_id);
+        // Transfer any leftover fan wallet to the approved model
+        await migrateFanWallet(adminClient, application.user_id);
       }
 
       // Fire-and-forget: send email + welcome chat in background (don't block response)
