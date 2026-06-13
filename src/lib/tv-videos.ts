@@ -189,6 +189,18 @@ export const TV_VIDEOS: Video[] = [
   { id: "167", youtubeId: "Tu9DemS0rO0", title: "Part 2 Content Day Mini Vlog with Exa Models, Cabrera DR", category: "Behind the Scenes" },
   { id: "168", youtubeId: "_T0Caf4I32c", title: "EXA Model Jaya Williams interviews model Virginia Sanhouse on Walking in Runway Shows for Swim Week", category: "Behind the Scenes" },
   { id: "169", youtubeId: "hKY3ce-7yIM", title: "Exa Models Swim Shows | Casting Art Basel 2025 | iPhone 17 Pro Max", category: "Behind the Scenes" },
+
+  // Miami Swim Week 2026 — latest uploads (added 2026-06-13)
+  { id: "170", youtubeId: "ZvK7lfb7OPY", title: "Serpent Swim | Full Runway Show | EXA Shows Miami Swim Week 2026", category: "MSW", featured: true },
+  { id: "171", youtubeId: "r1FaOEmJrzw", title: "Berry Beachy Swimwear | Miami Swim Week 2026 | Exa Shows | Full Runway Show 4K", category: "MSW", featured: true },
+  { id: "172", youtubeId: "kUg8qff2ak8", title: "Piura Swim & Akaló | Full Runway Show | EXA Shows Miami Swim Week 2026", category: "MSW" },
+  { id: "173", youtubeId: "9aPlccxNmf8", title: "Quiala Collection Full Show | Miami Swim Week 2026 | Exa Shows", category: "MSW" },
+  { id: "174", youtubeId: "dHYu9BBujeE", title: "Miami Swim Week 2026 Model Fashion Show 4K Slow Motion | EXA | Piura Swim", category: "MSW" },
+  { id: "175", youtubeId: "UwyRA9OCwgU", title: "Capristan | Miami Swim Week 2026 | Official Full Show 4K | Exa Shows", category: "MSW" },
+  { id: "176", youtubeId: "dS9HjnFX_Yg", title: "Berry Beachy | Full Runway Show 2026 | EXA Swim Shows Miami", category: "MSW" },
+  { id: "177", youtubeId: "m6gz3Y2_-lc", title: "Exa Shows Miami Swim Week 2026 | Berry Beachy Showcase", category: "MSW" },
+  { id: "178", youtubeId: "3a5cJhX9dH0", title: "Exa Shows | Miami Swim Week 2026 | Shows Coming Soon", category: "MSW" },
+  { id: "179", youtubeId: "jKe57upWUqo", title: "Berry Beachy Bikini Watch Party | Miami Swim Week 2026 | Exa Shows", category: "Behind the Scenes" },
 ];
 
 export const TV_CATEGORIES = [
