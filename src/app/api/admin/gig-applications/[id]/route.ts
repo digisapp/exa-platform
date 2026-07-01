@@ -74,7 +74,13 @@ export async function PATCH(
         // Non-fatal - application was already updated
       }
 
-      // Award event badge if gig is linked to an event
+      // Award event badge if gig is linked to an event.
+      // NOTE: the DB trigger manage_event_badge() is the canonical awarder and
+      // also fires on this same status update. This block is a redundant
+      // safeguard and MUST keep the same gating as the trigger -- in particular
+      // the is_active=true filter below (see migration
+      // 20260701000001_badge_award_respect_is_active). If you change the award
+      // criteria here, change the trigger too, or the two paths will diverge.
       if (application.gig?.event_id) {
         // Find the badge for this event
         const { data: badge } = await adminClient
