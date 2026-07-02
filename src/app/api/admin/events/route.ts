@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -45,19 +45,6 @@ const baseFields = {
 const createSchema = z.object(baseFields);
 const updateSchema = z.object({ id: z.string().uuid(), ...baseFields });
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Unauthorized", status: 401 as const };
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("id, type")
-    .eq("user_id", user.id)
-    .single() as { data: { id: string; type: string } | null };
-  if (!actor || actor.type !== "admin") return { error: "Forbidden", status: 403 as const };
-  return { actor };
-}
-
 // Empty-string -> null so we don't write "" into nullable date/text columns.
 function nn(v: string | undefined | null): string | null {
   const t = (v ?? "").trim();
@@ -79,7 +66,7 @@ function badgeFieldsFor(input: z.infer<typeof createSchema>) {
 export async function POST(request: NextRequest) {
   try {
     const auth = await requireAdmin();
-    if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
+    if (!auth.ok) return auth.response;
 
     const parsed = createSchema.safeParse(await request.json());
     if (!parsed.success) {
@@ -151,7 +138,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const auth = await requireAdmin();
-    if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
+    if (!auth.ok) return auth.response;
 
     const parsed = updateSchema.safeParse(await request.json());
     if (!parsed.success) {
