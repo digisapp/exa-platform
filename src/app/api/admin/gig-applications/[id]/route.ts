@@ -66,15 +66,18 @@ export async function PATCH(
       );
     }
 
-    // If accepted, increment spots_filled and award event badge
+    // If accepted, award the event badge. spots_filled is maintained by the DB
+    // trigger trg_sync_gig_spots_filled, which recomputes it from the accepted-
+    // application count on every status change (migration
+    // 20260702000001_sync_gig_spots_filled) -- do NOT increment it here too.
     if (status === "accepted" && application.status !== "accepted") {
-      const { error: rpcError } = await adminClient.rpc("increment_gig_spots_filled", { gig_id: application.gig_id });
-      if (rpcError) {
-        console.error("RPC increment error:", rpcError);
-        // Non-fatal - application was already updated
-      }
-
-      // Award event badge if gig is linked to an event
+      // Award event badge if gig is linked to an event.
+      // NOTE: the DB trigger manage_event_badge() is the canonical awarder and
+      // also fires on this same status update. This block is a redundant
+      // safeguard and MUST keep the same gating as the trigger -- in particular
+      // the is_active=true filter below (see migration
+      // 20260701000001_badge_award_respect_is_active). If you change the award
+      // criteria here, change the trigger too, or the two paths will diverge.
       if (application.gig?.event_id) {
         // Find the badge for this event
         const { data: badge } = await adminClient
@@ -106,14 +109,10 @@ export async function PATCH(
       }
     }
 
-    // If un-accepting an application (cancel, reject, or revert to pending), decrement spots_filled and remove badge
+    // If un-accepting (cancel, reject, or revert to pending), remove the event
+    // badge. spots_filled is recomputed by trg_sync_gig_spots_filled; don't
+    // decrement it here too.
     if ((status === "cancelled" || status === "rejected" || status === "pending") && application.status === "accepted") {
-      const { error: rpcError } = await adminClient.rpc("decrement_gig_spots_filled", { gig_id: application.gig_id });
-      if (rpcError) {
-        console.error("RPC decrement error:", rpcError);
-        // Non-fatal - application was already updated
-      }
-
       // Remove event badge if no other accepted applications for this event
       if (application.gig?.event_id) {
         // Check if model has other accepted applications for gigs linked to this event

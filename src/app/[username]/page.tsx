@@ -29,6 +29,7 @@ import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 import { BioExpand } from "@/components/model/BioExpand";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
+import { BadgeWall } from "@/components/profile/BadgeWall";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 import {
   DigisHeroProfileButton,
@@ -204,8 +205,11 @@ export default async function ModelProfilePage({ params }: Props) {
       )
     `)
     .eq("model_id", model.id)
-    .eq("badges.badge_type", "event")
-    .eq("badges.is_active", true) as { data: any[] | null };
+    .eq("badges.badge_type", "event") as { data: any[] | null };
+    // NOTE: intentionally NOT filtering badges.is_active here. The trophy wall
+    // shows every earned badge (a retired/over show is still a trophy). The
+    // "Get Tickets" promo ticker is gated separately on event status + is_active
+    // via `promoBadge` below.
 
   // Fetch event details for each badge
   let eventBadges: any[] | null = null;
@@ -214,7 +218,7 @@ export default async function ModelProfilePage({ params }: Props) {
     // Guard against empty array — .in("id", []) throws in Supabase-js
     const { data: eventsData } = eventIds.length > 0 ? await supabase
       .from("events")
-      .select("id, slug, name, short_name, year, badge_image_url")
+      .select("id, slug, name, short_name, year, badge_image_url, status")
       .in("id", eventIds) as { data: any[] | null } : { data: [] };
 
     // Combine badge and event data
@@ -225,8 +229,22 @@ export default async function ModelProfilePage({ params }: Props) {
         ...mb.badges,
         events: eventsMap.get(mb.badges?.event_id) || null
       }
-    })).filter(eb => eb.badges.events !== null);
+    })).filter(eb => eb.badges.events !== null)
+      // Most recent shows first (by event year, then when the badge was earned)
+      .sort((a, b) => {
+        const yearDiff = (b.badges.events.year ?? 0) - (a.badges.events.year ?? 0);
+        if (yearDiff !== 0) return yearDiff;
+        return new Date(b.earned_at).getTime() - new Date(a.earned_at).getTime();
+      });
   }
+
+  // The promo ticker ("Catch me on the Runway — Get Tickets") only shows for an
+  // UPCOMING/ACTIVE event whose badge is still active. The trophy wall above
+  // shows every earned badge regardless of this.
+  const promoBadge = eventBadges?.find((eb: any) =>
+    eb.badges?.is_active !== false &&
+    (eb.badges?.events?.status === "upcoming" || eb.badges?.events?.status === "active")
+  ) || null;
 
   // Resolve content_items media_url (can be storage path or full URL)
   const resolveMediaUrl = (url: string) =>
@@ -591,7 +609,7 @@ export default async function ModelProfilePage({ params }: Props) {
                     width — this guarantees the wordmark stays truly centered on the hero
                     regardless of how many chips/buttons/badges are in the side columns.
                     Sits below the event ticker (h-10) when one is active, otherwise top-0. */}
-                <div className={`absolute ${eventBadges && eventBadges.length > 0 ? 'top-10' : 'top-0'} inset-x-0 z-20 p-3 grid grid-cols-[1fr_auto_1fr] items-start gap-2 bg-gradient-to-b from-black/45 via-black/15 to-transparent`}>
+                <div className={`absolute ${promoBadge ? 'top-10' : 'top-0'} inset-x-0 z-20 p-3 grid grid-cols-[1fr_auto_1fr] items-start gap-2 bg-gradient-to-b from-black/45 via-black/15 to-transparent`}>
                   {/* Left column: online chip */}
                   <div className="flex flex-col items-start gap-1.5 min-w-0 justify-self-start">
                     {isOnline && (
@@ -645,15 +663,15 @@ export default async function ModelProfilePage({ params }: Props) {
 
                 {/* Event ticker strip — promo bar pinned to the very top edge so it
                     never falls on the model's face regardless of photo crop. */}
-                {eventBadges && eventBadges.length > 0 && (
+                {promoBadge && (
                   <Link
-                    href={`/shows/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
+                    href={`/shows/${promoBadge.badges.events.slug}?ref=${model.affiliate_code}`}
                     className="absolute top-0 inset-x-0 z-30 overflow-hidden h-10 flex items-center bg-gradient-to-r from-cyan-600/85 via-sky-500/85 to-violet-600/85 backdrop-blur-sm border-b border-cyan-300/30 shadow-[0_0_24px_rgba(34,211,238,0.45),inset_0_0_12px_rgba(255,255,255,0.05)]"
                   >
                     <div className="event-ticker-scroll">
                       {[0, 1].map((i) => (
                         <span key={i} className="text-white text-[11px] font-extrabold tracking-[0.14em] uppercase whitespace-nowrap px-6">
-                          🌊&nbsp;&nbsp;Catch me on the Runway&nbsp;&nbsp;·&nbsp;&nbsp;{eventBadges[0].badges.events.name.replace(/\s+\d{4}$/, '')}&nbsp;&nbsp;—&nbsp;&nbsp;Get Tickets&nbsp;&nbsp;→&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                          🌊&nbsp;&nbsp;Catch me on the Runway&nbsp;&nbsp;·&nbsp;&nbsp;{promoBadge.badges.events.name.replace(/\s+\d{4}$/, '')}&nbsp;&nbsp;—&nbsp;&nbsp;Get Tickets&nbsp;&nbsp;→&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         </span>
                       ))}
                     </div>
@@ -754,12 +772,12 @@ export default async function ModelProfilePage({ params }: Props) {
               {/* Profile Image (default circle layout) */}
               <div className="flex justify-center mb-4">
                 <div className="relative group">
-                  {/* Profile pic — event ticker clipped inside circle when badge active */}
-                  {eventBadges && eventBadges.length > 0 ? (
+                  {/* Profile pic — event ticker clipped inside circle when a promo event is live */}
+                  {promoBadge ? (
                     <Link
-                      href={`/shows/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
+                      href={`/shows/${promoBadge.badges.events.slug}?ref=${model.affiliate_code}`}
                       className="block"
-                      title={`${eventBadges[0].badges.events.name} — Get Tickets`}
+                      title={`${promoBadge.badges.events.name} — Get Tickets`}
                     >
                       <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ring-[4px] ring-cyan-400 shadow-[0_0_28px_rgba(34,211,238,0.4)] relative ${isOwner ? 'profile-pic-breathing' : ''}`}>
                         {profilePhotoUrl ? (
@@ -783,7 +801,7 @@ export default async function ModelProfilePage({ params }: Props) {
                           <div className="event-ticker-scroll">
                             {[0, 1].map((i) => (
                               <span key={i} className="text-white text-[9px] font-extrabold tracking-[0.12em] uppercase whitespace-nowrap px-3">
-                                🌊&nbsp;&nbsp;Catch me on the Runway&nbsp;&nbsp;·&nbsp;&nbsp;{eventBadges[0].badges.events.name.replace(/\s+\d{4}$/, '')}&nbsp;&nbsp;—&nbsp;&nbsp;Get Tickets&nbsp;&nbsp;→&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                🌊&nbsp;&nbsp;Catch me on the Runway&nbsp;&nbsp;·&nbsp;&nbsp;{promoBadge.badges.events.name.replace(/\s+\d{4}$/, '')}&nbsp;&nbsp;—&nbsp;&nbsp;Get Tickets&nbsp;&nbsp;→&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                               </span>
                             ))}
                           </div>
@@ -925,6 +943,20 @@ export default async function ModelProfilePage({ params }: Props) {
               allowVideoCall={model.allow_video_call ?? true}
               allowVoiceCall={model.allow_voice_call ?? true}
               allowTips={model.allow_tips ?? true}
+            />
+          )}
+
+          {/* Runway Badges — trophy wall of every show this model has been confirmed for */}
+          {eventBadges && eventBadges.length > 0 && (
+            <BadgeWall
+              items={eventBadges.map((eb: any) => ({
+                icon: eb.badges?.icon ?? null,
+                shortName: eb.badges?.events?.short_name || eb.badges?.name || "Show",
+                year: eb.badges?.events?.year ?? null,
+                name: eb.badges?.events?.name || eb.badges?.name || "",
+                status: eb.badges?.events?.status ?? null,
+                active: eb.badges?.is_active !== false,
+              }))}
             />
           )}
 

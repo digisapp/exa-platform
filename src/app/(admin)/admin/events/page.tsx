@@ -56,7 +56,29 @@ interface Event {
   tickets_enabled: boolean;
   ticket_price_cents: number | null;
   status: string;
+  year?: number | null;
+  description?: string | null;
+  location_city?: string | null;
+  location_state?: string | null;
+  location_country?: string | null;
+  points_awarded?: number | null;
 }
+
+const EMPTY_EVENT_FORM = {
+  name: "",
+  short_name: "",
+  slug: "",
+  year: String(new Date().getFullYear()),
+  status: "upcoming",
+  start_date: "",
+  end_date: "",
+  location_city: "",
+  location_state: "",
+  location_country: "US",
+  description: "",
+  badge_emoji: "",
+  points_awarded: "500",
+};
 
 interface TicketTier {
   id: string;
@@ -149,6 +171,12 @@ export default function AdminEventsPage() {
     quantity: "",
     is_active: true,
   });
+
+  // Event create/edit form state
+  const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [savingEvent, setSavingEvent] = useState(false);
+  const [eventForm, setEventForm] = useState({ ...EMPTY_EVENT_FORM });
 
   const supabase = createClient();
 
@@ -392,6 +420,58 @@ export default function AdminEventsPage() {
     setTierDialogOpen(false);
   }
 
+  function openEventDialog(event?: Event) {
+    if (event) {
+      setEditingEvent(event);
+      setEventForm({
+        name: event.name || "",
+        short_name: event.short_name || "",
+        slug: event.slug || "",
+        year: String(event.year ?? new Date().getFullYear()),
+        status: event.status || "upcoming",
+        start_date: event.start_date || "",
+        end_date: event.end_date || "",
+        location_city: event.location_city || "",
+        location_state: event.location_state || "",
+        location_country: event.location_country || "US",
+        description: event.description || "",
+        badge_emoji: "",
+        points_awarded: String(event.points_awarded ?? 500),
+      });
+    } else {
+      setEditingEvent(null);
+      setEventForm({ ...EMPTY_EVENT_FORM });
+    }
+    setEventDialogOpen(true);
+  }
+
+  async function saveEvent() {
+    if (!eventForm.name || !eventForm.short_name) {
+      toast.error("Name and short name are required");
+      return;
+    }
+    setSavingEvent(true);
+    const res = await fetch("/api/admin/events", {
+      method: editingEvent ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editingEvent ? { id: editingEvent.id, ...eventForm } : eventForm),
+    });
+    const json = await res.json().catch(() => ({}));
+    setSavingEvent(false);
+
+    if (!res.ok && res.status !== 207) {
+      toast.error(json.error || "Failed to save event");
+      return;
+    }
+    if (json.warning) toast.warning(json.warning);
+    else toast.success(editingEvent ? "Event updated" : "Event created");
+
+    setEventDialogOpen(false);
+    await fetchEvents();
+    // Reflect edits in the currently-selected event panel
+    if (json.event) setSelectedEvent((prev) => (prev && prev.id === json.event.id ? json.event : prev));
+  }
+
   async function updateCommissionStatus(commissionId: string, newStatus: "confirmed" | "paid" | "cancelled") {
     const updateData: Record<string, unknown> = { status: newStatus, updated_at: new Date().toISOString() };
     if (newStatus === "paid") updateData.paid_at = new Date().toISOString();
@@ -453,42 +533,230 @@ export default function AdminEventsPage() {
         </div>
       </div>
 
+      {/* Create / edit event */}
+      <Dialog open={eventDialogOpen} onOpenChange={setEventDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingEvent ? "Edit Event" : "New Event"}</DialogTitle>
+            <DialogDescription>
+              {editingEvent
+                ? "Update event details. Name/short-name/year changes also update this event's badge label."
+                : "Creating an event also creates its “confirmed to walk” badge, so models are badged automatically when accepted."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Name *</Label>
+              <Input
+                placeholder="EXA's Miami Swim Week 2027"
+                value={eventForm.name}
+                onChange={(e) => setEventForm({ ...eventForm, name: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Short name *</Label>
+                <Input
+                  placeholder="MSW"
+                  value={eventForm.short_name}
+                  onChange={(e) => setEventForm({ ...eventForm, short_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Year *</Label>
+                <Input
+                  type="number"
+                  placeholder="2027"
+                  value={eventForm.year}
+                  onChange={(e) => setEventForm({ ...eventForm, year: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Slug</Label>
+                <Input
+                  placeholder="auto from name"
+                  value={eventForm.slug}
+                  onChange={(e) => setEventForm({ ...eventForm, slug: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <select
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  value={eventForm.status}
+                  onChange={(e) => setEventForm({ ...eventForm, status: e.target.value })}
+                >
+                  <option value="upcoming">Upcoming</option>
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start date</Label>
+                <Input
+                  type="date"
+                  value={eventForm.start_date}
+                  onChange={(e) => setEventForm({ ...eventForm, start_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>End date</Label>
+                <Input
+                  type="date"
+                  value={eventForm.end_date}
+                  onChange={(e) => setEventForm({ ...eventForm, end_date: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>City</Label>
+                <Input
+                  placeholder="Miami"
+                  value={eventForm.location_city}
+                  onChange={(e) => setEventForm({ ...eventForm, location_city: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>State</Label>
+                <Input
+                  placeholder="FL"
+                  value={eventForm.location_state}
+                  onChange={(e) => setEventForm({ ...eventForm, location_state: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Country</Label>
+                <Input
+                  placeholder="US"
+                  value={eventForm.location_country}
+                  onChange={(e) => setEventForm({ ...eventForm, location_country: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Input
+                placeholder="The premier swimwear fashion event…"
+                value={eventForm.description}
+                onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Badge emoji</Label>
+                <Input
+                  placeholder="🏖️ (auto by short name)"
+                  value={eventForm.badge_emoji}
+                  onChange={(e) => setEventForm({ ...eventForm, badge_emoji: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Points awarded</Label>
+                <Input
+                  type="number"
+                  value={eventForm.points_awarded}
+                  onChange={(e) => setEventForm({ ...eventForm, points_awarded: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEventDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={saveEvent} disabled={savingEvent}>
+              {savingEvent ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : editingEvent ? (
+                "Save changes"
+              ) : (
+                "Create event"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Events List */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Events
-            </CardTitle>
-            <CardDescription>Select an event to manage tickets</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Events
+                </CardTitle>
+                <CardDescription>Select an event to manage tickets</CardDescription>
+              </div>
+              <Button size="sm" onClick={() => openEventDialog()}>
+                <Plus className="h-4 w-4 mr-1" />
+                New
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-2">
+            {events.length === 0 && (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                No events yet. Create one to start awarding badges and selling tickets.
+              </p>
+            )}
             {events.map((event) => (
-              <button
-                key={event.id}
-                onClick={() => setSelectedEvent(event)}
-                className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                  selectedEvent?.id === event.id
-                    ? "border-pink-500 bg-pink-500/10"
-                    : "border-border hover:border-pink-500/50"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{event.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {event.short_name} &bull;{" "}
-                      {event.start_date
-                        ? format(new Date(event.start_date), "MMM d, yyyy")
-                        : "TBA"}
-                    </p>
+              <div key={event.id} className="relative">
+                <button
+                  onClick={() => setSelectedEvent(event)}
+                  className={`w-full text-left p-3 pr-10 rounded-lg border transition-colors ${
+                    selectedEvent?.id === event.id
+                      ? "border-pink-500 bg-pink-500/10"
+                      : "border-border hover:border-pink-500/50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{event.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {event.short_name} &bull;{" "}
+                        {event.start_date
+                          ? format(new Date(event.start_date), "MMM d, yyyy")
+                          : "TBA"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {event.tickets_enabled && (
+                        <Ticket className="h-4 w-4 text-pink-500" />
+                      )}
+                      <span
+                        className={`px-1.5 py-0.5 rounded-full text-[10px] capitalize ${
+                          event.status === "active"
+                            ? "bg-green-500/10 text-green-500"
+                            : event.status === "upcoming"
+                            ? "bg-blue-500/10 text-blue-500"
+                            : event.status === "completed"
+                            ? "bg-muted text-muted-foreground"
+                            : "bg-red-500/10 text-red-500"
+                        }`}
+                      >
+                        {event.status}
+                      </span>
+                    </div>
                   </div>
-                  {event.tickets_enabled && (
-                    <Ticket className="h-4 w-4 text-pink-500" />
-                  )}
-                </div>
-              </button>
+                </button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-2 h-7 w-7 opacity-60 hover:opacity-100"
+                  onClick={() => openEventDialog(event)}
+                  title="Edit event"
+                >
+                  <Edit className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             ))}
           </CardContent>
         </Card>
