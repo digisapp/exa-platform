@@ -218,7 +218,7 @@ export default async function ModelProfilePage({ params }: Props) {
     // Guard against empty array — .in("id", []) throws in Supabase-js
     const { data: eventsData } = eventIds.length > 0 ? await supabase
       .from("events")
-      .select("id, slug, name, short_name, year, badge_image_url, status")
+      .select("id, slug, name, short_name, year, badge_image_url, status, start_date")
       .in("id", eventIds) as { data: any[] | null } : { data: [] };
 
     // Combine badge and event data
@@ -240,11 +240,22 @@ export default async function ModelProfilePage({ params }: Props) {
 
   // The promo ticker ("Catch me on the Runway — Get Tickets") only shows for an
   // UPCOMING/ACTIVE event whose badge is still active. The trophy wall above
-  // shows every earned badge regardless of this.
-  const promoBadge = eventBadges?.find((eb: any) =>
-    eb.badges?.is_active !== false &&
-    (eb.badges?.events?.status === "upcoming" || eb.badges?.events?.status === "active")
-  ) || null;
+  // shows every earned badge regardless of this. When a model is confirmed for
+  // more than one live show, promote the SOONEST-starting one (an active show
+  // sorts ahead of a far-future upcoming one, since its start_date is earlier).
+  const promoBadge = (eventBadges ?? [])
+    .filter((eb: any) =>
+      eb.badges?.is_active !== false &&
+      (eb.badges?.events?.status === "upcoming" || eb.badges?.events?.status === "active")
+    )
+    .sort((a: any, b: any) => {
+      const da = a.badges?.events?.start_date;
+      const db = b.badges?.events?.start_date;
+      if (da && db) return new Date(da).getTime() - new Date(db).getTime();
+      if (da) return -1; // events with a known date rank ahead of undated ones
+      if (db) return 1;
+      return 0;
+    })[0] || null;
 
   // Resolve content_items media_url (can be storage path or full URL)
   const resolveMediaUrl = (url: string) =>
