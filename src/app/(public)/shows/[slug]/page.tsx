@@ -527,7 +527,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                   </h2>
                 </div>
 
-                <DigisScheduleSection affiliateRef={ref} />
+                <DigisScheduleSection affiliateRef={ref} schedule={event.schedule ?? undefined} />
               </div>
             </div>
           )}
