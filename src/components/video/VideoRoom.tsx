@@ -63,6 +63,25 @@ export function VideoRoom({
     onCallEnd();
   }, [sessionId, onCallEnd]);
 
+  // Heartbeat while the call is live so the reconciliation sweeper knows the
+  // call's true last-alive time (and can bill a crashed call accurately).
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const sendHeartbeat = () => {
+      fetch("/api/calls/heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    sendHeartbeat();
+    const interval = setInterval(sendHeartbeat, 20_000);
+    return () => clearInterval(interval);
+  }, [isConnected, sessionId]);
+
   const handleTipSuccess = (amount: number, newBalance: number) => {
     setLocalCoinBalance(newBalance);
     if (onTipSuccess) {

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (suspended) return suspended;
 
     let recipientActor: { id: string } | null = null;
-    let recipientModel: { id: string; username: string | null; first_name: string | null; user_id: string | null; video_call_rate: number | null; voice_call_rate: number | null; email?: string | null } | null = null;
+    let recipientModel: { id: string; username: string | null; first_name: string | null; user_id: string | null; video_call_rate: number | null; voice_call_rate: number | null; email?: string | null; video_is_online?: boolean | null } | null = null;
     let conversationId: string | null = providedConversationId || null;
 
     // If conversationId provided, get recipient from conversation
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         // Try to get model info (might be a model or fan)
         const { data: model } = await supabase
           .from("models")
-          .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email")
+          .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, video_is_online")
           .eq("user_id", recipientActorData.user_id)
           .single();
 
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       // Use recipientUsername to find recipient
       const { data: model } = await supabase
         .from("models")
-        .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email")
+        .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, video_is_online")
         .eq("username", recipientUsername)
         .eq("is_approved", true)
         .single();
@@ -148,6 +148,17 @@ export async function POST(request: NextRequest) {
 
     if (!recipientActor || !recipientModel) {
       return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
+    }
+
+    // Don't let a fan start a call into dead air. If the model isn't currently
+    // online (offline-models cron flips this off after ~2 min of inactivity),
+    // return a clear, actionable error instead of a call that just hangs until
+    // it auto-declines. Only gates fans calling real models.
+    if (callerActor.type === "fan" && recipientModel.video_is_online === false) {
+      return NextResponse.json({
+        error: `${recipientModel.first_name || recipientModel.username || "This model"} is offline right now. Try again when they're online, or send a message.`,
+        code: "recipient_offline",
+      }, { status: 409 });
     }
 
     // Check caller's coin balance if they're a fan calling a model with a rate

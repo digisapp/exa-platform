@@ -89,7 +89,7 @@ export function VideoCallButton({
         if (response.status === 402) {
           toast.error(`Insufficient coins. Need ${data.required}, have ${data.balance}`);
         } else if (response.status === 409) {
-          toast.error("A call is already in progress");
+          toast.error(data.error || "A call is already in progress");
         } else {
           toast.error(data.error || "Failed to start call");
         }
