@@ -37,7 +37,6 @@ export function VideoCallButton({
   recipientIsModel = false,
   recipientActorId,
   recipientName,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   recipientAvatar,
   videoCallRate = 5,
   callType = "video",
@@ -130,8 +129,10 @@ export function VideoCallButton({
         canTip={canTip}
         recipientActorId={recipientActorId}
         recipientName={recipientName}
+        recipientAvatar={recipientAvatar}
         coinBalance={coinBalance}
         callType={callType}
+        waitForAnswer
         onTipSuccess={(_, newBalance) => {
           if (onBalanceChange) {
             onBalanceChange(newBalance);

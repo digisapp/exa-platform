@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   LiveKitRoom,
   VideoConference,
@@ -12,8 +12,10 @@ import {
 import { ConnectionState } from "livekit-client";
 import "@livekit/components-styles";
 import { Button } from "@/components/ui/button";
-import { PhoneOff, Mic, MicOff, Video, VideoOff, Coins, Heart, Loader2, X, Wifi, WifiOff } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PhoneOff, PhoneCall, Mic, MicOff, Video, VideoOff, Coins, Heart, Loader2, X, Wifi, WifiOff } from "lucide-react";
 import { CALL_COST_PER_MINUTE } from "@/lib/livekit-constants";
+import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { showTipSuccessToast } from "@/lib/tip-toast";
@@ -30,9 +32,12 @@ interface VideoRoomProps {
   canTip?: boolean;
   recipientActorId?: string;
   recipientName?: string;
+  recipientAvatar?: string | null;
   coinBalance?: number;
   onTipSuccess?: (amount: number, newBalance: number) => void;
   callType?: "video" | "voice";
+  /** Caller side: show a ringing screen until the recipient answers. */
+  waitForAnswer?: boolean;
 }
 
 export function VideoRoom({
@@ -43,25 +48,79 @@ export function VideoRoom({
   canTip = false,
   recipientActorId,
   recipientName,
+  recipientAvatar,
   coinBalance = 0,
   onTipSuccess,
   callType = "video",
+  waitForAnswer = false,
 }: VideoRoomProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [localCoinBalance, setLocalCoinBalance] = useState(coinBalance);
+  // Receivers (waitForAnswer=false) are already in an accepted call, so treat
+  // them as answered from the start. Callers wait for the recipient to pick up.
+  const [answered, setAnswered] = useState(!waitForAnswer);
+  const [outcome, setOutcome] = useState<null | "declined" | "missed">(null);
+  const outcomeRef = useRef(outcome);
+  useEffect(() => { outcomeRef.current = outcome; }, [outcome]);
 
   const handleDisconnect = useCallback(async () => {
-    try {
-      await fetch("/api/calls/end", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
-      });
-    } catch (error) {
-      console.error("Error ending call:", error);
+    // If the call ended before it was ever answered (declined/missed), the
+    // session is already in a terminal state — don't POST /end and overwrite it.
+    if (!outcomeRef.current) {
+      try {
+        await fetch("/api/calls/end", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+      } catch (error) {
+        console.error("Error ending call:", error);
+      }
     }
     onCallEnd();
   }, [sessionId, onCallEnd]);
+
+  const handleRemoteJoined = useCallback(() => setAnswered(true), []);
+
+  // Caller side: watch the session row for the recipient's response.
+  useEffect(() => {
+    if (!waitForAnswer) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`call-status:${sessionId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "video_call_sessions", filter: `id=eq.${sessionId}` },
+        (payload) => {
+          const status = (payload.new as { status?: string }).status;
+          if (status === "active") setAnswered(true);
+          else if (status === "declined") setOutcome((prev) => prev ?? "declined");
+          else if (status === "missed") setOutcome((prev) => prev ?? "missed");
+        }
+      )
+      .subscribe();
+    return () => { channel.unsubscribe(); };
+  }, [waitForAnswer, sessionId]);
+
+  // Safety net: if realtime never delivers the recipient's response, stop
+  // ringing after the recipient's auto-decline window (~120s) has elapsed.
+  useEffect(() => {
+    if (!waitForAnswer || answered || outcome) return;
+    const t = setTimeout(() => setOutcome("missed"), 125_000);
+    return () => clearTimeout(t);
+  }, [waitForAnswer, answered, outcome]);
+
+  // Show the outcome briefly, then close the call UI.
+  useEffect(() => {
+    if (!outcome) return;
+    toast.info(
+      outcome === "declined"
+        ? `${recipientName || "They"} declined the call`
+        : `No answer from ${recipientName || "the other person"}`
+    );
+    const t = setTimeout(() => onCallEnd(), 2500);
+    return () => clearTimeout(t);
+  }, [outcome, recipientName, onCallEnd]);
 
   // Heartbeat while the call is live so the reconciliation sweeper knows the
   // call's true last-alive time (and can bill a crashed call accurately).
@@ -126,9 +185,51 @@ export function VideoRoom({
           coinBalance={localCoinBalance}
           onTipSuccess={handleTipSuccess}
           callType={callType}
+          billingActive={answered}
+          onRemoteJoined={handleRemoteJoined}
         />
         <RoomAudioRenderer />
       </LiveKitRoom>
+
+      {/* Caller ringing screen — covers the room until the recipient answers */}
+      {waitForAnswer && !answered && !outcome && (
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-gradient-to-b from-black via-violet-950/50 to-black">
+          <div className="relative">
+            <div className="absolute -inset-2 rounded-full bg-pink-500/40 blur-2xl animate-pulse" />
+            <Avatar className="relative h-28 w-28 ring-4 ring-pink-500/70 shadow-[0_0_50px_rgba(236,72,153,0.55)]">
+              <AvatarImage src={recipientAvatar || undefined} alt={recipientName || "Model"} />
+              <AvatarFallback className="text-3xl bg-gradient-to-br from-pink-500 to-violet-500 text-white">
+                {(recipientName || "?").charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          <h3 className="mt-6 text-2xl font-semibold text-white">{recipientName || "Calling…"}</h3>
+          <p className="mt-2 flex items-center gap-2 text-pink-300/90">
+            <PhoneCall className="h-4 w-4 animate-pulse" />
+            <span>Ringing…</span>
+          </p>
+          <Button
+            variant="destructive"
+            size="icon"
+            aria-label="Cancel call"
+            className="mt-10 rounded-full w-14 h-14 bg-red-500 hover:bg-red-600"
+            onClick={handleDisconnect}
+          >
+            <PhoneOff className="h-6 w-6" />
+          </Button>
+        </div>
+      )}
+
+      {/* Outcome screen — brief message before the call UI closes */}
+      {outcome && (
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/90">
+          <p className="text-xl font-medium text-white">
+            {outcome === "declined"
+              ? `${recipientName || "They"} declined`
+              : `No answer`}
+          </p>
+        </div>
+      )}
     </div>
     </ErrorBoundary>
   );
@@ -144,6 +245,10 @@ interface VideoCallContentProps {
   coinBalance?: number;
   onTipSuccess?: (amount: number, newBalance: number) => void;
   callType?: "video" | "voice";
+  /** Only run the visible duration/cost timer once the call is answered. */
+  billingActive?: boolean;
+  /** Fires when a remote participant joins (recipient answered). */
+  onRemoteJoined?: () => void;
 }
 
 function VideoCallContent({
@@ -156,6 +261,8 @@ function VideoCallContent({
   coinBalance = 0,
   onTipSuccess,
   callType = "video",
+  billingActive = true,
+  onRemoteJoined,
 }: VideoCallContentProps) {
   const [callDuration, setCallDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
@@ -167,16 +274,24 @@ function VideoCallContent({
   const room = useRoomContext();
   const connectionState = useConnectionState();
 
-  // Call duration timer
+  // Call duration timer — only ticks once the call is answered so the caller
+  // doesn't see a running clock/cost while still ringing.
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected || !billingActive) return;
 
     const interval = setInterval(() => {
       setCallDuration((prev) => prev + 1);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isConnected]);
+  }, [isConnected, billingActive]);
+
+  // Detect the recipient answering (a remote participant appears).
+  useEffect(() => {
+    if (participants.some((p) => !p.isLocal)) {
+      onRemoteJoined?.();
+    }
+  }, [participants, onRemoteJoined]);
 
   // Disable camera for voice calls when connected
   useEffect(() => {
