@@ -36,25 +36,37 @@ export async function settleCallSession(p: SettleCallParams): Promise<SettleCall
   const { admin, sessionId, initiatedBy, recipientId, callType, durationSeconds } = p;
 
   // Only a fan-initiated call to a model with a rate results in a charge.
-  const { data: callerActor } = await admin
+  // We must distinguish "positively non-chargeable" (recipient really isn't a
+  // paid model) from "couldn't determine" (a lookup transiently failed). The
+  // latter must NOT settle at 0 — that would permanently drop a real charge.
+  const { data: callerActor, error: callerErr } = await admin
     .from("actors")
     .select("type")
     .eq("id", initiatedBy)
-    .single() as { data: { type: string } | null };
+    .single() as { data: { type: string } | null; error: { code?: string } | null };
 
-  const { data: recipientActor } = await admin
+  const { data: recipientActor, error: recipientErr } = await admin
     .from("actors")
     .select("user_id")
     .eq("id", recipientId)
-    .single() as { data: { user_id: string } | null };
+    .single() as { data: { user_id: string } | null; error: { code?: string } | null };
 
   const recipientUserId = recipientActor?.user_id;
-  const { data: recipientModel } = recipientUserId
+  const { data: recipientModel, error: modelErr } = recipientUserId
     ? await admin.from("models")
         .select("video_call_rate, voice_call_rate, user_id")
         .eq("user_id", recipientUserId)
-        .single() as { data: { video_call_rate: number | null; voice_call_rate: number | null; user_id: string } | null }
-    : { data: null };
+        .single() as { data: { video_call_rate: number | null; voice_call_rate: number | null; user_id: string } | null; error: { code?: string } | null }
+    : { data: null, error: null };
+
+  // PGRST116 = "no rows found" — a legitimate non-model recipient. Any other
+  // error means the lookup itself failed; leave the call unsettled so the
+  // sweeper retries rather than silently marking it charged-0.
+  const lookupFailed = (e: { code?: string } | null) => !!e && e.code !== "PGRST116";
+  if (lookupFailed(callerErr) || lookupFailed(recipientErr) || lookupFailed(modelErr)) {
+    logger.error("Call settlement: chargeability lookup failed — left unsettled for retry", undefined, { sessionId });
+    return { settled: false, coinsCharged: 0 };
+  }
 
   const ratePerMinute = callType === "voice"
     ? (recipientModel?.voice_call_rate || 0)
@@ -70,10 +82,14 @@ export async function settleCallSession(p: SettleCallParams): Promise<SettleCall
 
   // Nothing to charge (free call, model→fan, model→model): settle immediately.
   if (!chargeable) {
-    await admin
+    const { error: settleErr } = await admin
       .from("video_call_sessions")
       .update({ settled: true, coins_charged: 0 })
       .eq("id", sessionId);
+    if (settleErr) {
+      logger.error("Call settlement: failed to mark free call settled — will retry", settleErr, { sessionId });
+      return { settled: false, coinsCharged: 0 };
+    }
     return { settled: true, coinsCharged: 0 };
   }
 
@@ -99,10 +115,18 @@ export async function settleCallSession(p: SettleCallParams): Promise<SettleCall
   }
 
   const coinsCharged = result.coins_charged ?? 0;
-  await admin
+  const { error: settleErr } = await admin
     .from("video_call_sessions")
     .update({ settled: true, coins_charged: coinsCharged })
     .eq("id", sessionId);
+
+  if (settleErr) {
+    // The coins already moved (end_call_transfer is idempotent). Only the
+    // bookkeeping write failed — report unsettled so the sweeper reconciles
+    // the flag rather than the caller trusting a state the row doesn't reflect.
+    logger.error("Call settlement: transfer succeeded but marking settled failed — sweeper will reconcile", settleErr, { sessionId, coinsCharged });
+    return { settled: false, coinsCharged };
+  }
 
   return { settled: true, coinsCharged };
 }
