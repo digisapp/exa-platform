@@ -93,6 +93,13 @@ export function GigsFeed({ gigs, modelApplications, isApproved }: GigsFeedProps)
         </Badge>
       );
     }
+    if (status === "waitlist") {
+      return (
+        <Badge className="bg-violet-500/20 text-violet-300 border-violet-500/30 gap-1">
+          <Clock className="h-3 w-3" /> Shortlisted
+        </Badge>
+      );
+    }
     if (status === "rejected") {
       return (
         <Badge variant="outline" className="text-white/40 border-white/10">

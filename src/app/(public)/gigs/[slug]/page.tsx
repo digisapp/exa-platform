@@ -409,10 +409,16 @@ export default async function GigDetailPage({ params }: Props) {
                         className={`capitalize ${
                           existingApplication.status === "accepted" || existingApplication.status === "approved"
                             ? "bg-green-500"
+                            : existingApplication.status === "waitlist"
+                            ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
                             : ""
                         }`}
                       >
-                        {existingApplication.status === "approved" ? "Confirmed" : existingApplication.status}
+                        {existingApplication.status === "approved"
+                          ? "Confirmed"
+                          : existingApplication.status === "waitlist"
+                          ? "Shortlisted"
+                          : existingApplication.status}
                       </Badge>
                       {existingApplication.payment_status === "paid" && (
                         <p className="text-xs text-green-400 mt-2">Payment received</p>

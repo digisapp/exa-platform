@@ -2,6 +2,110 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
+import { sendGigApplicationAcceptedEmail, sendGigWaitlistedEmail } from "@/lib/email";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
+
+// Award the gig's event badge to a model (same gating as the manage_event_badge
+// DB trigger — is_active only; see migration 20260701000001).
+async function awardEventBadge(adminClient: SupabaseClient, eventId: string, modelId: string) {
+  const { data: badge } = await (adminClient as any)
+    .from("badges")
+    .select("id")
+    .eq("event_id", eventId)
+    .eq("badge_type", "event")
+    .eq("is_active", true)
+    .single();
+  if (!badge) return;
+  await (adminClient as any)
+    .from("model_badges")
+    .upsert(
+      { model_id: modelId, badge_id: badge.id, earned_at: new Date().toISOString() },
+      { onConflict: "model_id,badge_id" }
+    );
+}
+
+// Promote waitlisted applications into freed spots. Called after any status
+// change that can free capacity. Oldest waitlisted first; each promotion goes
+// through the same effects as a manual accept (badge award via the DB trigger
+// + this safeguard, spots_filled recomputed by trg_sync_gig_spots_filled) and
+// sends the standard acceptance email. Data analysis (2026-07-04) showed
+// acceptance is the strongest retention driver — 85% of applicants never got
+// one; this manufactures more "yes" moments from the same spots.
+async function promoteFromWaitlist(adminClient: SupabaseClient, gigId: string) {
+  try {
+    // Fresh read — spots_filled was just recomputed by the trigger.
+    const { data: gig } = await (adminClient as any)
+      .from("gigs")
+      .select("id, title, spots, spots_filled, event_id, start_at, location_city, location_state, status")
+      .eq("id", gigId)
+      .single();
+
+    // Only promote into a bounded, open gig with free capacity.
+    if (!gig || gig.status !== "open" || !gig.spots) return;
+    const freeSpots = gig.spots - (gig.spots_filled ?? 0);
+    if (freeSpots <= 0) return;
+
+    const { data: waitlisted } = await (adminClient as any)
+      .from("gig_applications")
+      .select("id, model_id")
+      .eq("gig_id", gigId)
+      .eq("status", "waitlist")
+      .order("applied_at", { ascending: true })
+      .limit(freeSpots);
+
+    if (!waitlisted?.length) return;
+
+    let eventName: string | undefined;
+    if (gig.event_id) {
+      const { data: ev } = await (adminClient as any)
+        .from("events")
+        .select("short_name, year")
+        .eq("id", gig.event_id)
+        .single();
+      if (ev) eventName = `${ev.short_name} ${ev.year}`;
+    }
+
+    for (const app of waitlisted) {
+      const { data: promoted } = await (adminClient as any)
+        .from("gig_applications")
+        .update({
+          status: "accepted",
+          reviewed_at: new Date().toISOString(),
+          admin_note: "Auto-promoted from waitlist",
+        })
+        .eq("id", app.id)
+        .eq("status", "waitlist") // compare-and-set: skip if changed concurrently
+        .select("id");
+
+      if (!promoted?.length) continue;
+
+      if (gig.event_id) {
+        await awardEventBadge(adminClient, gig.event_id, app.model_id);
+      }
+
+      // Congrats email (non-blocking)
+      const { data: model } = await (adminClient as any)
+        .from("models")
+        .select("email, first_name, username")
+        .eq("id", app.model_id)
+        .single();
+      if (model?.email) {
+        sendGigApplicationAcceptedEmail({
+          to: model.email,
+          modelName: model.first_name || model.username || "Model",
+          gigTitle: gig.title,
+          gigDate: gig.start_at ? new Date(gig.start_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : undefined,
+          gigLocation: [gig.location_city, gig.location_state].filter(Boolean).join(", ") || undefined,
+          eventName,
+        }).catch((err) => logger.error("Waitlist promotion email failed", err, { applicationId: app.id }));
+      }
+    }
+  } catch (err) {
+    // Promotion is best-effort — never fail the admin's original action.
+    logger.error("Waitlist promotion failed", err, { gigId });
+  }
+}
 
 export async function PATCH(
   request: NextRequest,
@@ -29,11 +133,17 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status } = body;
+    let { status } = body;
 
-    if (!status || !["accepted", "rejected", "pending", "cancelled"].includes(status)) {
+    if (!status || !["accepted", "rejected", "pending", "cancelled", "waitlist"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
+
+    // The DB CHECK constraint has no 'cancelled' value (pending/accepted/
+    // rejected/withdrawn/waitlist) — the old cancel path always failed at the
+    // DB. Map it to 'rejected', which is what the admin UI's "Declined" bucket
+    // treats it as anyway.
+    if (status === "cancelled") status = "rejected";
 
     // Use service role client to bypass RLS
     const adminClient = createServiceRoleClient();
@@ -109,10 +219,10 @@ export async function PATCH(
       }
     }
 
-    // If un-accepting (cancel, reject, or revert to pending), remove the event
-    // badge. spots_filled is recomputed by trg_sync_gig_spots_filled; don't
-    // decrement it here too.
-    if ((status === "cancelled" || status === "rejected" || status === "pending") && application.status === "accepted") {
+    // If un-accepting (reject, revert to pending, or move to waitlist), remove
+    // the event badge. spots_filled is recomputed by trg_sync_gig_spots_filled;
+    // don't decrement it here too.
+    if ((status === "rejected" || status === "pending" || status === "waitlist") && application.status === "accepted") {
       // Remove event badge if no other accepted applications for this event
       if (application.gig?.event_id) {
         // Check if model has other accepted applications for gigs linked to this event
@@ -146,6 +256,38 @@ export async function PATCH(
           }
         }
       }
+    }
+
+    // Newly waitlisted → positive "you're shortlisted" touchpoint (non-blocking).
+    if (status === "waitlist" && application.status !== "waitlist") {
+      const { data: model } = await (adminClient as any)
+        .from("models")
+        .select("email, first_name, username")
+        .eq("id", application.model_id)
+        .single();
+      if (model?.email) {
+        let eventName: string | undefined;
+        if (application.gig?.event_id) {
+          const { data: ev } = await (adminClient as any)
+            .from("events")
+            .select("short_name, year")
+            .eq("id", application.gig.event_id)
+            .single();
+          if (ev) eventName = `${ev.short_name} ${ev.year}`;
+        }
+        sendGigWaitlistedEmail({
+          to: model.email,
+          modelName: model.first_name || model.username || "Model",
+          gigTitle: application.gig?.title || "an EXA gig",
+          eventName,
+        }).catch((err) => logger.error("Waitlist email failed", err, { applicationId: id }));
+      }
+    }
+
+    // A spot may have been freed (accepted → anything else): promote the oldest
+    // waitlisted applicant(s) into the freed capacity.
+    if (application.status === "accepted" && status !== "accepted") {
+      await promoteFromWaitlist(adminClient, application.gig_id);
     }
 
     // Log the admin action

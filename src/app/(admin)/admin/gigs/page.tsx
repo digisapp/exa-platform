@@ -753,7 +753,7 @@ export default function AdminGigsPage() {
     }
   }
 
-  async function handleApplicationAction(appId: string, action: "accepted" | "rejected" | "cancelled" | "pending") {
+  async function handleApplicationAction(appId: string, action: "accepted" | "rejected" | "cancelled" | "pending" | "waitlist") {
     setProcessingApp(appId);
     try {
       const app = applications.find(a => a.id === appId);
@@ -770,8 +770,10 @@ export default function AdminGigsPage() {
         throw new Error(data.error || "Failed to update application");
       }
 
-      // Send notification (chat message + email) via API route to bypass RLS
-      if (app.model) {
+      // Send notification (chat message + email) via API route to bypass RLS.
+      // Waitlist is excluded: the PATCH route already sends the "you're
+      // shortlisted" email server-side (and auto-promotions email from there too).
+      if (app.model && action !== "waitlist") {
         const gig = gigs.find(g => g.id === app.gig_id);
 
         try {
@@ -812,6 +814,8 @@ export default function AdminGigsPage() {
 
       const toastMessage = action === "accepted"
         ? "Model accepted and notified!"
+        : action === "waitlist"
+        ? "Model shortlisted — auto-promoted when a spot frees up"
         : action === "cancelled"
         ? "Model cancelled"
         : action === "pending"
