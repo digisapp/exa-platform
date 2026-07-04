@@ -1,103 +1,20 @@
 import { stripe } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
 
-const PACKAGES = {
-  "opening-show": {
-    name: "Opening Show — Tuesday May 26, 2026",
-    fullPrice: 350000, // $3,500.00 in cents
-    installmentPrice: 116700, // $1,167.00/month in cents
-    description: "Premier opening night runway show at Miami Swim Week 2026",
-  },
-  "day-2": {
-    name: "Day 2 Show — Wednesday May 27, 2026",
-    fullPrice: 250000, // $2,500.00 in cents
-    installmentPrice: 83400, // $834.00/month in cents
-    description: "Runway show on Day 2 of Miami Swim Week 2026",
-  },
-  "day-4": {
-    name: "Day 4 Show — Friday May 29, 2026",
-    fullPrice: 150000, // $1,500.00 in cents
-    installmentPrice: 50000, // $500.00/month in cents
-    description: "Runway show on Day 4 of Miami Swim Week 2026",
-  },
-  "day-5": {
-    name: "Day 5 Show — Saturday May 30, 2026",
-    fullPrice: 150000, // $1,500.00 in cents
-    installmentPrice: 50000, // $500.00/month in cents
-    description: "Saturday runway show at Miami Swim Week 2026",
-  },
-  "day-6": {
-    name: "Day 6 Show — Sunday May 31, 2026",
-    fullPrice: 150000, // $1,500.00 in cents
-    installmentPrice: 50000, // $500.00/month in cents
-    description: "Grand finale closing show at Miami Swim Week 2026",
-  },
-  "full-production": {
-    name: "Solo Show — Full Production — Miami Swim Week 2026",
-    fullPrice: 2350000, // $23,500.00 in cents
-    installmentPrice: 783400, // $7,834.00/month in cents
-    description: "Exclusive single-brand runway show with full production, all models, styling, show direction, and a dedicated live shopping space. Your brand owns the entire show.",
-  },
-  "showroom-halfday": {
-    name: "Private Showroom — Half Day (4 hrs)",
-    fullPrice: 120000, // $1,200.00 in cents
-    installmentPrice: 120000, // full only
-    description: "4-hour private ballroom showroom at our Miami Swim Week hotel venue. Your brand, your space — invite buyers, press, and VIPs for an exclusive presentation.",
-  },
-  "showroom-fullday": {
-    name: "Private Showroom — The Alexander Hotel, Miami Beach",
-    fullPrice: 160000, // $1,600.00 in cents
-    installmentPrice: 160000, // full only
-    description: "Private ballroom showroom at The Alexander Hotel, Miami Beach during Swim Week. Your brand, your space — invite buyers, press, and VIPs for an exclusive presentation.",
-  },
-  "swim-shop": {
-    name: "EXA Swim Shop — May 26–31, 2026",
-    fullPrice: 50000, // $500.00 in cents
-    installmentPrice: 50000, // full only
-    description: "Sell your swimwear collection in the EXA Swim Shop during Miami Swim Week 2026 (May 26–31). Prime retail pop-up location with show week foot traffic.",
-  },
-  "lobby-display": {
-    name: "Hotel Lobby Display — May 26–31, 2026",
-    fullPrice: 60000, // $600.00 in cents
-    installmentPrice: 60000, // full only
-    description: "Branded display in the hotel lobby all week at Miami Swim Week 2026. Visible to every guest, model, designer, buyer, and attendee.",
-  },
-  "beach-shoot-halfday": {
-    name: "Miami Beach Shoot Day — Half Day",
-    fullPrice: 150000, // $1,500.00 in cents
-    installmentPrice: 150000, // full only
-    description: "Half-day professional photo & video shoot with EXA models in your swimwear at a Miami Beach location during Swim Week. All content is yours.",
-  },
-  "afterparty-standard": {
-    name: "Closing Party Sponsorship — Standard",
-    fullPrice: 200000, // $2,000.00 in cents
-    installmentPrice: 200000, // full only
-    description: "Standard sponsorship of the official EXA Closing Party on Sunday May 31, 2026. Logo on event materials, branded presence, product placement.",
-  },
-  "afterparty-premier": {
-    name: "Closing Party Sponsorship — Premier",
-    fullPrice: 350000, // $3,500.00 in cents
-    installmentPrice: 350000, // full only
-    description: "Premier sponsorship of the official EXA Closing Party on Sunday May 31, 2026. Featured logo placement, dedicated product moment, social features.",
-  },
-  "afterparty-presenting": {
-    name: "Closing Party Sponsorship — Presenting Sponsor",
-    fullPrice: 500000, // $5,000.00 in cents
-    installmentPrice: 500000, // full only
-    description: "Presenting sponsorship of the official EXA Closing Party on Sunday May 31, 2026. Top billing across all materials, exclusive branded activation, and VIP table.",
-  },
-} as const;
-
-type PackageKey = keyof typeof PACKAGES;
+// Package prices now live in the event_packages table (seeded cent-for-cent
+// from the previous hardcoded PACKAGES dict). This route serves the MSW event;
+// generalizing the success/cancel URLs to arbitrary events is a later step.
+const MSW_EVENT_SLUG = "miami-swim-week-2026";
 
 const mswCheckoutSchema = z.object({
-  package: z.enum(Object.keys(PACKAGES) as [string, ...string[]]),
+  package: z.string().min(1),
   paymentType: z.enum(["full", "installment"]),
   addPhotoVideo: z.boolean().optional(),
   addExtraModels: z.boolean().optional(),
@@ -114,7 +31,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
     }
     const { package: pkg, paymentType, addPhotoVideo, addExtraModels } = parsed.data;
-    const packageConfig = PACKAGES[pkg as PackageKey];
+
+    // Look up the package price from the database.
+    const admin = createServiceRoleClient();
+    const { data: event } = await admin
+      .from("events")
+      .select("id")
+      .eq("slug", MSW_EVENT_SLUG)
+      .single() as { data: { id: string } | null };
+
+    if (!event) {
+      logger.error("MSW checkout: event not found", undefined, { slug: MSW_EVENT_SLUG });
+      return NextResponse.json({ error: "Event not configured" }, { status: 500 });
+    }
+
+    // Cast: event_packages is newer than the generated DB types.
+    const { data: dbPackage } = await (admin as any)
+      .from("event_packages")
+      .select("name, description, full_price_cents, installment_price_cents")
+      .eq("event_id", event.id)
+      .eq("key", pkg)
+      .eq("is_active", true)
+      .single() as {
+        data: { name: string; description: string | null; full_price_cents: number; installment_price_cents: number } | null;
+      };
+
+    if (!dbPackage) {
+      return NextResponse.json({ error: "Unknown package" }, { status: 400 });
+    }
+
+    const packageConfig = {
+      name: dbPackage.name,
+      description: dbPackage.description ?? "",
+      fullPrice: dbPackage.full_price_cents,
+      installmentPrice: dbPackage.installment_price_cents,
+    };
 
     const successUrl = `${BASE_URL}/designers/miami-swim-week/success?session_id={CHECKOUT_SESSION_ID}&pkg=${pkg}&type=${paymentType}&media=${addPhotoVideo ? "1" : "0"}&models=${addExtraModels ? "20" : "15"}`;
     const cancelUrl = `${BASE_URL}/designers/miami-swim-week`;
