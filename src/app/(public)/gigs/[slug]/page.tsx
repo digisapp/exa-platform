@@ -28,7 +28,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { ApplyButton } from "@/components/gigs/ApplyButton";
 import { TripApplicationForm } from "@/components/gigs/TripApplicationForm";
 import { CreatorHousePaymentButton } from "@/components/gigs/CreatorHousePaymentButton";
-import { MSW_2026_SCHEDULE } from "@/lib/msw-schedule";
+import { MSW_2026_SCHEDULE, type MSWScheduleEntry } from "@/lib/msw-schedule";
 import type { Metadata } from "next";
 
 interface Props {
@@ -202,7 +202,23 @@ export default async function GigDetailPage({ params }: Props) {
     }
   }
 
-  const isMSW = slug === "miami-swim-week-2026";
+  // Load the linked event's show config so a show's gig page is data-driven
+  // (schedule + designer/sponsor links), not hardcoded to MSW. Falls back to
+  // the MSW slug until events are backfilled.
+  type LinkedEvent = { schedule: MSWScheduleEntry[] | null; has_sponsor_pages: boolean | null };
+  let linkedEvent: LinkedEvent | null = null;
+  if (gig.event_id) {
+    // Cast: schedule/has_sponsor_pages are newer than the generated DB types.
+    const { data } = await (supabase as any)
+      .from("events")
+      .select("schedule, has_sponsor_pages")
+      .eq("id", gig.event_id)
+      .single();
+    linkedEvent = (data as LinkedEvent | null) ?? null;
+  }
+  const gigSchedule: MSWScheduleEntry[] | null =
+    linkedEvent?.schedule ?? (slug === "miami-swim-week-2026" ? MSW_2026_SCHEDULE : null);
+  const showSponsorLinks = linkedEvent?.has_sponsor_pages ?? (slug === "miami-swim-week-2026");
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
@@ -520,8 +536,8 @@ export default async function GigDetailPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* MSW-specific: Designer & Sponsor CTAs */}
-              {isMSW && (
+              {/* Designer & Sponsor CTAs — events with B2B microsites */}
+              {showSponsorLinks && (
                 <div className="space-y-2">
                   <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold px-1">Join the Show</p>
                   <Link href="/designers/miami-swim-week" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/40 hover:border-violet-500/70 text-violet-200 font-semibold transition-all hover:shadow-[0_0_16px_rgba(167,139,250,0.3)]">
@@ -543,8 +559,8 @@ export default async function GigDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {/* MSW Schedule */}
-          {isMSW && (
+          {/* Show schedule — events with a multi-show schedule */}
+          {gigSchedule && gigSchedule.length > 0 && (
             <div className="lg:col-span-2 order-3" id="schedule">
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-5">
@@ -557,7 +573,7 @@ export default async function GigDetailPage({ params }: Props) {
                 </div>
 
                 <div className="space-y-2">
-                  {MSW_2026_SCHEDULE.map((s) => (
+                  {gigSchedule.map((s) => (
                     <div
                       key={s.id}
                       className={`flex items-start gap-4 p-3.5 rounded-xl transition-all ${
