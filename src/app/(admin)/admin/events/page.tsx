@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import type { MSWScheduleEntry } from "@/lib/msw-schedule";
 import {
   Card,
   CardContent,
@@ -46,18 +47,9 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-interface ScheduleEntry {
-  id: string;
-  day: string;
-  dayShort: string;
-  date: string;
-  dateNum: string;
-  title: string;
-  description: string;
-  highlight: boolean;
-  badge: string | null;
-  digisEventId: string;
-}
+// Canonical schedule-entry shape lives in lib/msw-schedule (shared with the
+// public show pages and the API validator).
+type ScheduleEntry = MSWScheduleEntry;
 
 interface Event {
   id: string;
@@ -103,8 +95,6 @@ const EMPTY_EVENT_FORM = {
   ticket_url: "",
   use_external_ticketing: false,
   has_casting_call: false,
-  has_sponsor_pages: false,
-  has_venue_map: false,
   countdown_at: "",
   schedule: [] as ScheduleEntry[],
 };
@@ -469,8 +459,6 @@ export default function AdminEventsPage() {
         ticket_url: event.ticket_url || "",
         use_external_ticketing: event.use_external_ticketing ?? false,
         has_casting_call: event.has_casting_call ?? false,
-        has_sponsor_pages: event.has_sponsor_pages ?? false,
-        has_venue_map: event.has_venue_map ?? false,
         countdown_at: event.countdown_at || "",
         schedule: event.schedule ?? [],
       });
@@ -482,12 +470,16 @@ export default function AdminEventsPage() {
   }
 
   // --- Schedule repeater helpers (drives events.schedule / Digis ticket links) ---
+  const newRowId = () =>
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `row-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   function addScheduleRow() {
     setEventForm((f) => ({
       ...f,
       schedule: [
         ...f.schedule,
-        { id: crypto.randomUUID(), day: "", dayShort: "", date: "", dateNum: "", title: "", description: "", highlight: false, badge: null, digisEventId: "" },
+        { id: newRowId(), day: "", dayShort: "", date: "", dateNum: "", title: "", description: "", highlight: false, badge: null, digisEventId: "" },
       ],
     }));
   }
@@ -751,22 +743,16 @@ export default function AdminEventsPage() {
 
               {/* Feature toggles */}
               <div className="grid grid-cols-1 gap-2 mb-3">
-                {([
-                  ["has_casting_call", "Casting-call CTA", "Shows an “Apply Now” button linking to this event’s gig"],
-                  ["has_sponsor_pages", "Designer / sponsor links", "Shows the “Join the Show” sign-up links"],
-                  ["has_venue_map", "Venue floor-plan section", "Renders the venue map on the show page"],
-                ] as const).map(([key, label, hint]) => (
-                  <div key={key} className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2">
-                    <div>
-                      <Label className="text-sm">{label}</Label>
-                      <p className="text-[11px] text-muted-foreground">{hint}</p>
-                    </div>
-                    <Switch
-                      checked={eventForm[key]}
-                      onCheckedChange={(v) => setEventForm({ ...eventForm, [key]: v })}
-                    />
+                <div className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2">
+                  <div>
+                    <Label className="text-sm">Casting-call CTA</Label>
+                    <p className="text-[11px] text-muted-foreground">Shows an “Apply Now” button linking to this event’s gig</p>
                   </div>
-                ))}
+                  <Switch
+                    checked={eventForm.has_casting_call}
+                    onCheckedChange={(v) => setEventForm({ ...eventForm, has_casting_call: v })}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2 mb-3">

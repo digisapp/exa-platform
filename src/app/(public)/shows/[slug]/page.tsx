@@ -514,8 +514,10 @@ export default async function EventPage({ params, searchParams }: Props) {
             </div>
           )}
 
-          {/* Full Week Schedule — events with a multi-show schedule */}
-          {(event.schedule != null || event.slug === "miami-swim-week-2026") && (
+          {/* Full Week Schedule — render when there are real rows, or for MSW
+              pre-backfill (null → component falls back to the hardcoded MSW
+              schedule). An empty [] stays hidden (no empty section box). */}
+          {((event.schedule?.length ?? 0) > 0 || (event.schedule == null && event.slug === "miami-swim-week-2026")) && (
             <div className="lg:col-span-2 order-4" id="schedule">
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-5">
