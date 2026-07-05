@@ -17,7 +17,7 @@ function resolveMediaUrl(url: string | null | undefined): string | null {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
 }
 import { cn } from "@/lib/utils";
-import { useState, useRef, memo } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { toast } from "sonner";
 import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
@@ -53,6 +53,15 @@ export const ModelCard = memo(function ModelCard({
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const [bouncing, setBouncing] = useState(false);
   const tooltipTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Open profiles in a new tab on desktop only — on touch devices a new tab
+  // strands the user outside the browsing flow (no back button).
+  const [newTab, setNewTab] = useState(false);
+  useEffect(() => {
+    setNewTab(window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+  }, []);
+  const linkTarget = newTab ? "_blank" : undefined;
+  const linkRel = newTab ? "noopener noreferrer" : undefined;
 
   // Display first name only (not full name for privacy)
   const displayName = model.first_name || model.username;
@@ -119,7 +128,7 @@ export const ModelCard = memo(function ModelCard({
 
   if (variant === "compact") {
     return (
-      <Link href={`/${model.username}`} target="_blank" rel="noopener noreferrer">
+      <Link href={`/${model.username}`} target={linkTarget} rel={linkRel}>
         <div className="glass-card rounded-xl p-4 hover:scale-105 transition-transform group">
           <div className="flex items-center gap-3">
             <div className="profile-image-container !p-[2px]">
@@ -158,7 +167,7 @@ export const ModelCard = memo(function ModelCard({
   const cardImageUrl = resolveMediaUrl(model.profile_photo_url);
 
   return (
-    <Link href={`/${model.username}`} target="_blank" rel="noopener noreferrer">
+    <Link href={`/${model.username}`} target={linkTarget} rel={linkRel}>
       <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
         {/* Image with Hover Overlay */}
         <div className="aspect-[3/4] relative bg-gradient-to-br from-[#FF69B4]/20 to-[#9400D3]/20 overflow-hidden">
@@ -262,6 +271,24 @@ export const ModelCard = memo(function ModelCard({
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-8">
             <h3 className="font-semibold text-white truncate">{displayName}</h3>
             <p className="text-sm text-[#00BFFF]">@{model.username}</p>
+            {/* Key facts stay visible without hover — touch devices never see the overlay */}
+            {(model.show_location && (model.city || model.state)) || (model.focus_tags && model.focus_tags.length > 0) ? (
+              <div className="flex items-center gap-2 mt-1 min-w-0">
+                {model.show_location && (model.city || model.state) && (
+                  <span className="flex items-center gap-1 text-xs text-white/70 truncate">
+                    <MapPin className="h-3 w-3 text-[#FF69B4] shrink-0" />
+                    <span className="truncate">
+                      {model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}
+                    </span>
+                  </span>
+                )}
+                {model.focus_tags && model.focus_tags.length > 0 && (
+                  <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-white/10 text-white/80 border border-white/15">
+                    {focusLabels[model.focus_tags[0]] || model.focus_tags[0]}
+                  </span>
+                )}
+              </div>
+            ) : null}
           </div>
 
           {/* Hover Overlay with Details */}

@@ -9,7 +9,6 @@ import { ModelFilters } from "@/components/models/model-filters";
 import { ModelCard } from "@/components/models/model-card";
 import { ModelsGrid } from "@/components/models/models-grid";
 import { BrandPaywallWrapper } from "@/components/brands/BrandPaywallWrapper";
-import { FanCoinGateWrapper } from "@/components/fans/FanCoinGate";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { sanitizeOrFilterTerm } from "@/lib/utils";
 
@@ -196,44 +195,6 @@ export default async function ModelsPage({
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
 
-  // Fetch the best hero-portrait photo for each model on this page.
-  // This fixes the pre-existing grid crop issue: profile_photo_url is a
-  // square face crop and aspect-[3/4] cards were losing the top/bottom of
-  // every face. Uses the same high-res-portrait criteria as the profile-page
-  // hero. Models without an eligible photo keep their profile_photo_url.
-  const modelIdsOnPage = (models || []).map((m: any) => m.id);
-  const heroByModel = new Map<string, string>();
-  if (modelIdsOnPage.length > 0) {
-    const { data: heroPhotos } = await (supabase as any)
-      .from("content_items")
-      .select("model_id, media_url, width, height")
-      .in("model_id", modelIdsOnPage)
-      .eq("media_type", "image")
-      .eq("status", "portfolio")
-      .not("width", "is", null)
-      .gte("height", 1500)
-      .order("height", { ascending: false })
-      .limit(500);
-
-    const resolveMediaUrl = (url: string) =>
-      url.startsWith("http")
-        ? url
-        : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
-
-    for (const photo of heroPhotos || []) {
-      // portrait-or-square only; take the first (highest-resolution) per model
-      if (photo.height >= photo.width && !heroByModel.has(photo.model_id)) {
-        heroByModel.set(photo.model_id, resolveMediaUrl(photo.media_url));
-      }
-    }
-  }
-
-  // Attach hero_portrait_url to each model before passing to the client grid
-  const modelsWithHero = (models || []).map((m: any) => ({
-    ...m,
-    hero_portrait_url: heroByModel.get(m.id) || null,
-  }));
-
   // Now run actor-dependent queries in parallel
   let favoriteModelIds: string[] = [];
   const actorType: "model" | "fan" | "brand" | "admin" | null = actor?.type || null;
@@ -288,10 +249,6 @@ export default async function ModelsPage({
     (!profileData?.subscription_tier || profileData.subscription_tier === "free") &&
     profileData?.subscription_status !== "active";
 
-  // Check if fan has minimum coin balance (50 coins required)
-  const MIN_FAN_COINS = 50;
-  const isFanWithoutCoins = actorType === "fan" && coinBalance < MIN_FAN_COINS;
-
   // Build pagination URL helper
   const buildPageUrl = (page: number) => {
     const p = new URLSearchParams(
@@ -320,14 +277,11 @@ export default async function ModelsPage({
       {/* Paywall for free brands */}
       {isFreeBrand && <BrandPaywallWrapper />}
 
-      {/* Coin gate for fans without minimum balance */}
-      {isFanWithoutCoins && <FanCoinGateWrapper currentBalance={coinBalance} />}
-
-      <main className={`container px-8 md:px-16 py-8 pb-24 md:pb-8 ${isFreeBrand || isFanWithoutCoins ? "blur-sm pointer-events-none select-none" : ""}`}>
+      <main className={`container px-8 md:px-16 py-8 pb-24 md:pb-8 ${isFreeBrand ? "blur-sm pointer-events-none select-none" : ""}`}>
         {/* Header */}
         <div className="mb-8">
           <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
-            Directory
+            Explore
           </p>
           <h1 className="text-3xl md:text-4xl font-bold">
             <span className="exa-gradient-text">Models</span>
@@ -335,7 +289,7 @@ export default async function ModelsPage({
           {totalCount !== null && (
             totalCount > 0 ? (
               <p className="text-sm text-white/60 mt-1">
-                Browse {totalCount.toLocaleString()} verified models worldwide
+                Browse {totalCount.toLocaleString()} models worldwide
               </p>
             ) : (
               <p className="text-sm text-white/40 mt-1 italic">
@@ -372,13 +326,13 @@ export default async function ModelsPage({
 
         {/* Filters */}
         <Suspense fallback={<div className="h-24 rounded-2xl bg-gradient-to-br from-pink-500/10 via-violet-500/10 to-cyan-500/10 animate-pulse" />}>
-          <ModelFilters />
+          <ModelFilters actorType={actorType} />
         </Suspense>
 
         {/* Results */}
         <div className="mt-6">
           <ModelsGrid
-            models={modelsWithHero}
+            models={models || []}
             isLoggedIn={!!user}
             favoriteModelIds={favoriteModelIds}
             actorType={actorType}

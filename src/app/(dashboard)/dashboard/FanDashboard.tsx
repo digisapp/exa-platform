@@ -80,9 +80,12 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
         is_verified, is_featured, last_active_at
       `)
       .eq("is_approved", true)
+      .is("deleted_at", null)
       .not("profile_photo_url", "is", null)
       .not("profile_photo_url", "ilike", "%cdninstagram.com%")
       .not("profile_photo_url", "ilike", "%instagram%")
+      // Recently-active models first — they're the ones who'll actually respond
+      .order("last_active_at", { ascending: false, nullsFirst: false })
       .limit(100),
     (supabase.from("fans") as any)
       .select("coin_balance, email")
@@ -171,7 +174,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   if (followedUserIds.length > 0) {
     const { data: followedModels } = await (supabase.from("models") as any)
       .select(`
-        id, username, first_name, last_name, profile_photo_url,
+        id, user_id, username, first_name, last_name, profile_photo_url,
         city, state, show_location,
         instagram_name, show_social_media,
         height, show_measurements,
@@ -179,7 +182,8 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
         is_verified, is_featured, last_active_at
       `)
       .in("user_id", followedUserIds)
-      .eq("is_approved", true);
+      .eq("is_approved", true)
+      .is("deleted_at", null);
 
     const modelsByUserId = new Map((followedModels || []).map((m: any) => [m.user_id, m]));
     favoriteModels = followedUserIds
