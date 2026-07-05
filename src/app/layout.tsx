@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -9,7 +9,11 @@ import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistr
 import { GoogleTranslate } from "@/components/GoogleTranslate";
 import { SpanishBanner } from "@/components/SpanishBanner";
 
-const inter = Inter({ subsets: ["latin"] });
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-poppins",
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -130,7 +134,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd[1]) }}
         />
       </head>
-      <body className={`${inter.className} bg-background text-foreground antialiased min-h-screen`}>
+      <body className={`${poppins.className} ${poppins.variable} bg-background text-foreground antialiased min-h-screen`}>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none"
