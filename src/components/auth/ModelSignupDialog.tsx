@@ -32,10 +32,6 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
   const [loading, setLoading] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [isImportedModel, setIsImportedModel] = useState(false);
-  const [importedModelInfo, setImportedModelInfo] = useState<{
-    name: string;
-    instagram: string;
-  } | null>(null);
 
   const [name, setName] = useState("");
   const [instagram, setInstagram] = useState("");
@@ -64,18 +60,10 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
     try {
       const res = await fetch(`/api/auth/check-imported?email=${encodeURIComponent(emailToCheck.toLowerCase().trim())}`);
       const data = await res.json();
-
-      if (data.isImported) {
-        setIsImportedModel(true);
-        setImportedModelInfo({ name: "", instagram: "" });
-      } else {
-        setIsImportedModel(false);
-        setImportedModelInfo(null);
-      }
+      setIsImportedModel(!!data.isImported);
     } catch {
       // Silently fail - not critical
       setIsImportedModel(false);
-      setImportedModelInfo(null);
     } finally {
       setCheckingEmail(false);
     }
@@ -199,7 +187,6 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
           email: email.toLowerCase().trim(),
           userId: authData.user.id,
           instagram_username: instagram.trim().replace("@", ""),
-          tiktok_username: "",
           phone: phone.trim() || null,
           date_of_birth: dateOfBirth,
           height: height,
@@ -225,14 +212,11 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
         return;
       }
 
-      // Step 4: Redirect based on whether they're an imported model or new applicant
-      if (data.isImported) {
-        toast.success("Welcome back! Your profile is ready.");
-        window.location.href = "/dashboard";
-      } else {
-        toast.success("Application submitted!");
-        window.location.href = "/pending-approval";
-      }
+      // Step 4: Everyone goes through review — imported models get their
+      // existing profile linked at approval time (admin approval route
+      // matches by email/Instagram), so no separate fast path here.
+      toast.success("Application submitted!");
+      window.location.href = "/pending-approval";
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Something went wrong";
       toast.error(message);
@@ -246,7 +230,6 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
     // Reset form after close animation
     setTimeout(() => {
       setIsImportedModel(false);
-      setImportedModelInfo(null);
       setName("");
       setInstagram("");
       setEmail("");
@@ -314,7 +297,6 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
                   // Reset imported status when email changes
                   if (isImportedModel) {
                     setIsImportedModel(false);
-                    setImportedModelInfo(null);
                   }
                 }}
                 onBlur={(e) => checkImportedModel(e.target.value)}
@@ -325,14 +307,15 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
               )}
             </div>
-            {isImportedModel && importedModelInfo && (
+            {isImportedModel && (
               <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-sm">
                 <p className="font-medium text-green-500 flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
                   Welcome back!
                 </p>
                 <p className="text-muted-foreground text-xs mt-1">
-                  We have your profile ready. Complete signup to claim your account.
+                  We already have your profile on file. Complete signup and
+                  we&apos;ll link it to your account when you&apos;re approved.
                 </p>
               </div>
             )}
@@ -396,7 +379,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
               <Label htmlFor="height">Height</Label>
               <Select value={height} onValueChange={setHeight} disabled={loading}>
                 <SelectTrigger id="height">
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Select height" />
                 </SelectTrigger>
                 <SelectContent>
                   {heightOptions.map((h) => (
