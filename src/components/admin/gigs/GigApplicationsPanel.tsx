@@ -31,6 +31,7 @@ import {
   Mail,
   Zap,
   LayoutGrid,
+  Clock,
 } from "lucide-react";
 import SpeedReviewModal from "./SpeedReviewModal";
 import GigApplicationsFullscreen from "./GigApplicationsFullscreen";
@@ -138,7 +139,7 @@ interface GigApplicationsPanelProps {
   modelBadges: Set<string>;
   syncingBadges: boolean;
   processingApp: string | null;
-  onApplicationAction: (appId: string, action: "accepted" | "rejected" | "cancelled" | "pending") => void;
+  onApplicationAction: (appId: string, action: "accepted" | "rejected" | "cancelled" | "pending" | "waitlist") => void;
   onSyncBadges: () => void;
   onSendMassEmail: (filter: "all" | "pending" | "approved") => Promise<void>;
 }
@@ -153,7 +154,7 @@ export default function GigApplicationsPanel({
   onApplicationAction,
   onSyncBadges,
 }: GigApplicationsPanelProps) {
-  const [applicationFilter, setApplicationFilter] = useState<"all" | "pending" | "approved" | "declined">("all");
+  const [applicationFilter, setApplicationFilter] = useState<"all" | "pending" | "approved" | "waitlist" | "declined">("all");
   const [tripFilter, setTripFilter] = useState<"all" | "1" | "2">("all");
   const [spotTypeFilter, setSpotTypeFilter] = useState<"all" | "paid" | "sponsored">("all");
   const [modelSearch, setModelSearch] = useState("");
@@ -261,6 +262,7 @@ export default function GigApplicationsPanel({
     // Status filter
     if (applicationFilter === "pending" && app.status !== "pending") return false;
     if (applicationFilter === "approved" && app.status !== "accepted" && app.status !== "approved") return false;
+    if (applicationFilter === "waitlist" && app.status !== "waitlist") return false;
     if (applicationFilter === "declined" && app.status !== "rejected" && app.status !== "cancelled") return false;
     // Trip filter
     if (tripFilter !== "all" && app.trip_number !== parseInt(tripFilter)) return false;
@@ -405,6 +407,16 @@ export default function GigApplicationsPanel({
                 }`}
               >
                 Approved ({applications.filter(a => a.status === "accepted" || a.status === "approved").length})
+              </button>
+              <button
+                onClick={() => setApplicationFilter("waitlist")}
+                className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  applicationFilter === "waitlist"
+                    ? "bg-white/[0.1] text-white shadow-sm"
+                    : "text-white/40 hover:text-white/70 hover:bg-white/[0.05]"
+                }`}
+              >
+                Waitlist ({applications.filter(a => a.status === "waitlist").length})
               </button>
               <button
                 onClick={() => setApplicationFilter("declined")}
@@ -700,6 +712,20 @@ export default function GigApplicationsPanel({
                       </Button>
                       <Button
                         size="sm"
+                        variant="outline"
+                        className="text-violet-400 border-violet-500/30 hover:bg-violet-500/10"
+                        onClick={() => onApplicationAction(app.id, "waitlist")}
+                        disabled={processingApp === app.id}
+                        title="Shortlist — auto-promoted (with congrats email) when a spot frees up"
+                      >
+                        {processingApp === app.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Clock className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
                         onClick={() => onApplicationAction(app.id, "accepted")}
                         disabled={processingApp === app.id}
                       >
@@ -745,6 +771,27 @@ export default function GigApplicationsPanel({
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <X className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  ) : app.status === "waitlist" ? (
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-violet-500/10 text-violet-400 border-violet-500/30">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Waitlisted
+                      </Badge>
+                      <Button
+                        size="sm"
+                        onClick={() => onApplicationAction(app.id, "accepted")}
+                        disabled={processingApp === app.id}
+                      >
+                        {processingApp === app.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Accept
+                          </>
                         )}
                       </Button>
                     </div>

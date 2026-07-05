@@ -2247,6 +2247,122 @@ export async function sendGigApplicationAcceptedEmail({
   }
 }
 
+// Waitlist placement email — a positive "you're shortlisted" touchpoint
+// (never a rejection; see feedback_no_rejection_emails). Sent when an admin
+// waitlists an application; if a spot frees up the model is auto-promoted and
+// receives the acceptance email above.
+export async function sendGigWaitlistedEmail({
+  to,
+  modelName,
+  gigTitle,
+  eventName,
+}: {
+  to: string;
+  modelName: string;
+  gigTitle: string;
+  eventName?: string;
+}) {
+  try {
+    const resend = getResendClient();
+    const gigsUrl = `${BASE_URL}/gigs`;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: `You're shortlisted for ${gigTitle} ✨`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <p style="margin: 0; font-size: 48px;">✨</p>
+              <h1 style="margin: 10px 0 0; color: white; font-size: 28px; font-weight: bold;">
+                You're Shortlisted!
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                You're in line for a spot
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${escapeHtml(modelName)}! 💫
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Your application made the shortlist for:
+              </p>
+
+              <!-- Gig Details -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 20px;">${escapeHtml(gigTitle)}</h2>
+                    ${eventName ? `
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">🏆</td>
+                        <td style="color: #ec4899; font-size: 14px; font-weight: 600;">${escapeHtml(eventName)}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Spots for this one are limited — you're next in line. If a spot opens up, you'll be
+                <strong style="color: #ec4899;">automatically confirmed</strong> and we'll email you right away.
+                No action needed.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${gigsUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-size: 16px; font-weight: 600;">
+                      Browse More Gigs
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
 // Creator House acceptance email with payment options
 export async function sendCreatorHouseAcceptedEmail({
   to,
