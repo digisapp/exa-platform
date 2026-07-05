@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendModelApprovalEmail } from "@/lib/email";
+import { sendModelApprovalSMS } from "@/lib/sms";
 import { escapeIlike } from "@/lib/utils";
 
 // Carries the fan's coin balance onto the model row and removes the fan
@@ -250,6 +251,20 @@ export async function PATCH(
           console.error("Failed to send approval email:", e);
         }
 
+        // SMS is the channel most likely to actually reach her — the email
+        // can land in spam and she'd never know she was approved.
+        if (application.phone) {
+          try {
+            await sendModelApprovalSMS(
+              application.phone,
+              application.display_name || "Model",
+              preferredLanguage
+            );
+          } catch (e) {
+            console.error("Failed to send approval SMS:", e);
+          }
+        }
+
         try {
           const { data: modelActor } = await adminClient
             .from("actors")
@@ -299,7 +314,7 @@ export async function PATCH(
               await adminClient.from("messages").insert({
                 conversation_id: conversationId,
                 sender_id: actor.id,
-                content: `Welcome to EXA, ${application.display_name || "Model"}! 🎉\n\nYour profile has been approved and you're now part of our community.\n\nHere's how to get started:\n• Complete your profile with photos and bio\n• Share your examodels.com/${modelUsername} on Instagram Bio + Story\n• Engage with the community 😊`,
+                content: `Welcome to EXA, ${application.display_name || "Model"}! 🎉\n\nYour application has been approved — one last step to go live.\n\nHere's how to get started:\n• Add your profile photo + bio (you won't appear on EXA until you have a photo!)\n• Share your examodels.com/${modelUsername} on Instagram Bio + Story\n• Engage with the community 😊`,
                 is_system: false,
               });
             }

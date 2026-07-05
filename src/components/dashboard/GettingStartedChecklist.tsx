@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, Circle, Rocket, ArrowRight } from "lucide-react";
+import { CheckCircle2, Circle, Rocket, ArrowRight, EyeOff } from "lucide-react";
 
 export interface ChecklistStep {
   key: string;
@@ -20,6 +20,7 @@ export function GettingStartedChecklist({ steps }: { steps: ChecklistStep[] }) {
 
   const doneCount = steps.length - remaining.length;
   const progressPct = Math.round((doneCount / steps.length) * 100);
+  const notVisibleYet = steps.some((s) => s.key === "photo" && !s.done);
 
   return (
     <section className="rounded-2xl border border-pink-500/30 bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent overflow-hidden shadow-[0_0_24px_rgba(236,72,153,0.12)]">
@@ -32,6 +33,19 @@ export function GettingStartedChecklist({ steps }: { steps: ChecklistStep[] }) {
           {doneCount}/{steps.length} done
         </span>
       </header>
+
+      {notVisibleYet && (
+        <Link
+          href="/settings"
+          className="mx-5 mt-4 flex items-center gap-2 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-sm text-amber-300 hover:bg-amber-500/15 transition-colors"
+        >
+          <EyeOff className="h-4 w-4 shrink-0" />
+          <span>
+            You&apos;re not visible on EXA yet — add a profile photo to appear on
+            the Models page.
+          </span>
+        </Link>
+      )}
 
       {/* Progress bar */}
       <div className="mx-5 mt-4 h-1.5 rounded-full bg-white/10 overflow-hidden">

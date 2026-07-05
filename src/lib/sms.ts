@@ -137,6 +137,23 @@ export async function notifyAdminNewCallRequest(request: {
   await sendSMS({ to: adminPhone, message });
 }
 
+// Tell a model her application was approved. The approval email is one spam
+// filter away from never being seen — SMS is the reliable channel for the one
+// message that brings her back to the platform.
+export async function sendModelApprovalSMS(
+  phone: string,
+  name: string,
+  language: string = "en"
+): Promise<void> {
+  const firstName = sanitizeSmsInput(name.split(" ")[0], 50);
+
+  const message = language.startsWith("es")
+    ? `¡Hola ${firstName}! Tu solicitud en EXA Models fue aprobada 🎉 Agrega tu foto de perfil para aparecer en EXA: https://examodels.com/dashboard - El Equipo EXA`
+    : `Hi ${firstName}! Your EXA Models application was approved 🎉 Add your profile photo to go live on EXA: https://examodels.com/dashboard - The EXA Team`;
+
+  await sendSMS({ to: phone, message });
+}
+
 // Send confirmation to model
 export async function sendCallRequestConfirmation(
   phone: string,

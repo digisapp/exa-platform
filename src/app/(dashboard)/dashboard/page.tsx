@@ -588,11 +588,18 @@ export default async function DashboardPage() {
 
   const checklistSteps = [
     {
-      key: "profile",
-      title: "Complete your profile",
-      description: "Add your bio and a profile photo so brands and fans can find you.",
+      key: "photo",
+      title: "Add your profile photo",
+      description: "You won't appear on EXA until you add one — it's what makes you visible to brands and fans.",
       href: "/settings",
-      done: Boolean(model.bio && model.profile_photo_url),
+      done: Boolean(model.profile_photo_url),
+    },
+    {
+      key: "profile",
+      title: "Write your bio",
+      description: "Tell brands and fans who you are and what you're looking for.",
+      href: "/settings",
+      done: Boolean(model.bio),
     },
     {
       key: "portfolio",

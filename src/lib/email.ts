@@ -127,20 +127,20 @@ export async function sendModelApprovalEmail({
     const headerSubtitle = isSpanish ? "¡Tu solicitud ha sido aprobada!" : "Your application has been approved!";
     const greeting = isSpanish ? `Hola ${escapeHtml(modelName)},` : `Hey ${escapeHtml(modelName)},`;
     const bodyText = isSpanish
-      ? "¡Buenas noticias! Tu solicitud como modelo ha sido aprobada. Ya eres parte de la comunidad EXA y tu perfil está activo."
-      : "Great news! Your model application has been approved. You're now part of the EXA community and your profile is live!";
-    const viewProfileText = isSpanish ? "Ver Tu Perfil" : "View Your Profile";
+      ? "¡Buenas noticias! Tu solicitud como modelo ha sido aprobada. Un último paso: tu perfil permanece oculto hasta que agregues una foto de perfil — agrégala ahora para aparecer en EXA."
+      : "Great news! Your model application has been approved. One last step: your profile stays hidden until you add a profile photo — add one now to go live on EXA.";
+    const addPhotoCtaText = isSpanish ? "Agregar Tu Foto" : "Add Your Photo";
     const nextStepsTitle = isSpanish ? "Próximos Pasos" : "Next Steps to Get Started";
-    const goToDashboardText = isSpanish ? "Ir al Dashboard" : "Go to Dashboard";
+    const viewProfileCtaText = isSpanish ? "Ver Tu Perfil" : "View Your Profile";
 
     const steps = isSpanish ? [
-      { title: "Completa Tu Perfil", desc: "Agrega tu bio, medidas, fotos y portafolio para destacar." },
-      { title: "Conecta Tus Redes Sociales", desc: "Vincula tu Instagram, TikTok y otras cuentas para crecer tu alcance." },
+      { title: "Agrega Tu Foto de Perfil", desc: "No apareces en EXA hasta que tengas una — es lo que te hace visible para marcas y fans." },
+      { title: "Completa Tu Perfil", desc: "Agrega tu bio, medidas y fotos de portafolio para destacar." },
       { title: "Explora Gigs y Oportunidades", desc: "Encuentra trabajos de modelaje, colaboraciones con marcas y oportunidades pagadas." },
       { title: "Gana Monedas y Cobra", desc: "Recibe propinas de fans, vende contenido premium y retira tus ganancias." },
     ] : [
-      { title: "Complete Your Profile", desc: "Add your bio, measurements, photos, and portfolio to stand out." },
-      { title: "Connect Your Social Media", desc: "Link your Instagram, TikTok, and other accounts to grow your reach." },
+      { title: "Add Your Profile Photo", desc: "You won't appear on EXA until you have one — it's what makes you visible to brands and fans." },
+      { title: "Complete Your Profile", desc: "Add your bio, measurements, and portfolio photos to stand out." },
       { title: "Browse Gigs & Opportunities", desc: "Find modeling gigs, brand collaborations, and paid opportunities." },
       { title: "Earn Coins & Get Paid", desc: "Receive tips from fans, sell premium content, and cash out your earnings." },
     ];
@@ -207,8 +207,8 @@ export async function sendModelApprovalEmail({
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
                 <tr>
                   <td align="center">
-                    <a href="${profileUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                      ${viewProfileText}
+                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      ${addPhotoCtaText}
                     </a>
                   </td>
                 </tr>
@@ -227,8 +227,8 @@ export async function sendModelApprovalEmail({
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="${dashboardUrl}" style="display: inline-block; background-color: #262626; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 500; font-size: 14px; border: 1px solid #404040;">
-                      ${goToDashboardText}
+                    <a href="${profileUrl}" style="display: inline-block; background-color: #262626; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 500; font-size: 14px; border: 1px solid #404040;">
+                      ${viewProfileCtaText}
                     </a>
                   </td>
                 </tr>
@@ -291,8 +291,8 @@ export async function sendModelApplicationReceivedEmail({
       : "Your application is being reviewed";
     const greeting = isSpanish ? `Hola ${escapeHtml(modelName)},` : `Hey ${escapeHtml(modelName)},`;
     const bodyText = isSpanish
-      ? "¡Gracias por aplicar a EXA Models! Recibimos tu solicitud y nuestro equipo la está revisando. Normalmente respondemos dentro de 24-48 horas."
-      : "Thanks for applying to EXA Models! We received your application and our team is reviewing it now. You'll typically hear back within 24-48 hours.";
+      ? "¡Gracias por aplicar a EXA Models! Recibimos tu solicitud y nuestro equipo la está revisando. Normalmente respondemos dentro de 24 horas."
+      : "Thanks for applying to EXA Models! We received your application and our team is reviewing it now. You'll typically hear back within 24 hours.";
     const confirmText = isSpanish ? "Confirma tu Correo" : "Confirm Your Email";
     const confirmNote = isSpanish
       ? "Un paso rápido: confirma tu correo para que podamos aprobar tu solicitud."
