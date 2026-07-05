@@ -11,8 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
+import { createClient } from "@/lib/supabase/client";
 
 interface Model {
   id: string;
@@ -73,6 +75,25 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  const [isAuthed, setIsAuthed] = useState(false);
+  const router = useRouter();
+
+  // Logged-in visitors go straight to the profile — the signup gate is only
+  // for anonymous traffic
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthed(!!session);
+    });
+  }, []);
+
+  const handleCardClick = (model: Model) => {
+    if (isAuthed) {
+      router.push(`/${model.username}`);
+    } else {
+      setSelectedModel(model);
+    }
+  };
 
   // Auto-scroll effect
   useEffect(() => {
@@ -163,7 +184,7 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
           {models.map((model, index) => (
             <div
               key={model.id}
-              onClick={() => setSelectedModel(model)}
+              onClick={() => handleCardClick(model)}
               className="flex-shrink-0 w-[280px] cursor-pointer group/card"
             >
               <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/10 to-violet-500/10 border border-white/10 hover:border-pink-500/50 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-pink-500/20">
@@ -257,9 +278,6 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
                   </div>
                 )}
               </div>
-              <h3 className="text-lg font-semibold mb-1">
-                {selectedModel.first_name || selectedModel.username}
-              </h3>
               {selectedModel.state && (
                 <p className="text-sm text-muted-foreground flex items-center gap-1 mb-4">
                   <MapPin className="h-3 w-3" />
@@ -267,7 +285,10 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
                 </p>
               )}
 
-              <FanSignupDialog>
+              <FanSignupDialog
+                redirectTo={`/${selectedModel.username}`}
+                referrerModelId={selectedModel.id}
+              >
                 <Button className="exa-gradient-button w-full">
                   Sign Up to View Profile
                 </Button>
@@ -275,7 +296,10 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
 
               <p className="text-xs text-muted-foreground mt-4 text-center">
                 Already have an account?{" "}
-                <Link href="/signin" className="text-pink-500 hover:underline">
+                <Link
+                  href={`/signin?redirect=${encodeURIComponent(`/${selectedModel.username}`)}`}
+                  className="text-pink-500 hover:underline"
+                >
                   Sign in
                 </Link>
               </p>

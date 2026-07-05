@@ -18,9 +18,13 @@ import { createClient } from "@/lib/supabase/client";
 
 interface FanSignupDialogProps {
   children: React.ReactNode;
+  /** Where to land after a successful signup (e.g. the model profile that prompted it). Defaults to /dashboard. */
+  redirectTo?: string;
+  /** Model that drove this signup — takes precedence over the localStorage referrer set by profile visits. */
+  referrerModelId?: string | null;
 }
 
-export function FanSignupDialog({ children }: FanSignupDialogProps) {
+export function FanSignupDialog({ children, redirectTo, referrerModelId: referrerModelIdProp }: FanSignupDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -67,12 +71,15 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
 
     setLoading(true);
 
-    // Get referrer model ID from localStorage (set when viewing a model profile)
-    let referrerModelId: string | null = null;
-    try {
-      referrerModelId = localStorage.getItem("signup_referrer_model_id");
-    } catch {
-      // localStorage might be unavailable
+    // Referrer: explicit prop (e.g. homepage carousel card) wins over the
+    // localStorage value set when viewing a model profile
+    let referrerModelId: string | null = referrerModelIdProp ?? null;
+    if (!referrerModelId) {
+      try {
+        referrerModelId = localStorage.getItem("signup_referrer_model_id");
+      } catch {
+        // localStorage might be unavailable
+      }
     }
 
     try {
@@ -123,7 +130,9 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
 
       if (signInError) {
         toast.success("Account created! Please sign in.");
-        window.location.href = "/signin";
+        window.location.href = redirectTo
+          ? `/signin?redirect=${encodeURIComponent(redirectTo)}`
+          : "/signin";
         return;
       }
 
@@ -138,7 +147,9 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
       });
 
       toast.success("Welcome to EXA!");
-      window.location.href = "/dashboard";
+      // Deliver on the promise that prompted the signup (e.g. "Sign Up to
+      // View Profile" → that model's profile), not a generic dashboard
+      window.location.href = redirectTo || "/dashboard";
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Something went wrong";
       toast.error(message);
