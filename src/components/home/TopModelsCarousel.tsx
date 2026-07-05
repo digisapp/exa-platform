@@ -278,13 +278,6 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
                   </div>
                 )}
               </div>
-              {selectedModel.state && (
-                <p className="text-sm text-muted-foreground flex items-center gap-1 mb-4">
-                  <MapPin className="h-3 w-3" />
-                  {selectedModel.state}
-                </p>
-              )}
-
               <FanSignupDialog
                 redirectTo={`/${selectedModel.username}`}
                 referrerModelId={selectedModel.id}
