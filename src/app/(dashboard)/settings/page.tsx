@@ -77,6 +77,9 @@ export default function ProfilePage() {
     reason: string | null;
   }>({ checking: false, available: null, reason: null });
   const usernameCheckTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [digisStatus, setDigisStatus] = useState<"idle" | "checking" | "found" | "not_found">("idle");
+  const digisCheckTimeout = useRef<NodeJS.Timeout | null>(null);
+  const digisCheckSeq = useRef(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -153,6 +156,34 @@ export default function ProfilePage() {
         setUsernameStatus({ checking: false, available: null, reason: "Error checking username" });
       }
     }, 400);
+  };
+
+  // Non-blocking check that the typed Digis username is a real digis.cc
+  // profile, so typos get caught before fans follow a dead affiliate link.
+  const checkDigisUsername = (username: string) => {
+    if (digisCheckTimeout.current) {
+      clearTimeout(digisCheckTimeout.current);
+    }
+    const seq = ++digisCheckSeq.current;
+    if (!username) {
+      setDigisStatus("idle");
+      return;
+    }
+    setDigisStatus("checking");
+    digisCheckTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/digis/verify?username=${encodeURIComponent(username)}`);
+        const data = await res.json();
+        if (seq !== digisCheckSeq.current) return; // a newer check is in flight
+        if (res.ok && (data.status === "found" || data.status === "not_found")) {
+          setDigisStatus(data.status);
+        } else {
+          setDigisStatus("idle"); // Digis unreachable — don't show a misleading warning
+        }
+      } catch {
+        if (seq === digisCheckSeq.current) setDigisStatus("idle");
+      }
+    }, 600);
   };
 
   const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -304,6 +335,9 @@ export default function ProfilePage() {
         if (modelData) {
           setModel(modelData);
           setOriginalUsername(modelData.username || "");
+          if (modelData.digis_username) {
+            checkDigisUsername(modelData.digis_username);
+          }
 
           // Fetch page views count and follower count in parallel
           const [{ count: viewCount }, { count: fCount }] = await Promise.all([
@@ -1668,11 +1702,34 @@ export default function ProfilePage() {
                   <Input
                     id="digis_username"
                     value={model.digis_username || ""}
-                    onChange={(e) => setModel({ ...model, digis_username: cleanSocialUsername(e.target.value.toLowerCase()) })}
+                    onChange={(e) => {
+                      const cleaned = cleanSocialUsername(e.target.value.toLowerCase());
+                      setModel({ ...model, digis_username: cleaned });
+                      checkDigisUsername(cleaned);
+                    }}
                     placeholder="your-digis-username"
                     autoComplete="off"
                     autoCapitalize="none"
+                    className={
+                      digisStatus === "found" ? "border-green-500 focus-visible:ring-green-500" :
+                      digisStatus === "not_found" ? "border-amber-500 focus-visible:ring-amber-500" : ""
+                    }
                   />
+                  {digisStatus === "checking" && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Checking Digis…
+                    </p>
+                  )}
+                  {digisStatus === "found" && (
+                    <p className="text-xs text-green-500">
+                      ✓ Linked to {model.digis_username} on Digis
+                    </p>
+                  )}
+                  {digisStatus === "not_found" && (
+                    <p className="text-xs text-amber-500">
+                      We couldn&apos;t find &ldquo;{model.digis_username}&rdquo; on Digis — double-check the spelling. You can still save.
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     Your Digis.cc username (no @). Fans redirected to Digis from your EXA profile will earn you{" "}
                     <span className="text-pink-400 font-semibold">20% commission</span> on every ticket sale.
