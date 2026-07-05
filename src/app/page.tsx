@@ -228,11 +228,22 @@ export default async function HomePage() {
           </div>
         </nav>
 
-        {/* Split Hero Section */}
+        {/* Split Hero Section — cards over a real EXA runway moment (Miami Swim Week) */}
         <section id="signup" className="container px-8 md:px-16 py-6 md:py-10 scroll-mt-20">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/10">
+            <Image
+              src="/hero-runway.jpg"
+              alt="EXA models walking the runway at Miami Swim Week"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-[center_22%]"
+            />
+            {/* Dim the photo so card copy stays readable — heavier at the bottom where the cards sit */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0d0015]/60 via-[#0d0015]/25 to-[#0d0015]/75" />
+          <div className="relative z-10 grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 p-4 md:p-8 pt-44 md:pt-72">
             {/* Models Side — full width on mobile */}
-            <div className="col-span-2 lg:col-span-1 relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
+            <div className="col-span-2 lg:col-span-1 relative p-6 md:p-8 rounded-3xl bg-black/35 backdrop-blur-md bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -left-20 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
@@ -253,7 +264,7 @@ export default async function HomePage() {
             </div>
 
             {/* Fans Side */}
-            <div className="relative p-4 md:p-8 rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 transition-all group">
+            <div className="relative p-4 md:p-8 rounded-3xl bg-black/35 backdrop-blur-md bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -left-10 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
@@ -274,7 +285,7 @@ export default async function HomePage() {
             </div>
 
             {/* Brands Side */}
-            <div className="relative p-4 md:p-8 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all group">
+            <div className="relative p-4 md:p-8 rounded-3xl bg-black/35 backdrop-blur-md bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
@@ -294,25 +305,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* Media Side */}
-            <div className="relative p-4 md:p-8 rounded-3xl bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-transparent border border-violet-500/20 hover:border-violet-500/40 transition-all group">
-              <div className="absolute -top-20 -right-10 w-40 h-40 bg-violet-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
-
-              <div className="relative z-10">
-                <h2 className="text-lg md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4">
-                  Press. Media.
-                  <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-500">Photographers.</span>
-                </h2>
-
-                <MediaInquiryDialog>
-                  <Button className="w-full md:w-auto text-sm md:text-base px-4 md:px-8 h-9 md:h-12 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white">
-                    Media Inquiry
-                    <ArrowRight className="ml-1.5 h-3.5 w-3.5 md:ml-2 md:h-4 md:w-4" />
-                  </Button>
-                </MediaInquiryDialog>
-              </div>
-            </div>
+          </div>
           </div>
         </section>
 
@@ -605,9 +598,11 @@ export default async function HomePage() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="#signup" className="text-white/70 hover:text-violet-300 transition-colors">
-                      Media & Press
-                    </Link>
+                    <MediaInquiryDialog>
+                      <button className="text-white/70 hover:text-violet-300 transition-colors">
+                        Media & Press
+                      </button>
+                    </MediaInquiryDialog>
                   </li>
                 </ul>
               </div>
@@ -644,9 +639,20 @@ export default async function HomePage() {
 
             {/* Bottom row */}
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-white/5">
-              <p className="text-xs text-white/40">
-                &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
-              </p>
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+                <p className="text-xs text-white/40">
+                  &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+                </p>
+                <Link href="/terms" className="text-xs text-white/40 hover:text-pink-300 transition-colors">
+                  Terms
+                </Link>
+                <Link href="/privacy" className="text-xs text-white/40 hover:text-pink-300 transition-colors">
+                  Privacy
+                </Link>
+                <a href="mailto:hello@examodels.com" className="text-xs text-white/40 hover:text-pink-300 transition-colors">
+                  Contact
+                </a>
+              </div>
               <div className="flex items-center gap-3">
                 <a
                   href="https://instagram.com/examodels"
