@@ -218,6 +218,37 @@ export function ChatView({
 
   // --- Extracted hooks ---
 
+  // Catch-up fetch after a possible realtime gap (subscription drop, tab
+  // returning from background). Merges the latest server page into local
+  // state without disturbing optimistic in-flight messages.
+  const resyncMessages = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `/api/messages/list?conversationId=${conversation.id}`
+      );
+      const data = await response.json();
+      if (!response.ok || !data.messages) return;
+
+      setMessages((prev) => {
+        const known = new Set(prev.map((m) => m.id));
+        const missed = (data.messages as Message[]).filter((m) => !known.has(m.id));
+        if (missed.length === 0) return prev;
+        return [...prev, ...missed].sort(
+          (a, b) => new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime()
+        );
+      });
+
+      if (data.reactions) {
+        setReactionsMap((prev) => ({ ...prev, ...data.reactions }));
+      }
+      if (data.repliedMessages) {
+        setRepliedMessagesMap((prev) => ({ ...prev, ...data.repliedMessages }));
+      }
+    } catch {
+      // Best-effort; realtime resubscribe will keep retrying
+    }
+  }, [conversation.id]);
+
   // Real-time messages
   useRealtimeMessages({
     conversationId: conversation.id,
@@ -256,6 +287,7 @@ export function ChatView({
         duration: 5000,
       });
     }, [otherName]),
+    onResync: resyncMessages,
   });
 
   // Read receipts
@@ -529,15 +561,20 @@ export function ChatView({
         return;
       }
 
-      // Replace optimistic message with real one from server
+      // Replace optimistic message with real one from server. A resync (or
+      // realtime) may have already delivered the server copy — in that case
+      // drop the optimistic one instead of duplicating.
       if (data.message) {
-        setMessages((prev) =>
-          prev.map((m) =>
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === data.message.id && m._tempId !== tempId)) {
+            return prev.filter((m) => m._tempId !== tempId);
+          }
+          return prev.map((m) =>
             m._tempId === tempId
               ? { ...data.message, _status: "sent" as const }
               : m
-          )
-        );
+          );
+        });
       }
 
       // Use server-reported coin deduction (may differ from our estimate)
