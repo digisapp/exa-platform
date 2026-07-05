@@ -23,8 +23,14 @@ export async function GET(
     .eq("username", modelSlug)
     .single() as { data: { id: string; affiliate_code: string | null; digis_username: string | null } | null };
 
-  // Build destination URL — go to model's Digis profile if available, else homepage
-  const dest = new URL(model?.digis_username ? `${DIGIS_BASE_URL}/${model.digis_username}` : DIGIS_BASE_URL);
+  // Build destination URL — go to model's Digis profile if available, else homepage.
+  // Guard against malformed stored values (pasted URLs, etc.) so we never build
+  // a broken digis.cc path that 404s.
+  const digisUsername =
+    model?.digis_username && /^[a-z0-9._-]+$/i.test(model.digis_username)
+      ? model.digis_username
+      : null;
+  const dest = new URL(digisUsername ? `${DIGIS_BASE_URL}/${digisUsername}` : DIGIS_BASE_URL);
 
   if (model?.affiliate_code) {
     dest.searchParams.set("ref", model.affiliate_code);
