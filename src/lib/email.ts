@@ -301,12 +301,12 @@ export async function sendModelApplicationReceivedEmail({
     const checkStatusText = isSpanish ? "Ver Estado de tu Solicitud" : "Check Application Status";
 
     const steps = isSpanish ? [
+      { title: "Agrega Tu Foto y Bio Ahora", desc: "Súbelas en tu página de estado y estarás visible en EXA en cuanto seas aprobada." },
       { title: "Prepara Tus Mejores Fotos", desc: "Ten listas tus fotos de portafolio para subirlas en cuanto seas aprobada." },
-      { title: "Piensa en Tu Bio", desc: "Una bio auténtica ayuda a marcas y fans a conocerte mejor." },
       { title: "Explora la Plataforma", desc: "Mira los perfiles de otras modelos para inspirarte." },
     ] : [
+      { title: "Add Your Photo & Bio Now", desc: "Upload them on your status page and you'll go live on EXA the moment you're approved." },
       { title: "Get Your Best Photos Ready", desc: "Have your portfolio shots ready to upload the moment you're approved." },
-      { title: "Think About Your Bio", desc: "An authentic bio helps brands and fans get to know you." },
       { title: "Explore the Platform", desc: "Check out other model profiles for inspiration." },
     ];
 
