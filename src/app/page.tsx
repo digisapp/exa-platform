@@ -228,22 +228,11 @@ export default async function HomePage() {
           </div>
         </nav>
 
-        {/* Split Hero Section — cards over a real EXA runway moment (Miami Swim Week) */}
+        {/* Split Hero Section */}
         <section id="signup" className="container px-8 md:px-16 py-6 md:py-10 scroll-mt-20">
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/10">
-            <Image
-              src="/hero-runway.jpg"
-              alt="EXA models walking the runway at Miami Swim Week"
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover object-[center_22%]"
-            />
-            {/* Dim the photo so card copy stays readable — heavier at the bottom where the cards sit */}
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0d0015]/60 via-[#0d0015]/25 to-[#0d0015]/75" />
-          <div className="relative z-10 grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 p-4 md:p-8 pt-44 md:pt-72">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
             {/* Models Side — full width on mobile */}
-            <div className="col-span-2 lg:col-span-1 relative p-6 md:p-8 rounded-3xl bg-black/35 backdrop-blur-md bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
+            <div className="col-span-2 lg:col-span-1 relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -left-20 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
@@ -264,7 +253,7 @@ export default async function HomePage() {
             </div>
 
             {/* Fans Side */}
-            <div className="relative p-4 md:p-8 rounded-3xl bg-black/35 backdrop-blur-md bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 transition-all group">
+            <div className="relative p-4 md:p-8 rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -left-10 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
@@ -285,7 +274,7 @@ export default async function HomePage() {
             </div>
 
             {/* Brands Side */}
-            <div className="relative p-4 md:p-8 rounded-3xl bg-black/35 backdrop-blur-md bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all group">
+            <div className="relative p-4 md:p-8 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
@@ -305,7 +294,6 @@ export default async function HomePage() {
               </div>
             </div>
 
-          </div>
           </div>
         </section>
 
