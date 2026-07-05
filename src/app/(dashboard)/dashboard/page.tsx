@@ -30,7 +30,6 @@ import {
   TrendingUp,
   Flame,
   Sparkles,
-  Zap,
   Heart,
   Clock,
 } from "lucide-react";
@@ -630,7 +629,7 @@ export default async function DashboardPage() {
           DESKTOP: 2-column layout — main content left, chats right
           MOBILE: single column, chats appear after gigs
          ══════════════════════════════════════════════════════ */}
-      <div className="lg:grid lg:grid-cols-[1fr_420px] lg:gap-6">
+      <div className="lg:grid lg:grid-cols-[1fr_400px] lg:gap-6">
 
       {/* ── LEFT COLUMN: all dashboard sections ── */}
       <div className="space-y-6">
@@ -648,7 +647,7 @@ export default async function DashboardPage() {
         />
 
         {/* KPI cards — right column, stacked vertically to match Profile Pictures height */}
-        <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 transition-all hover:border-amber-500/40 hover:bg-white/[0.08] flex items-center gap-4">
             <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-amber-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-center gap-4 w-full">
@@ -670,8 +669,8 @@ export default async function DashboardPage() {
           <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 transition-all hover:border-pink-500/40 hover:bg-white/[0.08] flex items-center gap-4">
             <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-pink-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-center gap-4 w-full">
-              <Zap className="h-5 w-5 text-pink-400 shrink-0" />
-              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Tips</span>
+              <Heart className="h-5 w-5 text-pink-400 shrink-0" />
+              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Tips · 7d</span>
               <p className="ml-auto text-2xl font-bold tracking-tight">{formatCoins(tips7dTotal)}</p>
             </div>
           </Link>
@@ -728,7 +727,7 @@ export default async function DashboardPage() {
                 <Sparkles className="h-7 w-7 text-white/30" />
               </div>
               <p className="text-sm text-white/60">All caught up — no urgent items.</p>
-              <p className="text-xs text-white/40 mt-1">New offers, bookings, and ending auctions will appear here.</p>
+              <p className="text-xs text-white/50 mt-1">New offers, bookings, and ending auctions will appear here.</p>
             </div>
           ) : (
             inboxItems.map((item) => {
@@ -851,7 +850,7 @@ export default async function DashboardPage() {
                 <Gavel className="h-7 w-7 text-violet-400" />
               </div>
               <p className="text-sm text-white/70">No EXA Bids yet</p>
-              <p className="text-xs text-white/40 mt-1 max-w-xs mx-auto">
+              <p className="text-xs text-white/50 mt-1 max-w-xs mx-auto">
                 Let fans and brands compete in real-time bids for your exclusive content & experiences.
               </p>
               <Button asChild size="sm" className="mt-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
@@ -877,7 +876,18 @@ export default async function DashboardPage() {
         </header>
         <div className="p-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-1">
           {activityFeed.length === 0 ? (
-            <p className="col-span-full text-xs text-white/40 text-center py-4">No activity this week.</p>
+            <div className="col-span-full text-center py-6">
+              <p className="text-sm text-white/60">No activity this week.</p>
+              <p className="text-xs text-white/50 mt-1">Share your profile to get tips, follows, and messages.</p>
+              {model.username && (
+                <Button asChild size="sm" variant="outline" className="mt-3 border-pink-500/40 text-pink-300 hover:bg-pink-500/10 hover:text-pink-200">
+                  <Link href={`/${model.username}`}>
+                    View your public profile
+                    <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
+                  </Link>
+                </Button>
+              )}
+            </div>
           ) : (
             activityFeed.slice(0, 6).map((item) => {
               const timeAgo = getTimeAgo(item.createdAt);
@@ -926,10 +936,10 @@ export default async function DashboardPage() {
                       {item.type === "message" && <span className="text-white/60">sent a message</span>}
                     </p>
                     {item.type === "message" && item.messagePreview && (
-                      <p className="text-[11px] text-white/40 truncate">&ldquo;{item.messagePreview}&rdquo;</p>
+                      <p className="text-[11px] text-white/50 truncate">&ldquo;{item.messagePreview}&rdquo;</p>
                     )}
                   </div>
-                  <span className="text-[10px] text-white/40 shrink-0">{timeAgo}</span>
+                  <span className="text-[11px] text-white/50 shrink-0">{timeAgo}</span>
                 </Link>
               );
             })
@@ -979,7 +989,7 @@ export default async function DashboardPage() {
       </div>{/* end left column */}
 
       {/* ── RIGHT COLUMN: EXA Live Wall (desktop only) ── */}
-      <aside className="hidden lg:block lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)]">
+      <aside className="hidden lg:block lg:sticky lg:top-20 lg:self-start lg:h-[calc(100vh-6rem)]">
         <LiveWallServer actorId={actor.id} actorType={actor.type} compact />
       </aside>
 

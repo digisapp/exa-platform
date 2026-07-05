@@ -379,7 +379,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
                     )}
                   </div>
                 </div>
-                <span className="text-xs text-white/50 group-hover:text-white transition-colors truncate max-w-[64px] text-center">
+                <span className="text-xs text-white/60 group-hover:text-white transition-colors truncate max-w-[64px] text-center">
                   {model.first_name || model.username}
                 </span>
               </Link>
@@ -497,7 +497,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
                   </div>
                   <div className="mt-2 flex items-center justify-between px-0.5">
                     {location ? (
-                      <span className="text-[10px] text-white/40 flex items-center gap-1 truncate">
+                      <span className="text-[11px] text-white/50 flex items-center gap-1 truncate">
                         <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
                         {location}
                       </span>
@@ -519,7 +519,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       {/* ──────────────────────────────────────────────
           Two-column layout: feed left, sidebar right
          ────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 items-start">
 
         {/* ── Left: For You Feed (65%) ── */}
         <ForYouFeed items={sortedFeed} coinBalance={coinBalance} />
