@@ -107,7 +107,13 @@ const FOCUS_OPTIONS = [
   { value: "cosplay", label: "Cosplay" },
 ];
 
-export function ModelFilters() {
+interface ModelFiltersProps {
+  actorType?: "model" | "fan" | "brand" | "admin" | null;
+}
+
+export function ModelFilters({ actorType }: ModelFiltersProps) {
+  // Collab/CPM filters are brand tools — hide them from fans
+  const showCollabFilters = actorType !== "fan";
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("q") || "");
@@ -249,27 +255,29 @@ export function ModelFilters() {
         </SelectContent>
       </Select>
 
-      <Button
-        variant={collabsOnly ? "default" : "outline"}
-        onClick={() => {
-          const params = new URLSearchParams(searchParams.toString());
-          if (collabsOnly) {
-            params.delete("collabs");
-            params.delete("platform");
-            params.delete("cpm");
-            params.delete("cpm_sort");
-            params.delete("engagement");
-          } else {
-            params.set("collabs", "1");
-          }
-          params.delete("page");
-          router.push(`/models?${params.toString()}`);
-        }}
-        className={collabsOnly ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0" : ""}
-      >
-        <Handshake className="h-4 w-4 mr-2" />
-        Open to Collabs
-      </Button>
+      {showCollabFilters && (
+        <Button
+          variant={collabsOnly ? "default" : "outline"}
+          onClick={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (collabsOnly) {
+              params.delete("collabs");
+              params.delete("platform");
+              params.delete("cpm");
+              params.delete("cpm_sort");
+              params.delete("engagement");
+            } else {
+              params.set("collabs", "1");
+            }
+            params.delete("page");
+            router.push(`/models?${params.toString()}`);
+          }}
+          className={collabsOnly ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0" : ""}
+        >
+          <Handshake className="h-4 w-4 mr-2" />
+          Open to Collabs
+        </Button>
+      )}
 
       {hasFilters && (
         <Button variant="ghost" onClick={clearFilters} className="text-white/60 hover:text-pink-300 hover:bg-pink-500/10">
@@ -281,7 +289,7 @@ export function ModelFilters() {
   );
 
   // Collab sub-filters
-  const collabSubFilters = collabsOnly && (
+  const collabSubFilters = showCollabFilters && collabsOnly && (
     <div className="flex flex-wrap gap-3 p-3 rounded-lg border border-pink-500/20 bg-pink-500/5">
       <span className="text-xs text-pink-400 font-medium self-center mr-1">Collab filters:</span>
 
