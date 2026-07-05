@@ -18,6 +18,15 @@ export function CallListener({ actorId }: CallListenerProps) {
   } | null>(null);
   const supabase = createClient();
 
+  // Ask for notification permission once so incoming calls can reach a
+  // backgrounded tab. Best-effort: some browsers require a user gesture and
+  // will just ignore this.
+  useEffect(() => {
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
   // Subscribe to incoming video calls globally
   useEffect(() => {
     if (!actorId) return;
@@ -88,6 +97,28 @@ export function CallListener({ actorId }: CallListenerProps) {
           toast.info(`${callerName} is ${callTypeLabel} calling you...`, {
             duration: 5000,
           });
+
+          // The toast is invisible if the tab is backgrounded — fire an OS
+          // notification too so the call can actually be answered.
+          if (
+            typeof Notification !== "undefined" &&
+            Notification.permission === "granted" &&
+            document.hidden
+          ) {
+            try {
+              const notification = new Notification(`${callerName} is calling you on EXA`, {
+                body: `Incoming ${callTypeLabel} call — tap to answer`,
+                icon: callerAvatar || "/favicon.ico",
+                tag: `exa-call-${callSession.id}`,
+              });
+              notification.onclick = () => {
+                window.focus();
+                notification.close();
+              };
+            } catch {
+              // Notification constructor can throw on some mobile browsers
+            }
+          }
         }
       )
       .subscribe();

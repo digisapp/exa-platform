@@ -28,8 +28,11 @@ export async function generateToken(
   const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
     identity: participantIdentity,
     name: participantName,
-    // Token expires in 30 minutes
-    ttl: "30m",
+    // Must outlast the longest plausible call: LiveKit kicks the participant
+    // when the token expires, so a 30m TTL hard-killed any call at the 30min
+    // mark. Billing is driven by heartbeat/settlement, not token lifetime, so
+    // a long TTL costs nothing. Rooms are single-use per session.
+    ttl: "4h",
   });
 
   at.addGrant({

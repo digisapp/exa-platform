@@ -13,6 +13,7 @@ import {
 import { Video, Phone, Loader2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { VideoRoom } from "./VideoRoom";
+import { PreCallDeviceCheck } from "./PreCallDeviceCheck";
 import { MIN_CALL_BALANCE } from "@/lib/livekit-constants";
 
 interface VideoCallButtonProps {
@@ -45,6 +46,7 @@ export function VideoCallButton({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [devicesReady, setDevicesReady] = useState(false);
   const [callSession, setCallSession] = useState<{
     sessionId: string;
     token: string;
@@ -176,6 +178,10 @@ export function VideoCallButton({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Camera/mic preview — surfaces permission problems before the
+                call (and coins) are committed */}
+            <PreCallDeviceCheck callType={callType} onReadyChange={setDevicesReady} />
+
             {/* Rate */}
             <div className="flex items-center justify-center gap-2 text-2xl font-bold">
               <Coins className="h-6 w-6 text-pink-500" />
@@ -211,7 +217,7 @@ export function VideoCallButton({
               </Button>
               <Button
                 onClick={startCall}
-                disabled={!hasEnoughCoins || isStarting}
+                disabled={!hasEnoughCoins || isStarting || !devicesReady}
                 className="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white"
               >
                 {isStarting ? (

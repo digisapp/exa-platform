@@ -12,6 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Phone, PhoneOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { VideoRoom } from "./VideoRoom";
+import { Ringtone } from "./ringtone";
+import { createClient } from "@/lib/supabase/client";
 
 interface IncomingCallDialogProps {
   sessionId: string;
@@ -43,6 +45,46 @@ export function IncomingCallDialog({
   const onCloseRef = useRef(onClose);
   useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
+  // Audible ring while the dialog is up; stops on accept/decline/unmount
+  useEffect(() => {
+    if (callSession) return;
+    const ringtone = new Ringtone();
+    ringtone.start();
+    return () => ringtone.stop();
+  }, [callSession]);
+
+  // If the caller hangs up (or the sweeper expires the session) while we're
+  // still ringing, dismiss instead of ringing into dead air.
+  useEffect(() => {
+    if (callSession) return; // answered — VideoRoom owns the session now
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`incoming-call:${sessionId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "video_call_sessions",
+          filter: `id=eq.${sessionId}`,
+        },
+        (payload) => {
+          const status = (payload.new as { status?: string }).status;
+          if (status === "ended" || status === "missed" || status === "declined") {
+            if (status === "ended") {
+              toast.info(`${callerName} hung up`);
+            }
+            onCloseRef.current();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [sessionId, callSession, callerName]);
 
   const handleMissed = useCallback(async () => {
     setIsDeclining(true);
