@@ -251,6 +251,9 @@ export const EndpointLimits = {
 
   // Live wall posts - 10 per minute (prevents spam without limiting conversation)
   liveWall: { limit: 10, windowSeconds: 60 },
+
+  // Lookups that fetch an external site (e.g. Digis username check) - 20 per minute
+  externalLookup: { limit: 20, windowSeconds: 60 },
 } as const;
 
 export type EndpointType = keyof typeof EndpointLimits;
