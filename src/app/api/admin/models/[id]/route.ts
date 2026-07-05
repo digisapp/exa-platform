@@ -94,6 +94,15 @@ export async function PATCH(
       updatePayload[key] = value === "" ? null : value;
     }
 
+    // Keep the legacy status text in sync with the is_approved boolean. The
+    // boolean is the source of truth everywhere (explore page, call checks),
+    // but the old text column drifted (models showing status='rejected' while
+    // approved+visible) and misled admins/analytics — see migration
+    // 20260704000004. Writing both on every approval change prevents new drift.
+    if (is_approved !== undefined) {
+      updatePayload.status = is_approved ? "approved" : "rejected";
+    }
+
     // Update the model
     const { error } = await supabase
       .from("models")
