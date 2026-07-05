@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, Instagram, LogOut, MailCheck, MailWarning } from "lucide-react";
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
+import { PendingProfileBuilder } from "./PendingProfileBuilder";
 
 const t = {
   en: {
@@ -65,6 +66,9 @@ export type PendingApplication = {
   tiktok_username?: string | null;
   created_at?: string | null;
   email_confirmed_at?: string | null;
+  status?: string | null;
+  bio?: string | null;
+  profile_photo_url?: string | null;
 };
 
 export function PendingApprovalView({ application }: { application: PendingApplication | null }) {
@@ -176,6 +180,14 @@ export function PendingApprovalView({ application }: { application: PendingAppli
               </div>
             )
           )}
+          {application?.status === "pending" && (
+            <PendingProfileBuilder
+              lang={lang}
+              initialBio={application.bio ?? null}
+              initialPhotoUrl={application.profile_photo_url ?? null}
+            />
+          )}
+
           {application && (
             <div className="p-4 rounded-lg bg-muted/50 space-y-2">
               <p className="text-sm text-muted-foreground">{s.yourApp}</p>
