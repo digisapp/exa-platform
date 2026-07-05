@@ -5021,6 +5021,7 @@ export type Database = {
       }
       model_applications: {
         Row: {
+          bio: string | null
           created_at: string | null
           date_of_birth: string | null
           display_name: string
@@ -5032,6 +5033,9 @@ export type Database = {
           id: string
           instagram_username: string | null
           phone: string | null
+          profile_photo_height: number | null
+          profile_photo_url: string | null
+          profile_photo_width: number | null
           rejection_reason: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -5041,6 +5045,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bio?: string | null
           created_at?: string | null
           date_of_birth?: string | null
           display_name: string
@@ -5052,6 +5057,9 @@ export type Database = {
           id?: string
           instagram_username?: string | null
           phone?: string | null
+          profile_photo_height?: number | null
+          profile_photo_url?: string | null
+          profile_photo_width?: number | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -5061,6 +5069,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bio?: string | null
           created_at?: string | null
           date_of_birth?: string | null
           display_name?: string
@@ -5072,6 +5081,9 @@ export type Database = {
           id?: string
           instagram_username?: string | null
           phone?: string | null
+          profile_photo_height?: number | null
+          profile_photo_url?: string | null
+          profile_photo_width?: number | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null

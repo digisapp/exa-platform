@@ -128,6 +128,20 @@ export async function PATCH(
       const existingModelByEmail = emailModel && !emailModel.user_id && !existingModelByUser && !existingModelByInstagram ? emailModel : null;
       const existingModel = existingModelByUser || existingModelByInstagram || existingModelByEmail;
 
+      // Profile the applicant built while pending (photo + bio) — copied onto
+      // the model row so she can be visible on /models the moment she's
+      // approved. Applicant-uploaded values win over imported/stale ones.
+      const pendingProfileFields = {
+        ...(application.profile_photo_url
+          ? {
+              profile_photo_url: application.profile_photo_url,
+              profile_photo_width: application.profile_photo_width ?? null,
+              profile_photo_height: application.profile_photo_height ?? null,
+            }
+          : {}),
+        ...(application.bio ? { bio: application.bio } : {}),
+      };
+
       if (existingModel && !existingModelByUser) {
         // Found existing model by Instagram/email - link user_id to it
         modelUsername = existingModel.username || "";
@@ -144,6 +158,7 @@ export async function PATCH(
               : {}),
             ...(application.phone ? { phone: application.phone } : {}),
             ...(application.height ? { height: application.height } : {}),
+            ...pendingProfileFields,
           }).eq("id", existingModel.id),
           adminClient.from("actors").update({ type: "model" }).eq("user_id", application.user_id).select("id").single(),
         ]);
@@ -214,6 +229,7 @@ export async function PATCH(
           show_social_media: true,
           coin_balance: 0,
           preferred_language: preferredLanguage,
+          ...pendingProfileFields,
         });
 
         // Model must exist before the wallet transfer — the RPC refuses to
@@ -229,7 +245,7 @@ export async function PATCH(
         modelUsername = existingModelByUser!.username || "";
         // Parallel: approve model + update actor type
         const [, { data: updatedActor, error: actorError }] = await Promise.all([
-          adminClient.from("models").update({ is_approved: true, status: "approved" }).eq("user_id", application.user_id),
+          adminClient.from("models").update({ is_approved: true, status: "approved", ...pendingProfileFields }).eq("user_id", application.user_id),
           adminClient.from("actors").update({ type: "model" }).eq("user_id", application.user_id).select("id").single(),
         ]);
 
@@ -370,6 +386,18 @@ export async function DELETE(
 
     // Use service role client to bypass RLS for delete
     const adminClient = createServiceRoleClient();
+
+    // Clean up any photo the applicant uploaded while pending — spam deletion
+    // is the one path where the file would otherwise be orphaned forever
+    const { data: appToDelete } = await adminClient
+      .from("model_applications")
+      .select("profile_photo_url")
+      .eq("id", id)
+      .maybeSingle();
+    const photoPath = (appToDelete?.profile_photo_url as string | null)?.split("/avatars/")[1];
+    if (photoPath) {
+      await adminClient.storage.from("avatars").remove([photoPath]);
+    }
 
     // Delete the application
     const { error: deleteError } = await adminClient
