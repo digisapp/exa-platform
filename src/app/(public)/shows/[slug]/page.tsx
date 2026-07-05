@@ -120,8 +120,11 @@ export default async function EventPage({ params, searchParams }: Props) {
     });
   }
 
-  // MSW 2026 tickets are on Digis — never use EXA internal ticket flow for this event
-  const hasInternalTickets = event.slug !== "miami-swim-week-2026" && event.tickets_enabled && ticketTiers.length > 0;
+  // Events can route ticketing to an external provider (e.g. Digis) instead of
+  // EXA's internal ticket flow. `use_external_ticketing` drives this; fall back
+  // to the MSW slug until the column is backfilled.
+  const useExternalTicketing = event.use_external_ticketing ?? (event.slug === "miami-swim-week-2026");
+  const hasInternalTickets = !useExternalTicketing && event.tickets_enabled && ticketTiers.length > 0;
 
   // Get confirmed models via event badge
   // Each event has a linked badge - models with that badge are confirmed
@@ -238,14 +241,11 @@ export default async function EventPage({ params, searchParams }: Props) {
       ? format(startDate, "MMMM d, yyyy")
       : "TBA";
 
-  // Miami Swim Week 2026 — tickets live on the Digis events hub (multiple shows across the week)
-  const MSW_DIGIS_TICKET_URL = "https://www.digis.cc/events";
-
-  // Build ticket URL with affiliate tracking
-  // MSW 2026 always uses Digis for ticketing regardless of event.ticket_url / tickets_enabled
-  const rawTicketUrl = event.slug === "miami-swim-week-2026"
-    ? MSW_DIGIS_TICKET_URL
-    : (event.ticket_url ?? null);
+  // Build ticket URL with affiliate tracking. External-ticketing events link
+  // straight to their provider URL stored on event.ticket_url. (The MSW slug
+  // fallback preserves the Digis hub link until ticket_url is backfilled.)
+  const rawTicketUrl = event.ticket_url
+    ?? (event.slug === "miami-swim-week-2026" ? "https://www.digis.cc/events" : null);
 
   const ticketUrl = rawTicketUrl
     ? ref
@@ -429,7 +429,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                   </Button>
                 )}
 
-                {event.slug === "miami-swim-week-2026" && (
+                {(event.has_casting_call ?? event.slug === "miami-swim-week-2026") && (
                   <Button
                     asChild
                     variant="outline"
@@ -461,9 +461,10 @@ export default async function EventPage({ params, searchParams }: Props) {
               {event.start_date && (
                 <EventCountdown
                   startsAt={
-                    event.slug === "miami-swim-week-2026"
-                      ? "2026-05-26T17:00:00-04:00"
-                      : event.start_date
+                    event.countdown_at
+                      ?? (event.slug === "miami-swim-week-2026"
+                        ? "2026-05-26T17:00:00-04:00"
+                        : event.start_date)
                   }
                 />
               )}
@@ -477,7 +478,8 @@ export default async function EventPage({ params, searchParams }: Props) {
                 </div>
               )}
 
-              {/* Sign Up Buttons */}
+              {/* Sign Up Buttons — only for events with designer/sponsor microsites */}
+              {(event.has_sponsor_pages ?? event.slug === "miami-swim-week-2026") && (
               <div className="space-y-2">
                 <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold px-1">Join the Show</p>
                 <Link href="/designers/miami-swim-week" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/40 hover:border-violet-500/70 text-violet-200 font-semibold transition-all hover:shadow-[0_0_16px_rgba(167,139,250,0.3)]">
@@ -495,6 +497,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                   <ArrowRight className="h-4 w-4 opacity-80" />
                 </Link>
               </div>
+              )}
 
               {/* Sponsor Card */}
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5">
@@ -505,14 +508,16 @@ export default async function EventPage({ params, searchParams }: Props) {
           </div>
 
           {/* Venue Map */}
-          {event.slug === "miami-swim-week-2026" && (
+          {(event.has_venue_map ?? event.slug === "miami-swim-week-2026") && (
             <div className="lg:col-span-2 order-3">
               <HotelFloorPlan />
             </div>
           )}
 
-          {/* Full Week Schedule (MSW-only) */}
-          {event.slug === "miami-swim-week-2026" && (
+          {/* Full Week Schedule — render when there are real rows, or for MSW
+              pre-backfill (null → component falls back to the hardcoded MSW
+              schedule). An empty [] stays hidden (no empty section box). */}
+          {((event.schedule?.length ?? 0) > 0 || (event.schedule == null && event.slug === "miami-swim-week-2026")) && (
             <div className="lg:col-span-2 order-4" id="schedule">
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-5">
@@ -524,7 +529,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                   </h2>
                 </div>
 
-                <DigisScheduleSection affiliateRef={ref} />
+                <DigisScheduleSection affiliateRef={ref} schedule={event.schedule ?? undefined} />
               </div>
             </div>
           )}

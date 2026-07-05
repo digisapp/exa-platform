@@ -17,11 +17,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { MSW_2026_SCHEDULE } from "@/lib/msw-schedule";
-
-// Opening Show — flagship event, used as the default "Get Tickets" destination
-const MSW_DIGIS_TICKET_URL =
-  "https://digis.cc/events/34393c83-ca92-42f2-9d3e-bfb8988c7807";
+import { MSW_2026_SCHEDULE, type MSWScheduleEntry } from "@/lib/msw-schedule";
 
 // ---------------------------------------------------------------------------
 // Shared Dialog UI
@@ -153,8 +149,10 @@ export function DigisCastingCallButton({ href }: { href: string }) {
 
 export function DigisScheduleSection({
   affiliateRef,
+  schedule = MSW_2026_SCHEDULE,
 }: {
   affiliateRef?: string;
+  schedule?: MSWScheduleEntry[];
 }) {
   const handleScheduleClick = (digisEventId: string) => {
     // Each schedule item opens its own Digis event page in a new tab so
@@ -176,7 +174,7 @@ export function DigisScheduleSection({
   return (
     <>
       <div className="space-y-2">
-        {MSW_2026_SCHEDULE.map((s) => (
+        {schedule.map((s) => (
           <button
             key={s.id}
             type="button"
@@ -221,7 +219,11 @@ export function DigisScheduleSection({
 // Smaller row height than DigisScheduleSection to fit the sidebar card.
 // ---------------------------------------------------------------------------
 
-export function DigisScheduleSectionCompact() {
+export function DigisScheduleSectionCompact({
+  schedule = MSW_2026_SCHEDULE,
+}: {
+  schedule?: MSWScheduleEntry[];
+}) {
   const handleScheduleClick = (digisEventId: string) => {
     let url = `https://digis.cc/events/${digisEventId}`;
     try {
@@ -239,7 +241,7 @@ export function DigisScheduleSectionCompact() {
   return (
     <>
       <div className="space-y-2">
-        {MSW_2026_SCHEDULE.map((event) => (
+        {schedule.map((event) => (
           <button
             key={event.id}
             type="button"

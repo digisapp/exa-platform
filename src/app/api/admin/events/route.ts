@@ -26,6 +26,21 @@ function slugify(input: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+// One row of the public show schedule. Each becomes a clickable Digis ticket
+// link on /shows/[slug]; digisEventId points at digis.cc/events/{id}.
+const scheduleEntrySchema = z.object({
+  id: z.string().trim().min(1),
+  day: z.string().trim().max(20).default(""),
+  dayShort: z.string().trim().max(8).default(""),
+  date: z.string().trim().max(30).default(""),
+  dateNum: z.string().trim().max(8).default(""),
+  title: z.string().trim().min(1, "Each schedule row needs a title").max(120),
+  description: z.string().trim().max(300).default(""),
+  highlight: z.boolean().default(false),
+  badge: z.string().nullable().default(null),
+  digisEventId: z.string().trim().max(100).default(""),
+});
+
 const baseFields = {
   name: z.string().trim().min(2, "Name is required"),
   short_name: z.string().trim().min(1, "Short name is required").max(12),
@@ -40,7 +55,32 @@ const baseFields = {
   end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD").optional().or(z.literal("")),
   points_awarded: z.coerce.number().int().min(0).max(100000).default(500),
   badge_emoji: z.string().trim().max(8).optional().or(z.literal("")),
+  // Show-setup capability fields — see migration 20260704000002_events_self_describing.
+  ticket_url: z.string().trim().max(500).optional().or(z.literal("")),
+  countdown_at: z.string().trim().max(64).optional().or(z.literal("")),
+  use_external_ticketing: z.boolean().optional(),
+  has_casting_call: z.boolean().optional(),
+  has_sponsor_pages: z.boolean().optional(),
+  has_venue_map: z.boolean().optional(),
+  schedule: z.array(scheduleEntrySchema).max(50).optional(),
 };
+
+// Only write capability columns that were actually sent, so a partial update
+// never clobbers existing values with nulls.
+function capabilityFieldsFor(input: Record<string, unknown>) {
+  const out: Record<string, unknown> = {};
+  if (input.ticket_url !== undefined) out.ticket_url = nn(input.ticket_url as string);
+  if (input.countdown_at !== undefined) out.countdown_at = nn(input.countdown_at as string);
+  if (input.use_external_ticketing !== undefined) out.use_external_ticketing = input.use_external_ticketing;
+  if (input.has_casting_call !== undefined) out.has_casting_call = input.has_casting_call;
+  if (input.has_sponsor_pages !== undefined) out.has_sponsor_pages = input.has_sponsor_pages;
+  if (input.has_venue_map !== undefined) out.has_venue_map = input.has_venue_map;
+  if (input.schedule !== undefined) {
+    const s = input.schedule as unknown[];
+    out.schedule = s.length ? s : null;
+  }
+  return out;
+}
 
 const createSchema = z.object(baseFields);
 const updateSchema = z.object({ id: z.string().uuid(), ...baseFields });
@@ -92,6 +132,7 @@ export async function POST(request: NextRequest) {
         year: input.year,
         status: input.status,
         points_awarded: input.points_awarded,
+        ...capabilityFieldsFor(input),
       })
       .select("*")
       .single();
@@ -163,6 +204,7 @@ export async function PATCH(request: NextRequest) {
         year: input.year,
         status: input.status,
         points_awarded: input.points_awarded,
+        ...capabilityFieldsFor(input),
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)

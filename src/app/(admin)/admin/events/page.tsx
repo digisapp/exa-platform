@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import type { MSWScheduleEntry } from "@/lib/msw-schedule";
 import {
   Card,
   CardContent,
@@ -46,6 +47,10 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+// Canonical schedule-entry shape lives in lib/msw-schedule (shared with the
+// public show pages and the API validator).
+type ScheduleEntry = MSWScheduleEntry;
+
 interface Event {
   id: string;
   name: string;
@@ -62,6 +67,14 @@ interface Event {
   location_state?: string | null;
   location_country?: string | null;
   points_awarded?: number | null;
+  // Show-setup capability fields (see events self-describing migration)
+  ticket_url?: string | null;
+  use_external_ticketing?: boolean | null;
+  has_casting_call?: boolean | null;
+  has_sponsor_pages?: boolean | null;
+  has_venue_map?: boolean | null;
+  countdown_at?: string | null;
+  schedule?: ScheduleEntry[] | null;
 }
 
 const EMPTY_EVENT_FORM = {
@@ -78,6 +91,12 @@ const EMPTY_EVENT_FORM = {
   description: "",
   badge_emoji: "",
   points_awarded: "500",
+  // Show setup
+  ticket_url: "",
+  use_external_ticketing: false,
+  has_casting_call: false,
+  countdown_at: "",
+  schedule: [] as ScheduleEntry[],
 };
 
 interface TicketTier {
@@ -437,12 +456,41 @@ export default function AdminEventsPage() {
         description: event.description || "",
         badge_emoji: "",
         points_awarded: String(event.points_awarded ?? 500),
+        ticket_url: event.ticket_url || "",
+        use_external_ticketing: event.use_external_ticketing ?? false,
+        has_casting_call: event.has_casting_call ?? false,
+        countdown_at: event.countdown_at || "",
+        schedule: event.schedule ?? [],
       });
     } else {
       setEditingEvent(null);
       setEventForm({ ...EMPTY_EVENT_FORM });
     }
     setEventDialogOpen(true);
+  }
+
+  // --- Schedule repeater helpers (drives events.schedule / Digis ticket links) ---
+  const newRowId = () =>
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `row-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  function addScheduleRow() {
+    setEventForm((f) => ({
+      ...f,
+      schedule: [
+        ...f.schedule,
+        { id: newRowId(), day: "", dayShort: "", date: "", dateNum: "", title: "", description: "", highlight: false, badge: null, digisEventId: "" },
+      ],
+    }));
+  }
+  function updateScheduleRow(index: number, patch: Partial<ScheduleEntry>) {
+    setEventForm((f) => ({
+      ...f,
+      schedule: f.schedule.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    }));
+  }
+  function removeScheduleRow(index: number) {
+    setEventForm((f) => ({ ...f, schedule: f.schedule.filter((_, i) => i !== index) }));
   }
 
   async function saveEvent() {
@@ -663,6 +711,88 @@ export default function AdminEventsPage() {
                   value={eventForm.points_awarded}
                   onChange={(e) => setEventForm({ ...eventForm, points_awarded: e.target.value })}
                 />
+              </div>
+            </div>
+
+            {/* ---------------- Show setup ---------------- */}
+            <div className="pt-2 border-t border-white/10">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-3 mb-1">Show setup</p>
+              <p className="text-[11px] text-muted-foreground mb-3">
+                Controls the public show page: ticketing, feature sections, and the schedule of Digis ticket links. No code needed to launch a new show.
+              </p>
+
+              {/* Ticketing */}
+              <div className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2 mb-2">
+                <div>
+                  <Label className="text-sm">Sell tickets on an external site</Label>
+                  <p className="text-[11px] text-muted-foreground">e.g. Digis — hides EXA’s internal ticket flow</p>
+                </div>
+                <Switch
+                  checked={eventForm.use_external_ticketing}
+                  onCheckedChange={(v) => setEventForm({ ...eventForm, use_external_ticketing: v })}
+                />
+              </div>
+              <div className="space-y-2 mb-3">
+                <Label>Ticket / “Get Tickets” URL</Label>
+                <Input
+                  placeholder="https://digis.cc/events"
+                  value={eventForm.ticket_url}
+                  onChange={(e) => setEventForm({ ...eventForm, ticket_url: e.target.value })}
+                />
+              </div>
+
+              {/* Feature toggles */}
+              <div className="grid grid-cols-1 gap-2 mb-3">
+                <div className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2">
+                  <div>
+                    <Label className="text-sm">Casting-call CTA</Label>
+                    <p className="text-[11px] text-muted-foreground">Shows an “Apply Now” button linking to this event’s gig</p>
+                  </div>
+                  <Switch
+                    checked={eventForm.has_casting_call}
+                    onCheckedChange={(v) => setEventForm({ ...eventForm, has_casting_call: v })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 mb-3">
+                <Label>Countdown target (optional)</Label>
+                <Input
+                  placeholder="2027-05-26T17:00:00-04:00"
+                  value={eventForm.countdown_at}
+                  onChange={(e) => setEventForm({ ...eventForm, countdown_at: e.target.value })}
+                />
+                <p className="text-[11px] text-muted-foreground">ISO 8601 with timezone. Defaults to the start date if blank.</p>
+              </div>
+
+              {/* Schedule repeater */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Schedule (Digis ticket links)</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addScheduleRow}>+ Add show</Button>
+                </div>
+                {eventForm.schedule.length === 0 && (
+                  <p className="text-[11px] text-muted-foreground">No shows yet. Each row becomes a clickable Digis ticket link on the schedule.</p>
+                )}
+                {eventForm.schedule.map((row, i) => (
+                  <div key={row.id} className="rounded-lg border border-white/10 p-3 space-y-2">
+                    <div className="grid grid-cols-3 gap-2">
+                      <Input placeholder="Day (Mon)" value={row.dayShort} onChange={(e) => updateScheduleRow(i, { dayShort: e.target.value })} />
+                      <Input placeholder="Date # (26)" value={row.dateNum} onChange={(e) => updateScheduleRow(i, { dateNum: e.target.value })} />
+                      <Input placeholder="Date (May 26)" value={row.date} onChange={(e) => updateScheduleRow(i, { date: e.target.value, day: e.target.value })} />
+                    </div>
+                    <Input placeholder="Title (Opening Show)" value={row.title} onChange={(e) => updateScheduleRow(i, { title: e.target.value })} />
+                    <Input placeholder="Details (Doors 6pm · Show 7pm)" value={row.description} onChange={(e) => updateScheduleRow(i, { description: e.target.value })} />
+                    <Input placeholder="Digis event ID (uuid from digis.cc/events/…)" value={row.digisEventId} onChange={(e) => updateScheduleRow(i, { digisEventId: e.target.value })} />
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Switch checked={row.highlight} onCheckedChange={(v) => updateScheduleRow(i, { highlight: v })} />
+                        Highlight (marquee night)
+                      </label>
+                      <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => removeScheduleRow(i)}>Remove</Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
