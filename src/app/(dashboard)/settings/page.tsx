@@ -44,6 +44,17 @@ const US_STATES = [
 ];
 
 // Proper title case for city names (e.g., "cumming" -> "Cumming", "new york" -> "New York")
+// Models often paste a full profile URL instead of a bare username — keep only
+// the last path segment (drop protocol/domain/query/hash), then strip @ and spaces.
+function cleanSocialUsername(raw: string): string {
+  let cleaned = raw.trim();
+  if (cleaned.includes("/") || cleaned.includes("?")) {
+    cleaned = cleaned.split(/[?#]/)[0].replace(/\/+$/, "");
+    cleaned = cleaned.split("/").pop() || "";
+  }
+  return cleaned.replace(/^@/, "").replace(/\s/g, "");
+}
+
 function toTitleCase(str: string | null | undefined): string | null {
   if (!str) return null;
   return str
@@ -1573,7 +1584,7 @@ export default function ProfilePage() {
                   <Input
                     id="tiktok"
                     value={model.tiktok_username || ""}
-                    onChange={(e) => setModel({ ...model, tiktok_username: e.target.value.replace("@", "") })}
+                    onChange={(e) => setModel({ ...model, tiktok_username: cleanSocialUsername(e.target.value) })}
                     placeholder="username"
                   />
                   <Input
@@ -1591,7 +1602,7 @@ export default function ProfilePage() {
                   <Input
                     id="snapchat"
                     value={model.snapchat_username || ""}
-                    onChange={(e) => setModel({ ...model, snapchat_username: e.target.value.replace("@", "") })}
+                    onChange={(e) => setModel({ ...model, snapchat_username: cleanSocialUsername(e.target.value) })}
                     placeholder="username"
                   />
                   <Input
@@ -1609,7 +1620,7 @@ export default function ProfilePage() {
                   <Input
                     id="x"
                     value={model.x_username || ""}
-                    onChange={(e) => setModel({ ...model, x_username: e.target.value.replace("@", "") })}
+                    onChange={(e) => setModel({ ...model, x_username: cleanSocialUsername(e.target.value) })}
                     placeholder="username"
                   />
                   <Input
@@ -1627,7 +1638,7 @@ export default function ProfilePage() {
                   <Input
                     id="youtube"
                     value={model.youtube_username || ""}
-                    onChange={(e) => setModel({ ...model, youtube_username: e.target.value.replace("@", "") })}
+                    onChange={(e) => setModel({ ...model, youtube_username: cleanSocialUsername(e.target.value) })}
                     placeholder="channel name"
                   />
                   <Input
@@ -1645,7 +1656,7 @@ export default function ProfilePage() {
                   <Input
                     id="twitch"
                     value={model.twitch_username || ""}
-                    onChange={(e) => setModel({ ...model, twitch_username: e.target.value.replace("@", "") })}
+                    onChange={(e) => setModel({ ...model, twitch_username: cleanSocialUsername(e.target.value) })}
                     placeholder="username"
                   />
                 </div>
@@ -1657,15 +1668,7 @@ export default function ProfilePage() {
                   <Input
                     id="digis_username"
                     value={model.digis_username || ""}
-                    onChange={(e) => {
-                      // Accept full digis.cc URLs or bare usernames
-                      let cleaned = e.target.value.trim().toLowerCase();
-                      if (cleaned.includes("digis.cc/")) {
-                        cleaned = cleaned.split("digis.cc/").pop() || cleaned;
-                      }
-                      cleaned = cleaned.replace(/^@/, "").replace(/\s/g, "").replace(/\/$/, "");
-                      setModel({ ...model, digis_username: cleaned });
-                    }}
+                    onChange={(e) => setModel({ ...model, digis_username: cleanSocialUsername(e.target.value.toLowerCase()) })}
                     placeholder="your-digis-username"
                     autoComplete="off"
                     autoCapitalize="none"
