@@ -3,6 +3,8 @@ import { assertNotSuspended } from "@/lib/auth/suspension";
 import { NextRequest, NextResponse } from "next/server";
 import { generateRoomName, generateToken } from "@/lib/livekit";
 import { sendVideoCallRequestEmail } from "@/lib/email";
+import { sendIncomingCallSMS } from "@/lib/sms";
+import { CALL_RATE_LIMITS } from "@/types/video-calls";
 import { z } from "zod";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
     if (suspended) return suspended;
 
     let recipientActor: { id: string } | null = null;
-    let recipientModel: { id: string; username: string | null; first_name: string | null; user_id: string | null; video_call_rate: number | null; voice_call_rate: number | null; email?: string | null; video_is_online?: boolean | null } | null = null;
+    let recipientModel: { id: string; username: string | null; first_name: string | null; user_id: string | null; video_call_rate: number | null; voice_call_rate: number | null; email?: string | null; phone?: string | null; video_is_online?: boolean | null } | null = null;
     let conversationId: string | null = providedConversationId || null;
 
     // If conversationId provided, get recipient from conversation
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
         // Try to get model info (might be a model or fan)
         const { data: model } = await supabase
           .from("models")
-          .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, video_is_online")
+          .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, phone, video_is_online")
           .eq("user_id", recipientActorData.user_id)
           .single();
 
@@ -121,7 +123,7 @@ export async function POST(request: NextRequest) {
       // Use recipientUsername to find recipient
       const { data: model } = await supabase
         .from("models")
-        .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, video_is_online")
+        .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, phone, video_is_online")
         .eq("username", recipientUsername)
         .eq("is_approved", true)
         .single();
@@ -237,6 +239,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Cap concurrent ringing: a caller with calls already ringing shouldn't be
+    // able to spam-dial. Pending sessions expire as missed after ~3 min via the
+    // sweeper, so this can't wedge a legitimate caller for long.
+    const { count: pendingCount } = await supabase
+      .from("video_call_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("initiated_by", callerActor.id)
+      .eq("status", "pending");
+
+    if ((pendingCount ?? 0) >= CALL_RATE_LIMITS.maxPendingCalls) {
+      return NextResponse.json({
+        error: "You already have a call ringing. Wait for it to be answered or cancel it first.",
+        code: "too_many_pending_calls",
+      }, { status: 429 });
+    }
+
     // Generate room name
     const roomName = generateRoomName();
 
@@ -291,6 +309,18 @@ export async function POST(request: NextRequest) {
         callRate,
         callType,
       }).catch((err) => logger.error(`Failed to send ${callType} call email`, err));
+    }
+
+    // SMS ring (non-blocking): the in-app ring only reaches an open browser
+    // tab, so without this a model who isn't staring at the dashboard never
+    // knows a paying fan called.
+    if (recipientModel?.phone && callRate > 0) {
+      sendIncomingCallSMS(
+        recipientModel.phone,
+        recipientModel.first_name || recipientModel.username || "Model",
+        callerName,
+        callType
+      ).catch((err) => logger.error(`Failed to send ${callType} call SMS`, err));
     }
 
     return NextResponse.json({

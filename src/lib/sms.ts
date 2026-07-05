@@ -154,6 +154,23 @@ export async function sendModelApprovalSMS(
   await sendSMS({ to: phone, message });
 }
 
+// Ring the model's phone when a fan starts a live call. The in-app ring only
+// reaches an open browser tab; SMS is what makes the phone actually buzz.
+// Calls auto-expire as missed after ~2 min, so urgency in the copy is real.
+export async function sendIncomingCallSMS(
+  phone: string,
+  modelName: string,
+  callerName: string,
+  callType: "video" | "voice"
+): Promise<void> {
+  const firstName = sanitizeSmsInput(modelName.split(" ")[0], 50);
+  const safeCaller = sanitizeSmsInput(callerName, 50);
+
+  const message = `EXA: ${safeCaller} is ${callType} calling you right now, ${firstName}! Answer within 2 min: https://examodels.com/dashboard/messages`;
+
+  await sendSMS({ to: phone, message });
+}
+
 // Send confirmation to model
 export async function sendCallRequestConfirmation(
   phone: string,
