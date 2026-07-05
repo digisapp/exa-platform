@@ -28,6 +28,8 @@ import {
   Image as ImageIcon,
   Wand2,
   Share2,
+  ShieldCheck,
+  Crown,
 } from "lucide-react";
 
 type Color =
@@ -90,6 +92,7 @@ export default async function AdminPage() {
   const { count: pendingModelApps } = await (supabase.from("model_applications") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
   const { count: pendingBrands } = await (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("is_verified", false);
   const { count: pendingCalls } = await (supabase.from("call_requests") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
+  const { count: pendingVerifications } = await (supabase.from("model_verifications") as any).select("*", { count: "exact", head: true }).eq("status", "pending_review");
 
   const { data: modelBalances } = await supabase.from("models").select("coin_balance") as { data: { coin_balance: number }[] | null };
   const { data: fanBalances } = await supabase.from("fans").select("coin_balance") as { data: { coin_balance: number }[] | null };
@@ -106,6 +109,13 @@ export default async function AdminPage() {
       icon: Users,
       color: "pink",
       subtitle: pendingTotal > 0 ? `${pendingTotal} pending` : undefined,
+    },
+    {
+      href: "/admin/verifications",
+      label: "Verifications",
+      icon: ShieldCheck,
+      color: "emerald",
+      subtitle: (pendingVerifications || 0) > 0 ? `${pendingVerifications} to review` : undefined,
     },
     { href: "/admin/rosters", label: "Client Rosters", icon: Share2, color: "cyan" },
     { href: "/admin/traffic", label: "Traffic", icon: BarChart3, color: "blue" },
@@ -136,6 +146,7 @@ export default async function AdminPage() {
     },
     { href: "/admin/travel", label: "EXA Travel", icon: Plane, color: "violet", featured: true },
     { href: "/admin/boost", label: "EXA Boost", icon: Flame, color: "orange", featured: true },
+    { href: "/admin/swimcrown", label: "SwimCrown", icon: Crown, color: "amber" },
     { href: "/admin/exa-dolls", label: "EXA Dolls", icon: Sparkles, color: "pink", featured: true },
     { href: "/admin/stickers", label: "EXA Stickers", icon: Sparkles, color: "violet", featured: true },
     { href: "/admin/messages", label: "Messages", icon: MessageCircle, color: "indigo" },
