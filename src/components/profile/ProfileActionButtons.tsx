@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Link from "next/link";
+import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
 import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ interface ProfileActionButtonsProps {
   isLoggedIn: boolean;
   isOwner: boolean;
   modelUsername: string;
+  modelId: string;
   modelActorId: string | null;
   modelName?: string;
   coinBalance?: number;
@@ -64,10 +66,10 @@ export function ProfileActionButtons({
   isLoggedIn,
   isOwner,
   modelUsername,
+  modelId,
   modelActorId,
   modelName,
   coinBalance = 0,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   messageRate = 0,
   videoCallRate = 0,
   voiceCallRate = 0,
@@ -438,6 +440,14 @@ export function ProfileActionButtons({
                 </button>
               </div>
             )}
+            {/* Price transparency — without this, a fan's first hint that
+                messages cost coins is a 402 error after they hit send. */}
+            {!sentConversationId && messageRate > 0 && (
+              <p className="flex items-center justify-end gap-1 text-[10px] text-white/35 mt-1 pr-1">
+                <Coins className="h-2.5 w-2.5" />
+                {messageRate} {messageRate === 1 ? "coin" : "coins"} per message
+              </p>
+            )}
           </div>
         )}
 
@@ -484,7 +494,7 @@ export function ProfileActionButtons({
             <DialogTitle className="flex items-center gap-2">
               <Video className="h-5 w-5 text-pink-500" /> Video Call
             </DialogTitle>
-            <DialogDescription>Start a video call with {modelUsername}</DialogDescription>
+            <DialogDescription>Start a video call with {firstName}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div className="flex items-center justify-center gap-2 p-4 rounded-lg bg-muted/50">
@@ -507,7 +517,7 @@ export function ProfileActionButtons({
             <DialogTitle className="flex items-center gap-2">
               <Phone className="h-5 w-5 text-blue-500" /> Voice Call
             </DialogTitle>
-            <DialogDescription>Start a voice call with {modelUsername}</DialogDescription>
+            <DialogDescription>Start a voice call with {firstName}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div className="flex items-center justify-center gap-2 p-4 rounded-lg bg-muted/50">
@@ -591,7 +601,7 @@ export function ProfileActionButtons({
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
           <div className="bg-gradient-to-r from-pink-500 to-violet-500 px-6 py-8 text-white text-center">
             <Image src="/exa-logo-white.png" alt="EXA" width={100} height={32} className="h-8 w-auto mx-auto mb-4" />
-            <h2 className="text-2xl font-bold">Connect with {modelUsername}</h2>
+            <h2 className="text-2xl font-bold">Connect with {firstName}</h2>
           </div>
           <div className="px-6 py-5 space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -616,10 +626,13 @@ export function ProfileActionButtons({
               <p className="text-xs text-muted-foreground">Join Fans and Brands connecting with EXA Models</p>
             </div>
             <div className="flex flex-col gap-3">
-              <Link href="/fan/signup" className="w-full">
+              {/* Inline signup that lands the fan back on THIS profile (with
+                  referrer attribution) instead of dumping them on /dashboard —
+                  same pattern as the homepage carousel gate (PR #43). */}
+              <FanSignupDialog redirectTo={`/${modelUsername}`} referrerModelId={modelId}>
                 <Button className="w-full h-12 text-base exa-gradient-button">Create Free Account</Button>
-              </Link>
-              <Link href="/signin" className="w-full">
+              </FanSignupDialog>
+              <Link href={`/signin?redirect=${encodeURIComponent(`/${modelUsername}`)}`} className="w-full">
                 <Button variant="ghost" className="w-full text-muted-foreground">
                   Already have an account? <span className="text-pink-500 ml-1">Sign In</span>
                 </Button>
