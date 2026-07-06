@@ -97,7 +97,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = model.bio || `Book ${displayName} for photoshoots, events, and brand collaborations on EXA Models - the premier model booking platform.`;
 
   return {
-    title: `@${model.username} | EXA Models`,
+    title: `@${model.username}`,
     description,
     alternates: {
       canonical: profileUrl,
