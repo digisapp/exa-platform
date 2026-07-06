@@ -24,8 +24,6 @@ interface Contestant {
   vote_count: number;
   model: {
     id: string;
-    first_name: string;
-    last_name: string;
     username: string;
     profile_photo_url: string | null;
     city?: string | null;
@@ -137,7 +135,7 @@ export function VoteDialog({
 
       coinCtx?.deductCoins(effectiveAmount);
       toast.success(
-        `Voted ${effectiveAmount} coin${effectiveAmount !== 1 ? "s" : ""} for ${contestant.model.first_name}!`
+        `Voted ${effectiveAmount} coin${effectiveAmount !== 1 ? "s" : ""} for @${contestant.model.username}!`
       );
 
       onVoteSuccess(
@@ -163,7 +161,7 @@ export function VoteDialog({
         <DialogHeader>
           <DialogTitle className="text-center">
             <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">
-              Vote for {contestant.model.first_name}
+              Vote for @{contestant.model.username}
             </span>
           </DialogTitle>
         </DialogHeader>
@@ -174,7 +172,7 @@ export function VoteDialog({
             {contestant.model.profile_photo_url ? (
               <Image
                 src={contestant.model.profile_photo_url}
-                alt={contestant.model.first_name}
+                alt={contestant.model.username}
                 fill
                 className="object-cover"
               />
@@ -186,9 +184,6 @@ export function VoteDialog({
           </div>
           <div className="min-w-0">
             <p className="font-bold text-white truncate">
-              {contestant.model.first_name} {contestant.model.last_name}
-            </p>
-            <p className="text-xs text-muted-foreground">
               @{contestant.model.username}
             </p>
           </div>

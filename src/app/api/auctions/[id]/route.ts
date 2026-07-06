@@ -36,8 +36,6 @@ export async function GET(
         *,
         model:models!auctions_model_id_fkey (
           id,
-          first_name,
-          last_name,
           profile_photo_url,
           username,
           user_id
@@ -99,9 +97,7 @@ export async function GET(
       ...auction,
       model: auction.model ? {
         id: auction.model.id,
-        display_name: auction.model.first_name
-          ? `${auction.model.first_name} ${auction.model.last_name || ""}`.trim()
-          : null,
+        display_name: auction.model.username,
         profile_image_url: auction.model.profile_photo_url,
         slug: auction.model.username,
         user_id: auction.model.user_id,

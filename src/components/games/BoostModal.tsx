@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 
 interface Model {
   id: string;
-  first_name: string | null;
   username: string;
   profile_photo_url: string;
 }
@@ -80,11 +79,11 @@ export function BoostModal({
               <span className="absolute inset-0 blur-md bg-orange-500/50 animate-pulse" />
             </span>
             <span className="bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500 text-transparent bg-clip-text font-bold">
-              Boost {model.first_name || model.username}
+              Boost {model.username}
             </span>
           </DialogTitle>
           <DialogDescription className="text-base">
-            Your boost helps {model.first_name || "them"} rise to the top!
+            Your boost helps {model.username} rise to the top!
           </DialogDescription>
         </DialogHeader>
 
@@ -97,7 +96,7 @@ export function BoostModal({
               <div className="relative w-28 h-28 rounded-full overflow-hidden ring-4 ring-white/20 shadow-2xl">
                 <Image
                   src={model.profile_photo_url}
-                  alt={model.first_name || model.username}
+                  alt={model.username}
                   fill
                   className="object-cover"
                   sizes="112px"
@@ -116,7 +115,7 @@ export function BoostModal({
               {/* Emotional hook */}
               <p className="text-sm text-muted-foreground px-2">
                 Be their biggest supporter! Boosts give <strong className="text-white">5x leaderboard points</strong> and
-                help {model.first_name || "them"} get discovered by brands and fans.
+                help {model.username} get discovered by brands and fans.
               </p>
 
               {/* Benefits list */}
@@ -125,7 +124,7 @@ export function BoostModal({
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500">
                     <Trophy className="h-4 w-4 text-white" />
                   </div>
-                  <span className="text-left">Help {model.first_name || "them"} <strong className="text-orange-400">climb the leaderboard</strong></span>
+                  <span className="text-left">Help {model.username} <strong className="text-orange-400">climb the leaderboard</strong></span>
                 </div>
                 <div className="flex items-center gap-3 text-sm bg-white/5 rounded-lg px-4 py-2.5">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-purple-500">
@@ -144,7 +143,7 @@ export function BoostModal({
               <Link href="/signin" className="block">
                 <Button className="w-full h-12 text-base bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 hover:from-orange-600 hover:via-pink-600 hover:to-purple-600 shadow-lg shadow-pink-500/25">
                   <Heart className="h-5 w-5 mr-2" />
-                  Sign In to Support {model.first_name || "Them"}
+                  Sign In to Support {model.username}
                 </Button>
               </Link>
               <p className="text-xs text-muted-foreground">
@@ -213,7 +212,7 @@ export function BoostModal({
                         <span className="text-sm text-yellow-400">{REVEAL_COST} coins</span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {BOOST_POINTS}x points + {model.first_name || "they"} sees your name
+                        {BOOST_POINTS}x points + {model.username} sees your name
                       </p>
                     </div>
                   </div>
@@ -280,7 +279,7 @@ export function BoostModal({
                   ) : selectedType ? (
                     <>
                       {selectedType === "super" ? <Zap className="h-4 w-4 mr-2" /> : <Flame className="h-4 w-4 mr-2" />}
-                      Support {model.first_name || "them"} with {selectedType === "super" ? SUPER_COST : selectedType === "reveal" ? REVEAL_COST : BOOST_COST} coins
+                      Support {model.username} with {selectedType === "super" ? SUPER_COST : selectedType === "reveal" ? REVEAL_COST : BOOST_COST} coins
                     </>
                   ) : (
                     "Choose how to support"

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle, Search, MessageSquare, Sparkles, Users, Building2, Pin, Archive, ArchiveRestore, MoreVertical, Coins, Camera, Video, Mic } from "lucide-react";
 import { format, isToday, isYesterday, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import { modelDisplayName } from "@/lib/model-display";
 import { toast } from "sonner";
 import { SwipeableConversationItem } from "./SwipeableConversationItem";
 
@@ -39,8 +40,6 @@ interface Conversation {
     id?: string;
     type?: string;
     model: {
-      first_name: string | null;
-      last_name: string | null;
       username: string;
       profile_photo_url: string | null;
     } | null;
@@ -234,9 +233,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
   const getParticipantInfo = (participant: Conversation["otherParticipants"][0]) => {
     if (participant?.type === "model" && participant?.model) {
       return {
-        displayName: participant.model.first_name
-          ? `${participant.model.first_name} ${participant.model.last_name || ""}`.trim()
-          : participant.model.username,
+        displayName: modelDisplayName(participant.model),
         avatarUrl: participant.model.profile_photo_url,
         username: participant.model.username,
         type: "model",

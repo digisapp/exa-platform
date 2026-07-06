@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     // Try to find the model by phone number
     const { data: model } = await supabase
       .from("models")
-      .select("id, username, first_name, last_name, phone")
+      .select("id")
       .or(`phone.eq.${from},phone.eq.${normalizedPhone},phone.eq.+${from}`)
       .single();
 

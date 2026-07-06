@@ -71,7 +71,7 @@ export default async function FollowersPage() {
       ? supabase.from("fans").select("id, display_name, avatar_url").in("id", fanActorIds)
       : Promise.resolve({ data: [] }),
     modelUserIds.length > 0
-      ? supabase.from("models").select("user_id, username, first_name, last_name, profile_photo_url").in("user_id", modelUserIds)
+      ? supabase.from("models").select("user_id, username, profile_photo_url").in("user_id", modelUserIds)
       : Promise.resolve({ data: [] }),
     brandActorIds.length > 0
       ? (supabase.from("brands") as any).select("id, company_name, logo_url").in("id", brandActorIds)
@@ -97,10 +97,8 @@ export default async function FollowersPage() {
       displayName = fan?.display_name || "Anonymous Fan";
       avatarUrl = fan?.avatar_url;
     } else if (type === "model") {
-      const model = modelsMap.get(followerActor.user_id) as { first_name?: string; last_name?: string; username?: string; profile_photo_url?: string } | undefined;
-      displayName = model?.first_name
-        ? `${model.first_name} ${model.last_name || ""}`.trim()
-        : model?.username || "Model";
+      const model = modelsMap.get(followerActor.user_id) as { username?: string; profile_photo_url?: string } | undefined;
+      displayName = model?.username || "Model";
       avatarUrl = model?.profile_photo_url;
       profileUrl = model?.username ? `/${model.username}` : null;
     } else if (type === "brand") {

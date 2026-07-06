@@ -108,7 +108,7 @@ export async function GET() {
         ? (adminClient.from("brands") as any).select("id, company_name, logo_url").in("id", brandIds)
         : { data: [] },
       modelUserIds.length > 0
-        ? (adminClient.from("models") as any).select("user_id, first_name, username, profile_photo_url").in("user_id", modelUserIds)
+        ? (adminClient.from("models") as any).select("user_id, username, profile_photo_url").in("user_id", modelUserIds)
         : { data: [] },
     ]);
 
@@ -121,7 +121,7 @@ export async function GET() {
     for (const a of activityActors || []) {
       if (a.type === "model") {
         const m = (models.data || []).find((m: any) => m.user_id === a.user_id);
-        if (m) actorsMap.set(a.id, { name: m.first_name || m.username || "Model", avatar: m.profile_photo_url, type: "model", username: m.username });
+        if (m) actorsMap.set(a.id, { name: m.username || "Model", avatar: m.profile_photo_url, type: "model", username: m.username });
       }
     }
   }

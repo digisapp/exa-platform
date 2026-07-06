@@ -43,7 +43,7 @@ export default async function BidsPage() {
     if (actor?.type === "model" || actor?.type === "admin") {
       const { data } = await supabase
         .from("models")
-        .select("id, username, first_name, last_name, profile_photo_url, coin_balance")
+        .select("id, username, profile_photo_url, coin_balance")
         .eq("user_id", user.id)
         .single() as { data: any };
       profileData = data;
@@ -85,8 +85,6 @@ export default async function BidsPage() {
       *,
       model:models!auctions_model_id_fkey (
         id,
-        first_name,
-        last_name,
         profile_photo_url,
         username,
         user_id
@@ -100,9 +98,7 @@ export default async function BidsPage() {
     ...auction,
     model: auction.model ? {
       id: auction.model.id,
-      display_name: auction.model.first_name
-        ? `${auction.model.first_name} ${auction.model.last_name || ""}`.trim()
-        : null,
+      display_name: auction.model.username || null,
       profile_image_url: auction.model.profile_photo_url,
       slug: auction.model.username,
       user_id: auction.model.user_id,
@@ -117,9 +113,7 @@ export default async function BidsPage() {
   );
 
   const displayName =
-    profileData?.first_name
-      ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
-      : profileData?.display_name || profileData?.username || undefined;
+    profileData?.display_name || profileData?.username || undefined;
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>

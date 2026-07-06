@@ -21,8 +21,6 @@ export function ModelOnlineNotifier({ actorId }: ModelOnlineNotifierProps) {
     async (modelRow: {
       id: string;
       username: string;
-      first_name: string | null;
-      last_name: string | null;
       profile_photo_url: string | null;
       video_call_rate: number | null;
       video_is_online: boolean;
@@ -38,9 +36,7 @@ export function ModelOnlineNotifier({ actorId }: ModelOnlineNotifierProps) {
 
       notifiedRef.current.set(modelRow.id, now);
 
-      const displayName = modelRow.first_name
-        ? `${modelRow.first_name} ${modelRow.last_name || ""}`.trim()
-        : modelRow.username;
+      const displayName = modelRow.username;
 
       const rate = modelRow.video_call_rate;
       const rateText = rate ? `${rate} coins/min` : "";
@@ -160,7 +156,7 @@ function showModelOnlineToast({
               className="mt-3 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-green-500/25"
             >
               <Video className="h-4 w-4" />
-              Video Call {displayName.split(" ")[0]}
+              Video Call {displayName}
             </button>
           </div>
         </div>

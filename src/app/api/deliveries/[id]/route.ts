@@ -83,7 +83,7 @@ export async function GET(
     if (delivery.model_id) {
       const { data: m } = await adminClient
         .from("models")
-        .select("id, username, first_name, last_name, profile_photo_url")
+        .select("id, username, profile_photo_url")
         .eq("id", delivery.model_id)
         .maybeSingle();
       model = m;

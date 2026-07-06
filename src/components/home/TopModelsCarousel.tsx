@@ -19,8 +19,6 @@ import { createClient } from "@/lib/supabase/client";
 interface Model {
   id: string;
   username: string;
-  first_name: string | null;
-  last_name: string | null;
   profile_photo_url: string | null;
   city: string | null;
   state: string | null;
@@ -243,14 +241,14 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
                   {model.profile_photo_url ? (
                     <Image
                       src={model.profile_photo_url}
-                      alt={model.first_name || model.username}
+                      alt={model.username}
                       fill
                       sizes="280px"
                       className="object-cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-white/30">
-                      {model.first_name?.charAt(0) || model.username.charAt(0).toUpperCase()}
+                      {model.username.charAt(0).toUpperCase()}
                     </div>
                   )}
 
@@ -260,7 +258,7 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
                   {/* Info Overlay */}
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <h3 className="text-lg font-semibold text-white truncate">
-                      {model.first_name || model.username}
+                      {model.username}
                     </h3>
                     {model.state && (
                       <p className="text-sm text-white/70 flex items-center gap-1 mt-1">
@@ -298,7 +296,7 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center">
-              View {selectedModel?.first_name || selectedModel?.username}&apos;s Profile
+              View {selectedModel?.username}&apos;s Profile
             </DialogTitle>
             <DialogDescription className="text-center">
               Create a free account to view full profiles, follow models, and get exclusive content.
@@ -311,14 +309,14 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
                 {selectedModel.profile_photo_url ? (
                   <Image
                     src={selectedModel.profile_photo_url}
-                    alt={selectedModel.first_name || selectedModel.username}
+                    alt={selectedModel.username}
                     width={96}
                     height={96}
                     className="object-cover w-full h-full"
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center text-2xl font-bold">
-                    {selectedModel.first_name?.charAt(0) || selectedModel.username.charAt(0).toUpperCase()}
+                    {selectedModel.username.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>

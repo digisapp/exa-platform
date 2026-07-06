@@ -78,14 +78,12 @@ export function CallListener({ actorId }: CallListenerProps) {
           if (callerActor.type === "model") {
             const { data: model } = await (supabase
               .from("models") as any)
-              .select("first_name, last_name, username, profile_photo_url")
+              .select("username, profile_photo_url")
               .eq("user_id", callerActor.user_id)
-              .single() as { data: { first_name?: string; last_name?: string; username?: string; profile_photo_url?: string } | null };
+              .single() as { data: { username?: string; profile_photo_url?: string } | null };
 
             if (model) {
-              callerName = model.first_name
-                ? `${model.first_name} ${model.last_name || ""}`.trim()
-                : model.username || "Model";
+              callerName = model.username || "Model";
               callerAvatar = model.profile_photo_url || undefined;
             }
           } else if (callerActor.type === "fan") {

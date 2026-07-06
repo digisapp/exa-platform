@@ -17,8 +17,6 @@ interface DeliveryCardProps {
     model?: {
       id: string;
       username: string;
-      first_name?: string | null;
-      last_name?: string | null;
       profile_photo_url?: string | null;
     } | null;
     booking?: {
@@ -56,9 +54,7 @@ const SERVICE_LABELS: Record<string, string> = {
 
 export function DeliveryCard({ delivery, onClick }: DeliveryCardProps) {
   const modelName = delivery.model
-    ? delivery.model.first_name
-      ? `${delivery.model.first_name}${delivery.model.last_name ? ` ${delivery.model.last_name}` : ""}`
-      : delivery.model.username
+    ? `@${delivery.model.username}`
     : "Unknown Model";
 
   const source = delivery.booking

@@ -17,8 +17,6 @@ interface AuctionItem {
   ends_at: string;
   model: {
     username: string;
-    first_name: string | null;
-    last_name: string | null;
     profile_photo_url: string | null;
   };
   myBidStatus: string | null;
@@ -81,7 +79,7 @@ export function LiveBidsPanel({ auctions }: LiveBidsPanelProps) {
 
       <div className="p-3 space-y-2">
         {auctions.map((auction) => {
-          const modelName = `${auction.model.first_name || ""} ${auction.model.last_name || ""}`.trim() || auction.model.username;
+          const modelName = auction.model.username;
           const price = auction.current_bid || auction.starting_price;
           const timeLeft = countdowns[auction.id] || "…";
           const isWinning = auction.myBidStatus === "winning";

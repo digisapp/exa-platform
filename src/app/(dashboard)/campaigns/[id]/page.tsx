@@ -68,7 +68,7 @@ export default async function CampaignDetailPage({
   if (modelIds.length > 0) {
     const { data: modelData } = await supabase
       .from("models")
-      .select("*")
+      .select("id, username, profile_photo_url, city, state, height, instagram_followers, tiktok_followers, is_verified, is_featured, reliability_score, focus_tags, show_location, show_measurements, last_active_at")
       .in("id", modelIds);
     models = modelData || [];
   }
@@ -136,7 +136,7 @@ export default async function CampaignDetailPage({
               <div key={model.id} className="relative group">
                 <ModelTagsDisplay
                   modelId={model.id}
-                  modelName={model.first_name || model.username}
+                  modelName={model.username}
                 />
                 <ModelCard
                   model={model}
@@ -146,7 +146,7 @@ export default async function CampaignDetailPage({
                 <RemoveFromCampaignButton
                   campaignId={id}
                   modelId={model.id}
-                  modelName={model.first_name || model.username}
+                  modelName={model.username}
                 />
               </div>
             ))}

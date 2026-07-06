@@ -21,7 +21,6 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 interface Model {
   id: string;
-  first_name: string | null;
   username: string;
   profile_photo_url: string;
   city: string | null;
@@ -257,7 +256,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
       }
 
       const title = type === "reveal" ? "Boosted & Revealed!" : "Boosted!";
-      toast.success(`${title} You gave ${boostModal.first_name || boostModal.username} ${data.points_awarded} points!`);
+      toast.success(`${title} You gave ${boostModal.username} ${data.points_awarded} points!`);
 
       // Play boost sound
       sounds.onBoost();

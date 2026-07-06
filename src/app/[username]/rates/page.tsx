@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { data: model } = await supabase
     .from("models")
-    .select("first_name, last_name, username, bio, profile_photo_url, is_approved")
+    .select("username, bio, profile_photo_url, is_approved")
     .eq("username", username)
     .single() as { data: any };
 
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Rates Preview | EXA Models" };
   }
 
-  const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
+  const displayName = model.username;
 
   return {
     title: `${displayName} - Rates & Booking | EXA Models`,
@@ -68,7 +68,15 @@ export default async function ModelRatesPage({ params }: Props) {
   // Get model (without is_approved filter - we check ownership below)
   const { data: model } = await supabase
     .from("models")
-    .select("*")
+    .select(`
+      id, user_id, username, bio, profile_photo_url, is_approved, last_active_at,
+      show_location, city, state, focus_tags,
+      photoshoot_hourly_rate, photoshoot_half_day_rate, photoshoot_full_day_rate,
+      promo_hourly_rate, brand_ambassador_daily_rate, private_event_hourly_rate,
+      social_companion_hourly_rate, meet_greet_rate, travel_fee,
+      open_to_collabs, instagram_collab_rate, tiktok_collab_rate,
+      avg_instagram_impressions, avg_tiktok_views
+    `)
     .eq("username", username)
     .single() as { data: any };
 
@@ -124,7 +132,7 @@ export default async function ModelRatesPage({ params }: Props) {
     id: p.id, photo_url: resolveMediaUrl(p.media_url), url: resolveMediaUrl(p.media_url), asset_type: "portfolio", title: p.title, created_at: p.created_at,
   }));
 
-  const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
+  const displayName = model.username;
 
   return (
     <div className="min-h-screen relative">

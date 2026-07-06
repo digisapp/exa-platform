@@ -81,7 +81,6 @@ export async function GET(
         photo_urls,
         model:models(
           id,
-          first_name,
           username,
           profile_photo_url
         )
@@ -149,7 +148,7 @@ export async function GET(
       wornBy: modelProducts?.map((mp: any) => ({
         model: {
           id: mp.model.id,
-          name: mp.model.first_name,
+          name: mp.model.username,
           username: mp.model.username,
           photo: mp.model.profile_photo_url,
         },

@@ -20,8 +20,6 @@ import {
 interface Model {
   id: string;
   username: string;
-  first_name?: string;
-  last_name?: string;
   profile_photo_url?: string;
   city?: string;
   state?: string;
@@ -108,9 +106,7 @@ export function BulkAddModelsDialog({ campaignId, campaignName, existingModelIds
   };
 
   const getModelName = (model: Model) => {
-    return model.first_name
-      ? `${model.first_name} ${model.last_name || ""}`.trim()
-      : model.username;
+    return model.username;
   };
 
   return (

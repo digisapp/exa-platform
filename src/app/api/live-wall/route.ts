@@ -76,13 +76,11 @@ export async function POST(request: NextRequest) {
     if (actor.type === "model") {
       const { data: model } = await supabase
         .from("models")
-        .select("first_name, last_name, username, profile_photo_url")
+        .select("username, profile_photo_url")
         .eq("user_id", user.id)
         .maybeSingle();
       if (model) {
-        displayName = model.username
-          ? `@${model.username}`
-          : `${model.first_name || ""} ${model.last_name || ""}`.trim() || "Model";
+        displayName = model.username ? `@${model.username}` : "Model";
         avatarUrl = model.profile_photo_url;
         profileSlug = model.username;
       }

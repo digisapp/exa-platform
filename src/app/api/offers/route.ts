@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
             created_at,
             checked_in_at,
             no_show,
-            model:models(id, username, first_name, last_name, profile_photo_url, reliability_score, city, state)
+            model:models(id, username, profile_photo_url, reliability_score, city, state)
           )
         `)
         .eq("brand_id", actor.id);

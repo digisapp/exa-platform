@@ -15,8 +15,6 @@ export type FeedItem =
       id: string;
       model: {
         username: string;
-        first_name: string | null;
-        last_name: string | null;
         profile_photo_url: string | null;
         is_verified: boolean;
       };
@@ -36,8 +34,6 @@ export type FeedItem =
       id: string;
       model: {
         username: string;
-        first_name: string | null;
-        last_name: string | null;
         profile_photo_url: string | null;
         is_verified: boolean;
       };
@@ -152,7 +148,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
           let auctionCount = 0;
           return visibleItems.map((item) => {
           if (item.type === "content") {
-            const modelName = `${item.model.first_name || ""} ${item.model.last_name || ""}`.trim() || item.model.username;
+            const modelName = item.model.username;
             return (
               <div key={`content-${item.id}`} className="rounded-xl border border-border/50 bg-card overflow-hidden">
                 {/* Model header */}
@@ -212,7 +208,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
 
           if (item.type === "auction") {
             auctionCount++;
-            const modelName = `${item.model.first_name || ""} ${item.model.last_name || ""}`.trim() || item.model.username;
+            const modelName = item.model.username;
             const price = item.current_bid || item.starting_price;
             const isWinning = item.myBidStatus === "winning";
             const isOutbid = item.myBidStatus === "outbid";

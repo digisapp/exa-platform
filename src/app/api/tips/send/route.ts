@@ -124,10 +124,10 @@ export async function POST(request: NextRequest) {
     } else if (sender.type === "model") {
       const { data: senderModel } = await supabase
         .from("models")
-        .select("first_name, username")
+        .select("username")
         .eq("user_id", user.id)
         .single();
-      senderName = senderModel?.first_name || senderModel?.username || "A model";
+      senderName = senderModel?.username || "A model";
     } else if (sender.type === "brand") {
       const { data: brand } = await supabase
         .from("brands")
@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
       success: true,
       amount: result.amount,
       newBalance: result.sender_new_balance,
-      recipientName: recipientModel.first_name || recipientModel.username,
+      recipientName: recipientModel.username,
       conversationId,
     });
   } catch (error) {

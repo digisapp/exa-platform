@@ -46,7 +46,7 @@ export default async function MyBidsPage() {
       auction:auctions!auction_bids_auction_id_fkey (
         id, title, category, status, current_bid, starting_price, ends_at, winner_id,
         model:models!auctions_model_id_fkey (
-          first_name, last_name, username, profile_photo_url
+          username, profile_photo_url
         )
       )
     `
@@ -183,9 +183,7 @@ function BidCard({ bid, actorId }: { bid: any; actorId: string }) {
   if (!auction) return null;
 
   const model = auction.model;
-  const modelName = model
-    ? `${model.first_name || ""} ${model.last_name || ""}`.trim() || model.username
-    : "Model";
+  const modelName = model?.username || "Model";
 
   const currentPrice = auction.current_bid || auction.starting_price;
   const isActive = auction.status === "active";

@@ -91,8 +91,8 @@ const FOCUS_LABELS: Record<string, string> = {
 
 export interface DraftModelData {
   id: string;
-  first_name: string | null;
-  last_name: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   username: string | null;
   profile_photo_url: string | null;
   height: string | null;
@@ -178,6 +178,9 @@ export function ModelDraftCard({ model, isPicked, onPick, isLoading = false, ass
   const ovr = model.reliability_score;
   const ig = fmtFollowers(model.instagram_followers);
   const primaryFocus = model.focus_tags?.[0];
+  const displayName = model.first_name
+    ? `${model.first_name}${model.last_name ? ` ${model.last_name}` : ""}`
+    : `@${model.username}`;
 
   return (
     <motion.div
@@ -197,7 +200,7 @@ export function ModelDraftCard({ model, isPicked, onPick, isLoading = false, ass
           {model.profile_photo_url ? (
             <Image
               src={model.profile_photo_url}
-              alt={`${model.first_name} ${model.last_name}`}
+              alt={displayName}
               fill
               className="object-cover object-top"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px"
@@ -205,7 +208,7 @@ export function ModelDraftCard({ model, isPicked, onPick, isLoading = false, ass
           ) : (
             <div className={`absolute inset-0 bg-gradient-to-br ${tier.gradient} opacity-15 flex items-center justify-center`}>
               <span className="text-5xl font-black text-white/20">
-                {model.first_name?.[0]}{model.last_name?.[0]}
+                {(model.first_name ?? model.username)?.[0]}{model.last_name?.[0]}
               </span>
             </div>
           )}
@@ -265,11 +268,19 @@ export function ModelDraftCard({ model, isPicked, onPick, isLoading = false, ass
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h3 className="font-black text-[15px] leading-tight text-white tracking-tight truncate">
-                {model.first_name}{" "}
-                <span className={tier.text}>{model.last_name}</span>
+                {model.first_name ? (
+                  <>
+                    {model.first_name}{" "}
+                    <span className={tier.text}>{model.last_name}</span>
+                  </>
+                ) : (
+                  <span className={tier.text}>@{model.username}</span>
+                )}
               </h3>
               <p className="text-[10px] text-white/35 truncate">
-                @{model.username}{model.city ? ` · ${model.city}` : ""}
+                {[model.first_name ? `@${model.username}` : null, model.city]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
             </div>
             {model.admin_rating !== null && (

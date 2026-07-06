@@ -71,11 +71,11 @@ export async function POST(request: NextRequest) {
 
       // Get recipient's name for token
       const { data: model } = await supabase.from("models")
-        .select("first_name, username")
+        .select("username")
         .eq("user_id", user.id)
         .single();
 
-      const recipientName = model?.first_name || model?.username || "Model";
+      const recipientName = model?.username || "Model";
 
       // Generate token for recipient
       const token = await generateToken(session.room_name, recipientName, actor.id);

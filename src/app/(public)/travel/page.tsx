@@ -71,7 +71,7 @@ export default async function TravelPage() {
       const { data } = (await supabase
         .from("models")
         .select(
-          "id, username, first_name, last_name, profile_photo_url, coin_balance"
+          "id, username, profile_photo_url, coin_balance"
         )
         .eq("user_id", user.id)
         .single()) as { data: any };
@@ -107,11 +107,7 @@ export default async function TravelPage() {
     .order("start_at", { ascending: true })) as { data: any[] | null };
 
   const displayName =
-    actorType === "fan"
-      ? profileData?.display_name
-      : profileData?.first_name
-        ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
-        : (profileData?.username || undefined);
+    profileData?.display_name || profileData?.username || undefined;
 
   const openTrips = travelGigs?.filter((g) => g.status === "open") || [];
   const upcomingTrips = travelGigs?.filter((g) => g.status === "upcoming") || [];

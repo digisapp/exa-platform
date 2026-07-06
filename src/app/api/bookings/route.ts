@@ -165,7 +165,7 @@ export async function GET(request: NextRequest) {
       const modelsMap = new Map<string, any>();
       if (modelIds.length > 0) {
         const { data: models } = await adminClient.from("models")
-          .select("id, username, first_name, last_name, profile_photo_url, city, state")
+          .select("id, username, profile_photo_url, city, state")
           .in("id", modelIds);
         (models || []).forEach((m: any) => modelsMap.set(m.id, m));
       }

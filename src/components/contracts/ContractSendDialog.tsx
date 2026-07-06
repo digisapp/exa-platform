@@ -40,7 +40,6 @@ interface ContractTemplate {
 interface ModelSearchResult {
   id: string;
   username: string;
-  first_name: string;
   profile_photo_url: string | null;
   city?: string | null;
   state?: string | null;
@@ -104,7 +103,7 @@ export function ContractSendDialog({
   const effectiveModelId = modelId || pickedModel?.id || null;
   const effectiveModelName =
     modelName ||
-    (pickedModel ? pickedModel.first_name || `@${pickedModel.username}` : null);
+    (pickedModel ? `@${pickedModel.username}` : null);
   const needsModelSelection = !modelId;
 
   useEffect(() => {
@@ -300,7 +299,7 @@ export function ContractSendDialog({
                       {pickedModel.profile_photo_url ? (
                         <Image
                           src={pickedModel.profile_photo_url}
-                          alt={pickedModel.first_name || pickedModel.username}
+                          alt={pickedModel.username}
                           width={36}
                           height={36}
                           className="w-full h-full object-cover"
@@ -309,7 +308,7 @@ export function ContractSendDialog({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
-                        {pickedModel.first_name || `@${pickedModel.username}`}
+                        @{pickedModel.username}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
                         @{pickedModel.username}
@@ -336,7 +335,7 @@ export function ContractSendDialog({
                       <Input
                         value={modelQuery}
                         onChange={(e) => setModelQuery(e.target.value)}
-                        placeholder="Search models by name or username"
+                        placeholder="Search models by username"
                         className="pl-9"
                       />
                     </div>
@@ -364,7 +363,7 @@ export function ContractSendDialog({
                                 {m.profile_photo_url ? (
                                   <Image
                                     src={m.profile_photo_url}
-                                    alt={m.first_name || m.username}
+                                    alt={m.username}
                                     width={32}
                                     height={32}
                                     className="w-full h-full object-cover"
@@ -373,7 +372,7 @@ export function ContractSendDialog({
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium truncate">
-                                  {m.first_name || `@${m.username}`}
+                                  @{m.username}
                                 </p>
                                 <p className="text-xs text-muted-foreground truncate">
                                   @{m.username}

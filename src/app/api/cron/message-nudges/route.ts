@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
 
     const [modelsRes, fansRes, brandsRes] = await Promise.all([
       modelUserIds.length > 0
-        ? adminClient.from("models").select("user_id, first_name, last_name, username").in("user_id", modelUserIds)
+        ? adminClient.from("models").select("user_id, first_name, username").in("user_id", modelUserIds)
         : { data: [] },
       fanUserIds.length > 0
         ? adminClient.from("fans").select("user_id, display_name, username").in("user_id", fanUserIds)
@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
     function getDisplayName(actor: { type: string; user_id: string }): string {
       if (actor.type === "model") {
         const m = modelsByUserId.get(actor.user_id);
-        return m ? `${m.first_name || ""} ${m.last_name || ""}`.trim() || m.username || "A model" : "A model";
+        return m?.username ? `@${m.username}` : "A model";
       }
       if (actor.type === "fan") {
         const f = fansByUserId.get(actor.user_id);

@@ -166,9 +166,7 @@ export default async function RatesPage({ searchParams }: Props) {
 
             <div className="grid gap-6">
               {models.map((model) => {
-                const displayName = model.first_name
-                  ? `${model.first_name} ${model.last_name || ""}`.trim()
-                  : model.username;
+                const displayName = model.username;
                 const startingRate = getStartingRate(model);
                 const categories = getServiceCategories(model);
 

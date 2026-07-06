@@ -48,7 +48,7 @@ export default async function FavoritesPage() {
   const { data: favoritedModels } = userIds.length > 0
     ? await supabase
         .from("models")
-        .select("*")
+        .select("id, user_id, username, profile_photo_url, is_verified, is_featured, last_active_at, show_location, city, state, focus_tags, reliability_score, height, show_measurements, instagram_followers, tiktok_followers")
         .in("user_id", userIds)
         .eq("is_approved", true)
     : { data: [] };

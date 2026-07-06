@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
         total_boosts,
         models!inner (
           id,
-          first_name,
           username,
           profile_photo_url,
           city,
@@ -68,7 +67,6 @@ export async function GET(request: NextRequest) {
       totalBoosts: entry.total_boosts,
       model: entry.models ? {
         id: entry.models.id,
-        firstName: entry.models.first_name,
         username: entry.models.username,
         profilePhotoUrl: entry.models.profile_photo_url,
         city: entry.models.city,

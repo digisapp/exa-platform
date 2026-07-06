@@ -73,12 +73,10 @@ export async function POST(request: NextRequest) {
     if (joinerActor.type === 'model') {
       const { data: model } = await supabase
         .from('models')
-        .select('first_name, last_name, username')
+        .select('username')
         .eq('user_id', user.id)
-        .single() as { data: { first_name?: string; last_name?: string; username?: string } | null };
-      joinerName = model?.first_name
-        ? `${model.first_name} ${model.last_name || ''}`.trim()
-        : model?.username || 'User';
+        .single() as { data: { username?: string } | null };
+      joinerName = model?.username || 'User';
     } else {
       const { data: fan } = await supabase
         .from('fans')

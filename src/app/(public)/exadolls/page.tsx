@@ -23,7 +23,7 @@ export default async function ExaDollsGalleryPage() {
   const { data: models } = await supabase
     .from("models")
     .select(
-      "id, first_name, last_name, username, exa_doll_image_url, exa_doll_generated_at"
+      "id, username, exa_doll_image_url, exa_doll_generated_at"
     )
     .not("exa_doll_image_url", "is", null)
     .eq("is_approved", true)
@@ -68,10 +68,7 @@ export default async function ExaDollsGalleryPage() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {dolls.map((model) => {
-              const name =
-                [model.first_name, model.last_name].filter(Boolean).join(" ") ||
-                model.username ||
-                "Unknown";
+              const name = model.username || "Unknown";
 
               return (
                 <Link

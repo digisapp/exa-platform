@@ -72,7 +72,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .limit(50),
     (supabase.from("models") as any)
       .select(`
-        id, username, first_name, last_name, profile_photo_url,
+        id, username, profile_photo_url,
         city, state, show_location,
         instagram_name, show_social_media,
         height, show_measurements,
@@ -93,7 +93,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .single(),
     // All currently live auctions with model info
     (supabase.from("auctions") as any)
-      .select("id, title, category, cover_image_url, current_bid, starting_price, bid_count, ends_at, status, model:models!auctions_model_id_fkey(first_name, last_name, username, profile_photo_url, is_verified)")
+      .select("id, title, category, cover_image_url, current_bid, starting_price, bid_count, ends_at, status, model:models!auctions_model_id_fkey(username, profile_photo_url, is_verified)")
       .eq("status", "active")
       .gt("ends_at", new Date().toISOString())
       .order("ends_at", { ascending: true })
@@ -108,7 +108,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .select(`
         id, title, description, media_type, preview_url, media_url,
         coin_price, unlock_count, created_at,
-        model:models!content_items_model_id_fkey(id, username, first_name, last_name, profile_photo_url, is_verified)
+        model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified)
       `)
       .eq("status", "exclusive")
       .gt("coin_price", 0)
@@ -120,7 +120,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .select(`
         id, title, description, media_type, preview_url, media_url,
         coin_price, unlock_count, created_at,
-        model:models!content_items_model_id_fkey(id, username, first_name, last_name, profile_photo_url, is_verified)
+        model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified)
       `)
       .eq("status", "exclusive")
       .gt("coin_price", 0)
@@ -174,7 +174,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   if (followedUserIds.length > 0) {
     const { data: followedModels } = await (supabase.from("models") as any)
       .select(`
-        id, user_id, username, first_name, last_name, profile_photo_url,
+        id, user_id, username, profile_photo_url,
         city, state, show_location,
         instagram_name, show_social_media,
         height, show_measurements,
@@ -371,20 +371,20 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
                     {model.profile_photo_url ? (
                       <Image
                         src={model.profile_photo_url}
-                        alt={model.first_name || model.username}
+                        alt={model.username}
                         width={56}
                         height={56}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold">
-                        {(model.first_name || model.username || "?")[0].toUpperCase()}
+                        {(model.username || "?")[0].toUpperCase()}
                       </div>
                     )}
                   </div>
                 </div>
                 <span className="text-xs text-white/60 group-hover:text-white transition-colors truncate max-w-[64px] text-center">
-                  {model.first_name || model.username}
+                  {model.username}
                 </span>
               </Link>
             ))}
@@ -411,14 +411,14 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
                     {model.profile_photo_url ? (
                       <Image
                         src={model.profile_photo_url}
-                        alt={model.first_name || model.username}
+                        alt={model.username}
                         width={80}
                         height={80}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold text-lg">
-                        {(model.first_name || model.username || "?")[0].toUpperCase()}
+                        {(model.username || "?")[0].toUpperCase()}
                       </div>
                     )}
                   </div>
@@ -431,7 +431,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
                   )}
                 </div>
                 <span className="text-xs text-white/60 group-hover:text-white transition-colors truncate max-w-[80px] text-center">
-                  {model.first_name || model.username}
+                  {model.username}
                 </span>
               </Link>
             ))}

@@ -370,7 +370,7 @@ export default async function DashboardPage() {
         ? (adminClient.from("brands") as any).select("id, company_name, username, logo_url").in("id", activityBrandIds)
         : { data: [] },
       activityModelUserIds.length > 0
-        ? (adminClient.from("models") as any).select("id, user_id, first_name, last_name, username, profile_photo_url").in("user_id", activityModelUserIds)
+        ? (adminClient.from("models") as any).select("id, user_id, username, profile_photo_url").in("user_id", activityModelUserIds)
         : { data: [] },
     ]);
 
@@ -396,9 +396,7 @@ export default async function DashboardPage() {
         if (matchedModel) {
           activityActorsMap.set(actorData.id, {
             type: "model",
-            name: matchedModel.first_name
-              ? `${matchedModel.first_name} ${matchedModel.last_name || ""}`.trim()
-              : matchedModel.username,
+            name: matchedModel.username,
             avatar: matchedModel.profile_photo_url,
             username: matchedModel.username
           });

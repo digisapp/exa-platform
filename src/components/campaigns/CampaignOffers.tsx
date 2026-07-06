@@ -54,8 +54,6 @@ interface Response {
   model: {
     id: string;
     username: string;
-    first_name: string | null;
-    last_name: string | null;
     profile_photo_url: string | null;
     city: string | null;
     state: string | null;
@@ -245,7 +243,7 @@ export function CampaignOffers({ campaignId }: CampaignOffersProps) {
                               <Avatar className="h-8 w-8">
                                 <AvatarImage src={response.model?.profile_photo_url || undefined} />
                                 <AvatarFallback className="text-xs">
-                                  {response.model?.first_name?.[0] || response.model?.username?.[0] || "?"}
+                                  {response.model?.username?.[0] || "?"}
                                 </AvatarFallback>
                               </Avatar>
 
@@ -255,9 +253,7 @@ export function CampaignOffers({ campaignId }: CampaignOffersProps) {
                                     href={`/${response.model?.username}`}
                                     className="font-medium text-sm hover:text-pink-500 truncate"
                                   >
-                                    {response.model?.first_name
-                                      ? `${response.model.first_name} ${response.model.last_name || ""}`.trim()
-                                      : `@${response.model?.username}`}
+                                    @{response.model?.username}
                                   </Link>
                                   {response.model?.reliability_score != null && (
                                     <span

@@ -97,7 +97,6 @@ export async function GET(request: NextRequest) {
       .from("models")
       .select(`
         id,
-        first_name,
         username,
         profile_photo_url,
         city,

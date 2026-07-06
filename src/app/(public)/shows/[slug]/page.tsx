@@ -148,7 +148,11 @@ export default async function EventPage({ params, searchParams }: Props) {
     if (modelIds.length > 0) {
       const { data: fullModels } = await supabase
         .from("models")
-        .select("*")
+        .select(`
+          id, username, profile_photo_url, is_verified, is_featured,
+          last_active_at, reliability_score, show_location, city, state, height,
+          show_measurements, instagram_followers, tiktok_followers, focus_tags
+        `)
         .in("id", modelIds);
       eventModels = fullModels || [];
     }
@@ -159,7 +163,7 @@ export default async function EventPage({ params, searchParams }: Props) {
   if (ref) {
     const { data: model } = await supabase
       .from("models")
-      .select("id, username, first_name, last_name")
+      .select("id, username")
       .eq("affiliate_code", ref)
       .single() as { data: any };
 
@@ -187,7 +191,7 @@ export default async function EventPage({ params, searchParams }: Props) {
     if (actor?.type === "model" || actor?.type === "admin") {
       const { data: model } = await supabase
         .from("models")
-        .select("id, username, first_name, last_name, profile_photo_url, coin_balance")
+        .select("id, username, profile_photo_url, coin_balance")
         .eq("user_id", user.id)
         .single() as { data: any };
       profileData = model;
@@ -226,11 +230,8 @@ export default async function EventPage({ params, searchParams }: Props) {
     }
   }
 
-  const displayName = actorType === "fan"
-    ? profileData?.display_name
-    : profileData?.first_name
-      ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
-      : profileData?.username || undefined;
+  const displayName =
+    profileData?.display_name || profileData?.username || undefined;
 
   // Format dates
   const startDate = event.start_date ? new Date(event.start_date) : null;
@@ -387,9 +388,7 @@ export default async function EventPage({ params, searchParams }: Props) {
             <p className="text-center text-sm text-white/80">
               <span className="text-[10px] uppercase tracking-wider text-pink-300 font-bold mr-2">Referred by</span>
               <Link href={`/${referringModel.username}`} className="font-semibold text-pink-300 hover:text-pink-200 transition-colors">
-                {referringModel.first_name
-                  ? `${referringModel.first_name} ${referringModel.last_name || ""}`.trim()
-                  : referringModel.username}
+                {referringModel.username}
               </Link>
             </p>
           </div>

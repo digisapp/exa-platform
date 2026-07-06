@@ -51,7 +51,7 @@ export async function enrichBidsWithBidderInfo(
     uniqueModelIds.length > 0
       ? supabase
           .from("models")
-          .select("id, first_name, last_name, profile_photo_url")
+          .select("id, username, profile_photo_url")
           .in("id", uniqueModelIds)
       : { data: [] },
     uniqueFanIds.length > 0
@@ -90,9 +90,7 @@ export async function enrichBidsWithBidderInfo(
       if (model) {
         bidderInfo = {
           id: bidderId,
-          display_name: model.first_name
-            ? `${model.first_name} ${model.last_name || ""}`.trim()
-            : null,
+          display_name: model.username || null,
           profile_image_url: model.profile_photo_url,
           type: "model",
         };

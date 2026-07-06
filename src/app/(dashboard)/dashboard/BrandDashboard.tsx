@@ -104,7 +104,7 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
   let bookingModels: any[] = [];
   if (bookingModelIds.length > 0) {
     const { data } = await (supabase.from("models") as any)
-      .select("id, username, first_name, last_name, profile_photo_url")
+      .select("id, username, profile_photo_url")
       .in("id", bookingModelIds);
     bookingModels = data || [];
   }
@@ -118,7 +118,7 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
   if (followedUserIds.length > 0) {
     const { data: followedModels } = await (supabase.from("models") as any)
       .select(`
-        id, user_id, username, first_name, last_name, profile_photo_url,
+        id, user_id, username, profile_photo_url,
         city, state, show_location,
         instagram_followers, tiktok_followers,
         height, show_measurements,
@@ -298,9 +298,7 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
               <div className="space-y-3">
                 {(upcomingBookings || []).map((booking: any) => {
                   const model = enrichMap.get(booking.model_id);
-                  const respName = model?.first_name
-                    ? `${model.first_name} ${model.last_name || ""}`.trim()
-                    : model?.username || "Model";
+                  const respName = model?.username || "Model";
                   return (
                     <div key={booking.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5">
                       <Avatar className="h-10 w-10 ring-1 ring-white/10">

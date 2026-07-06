@@ -71,8 +71,6 @@ interface Response {
   model: {
     id: string;
     username: string;
-    first_name: string | null;
-    last_name: string | null;
     profile_photo_url: string | null;
     city: string | null;
     state: string | null;
@@ -456,7 +454,7 @@ export default function BrandOffersPage() {
                               <Avatar className="h-10 w-10">
                                 <AvatarImage src={response.model?.profile_photo_url || undefined} />
                                 <AvatarFallback>
-                                  {response.model?.first_name?.[0] || response.model?.username?.[0] || "?"}
+                                  {response.model?.username?.[0] || "?"}
                                 </AvatarFallback>
                               </Avatar>
 
@@ -466,9 +464,7 @@ export default function BrandOffersPage() {
                                     href={`/${response.model?.username}`}
                                     className="font-medium hover:text-pink-500 truncate"
                                   >
-                                    {response.model?.first_name
-                                      ? `${response.model.first_name} ${response.model.last_name || ""}`.trim()
-                                      : `@${response.model?.username}`}
+                                    {`@${response.model?.username}`}
                                   </Link>
                                   {response.model?.reliability_score !== null && response.model?.reliability_score !== undefined && (
                                     <span
@@ -583,7 +579,7 @@ export default function BrandOffersPage() {
                               {response.notes && (
                                 <div className="pl-[52px] pt-2 border-t border-border/50">
                                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mt-2 mb-1">
-                                    {response.status === "declined" ? "Reason" : "Note"} from {response.model?.first_name || `@${response.model?.username}`}
+                                    {response.status === "declined" ? "Reason" : "Note"} from {`@${response.model?.username}`}
                                   </p>
                                   <p className="text-sm text-muted-foreground italic whitespace-pre-wrap">
                                     &ldquo;{response.notes}&rdquo;

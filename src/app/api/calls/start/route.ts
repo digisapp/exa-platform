@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
     // it auto-declines. Only gates fans calling real models.
     if (callerActor.type === "fan" && recipientModel.video_is_online === false) {
       return NextResponse.json({
-        error: `${recipientModel.first_name || recipientModel.username || "This model"} is offline right now. Try again when they're online, or send a message.`,
+        error: `${recipientModel.username || "This model"} is offline right now. Try again when they're online, or send a message.`,
         code: "recipient_offline",
       }, { status: 409 });
     }
@@ -281,10 +281,10 @@ export async function POST(request: NextRequest) {
     let callerName = "User";
     if (callerActor.type === "model") {
       const { data: callerModel } = await supabase.from("models")
-        .select("first_name, username")
+        .select("username")
         .eq("user_id", user.id)
         .single();
-      callerName = callerModel?.first_name || callerModel?.username || "User";
+      callerName = callerModel?.username || "User";
     } else if (callerActor.type === "fan") {
       const { data: callerFan } = await supabase
         .from("fans")
@@ -328,7 +328,7 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
       roomName,
       token,
-      recipientName: recipientModel.first_name || recipientModel.username,
+      recipientName: recipientModel.username,
       callRate,
       callType,
       requiresCoins,

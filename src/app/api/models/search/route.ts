@@ -26,15 +26,13 @@ export async function GET(request: NextRequest) {
 
   let dbQuery = supabase
     .from("models")
-    .select("id, username, first_name, profile_photo_url, city, state", { count: "exact" })
+    .select("id, username, profile_photo_url, city, state", { count: "exact" })
     .eq("is_approved", true);
 
   if (query.trim()) {
     // Escape special characters for safe pattern matching
     const escapedQuery = query.replace(/[%_]/g, "\\$&");
-    dbQuery = dbQuery.or(
-      `username.ilike.%${escapedQuery}%,first_name.ilike.%${escapedQuery}%`
-    );
+    dbQuery = dbQuery.ilike("username", `%${escapedQuery}%`);
   }
 
   // Apply cursor-based pagination if cursor is provided
@@ -43,12 +41,12 @@ export async function GET(request: NextRequest) {
   }
 
   dbQuery = dbQuery
-    .order("first_name", { ascending: true })
+    .order("username", { ascending: true })
     .order("id", { ascending: true }) // Secondary sort for stable cursor
     .range(offset, offset + limit - 1);
 
   const { data: models, error, count } = await dbQuery as {
-    data: { id: string; username: string; first_name: string; profile_photo_url: string; city: string; state: string }[] | null;
+    data: { id: string; username: string; profile_photo_url: string; city: string; state: string }[] | null;
     error: any;
     count: number | null;
   };

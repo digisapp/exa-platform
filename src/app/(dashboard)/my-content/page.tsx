@@ -42,8 +42,6 @@ interface ContentItem {
   creator: {
     id: string;
     username: string;
-    firstName: string | null;
-    lastName: string | null;
     profilePhotoUrl: string | null;
   } | null;
 }
@@ -291,7 +289,7 @@ export default function MyContentPage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xs">
-                          {item.creator.firstName?.charAt(0) || "?"}
+                          {item.creator.username?.charAt(0)?.toUpperCase() || "?"}
                         </div>
                       )}
                     </div>
@@ -349,16 +347,12 @@ export default function MyContentPage() {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-sm">
-                              {selectedItem.creator.firstName?.charAt(0) || "?"}
+                              {selectedItem.creator.username?.charAt(0)?.toUpperCase() || "?"}
                             </div>
                           )}
                         </div>
                         <div>
                           <p className="font-medium text-sm">
-                            {selectedItem.creator.firstName}{" "}
-                            {selectedItem.creator.lastName}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
                             @{selectedItem.creator.username}
                           </p>
                         </div>

@@ -86,7 +86,7 @@ export default async function HomePage() {
   const { data: topModelsData } = await (supabase
     .from("models") as any)
     .select(`
-      id, username, first_name, profile_photo_url, state, profile_views, admin_rating,
+      id, username, profile_photo_url, state, profile_views, admin_rating,
       photoshoot_hourly_rate, photoshoot_half_day_rate, photoshoot_full_day_rate,
       promo_hourly_rate, brand_ambassador_daily_rate, private_event_hourly_rate,
       social_companion_hourly_rate, meet_greet_rate
@@ -121,7 +121,7 @@ export default async function HomePage() {
     .select(`
       id, title, current_bid, starting_price, bid_count, ends_at, cover_image_url,
       model:models!auctions_model_id_fkey (
-        first_name, profile_photo_url, username
+        profile_photo_url, username
       )
     `)
     .eq("status", "active")
@@ -467,7 +467,7 @@ export default async function HomePage() {
                           <Avatar className="h-9 w-9 border border-violet-500/30 shrink-0">
                             <AvatarImage src={auction.model?.profile_photo_url} />
                             <AvatarFallback className="bg-violet-500/20 text-violet-300 text-xs">
-                              {auction.model?.first_name?.[0] || "?"}
+                              {auction.model?.username?.[0]?.toUpperCase() || "?"}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
@@ -475,7 +475,7 @@ export default async function HomePage() {
                               {auction.title}
                             </p>
                             <div className="flex items-center gap-2 text-xs text-white/40">
-                              <span>@{auction.model?.username || auction.model?.first_name}</span>
+                              <span>@{auction.model?.username}</span>
                               {auction.bid_count > 0 && (
                                 <span>· {auction.bid_count} bid{auction.bid_count !== 1 ? "s" : ""}</span>
                               )}
