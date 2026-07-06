@@ -74,6 +74,13 @@ function formatPhoneNumber(phone: string): string | null {
   // Remove all non-digit characters
   const digits = phone.replace(/\D/g, "");
 
+  // Explicit country code (numbers from the country-code picker are stored
+  // as E.164) — trust it as-is. E.164 allows 8-15 digits total.
+  if (phone.trim().startsWith("+")) {
+    return digits.length >= 8 && digits.length <= 15 ? `+${digits}` : null;
+  }
+
+  // Legacy heuristics for numbers stored before the picker existed:
   // US number without country code (10 digits)
   if (digits.length === 10) {
     return `+1${digits}`;
@@ -161,12 +168,15 @@ export async function sendIncomingCallSMS(
   phone: string,
   modelName: string,
   callerName: string,
-  callType: "video" | "voice"
+  callType: "video" | "voice",
+  language: string = "en"
 ): Promise<void> {
   const firstName = sanitizeSmsInput(modelName.split(" ")[0], 50);
   const safeCaller = sanitizeSmsInput(callerName, 50);
 
-  const message = `EXA: ${safeCaller} is ${callType} calling you right now, ${firstName}! Answer within 2 min: https://examodels.com/dashboard/messages`;
+  const message = language.startsWith("es")
+    ? `EXA: ¡${safeCaller} te está llamando por ${callType === "video" ? "video" : "voz"} ahora mismo, ${firstName}! Contesta en 2 min: https://examodels.com/dashboard/messages`
+    : `EXA: ${safeCaller} is ${callType} calling you right now, ${firstName}! Answer within 2 min: https://examodels.com/dashboard/messages`;
 
   await sendSMS({ to: phone, message });
 }

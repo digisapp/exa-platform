@@ -1,6 +1,28 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
+// Countries where Spanish is the primary language — used to default new
+// visitors into the Spanish UI (they can always switch manually).
+const SPANISH_COUNTRIES = new Set([
+  'MX', 'ES', 'CO', 'AR', 'PE', 'VE', 'CL', 'EC', 'GT', 'CU', 'BO', 'DO',
+  'HN', 'PY', 'SV', 'NI', 'CR', 'PA', 'UY', 'PR', 'GQ',
+])
+
+// Detection hints for the client-side i18n provider. Cookies (not headers)
+// because the provider runs in the browser and public pages are ISR-cached —
+// per-visitor geo can't be baked into the HTML.
+function setGeoLocaleCookies(request: NextRequest, response: NextResponse) {
+  if (request.cookies.has('exa-geo-locale')) return
+
+  const country = request.headers.get('x-vercel-ip-country')?.toUpperCase() || ''
+  const acceptsSpanish = (request.headers.get('accept-language') || '').toLowerCase().startsWith('es')
+  const locale = (country ? SPANISH_COUNTRIES.has(country) : acceptsSpanish) ? 'es' : 'en'
+
+  const opts = { maxAge: 60 * 60 * 24 * 365, path: '/', sameSite: 'lax' as const }
+  response.cookies.set('exa-geo-locale', locale, opts)
+  if (country) response.cookies.set('exa-geo-country', country, opts)
+}
+
 export async function middleware(request: NextRequest) {
   // Redirect compcards.co to comp card creator
   const hostname = request.headers.get('host') || ''
@@ -17,12 +39,16 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    return await updateSession(request)
+    const response = await updateSession(request)
+    setGeoLocaleCookies(request, response)
+    return response
   } catch (err) {
     console.error('middleware: updateSession threw', err)
     // Don't 503 the request just because Supabase had a blip — let the
     // request through and let server components / RLS enforce auth.
-    return NextResponse.next({ request: { headers: request.headers } })
+    const response = NextResponse.next({ request: { headers: request.headers } })
+    setGeoLocaleCookies(request, response)
+    return response
   }
 }
 

@@ -8,6 +8,7 @@ import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
 import { GoogleTranslate } from "@/components/GoogleTranslate";
 import { SpanishBanner } from "@/components/SpanishBanner";
+import { I18nProvider } from "@/i18n";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -143,7 +144,9 @@ export default function RootLayout({
           Skip to content
         </a>
         <AuthProvider>
-          <div id="main-content" tabIndex={-1} className="outline-none">{children}</div>
+          <I18nProvider>
+            <div id="main-content" tabIndex={-1} className="outline-none">{children}</div>
+          </I18nProvider>
         </AuthProvider>
         <Suspense fallback={null}>
           <PageViewTracker />

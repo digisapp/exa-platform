@@ -10,7 +10,7 @@ import {
   Users,
   DollarSign,
 } from "lucide-react";
-import { ModelSignupDialogES } from "@/components/auth/ModelSignupDialogES";
+import { ModelSignupDialog } from "@/components/auth/ModelSignupDialog";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;
@@ -63,14 +63,14 @@ export default function ModeloPage() {
 
         {/* CTA */}
         <div className="text-center mb-12">
-          <ModelSignupDialogES>
+          <ModelSignupDialog forceLocale="es">
             <button
               className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-full bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 hover:from-pink-400 hover:via-violet-400 hover:to-cyan-400 text-white text-lg font-bold shadow-[0_0_24px_rgba(236,72,153,0.5)] hover:shadow-[0_0_32px_rgba(236,72,153,0.7)] active:scale-[0.98] transition-all"
             >
               Aplicar Ahora
               <ArrowRight className="h-5 w-5" />
             </button>
-          </ModelSignupDialogES>
+          </ModelSignupDialog>
           <p className="text-xs text-white/50 mt-3">
             Registro gratuito — aprobación en 24 horas
           </p>
@@ -465,14 +465,14 @@ export default function ModeloPage() {
 
         {/* CTA */}
         <div className="text-center mb-12">
-          <ModelSignupDialogES>
+          <ModelSignupDialog forceLocale="es">
             <button
               className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-full bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 hover:from-pink-400 hover:via-violet-400 hover:to-cyan-400 text-white text-lg font-bold shadow-[0_0_24px_rgba(236,72,153,0.5)] hover:shadow-[0_0_32px_rgba(236,72,153,0.7)] active:scale-[0.98] transition-all"
             >
               Aplicar Ahora
               <ArrowRight className="h-5 w-5" />
             </button>
-          </ModelSignupDialogES>
+          </ModelSignupDialog>
           <p className="text-xs text-white/50 mt-3">
             Registro gratuito — aprobación en 24 horas
           </p>

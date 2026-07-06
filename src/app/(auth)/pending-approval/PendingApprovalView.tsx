@@ -57,6 +57,15 @@ const t = {
 
 function getLanguage(): "en" | "es" {
   if (typeof window === "undefined") return "en";
+
+  // Explicit language choice (set by the i18n provider / language toggles)
+  const stored = localStorage.getItem("exa-locale");
+  if (stored === "en" || stored === "es") return stored;
+
+  // Geo-based default from middleware
+  const geo = document.cookie.match(/(?:^|; )exa-geo-locale=([^;]*)/)?.[1];
+  if (geo === "en" || geo === "es") return geo;
+
   const lang = navigator.language || "";
   return lang.startsWith("es") ? "es" : "en";
 }
