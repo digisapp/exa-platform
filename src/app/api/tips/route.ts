@@ -132,10 +132,10 @@ export async function POST(request: NextRequest) {
     } else if (sender.type === "model") {
       const { data: senderModel } = await supabase
         .from("models")
-        .select("first_name, username")
+        .select("username")
         .eq("user_id", user.id)
         .single();
-      senderName = senderModel?.first_name || senderModel?.username || "A model";
+      senderName = senderModel?.username || "A model";
     } else if (sender.type === "brand") {
       const { data: brand } = await supabase
         .from("brands")
@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
         .select("email, first_name, username")
         .eq("id", recipientId)
         .single() as { data: { email: string | null; first_name: string | null; username: string } | null };
-      recipientName = model?.first_name || model?.username || "Model";
+      recipientName = model?.username || "Model";
 
       // Send email notification to model (non-blocking)
       if (model?.email) {

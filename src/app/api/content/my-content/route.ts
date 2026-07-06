@@ -98,8 +98,6 @@ export async function GET(request: NextRequest) {
           model:models (
             id,
             username,
-            first_name,
-            last_name,
             profile_photo_url
           )
         )
@@ -158,8 +156,6 @@ export async function GET(request: NextRequest) {
       creator: p.content.model ? {
         id: p.content.model.id,
         username: p.content.model.username,
-        firstName: p.content.model.first_name,
-        lastName: p.content.model.last_name,
         profilePhotoUrl: p.content.model.profile_photo_url,
       } : null,
     }));

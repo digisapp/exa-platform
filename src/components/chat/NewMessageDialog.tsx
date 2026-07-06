@@ -58,7 +58,7 @@ export function NewMessageDialog({
           .from("models")
           .select("*")
           .eq("is_approved", true)
-          .or(`username.ilike.%${escapeIlike(search)}%,first_name.ilike.%${escapeIlike(search)}%,last_name.ilike.%${escapeIlike(search)}%`)
+          .ilike("username", `%${escapeIlike(search)}%`)
           .limit(10);
 
         setModels(data || []);
@@ -151,14 +151,11 @@ export function NewMessageDialog({
               <Avatar className="h-10 w-10">
                 <AvatarImage src={selectedModel.profile_photo_url || undefined} />
                 <AvatarFallback>
-                  {selectedModel.first_name?.charAt(0) || selectedModel.username?.charAt(0)?.toUpperCase() || "?"}
+                  {selectedModel.username?.charAt(0)?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">
-                  {selectedModel.first_name ? `${selectedModel.first_name} ${selectedModel.last_name || ""}`.trim() : selectedModel.username}
-                </p>
-                <p className="text-sm text-muted-foreground">
                   @{selectedModel.username}
                 </p>
               </div>
@@ -177,7 +174,7 @@ export function NewMessageDialog({
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name or username..."
+                placeholder="Search by username..."
                 className="pl-9"
               />
 
@@ -198,14 +195,11 @@ export function NewMessageDialog({
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={model.profile_photo_url || undefined} />
                           <AvatarFallback>
-                            {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
+                            {model.username?.charAt(0)?.toUpperCase() || "?"}
                           </AvatarFallback>
                         </Avatar>
                         <div className="text-left flex-1">
                           <p className="font-medium text-sm">
-                            {model.first_name ? `${model.first_name} ${model.last_name || ""}`.trim() : model.username}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
                             @{model.username}
                           </p>
                         </div>

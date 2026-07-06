@@ -63,15 +63,13 @@ export async function enrichLiveWallAvatars<T extends MessageWithProfile>(
     modelUserIds.length
       ? supabase
           .from("models")
-          .select("user_id, profile_photo_url, username, first_name, last_name")
+          .select("user_id, profile_photo_url, username")
           .in("user_id", modelUserIds)
       : Promise.resolve({
           data: [] as Array<{
             user_id: string;
             profile_photo_url: string | null;
             username: string | null;
-            first_name: string | null;
-            last_name: string | null;
           }>,
         }),
     fanUserIds.length
@@ -106,14 +104,10 @@ export async function enrichLiveWallAvatars<T extends MessageWithProfile>(
     user_id: string;
     profile_photo_url: string | null;
     username: string | null;
-    first_name: string | null;
-    last_name: string | null;
   }>) || []) {
     const aid = userIdToActorId.get(m.user_id);
     if (!aid) continue;
-    const display = m.username
-      ? `@${m.username}`
-      : `${m.first_name || ""} ${m.last_name || ""}`.trim() || null;
+    const display = m.username ? `@${m.username}` : null;
     profileMap.set(aid, {
       avatar_url: m.profile_photo_url,
       display_name: display,

@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   const { data: model } = await supabase
     .from("models")
-    .select("username, first_name, profile_photo_url, message_rate")
+    .select("username, profile_photo_url, message_rate")
     .eq("username", username.toLowerCase())
     .eq("is_approved", true)
     .maybeSingle();

@@ -20,8 +20,6 @@ export async function GET(
       .select(`
         id,
         username,
-        first_name,
-        last_name,
         profile_photo_url,
         bio,
         instagram_name
@@ -183,8 +181,8 @@ export async function GET(
       model: {
         id: model.id,
         username: model.username,
-        name: model.first_name,
-        fullName: `${model.first_name || ""} ${model.last_name || ""}`.trim(),
+        name: model.username,
+        fullName: model.username,
         photo: model.profile_photo_url,
         bio: model.bio,
         instagram: model.instagram_name,

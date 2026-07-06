@@ -126,11 +126,11 @@ export async function POST(request: NextRequest) {
     try {
       const { data: model } = await adminClient
         .from("models")
-        .select("first_name, username")
+        .select("username")
         .eq("id", modelId)
         .maybeSingle();
 
-      const modelName = model?.first_name || model?.username || "A model";
+      const modelName = model?.username ? `@${model.username}` : "A model";
 
       await (adminClient.from("notifications") as any).insert({
         actor_id: recipientActorId,
@@ -230,7 +230,7 @@ export async function GET(request: NextRequest) {
     const modelIds = [...new Set(deliveries.map((d: any) => d.model_id))];
     const { data: models } = await adminClient
       .from("models")
-      .select("id, username, first_name, last_name, profile_photo_url")
+      .select("id, username, profile_photo_url")
       .in("id", modelIds);
 
     const modelMap: Record<string, any> = {};

@@ -14,7 +14,6 @@ interface LeaderboardEntry {
   totalBoosts: number;
   model: {
     id: string;
-    firstName: string | null;
     username: string;
     profilePhotoUrl: string;
     city: string | null;
@@ -212,7 +211,7 @@ export function TopModelsLeaderboard({
                 {entry.model?.profilePhotoUrl && (
                   <Image
                     src={entry.model.profilePhotoUrl}
-                    alt={entry.model.firstName || entry.model.username}
+                    alt={entry.model.username}
                     fill
                     className="object-cover"
                     sizes="44px"
@@ -226,7 +225,7 @@ export function TopModelsLeaderboard({
                   "font-semibold truncate",
                   entry.rank === 1 && "text-yellow-200"
                 )}>
-                  {entry.model?.firstName || entry.model?.username}
+                  {entry.model?.username}
                 </p>
                 {!compact && entry.model?.state && (
                   <p className="text-xs text-muted-foreground truncate">

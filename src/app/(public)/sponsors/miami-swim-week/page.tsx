@@ -535,7 +535,7 @@ export default async function SponsorMswPage() {
         if (modelIds.length > 0) {
           const { data: fullModels } = await supabase
             .from("models")
-            .select("id, username, first_name, last_name, profile_photo_url")
+            .select("id, username, profile_photo_url")
             .in("id", modelIds)
             .not("profile_photo_url", "is", null);
           eventModels = fullModels || [];

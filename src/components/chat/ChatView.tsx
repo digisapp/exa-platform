@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { messageCoinCost } from "@/lib/coin-config";
+import { modelDisplayName } from "@/lib/model-display";
 import { MessageInput } from "./MessageInput";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages, ChatMessagesHandle } from "./ChatMessages";
@@ -140,8 +141,8 @@ export function ChatView({
   }, []);
 
   // Get current user's display name for typing indicator
-  const currentUserName = currentModel?.first_name
-    ? `${currentModel.first_name} ${currentModel.last_name || ""}`.trim()
+  const currentUserName = currentModel
+    ? modelDisplayName(currentModel)
     : currentFan?.display_name || "User";
 
   // Typing indicator
@@ -157,9 +158,7 @@ export function ChatView({
 
     if (actor.type === "model" && model) {
       return {
-        name: model.first_name
-          ? `${model.first_name} ${model.last_name || ""}`.trim()
-          : model.username || "Model",
+        name: modelDisplayName(model),
         avatar: model.profile_photo_url,
         username: model.username,
         type: "model" as const,

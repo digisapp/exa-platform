@@ -40,15 +40,15 @@ function LineupCard({ model, index, onRemove }: { model: ModelRow; index: number
       </span>
       <div className="relative h-10 w-10 rounded-lg overflow-hidden shrink-0">
         {model.profile_photo_url ? (
-          <Image src={model.profile_photo_url} alt={model.first_name || ""} fill className="object-cover object-top" />
+          <Image src={model.profile_photo_url} alt={model.username || ""} fill className="object-cover object-top" />
         ) : (
           <div className="h-full w-full bg-white/5 flex items-center justify-center text-xs text-white/30">
-            {model.first_name?.[0]}{model.last_name?.[0]}
+            {model.username?.[0]}
           </div>
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white/90 truncate">{model.first_name} {model.last_name}</p>
+        <p className="text-sm font-semibold text-white/90 truncate">@{model.username}</p>
         <p className="text-[10px] text-white/35 truncate">
           {model.height && `${model.height}`}
           {model.dress_size && ` · Sz ${model.dress_size}`}
@@ -143,14 +143,14 @@ export default function MswCastingPage() {
     const [modelsRes, picksRes] = await Promise.all([
       modelIds.length
         ? supabase.from("models")
-            .select("id, first_name, last_name, username, profile_photo_url, height, bust, waist, hips, dress_size, shoe_size, instagram_followers, city, state, admin_rating, reliability_score, focus_tags")
+            .select("id, username, profile_photo_url, height, bust, waist, hips, dress_size, shoe_size, instagram_followers, city, state, admin_rating, reliability_score, focus_tags")
             .in("id", modelIds)
         : Promise.resolve({ data: [] }),
       fetch(`/api/brands/msw-casting/picks?event_id=${event.id}`).then((r) => r.json()),
     ]);
 
     const sorted = ((modelsRes.data || []) as ModelRow[])
-      .sort((a, b) => (b.admin_rating ?? 0) - (a.admin_rating ?? 0) || (a.first_name ?? "").localeCompare(b.first_name ?? ""));
+      .sort((a, b) => (b.admin_rating ?? 0) - (a.admin_rating ?? 0) || (a.username ?? "").localeCompare(b.username ?? ""));
 
     setModels(sorted);
     setPicks(new Set(picksRes.picks || []));
@@ -191,9 +191,7 @@ export default function MswCastingPage() {
     let list = showPicksOnly ? models.filter((m) => picks.has(m.id)) : models;
     if (search) {
       const q = search.toLowerCase();
-      list = list.filter(
-        (m) => m.first_name?.toLowerCase().includes(q) || m.last_name?.toLowerCase().includes(q) || m.username?.toLowerCase().includes(q)
-      );
+      list = list.filter((m) => m.username?.toLowerCase().includes(q));
     }
     if (heightFilter > 0) {
       list = list.filter((m) => {

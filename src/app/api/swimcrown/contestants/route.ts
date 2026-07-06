@@ -46,8 +46,6 @@ export async function GET(request: NextRequest) {
         created_at,
         models!inner (
           id,
-          first_name,
-          last_name,
           username,
           profile_photo_url,
           city,
@@ -64,7 +62,7 @@ export async function GET(request: NextRequest) {
     const safeSearch = sanitizeOrFilterTerm(search);
     if (safeSearch) {
       query = query.or(
-        `tagline.ilike.%${safeSearch}%,models.first_name.ilike.%${safeSearch}%,models.username.ilike.%${safeSearch}%`
+        `tagline.ilike.%${safeSearch}%,models.username.ilike.%${safeSearch}%`
       );
     }
 
@@ -100,8 +98,6 @@ export async function GET(request: NextRequest) {
       model: c.models
         ? {
             id: c.models.id,
-            firstName: c.models.first_name,
-            lastName: c.models.last_name || "",
             username: c.models.username,
             profilePhotoUrl: c.models.profile_photo_url,
             city: c.models.city,

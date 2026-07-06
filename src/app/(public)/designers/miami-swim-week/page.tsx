@@ -142,7 +142,7 @@ export default async function MswBrandPage() {
         if (modelIds.length > 0) {
           const { data: fullModels } = await supabase
             .from("models")
-            .select("id, username, first_name, last_name, profile_photo_url")
+            .select("id, username, profile_photo_url")
             .in("id", modelIds)
             .not("profile_photo_url", "is", null);
           eventModels = fullModels || [];
@@ -456,7 +456,7 @@ export default async function MswBrandPage() {
                   <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-muted">
                     <Image
                       src={model.profile_photo_url}
-                      alt={model.first_name || model.username}
+                      alt={model.username}
                       fill
                       sizes="(max-width: 768px) 50vw, 20vw"
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -464,9 +464,7 @@ export default async function MswBrandPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-3">
                       <p className="text-white text-xs font-semibold truncate">
-                        {model.first_name
-                          ? `${model.first_name} ${model.last_name || ""}`.trim()
-                          : model.username}
+                        {model.username}
                       </p>
                     </div>
                   </div>

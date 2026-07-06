@@ -23,8 +23,6 @@ interface AnalyticsData {
   frequentCollaborators: Array<{
     id: string;
     username: string;
-    first_name: string | null;
-    last_name: string | null;
     profile_photo_url: string | null;
     booking_count: number;
   }>;
@@ -36,8 +34,6 @@ interface AnalyticsData {
     model: {
       id: string;
       username: string;
-      first_name: string | null;
-      last_name: string | null;
       profile_photo_url: string | null;
     } | null;
   }>;
@@ -324,7 +320,7 @@ export default function BrandAnalyticsPage() {
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={booking.model?.profile_photo_url || undefined} />
                       <AvatarFallback>
-                        {booking.model?.first_name?.[0] || booking.model?.username?.[0] || "?"}
+                        {booking.model?.username?.[0] || "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
@@ -332,9 +328,7 @@ export default function BrandAnalyticsPage() {
                         href={`/${booking.model?.username}`}
                         className="font-medium hover:text-cyan-500 truncate block"
                       >
-                        {booking.model?.first_name
-                          ? `${booking.model.first_name} ${booking.model.last_name || ""}`.trim()
-                          : `@${booking.model?.username}`}
+                        @{booking.model?.username}
                       </Link>
                       <p className="text-sm text-muted-foreground">
                         {SERVICE_LABELS[booking.service_type] || booking.service_type}
@@ -380,7 +374,7 @@ export default function BrandAnalyticsPage() {
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={model.profile_photo_url || undefined} />
                       <AvatarFallback>
-                        {model.first_name?.[0] || model.username?.[0] || "?"}
+                        {model.username?.[0] || "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
@@ -388,9 +382,7 @@ export default function BrandAnalyticsPage() {
                         href={`/${model.username}`}
                         className="font-medium hover:text-cyan-500 truncate block"
                       >
-                        {model.first_name
-                          ? `${model.first_name} ${model.last_name || ""}`.trim()
-                          : `@${model.username}`}
+                        @{model.username}
                       </Link>
                       <p className="text-sm text-muted-foreground">@{model.username}</p>
                     </div>

@@ -266,8 +266,8 @@ export async function POST(request: NextRequest) {
           // Get sender display name
           let senderDisplayName = "Someone";
           if (sender.type === "model") {
-            const { data: sm } = await adminClient.from("models").select("first_name, last_name, username").eq("user_id", user.id).maybeSingle();
-            senderDisplayName = sm ? `${sm.first_name || ""} ${sm.last_name || ""}`.trim() || sm.username || "A model" : "A model";
+            const { data: sm } = await adminClient.from("models").select("username").eq("user_id", user.id).maybeSingle();
+            senderDisplayName = sm?.username || "A model";
           } else if (sender.type === "fan") {
             const { data: sf } = await adminClient.from("fans").select("display_name, username").eq("user_id", user.id).maybeSingle();
             senderDisplayName = sf?.display_name || sf?.username || "A fan";

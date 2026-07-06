@@ -17,6 +17,7 @@ function resolveMediaUrl(url: string | null | undefined): string | null {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
 }
 import { cn } from "@/lib/utils";
+import { modelDisplayName } from "@/lib/model-display";
 import { useState, useEffect, useRef, memo } from "react";
 import { toast } from "sonner";
 import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
@@ -63,8 +64,7 @@ export const ModelCard = memo(function ModelCard({
   const linkTarget = newTab ? "_blank" : undefined;
   const linkRel = newTab ? "noopener noreferrer" : undefined;
 
-  // Display first name only (not full name for privacy)
-  const displayName = model.first_name || model.username;
+  const displayName = modelDisplayName(model);
 
   // Get level badge
   const getLevel = () => {
@@ -147,8 +147,7 @@ export const ModelCard = memo(function ModelCard({
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">{displayName}</p>
-              <p className="text-sm text-muted-foreground">@{model.username}</p>
+              <p className="font-medium truncate">@{displayName}</p>
             </div>
           </div>
         </div>
@@ -269,8 +268,7 @@ export const ModelCard = memo(function ModelCard({
 
           {/* Bottom Name Bar - Always Visible */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-8">
-            <h3 className="font-semibold text-white truncate">{displayName}</h3>
-            <p className="text-sm text-[#00BFFF]">@{model.username}</p>
+            <h3 className="font-semibold text-white truncate">@{displayName}</h3>
             {/* Key facts stay visible without hover — touch devices never see the overlay */}
             {(model.show_location && (model.city || model.state)) || (model.focus_tags && model.focus_tags.length > 0) ? (
               <div className="flex items-center gap-2 mt-1 min-w-0">
@@ -295,7 +293,7 @@ export const ModelCard = memo(function ModelCard({
           <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-white text-lg">{displayName}</h3>
+                <h3 className="font-semibold text-white text-lg">@{displayName}</h3>
                 {model.reliability_score !== null && model.reliability_score !== undefined && (
                   <span
                     className={cn(
@@ -313,7 +311,6 @@ export const ModelCard = memo(function ModelCard({
                   </span>
                 )}
               </div>
-              <p className="text-sm text-[#00BFFF]">@{model.username}</p>
 
               {model.show_location && (model.city || model.state) && (
                 <div className="flex items-center gap-1 text-sm text-white/80">

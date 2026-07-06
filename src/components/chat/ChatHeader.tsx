@@ -172,7 +172,7 @@ export function ChatHeader({
             </Link>
           ) : isOnline ? (
             <p className="text-xs font-medium text-green-500">Online</p>
-          ) : otherInfo.username ? (
+          ) : otherInfo.username && otherInfo.username !== otherName ? (
             <Link
               href={`/${otherInfo.username}`}
               className="text-xs text-muted-foreground hover:text-primary transition-colors"

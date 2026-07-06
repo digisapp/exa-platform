@@ -72,11 +72,15 @@ export async function GET(
 
     // For brands, include full response details with model info
     if (actor.type === "brand" || actor.type === "admin") {
+      const modelColumns =
+        actor.type === "admin"
+          ? "id, username, first_name, last_name, profile_photo_url, city, state, reliability_score"
+          : "id, username, profile_photo_url, city, state, reliability_score";
       const { data: responses } = await supabase
         .from("offer_responses")
         .select(`
           *,
-          model:models(id, username, first_name, last_name, profile_photo_url, city, state, reliability_score)
+          model:models(${modelColumns})
         `)
         .eq("offer_id", id)
         .order("responded_at", { ascending: false, nullsFirst: false });

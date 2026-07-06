@@ -17,7 +17,6 @@ export default function NewChatPage() {
   const [sending, setSending] = useState(false);
   const [modelInfo, setModelInfo] = useState<{
     username: string;
-    first_name: string | null;
     profile_photo_url: string | null;
     message_rate: number | null;
   } | null>(null);
@@ -107,7 +106,7 @@ export default function NewChatPage() {
     );
   }
 
-  const displayName = modelInfo?.first_name || modelUsername;
+  const displayName = modelInfo?.username || modelUsername;
   const coinCost = messageCoinCost(modelInfo?.message_rate);
 
   return (

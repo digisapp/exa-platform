@@ -113,10 +113,10 @@ export async function POST(request: NextRequest) {
           } else if (actor.type === "model") {
             const { data: buyerModel } = await supabase
               .from("models")
-              .select("first_name, username")
+              .select("username")
               .eq("user_id", user.id)
               .single();
-            buyerName = buyerModel?.first_name || buyerModel?.username || "A model";
+            buyerName = buyerModel?.username || "A model";
           }
 
           if (model?.email) {

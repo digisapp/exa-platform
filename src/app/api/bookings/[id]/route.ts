@@ -107,7 +107,7 @@ export async function GET(
     // Get model info separately
     if (booking.model_id) {
       const { data: model } = await supabase.from("models")
-        .select("id, username, first_name, last_name, profile_photo_url, city, state, email, user_id")
+        .select("id, username, profile_photo_url, city, state, email, user_id")
         .eq("id", booking.model_id)
         .maybeSingle();
       bookingData.model = model;
@@ -225,7 +225,7 @@ export async function PATCH(
     if (booking.model_id) {
       const { data: model } = await adminClient
         .from("models")
-        .select("id, user_id, username, first_name, last_name")
+        .select("id, user_id, username")
         .eq("id", booking.model_id)
         .maybeSingle();
       bookingRecord.model = model;
@@ -300,7 +300,7 @@ export async function PATCH(
                 actor_id: booking.client_id,
                 type: "booking_declined",
                 title: "Booking Declined - Insufficient Funds",
-                body: `Your booking with ${bookingRecord.model?.first_name || bookingRecord.model?.username} was declined because you don't have enough coins. You need ${escrowAmount.toLocaleString()} coins but only have ${(result.balance ?? 0).toLocaleString()}.`,
+                body: `Your booking with ${bookingRecord.model?.username} was declined because you don't have enough coins. You need ${escrowAmount.toLocaleString()} coins but only have ${(result.balance ?? 0).toLocaleString()}.`,
                 data: { booking_id: id, booking_number: booking.booking_number },
               });
 
@@ -325,7 +325,7 @@ export async function PATCH(
           actor_id: booking.client_id,
           type: "booking_accepted",
           title: "Booking Accepted!",
-          body: `${bookingRecord.model?.first_name || bookingRecord.model?.username} accepted your booking request for ${new Date(booking.event_date).toLocaleDateString()}`,
+          body: `${bookingRecord.model?.username} accepted your booking request for ${new Date(booking.event_date).toLocaleDateString()}`,
           data: { booking_id: id, booking_number: booking.booking_number },
         };
         break;
@@ -346,7 +346,7 @@ export async function PATCH(
           actor_id: booking.client_id,
           type: "booking_declined",
           title: "Booking Declined",
-          body: `${bookingRecord.model?.first_name || bookingRecord.model?.username} declined your booking request`,
+          body: `${bookingRecord.model?.username} declined your booking request`,
           data: { booking_id: id, booking_number: booking.booking_number },
         };
         break;
@@ -372,7 +372,7 @@ export async function PATCH(
           actor_id: booking.client_id,
           type: "booking_counter",
           title: "Counter Offer Received",
-          body: `${bookingRecord.model?.first_name || bookingRecord.model?.username} sent a counter offer of ${counterAmount.toLocaleString()} coins`,
+          body: `${bookingRecord.model?.username} sent a counter offer of ${counterAmount.toLocaleString()} coins`,
           data: { booking_id: id, booking_number: booking.booking_number, counter_amount: counterAmount },
         };
         break;
@@ -483,7 +483,7 @@ export async function PATCH(
             actor_id: notifyActorId,
             type: "booking_cancelled",
             title: "Booking Cancelled",
-            body: `${bookingRecord.model?.first_name || bookingRecord.model?.username} cancelled the booking`,
+            body: `${bookingRecord.model?.username} cancelled the booking`,
             data: { booking_id: id, booking_number: booking.booking_number },
           };
         }
@@ -732,7 +732,7 @@ export async function PATCH(
         }
 
         if (clientEmail) {
-          const modelName = bookingRecord.model?.first_name || bookingRecord.model?.username || "The model";
+          const modelName = bookingRecord.model?.username || "The model";
           const modelUsername = bookingRecord.model?.username || "";
 
           if (action === "accept") {

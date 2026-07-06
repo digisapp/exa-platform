@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
     if (topModelIds.length > 0) {
       const { data: models } = await supabase
         .from("models")
-        .select("id, username, first_name, last_name, profile_photo_url")
+        .select("id, username, profile_photo_url")
         .in("id", topModelIds);
 
       if (models) {
@@ -141,16 +141,12 @@ export async function GET(request: NextRequest) {
             const model = models.find((m: any) => m.id === id) as {
               id: string;
               username: string;
-              first_name: string | null;
-              last_name: string | null;
               profile_photo_url: string | null;
             } | undefined;
             if (!model) return null;
             return {
               id: model.id,
               username: model.username,
-              first_name: model.first_name,
-              last_name: model.last_name,
               profile_photo_url: model.profile_photo_url,
               booking_count: modelBookingCounts[id],
             };
@@ -216,7 +212,7 @@ export async function GET(request: NextRequest) {
       if (upcomingModelIds.length > 0) {
         const { data: upcomingModels } = await supabase
           .from("models")
-          .select("id, username, first_name, last_name, profile_photo_url")
+          .select("id, username, profile_photo_url")
           .in("id", upcomingModelIds);
 
         upcomingWithModels = upcomingBookings

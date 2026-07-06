@@ -112,12 +112,12 @@ export default async function TicketsPage({ params, searchParams }: Props) {
   if (ref) {
     const { data: model } = await supabase
       .from("models")
-      .select("first_name, username")
+      .select("username")
       .eq("affiliate_code", ref)
       .single() as { data: any };
 
     if (model) {
-      referringModelName = model.first_name || model.username;
+      referringModelName = model.username;
     }
   }
 
@@ -139,7 +139,7 @@ export default async function TicketsPage({ params, searchParams }: Props) {
     if (actor?.type === "model" || actor?.type === "admin") {
       const { data: model } = await supabase
         .from("models")
-        .select("id, username, first_name, last_name, profile_photo_url, coin_balance")
+        .select("id, username, profile_photo_url, coin_balance")
         .eq("user_id", user.id)
         .single() as { data: any };
       profileData = model;
@@ -156,11 +156,7 @@ export default async function TicketsPage({ params, searchParams }: Props) {
   }
 
   const displayName =
-    actorType === "fan"
-      ? profileData?.display_name
-      : profileData?.first_name
-        ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
-        : profileData?.username || undefined;
+    profileData?.display_name || profileData?.username || undefined;
 
   // Format dates
   const startDate = event.start_date ? new Date(event.start_date) : null;

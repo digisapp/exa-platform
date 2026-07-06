@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
             try {
               // Get model info and winner actor info in parallel
               const [modelResult, winnerActorResult] = await Promise.all([
-                supabase.from("models").select("first_name, last_name, user_id").eq("id", auction.model_id).single(),
+                supabase.from("models").select("first_name, last_name, username, user_id").eq("id", auction.model_id).single(),
                 supabase.from("actors").select("id, type, user_id").eq("id", data.winner_id).single(),
               ]);
 
@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
                   await sendAuctionWonEmail({
                     to: winnerUser.user.email,
                     winnerName,
-                    modelName,
+                    modelName: model.username ? `@${model.username}` : "the model",
                     auctionTitle: auction.title,
                     amount: data.amount,
                     auctionId: auction.id,

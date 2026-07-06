@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     // Search models by username
     const { data: models } = await supabase
       .from("models")
-      .select("username, first_name, profile_photo_url")
+      .select("username, profile_photo_url")
       .not("username", "is", null)
       .not("user_id", "is", null)
       .ilike("username", `${q}%`)
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const users = [
       ...(models || []).map((m: any) => ({
         username: m.username,
-        display_name: m.first_name || m.username,
+        display_name: m.username,
         avatar_url: m.profile_photo_url,
         actor_type: "model",
       })),

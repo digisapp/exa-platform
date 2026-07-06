@@ -59,8 +59,6 @@ interface Booking {
   model?: {
     id: string;
     username: string;
-    first_name: string | null;
-    last_name: string | null;
     profile_photo_url: string | null;
     city: string | null;
     state: string | null;
@@ -599,7 +597,7 @@ export default function BookingsPage() {
                             onClick={() => setContractDialog({
                               bookingId: booking.id,
                               modelId: booking.model_id,
-                              modelName: booking.model ? [booking.model.first_name, booking.model.last_name].filter(Boolean).join(" ") : "Model",
+                              modelName: booking.model?.username || "Model",
                             })}
                           >
                             <FileText className="h-4 w-4 mr-1.5" />

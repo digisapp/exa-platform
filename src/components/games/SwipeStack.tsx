@@ -6,7 +6,6 @@ import { SwipeCard, ActionButtons } from "./SwipeCard";
 
 interface Model {
   id: string;
-  first_name: string | null;
   username: string;
   profile_photo_url: string;
   city: string | null;

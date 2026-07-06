@@ -81,10 +81,10 @@ export function TipNotificationListener({ actorId }: TipNotificationListenerProp
           } else if (senderActor?.type === "model" && senderActor.user_id) {
             const { data: model } = await supabase
               .from("models")
-              .select("first_name, username")
+              .select("username")
               .eq("user_id", senderActor.user_id)
               .maybeSingle();
-            senderName = model?.first_name || model?.username || "A model";
+            senderName = model?.username || "A model";
           }
 
           // Mark as shown and display toast

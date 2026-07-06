@@ -56,7 +56,7 @@ export default async function ForModelsPage() {
     if (actor?.type === "model" || actor?.type === "admin") {
       const { data: model } = await supabase
         .from("models")
-        .select("id, username, first_name, last_name, profile_photo_url, coin_balance")
+        .select("id, username, profile_photo_url, coin_balance")
         .eq("user_id", user.id)
         .single() as { data: any };
       profileData = model;
@@ -74,9 +74,7 @@ export default async function ForModelsPage() {
 
   const displayName = actorType === "fan"
     ? profileData?.display_name
-    : profileData?.first_name
-      ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
-      : profileData?.username || undefined;
+    : profileData?.username || undefined;
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>

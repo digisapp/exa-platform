@@ -69,7 +69,7 @@ export async function GET(
     if (modelIds.length > 0) {
       const { data: modelData } = await supabase
         .from("models")
-        .select("id, username, first_name, last_name, profile_photo_url, state, city")
+        .select("id, username, profile_photo_url, state, city")
         .in("id", modelIds);
       models = modelData || [];
     }

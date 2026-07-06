@@ -79,7 +79,7 @@ export default async function CampaignsPage() {
     const uniqueModelIds = [...new Set(allModelIds)] as string[];
     const { data: models } = await supabase
       .from("models")
-      .select("id, username, first_name, last_name, profile_photo_url")
+      .select("id, username, profile_photo_url")
       .in("id", uniqueModelIds);
 
     models?.forEach((m: any) => modelsMap.set(m.id, m));

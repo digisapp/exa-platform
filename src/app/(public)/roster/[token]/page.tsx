@@ -10,7 +10,7 @@ interface PageProps {
 }
 
 const MODEL_FIELDS = `
-  id, username, first_name, last_name, profile_photo_url,
+  id, username, profile_photo_url,
   height, hair_color, eye_color, bust, waist, hips, dress_size, shoe_size,
   city, state, focus_tags, is_verified,
   instagram_name, instagram_followers, tiktok_username, tiktok_followers

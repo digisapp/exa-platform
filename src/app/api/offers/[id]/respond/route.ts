@@ -42,7 +42,7 @@ export async function POST(
     // Get model
     const { data: model } = await supabase
       .from("models")
-      .select("id, username, first_name")
+      .select("id, username")
       .eq("user_id", user.id)
       .single();
 
@@ -172,7 +172,7 @@ export async function POST(
       }
 
       if (conversationId) {
-        const modelName = model.first_name || `@${model.username}`;
+        const modelName = `@${model.username}`;
         const message = status === "accepted"
           ? `${modelName} has accepted your offer "${offer.title}"!`
           : `${modelName} has declined your offer "${offer.title}".`;

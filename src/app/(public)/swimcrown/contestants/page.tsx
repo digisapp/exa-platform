@@ -48,12 +48,12 @@ export default async function SwimCrownContestantsPage() {
     if (actor?.type === "model") {
       const { data: model } = await supabase
         .from("models")
-        .select("coin_balance, profile_photo_url, first_name, username")
+        .select("coin_balance, profile_photo_url, username")
         .eq("user_id", user.id)
         .single();
       coinBalance = model?.coin_balance || 0;
       avatarUrl = model?.profile_photo_url || "";
-      name = model?.first_name || "";
+      name = model?.username || "";
       username = model?.username || "";
     } else if (actor?.type === "fan") {
       const { data: fan } = await supabase
@@ -107,8 +107,6 @@ export default async function SwimCrownContestantsPage() {
         created_at: c.createdAt || new Date().toISOString(),
         model: c.model ? {
           id: c.model.id,
-          first_name: c.model.firstName,
-          last_name: c.model.lastName || "",
           username: c.model.username,
           profile_photo_url: c.model.profilePhotoUrl,
           city: c.model.city,

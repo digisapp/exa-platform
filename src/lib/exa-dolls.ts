@@ -118,8 +118,6 @@ const OUTFIT_STYLES = [
 
 export interface ExaDollModelInput {
   id: string;
-  first_name: string | null;
-  last_name: string | null;
   username: string | null;
   country_code: string | null;
   hair_color: string | null;

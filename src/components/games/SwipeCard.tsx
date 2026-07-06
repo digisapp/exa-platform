@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 
 interface Model {
   id: string;
-  first_name: string | null;
   username: string;
   profile_photo_url: string;
   city: string | null;
@@ -77,7 +76,7 @@ export function SwipeCard({
         {/* Model Image */}
         <Image
           src={model.profile_photo_url}
-          alt={model.first_name || model.username}
+          alt={model.username}
           fill
           className="object-cover"
           sizes="(max-width: 640px) calc(100vw - 32px), 400px"
@@ -134,7 +133,7 @@ export function SwipeCard({
               onClick={(e) => e.stopPropagation()}
               className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg hover:text-pink-300 transition-colors"
             >
-              {model.first_name || model.username}
+              {model.username}
             </Link>
           </div>
 
@@ -176,12 +175,12 @@ export function SwipeCard({
               onClick={async (e) => {
                 e.stopPropagation();
                 const shareUrl = `${window.location.origin}/${model.username}`;
-                const shareText = `Check out ${model.first_name || model.username} on EXA Models!`;
+                const shareText = `Check out ${model.username} on EXA Models!`;
 
                 if (navigator.share) {
                   try {
                     await navigator.share({
-                      title: `${model.first_name || model.username} | EXA Models`,
+                      title: `${model.username} | EXA Models`,
                       text: shareText,
                       url: shareUrl,
                     });

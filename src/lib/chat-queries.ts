@@ -70,7 +70,7 @@ export async function fetchConversationList(
   const { data: models } = userIds.length > 0
     ? await supabase
         .from("models")
-        .select("user_id, username, first_name, last_name, profile_photo_url")
+        .select("user_id, username, profile_photo_url")
         .in("user_id", userIds) as { data: any[] | null }
     : { data: [] };
 

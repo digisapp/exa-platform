@@ -165,12 +165,12 @@ export default function WalletPage() {
     if (ids.length === 0) return;
     const { data } = await supabase
       .from("models")
-      .select("id, username, first_name")
-      .in("id", ids) as { data: { id: string; username: string; first_name: string | null }[] | null };
+      .select("id, username")
+      .in("id", ids) as { data: { id: string; username: string }[] | null };
     if (data && data.length > 0) {
       setCounterpartyNames((prev) => {
         const next = { ...prev };
-        data.forEach((m) => { next[m.id] = m.first_name || m.username; });
+        data.forEach((m) => { next[m.id] = `@${m.username}`; });
         return next;
       });
     }

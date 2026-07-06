@@ -13,8 +13,6 @@ import { CreateCampaignDialog } from "@/components/campaigns/CreateCampaignDialo
 interface Model {
   id: string;
   username: string;
-  first_name?: string;
-  last_name?: string;
   profile_photo_url?: string;
 }
 
@@ -44,13 +42,8 @@ export function CampaignsGrid({ campaigns }: CampaignsGridProps) {
     if (campaign.name.toLowerCase().includes(query)) return true;
     // Search by description
     if (campaign.description?.toLowerCase().includes(query)) return true;
-    // Search by model names in the campaign
-    if (campaign.models.some((model) => {
-      const modelName = model.first_name
-        ? `${model.first_name} ${model.last_name || ""}`.trim().toLowerCase()
-        : model.username?.toLowerCase() || "";
-      return modelName.includes(query) || model.username?.toLowerCase().includes(query);
-    })) return true;
+    // Search by model usernames in the campaign
+    if (campaign.models.some((model) => model.username?.toLowerCase().includes(query))) return true;
     return false;
   });
 
@@ -124,14 +117,14 @@ export function CampaignsGrid({ campaigns }: CampaignsGridProps) {
                           {model.profile_photo_url ? (
                             <Image
                               src={model.profile_photo_url}
-                              alt={model.first_name || model.username}
+                              alt={model.username}
                               width={40}
                               height={40}
                               className="w-full h-full object-cover"
                             />
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-violet-500/20 to-pink-500/20 flex items-center justify-center text-xs">
-                              {(model.first_name || model.username)?.charAt(0).toUpperCase()}
+                              {model.username?.charAt(0).toUpperCase()}
                             </div>
                           )}
                         </div>

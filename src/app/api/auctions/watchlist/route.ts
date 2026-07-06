@@ -50,8 +50,6 @@ export async function GET() {
           bid_count,
           model:models!auctions_model_id_fkey (
             id,
-            first_name,
-            last_name,
             profile_photo_url,
             username
           )
@@ -76,9 +74,7 @@ export async function GET() {
         ...entry.auction,
         model: entry.auction.model ? {
           id: entry.auction.model.id,
-          display_name: entry.auction.model.first_name
-            ? `${entry.auction.model.first_name} ${entry.auction.model.last_name || ""}`.trim()
-            : null,
+          display_name: entry.auction.model.username,
           profile_image_url: entry.auction.model.profile_photo_url,
           slug: entry.auction.model.username,
         } : null,

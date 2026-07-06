@@ -26,7 +26,7 @@ export const revalidate = 120;
 
 // Only select fields needed for model cards
 const MODEL_CARD_FIELDS = `
-  id, username, first_name, last_name, profile_photo_url, is_verified, is_featured,
+  id, username, profile_photo_url, is_verified, is_featured,
   last_active_at, reliability_score, show_location, city, state, height,
   show_measurements, instagram_followers, tiktok_followers, focus_tags
 `;
@@ -77,7 +77,7 @@ export default async function ModelsPage({
   function applyFilters(q: any): any {
     if (params.q) {
       const term = sanitizeOrFilterTerm(params.q);
-      q = q.or(`username.ilike.%${term}%,first_name.ilike.%${term}%,last_name.ilike.%${term}%`);
+      q = q.ilike("username", `%${term}%`);
     }
     if (params.state) q = q.eq("state", params.state);
     if (params.level === "verified") q = q.eq("is_verified", true);
@@ -177,7 +177,7 @@ export default async function ModelsPage({
     // Featured models
     (supabase
       .from("models") as any)
-      .select("id, username, first_name, profile_photo_url")
+      .select("id, username, profile_photo_url")
       .eq("is_featured", true)
       .eq("is_approved", true)
       .is("deleted_at", null)
@@ -206,7 +206,7 @@ export default async function ModelsPage({
     const [profileResult, favoritesResult] = await Promise.all([
       // Profile info based on actor type
       actor.type === "model" || actor.type === "admin"
-        ? (supabase.from("models") as any).select("username, first_name, last_name, profile_photo_url, coin_balance").eq("user_id", user.id).single() as Promise<{ data: any }>
+        ? (supabase.from("models") as any).select("username, profile_photo_url, coin_balance").eq("user_id", user.id).single() as Promise<{ data: any }>
         : actor.type === "fan"
           ? (supabase.from("fans") as any).select("display_name, avatar_url, coin_balance").eq("id", actor.id).single() as Promise<{ data: any }>
           : (supabase.from("brands") as any).select("company_name, logo_url, coin_balance, subscription_tier, subscription_status").eq("id", actor.id).single() as Promise<{ data: any }>,
@@ -240,9 +240,7 @@ export default async function ModelsPage({
     ? profileData?.display_name
     : actorType === "brand"
       ? profileData?.company_name
-      : profileData?.first_name
-        ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
-        : profileData?.username || undefined;
+      : profileData?.username || undefined;
 
   // Check if brand has active subscription
   const isFreeBrand = actorType === "brand" &&

@@ -26,8 +26,6 @@ interface Delivery {
   model?: {
     id: string;
     username: string;
-    first_name?: string | null;
-    last_name?: string | null;
     profile_photo_url?: string | null;
   } | null;
   booking?: {
@@ -115,8 +113,6 @@ export default function BrandContentPage() {
       d.title,
       d.notes,
       d.model?.username,
-      d.model?.first_name,
-      d.model?.last_name,
       d.booking?.booking_number,
       d.booking?.service_type,
       d.offer?.title,

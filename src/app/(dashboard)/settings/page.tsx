@@ -454,7 +454,7 @@ export default function ProfilePage() {
       // Get model details
       const modelUserIds = followerActors.filter((a: any) => a.type === "model").map((a: any) => a.user_id);
       const { data: models } = modelUserIds.length > 0
-        ? await supabase.from("models").select("user_id, username, first_name, last_name, profile_photo_url").in("user_id", modelUserIds)
+        ? await supabase.from("models").select("user_id, username, profile_photo_url").in("user_id", modelUserIds)
         : { data: [] };
       const modelsMap = new Map((models || []).map((m: any) => [m.user_id, m]));
 
@@ -481,9 +481,7 @@ export default function ProfilePage() {
           avatarUrl = fan?.avatar_url;
         } else if (type === "model") {
           const model = modelsMap.get(followerActor.user_id) as any;
-          displayName = model?.first_name
-            ? `${model.first_name} ${model.last_name || ""}`.trim()
-            : model?.username || "Model";
+          displayName = model?.username || "Model";
           avatarUrl = model?.profile_photo_url;
           profileUrl = model?.username ? `/${model.username}` : null;
         } else if (type === "brand") {
@@ -1371,7 +1369,7 @@ export default function ProfilePage() {
                 />
               ) : (
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-2xl font-bold">
-                  {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
+                  {model.username?.charAt(0)?.toUpperCase() || "?"}
                 </div>
               )}
               {/* Hover overlay with camera icon */}

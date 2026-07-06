@@ -10,8 +10,6 @@ const INITIAL_COUNT = 8;
 interface Model {
   id: string;
   username: string;
-  first_name: string | null;
-  last_name: string | null;
   profile_photo_url: string;
 }
 
@@ -33,7 +31,7 @@ export function ModelGrid({ models }: { models: Model[] }) {
             <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-muted">
               <Image
                 src={model.profile_photo_url}
-                alt={model.first_name || model.username}
+                alt={model.username}
                 fill
                 sizes="(max-width: 768px) 33vw, 12.5vw"
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -41,9 +39,7 @@ export function ModelGrid({ models }: { models: Model[] }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-2">
                 <p className="text-white text-[10px] font-semibold truncate">
-                  {model.first_name
-                    ? `${model.first_name} ${model.last_name || ""}`.trim()
-                    : model.username}
+                  {model.username}
                 </p>
               </div>
             </div>

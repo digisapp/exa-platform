@@ -79,7 +79,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Get model without is_approved filter (the page handles access control)
   const { data: model } = await supabase
     .from("models")
-    .select("first_name, last_name, username, bio, profile_photo_url, is_approved")
+    .select("username, bio, profile_photo_url, is_approved")
     .eq("username", username)
     .single() as { data: any };
 
@@ -92,12 +92,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Profile Preview | EXA Models" };
   }
 
-  const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
+  const displayName = model.username;
   const profileUrl = `https://www.examodels.com/${model.username}`;
   const description = model.bio || `Book ${displayName} for photoshoots, events, and brand collaborations on EXA Models - the premier model booking platform.`;
 
   return {
-    title: `${displayName} (@${model.username}) | EXA Models`,
+    title: `@${model.username} | EXA Models`,
     description,
     alternates: {
       canonical: profileUrl,
@@ -174,6 +174,8 @@ export default async function ModelProfilePage({ params }: Props) {
   // show_social_media, so it is gated in the JSX rather than redacted here.)
   if (!isOwner && !isAdmin) {
     for (const field of [
+      "first_name",
+      "last_name",
       "date_of_birth",
       "phone",
       "zelle_info",
@@ -384,8 +386,8 @@ export default async function ModelProfilePage({ params }: Props) {
     isModelFavorited = !!followRow;
   }
 
-  // Display name - show first_name + last_name, or fallback to username
-  const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
+  // Display name - real names are private; models are identified by username
+  const displayName = model.username;
 
   const isOnline = !!model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000;
 

@@ -55,7 +55,7 @@ export async function GET() {
 
     const { data: models } = await supabase
       .from("models")
-      .select("id, username, first_name, last_name, profile_photo_url, city, state, points_cached, is_approved")
+      .select("id, user_id, username, profile_photo_url, city, state, points_cached, is_approved")
       .in("user_id", userIds)
       .eq("is_approved", true);
 
@@ -194,10 +194,10 @@ export async function POST(request: NextRequest) {
       } else if (followerActor?.type === "model") {
         const { data: followerModel } = await supabase
           .from("models")
-          .select("first_name, username")
+          .select("username")
           .eq("user_id", user.id)
           .single();
-        followerName = followerModel?.first_name || followerModel?.username || "A model";
+        followerName = followerModel?.username || "A model";
       }
 
       // Create notification for the model

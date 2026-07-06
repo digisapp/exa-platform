@@ -43,8 +43,6 @@ interface DeliveryDetail {
   model?: {
     id: string;
     username: string;
-    first_name?: string | null;
-    last_name?: string | null;
     profile_photo_url?: string | null;
   } | null;
   booking?: {
@@ -232,9 +230,7 @@ export function DeliveryDetailSheet({
   };
 
   const modelName = delivery?.model
-    ? delivery.model.first_name
-      ? `${delivery.model.first_name}${delivery.model.last_name ? ` ${delivery.model.last_name}` : ""}`
-      : delivery.model.username
+    ? `@${delivery.model.username}`
     : "Unknown";
 
   return (

@@ -45,12 +45,12 @@ export default async function TopModelsPage() {
     if (actor?.type === "model") {
       const { data: model } = await supabase
         .from("models")
-        .select("coin_balance, profile_photo_url, first_name, username")
+        .select("coin_balance, profile_photo_url, username")
         .eq("user_id", user.id)
         .single();
       coinBalance = model?.coin_balance || 0;
       avatarUrl = model?.profile_photo_url || "";
-      name = model?.first_name || "";
+      name = model?.username || "";
       username = model?.username || "";
     } else if (actor?.type === "fan") {
       const { data: fan } = await supabase

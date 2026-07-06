@@ -195,7 +195,7 @@ export async function GET() {
       if (modelActorIds.length > 0) {
         const { data: models } = await supabase
           .from("models")
-          .select("id, username, first_name, last_name, profile_photo_url")
+          .select("id, username, profile_photo_url")
           .in("id", modelActorIds);
         modelDetails = models || [];
       }
@@ -213,10 +213,7 @@ export async function GET() {
           ...block,
           actorType: actorDetail?.type,
           username: modelDetail?.username,
-          displayName: modelDetail
-            ? `${modelDetail.first_name || ""} ${modelDetail.last_name || ""}`.trim() ||
-              modelDetail.username
-            : "User",
+          displayName: modelDetail?.username || "User",
           profilePhoto: modelDetail?.profile_photo_url,
         };
       });

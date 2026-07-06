@@ -11,8 +11,6 @@ import { Instagram, MapPin, BadgeCheck, ChevronLeft, ChevronRight, X } from "luc
 export interface RosterModel {
   id: string;
   username: string;
-  first_name: string | null;
-  last_name: string | null;
   profile_photo_url: string | null;
   height: string | null;
   hair_color: string | null;
@@ -34,8 +32,7 @@ export interface RosterModel {
 }
 
 function displayName(m: RosterModel) {
-  const n = [m.first_name, m.last_name].filter(Boolean).join(" ").trim();
-  return n || m.username;
+  return m.username;
 }
 
 function location(m: RosterModel) {

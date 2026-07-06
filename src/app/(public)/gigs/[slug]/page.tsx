@@ -97,7 +97,7 @@ export default async function GigDetailPage({ params }: Props) {
     if (actor?.type === "model" || actor?.type === "admin") {
       const { data: model } = await supabase
         .from("models")
-        .select("id, username, first_name, last_name, profile_photo_url, coin_balance")
+        .select("id, username, profile_photo_url, coin_balance")
         .eq("user_id", user.id)
         .single() as { data: any };
       profileData = model;
@@ -148,9 +148,7 @@ export default async function GigDetailPage({ params }: Props) {
 
   const displayName = actorType === "fan"
     ? profileData?.display_name
-    : profileData?.first_name
-      ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
-      : profileData?.username || undefined;
+    : profileData?.username || undefined;
 
   const spotsLeft = gig.spots ? gig.spots - gig.spots_filled : null;
   const deadline = gig.application_deadline
@@ -194,7 +192,7 @@ export default async function GigDetailPage({ params }: Props) {
       if (modelIds.length > 0) {
         const { data: fullModels } = await supabase
           .from("models")
-          .select("*")
+          .select("id, username, profile_photo_url, is_verified, is_featured, last_active_at, reliability_score, show_location, city, state, height, show_measurements, instagram_followers, tiktok_followers, focus_tags")
           .in("id", modelIds)
           .not("profile_photo_url", "is", null);
         eventModels = fullModels || [];

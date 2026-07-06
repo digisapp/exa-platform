@@ -27,8 +27,6 @@ interface Contestant {
   created_at: string;
   model: {
     id: string;
-    first_name: string;
-    last_name: string;
     username: string;
     profile_photo_url: string | null;
     city: string | null;
@@ -77,11 +75,7 @@ export function ContestantsGrid({
     const filtered = contestants.filter((c) => {
       if (!search) return true;
       const q = search.toLowerCase();
-      const fullName =
-        `${c.model.first_name} ${c.model.last_name}`.toLowerCase();
-      return (
-        fullName.includes(q) || c.model.username.toLowerCase().includes(q)
-      );
+      return c.model.username.toLowerCase().includes(q);
     });
 
     if (sortBy === "votes") {
@@ -122,8 +116,6 @@ export function ContestantsGrid({
           created_at: c.createdAt || new Date().toISOString(),
           model: c.model ? {
             id: c.model.id,
-            first_name: c.model.firstName,
-            last_name: c.model.lastName || "",
             username: c.model.username,
             profile_photo_url: c.model.profilePhotoUrl,
             city: c.model.city,
@@ -144,7 +136,7 @@ export function ContestantsGrid({
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name..."
+            placeholder="Search by username..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-zinc-900/50 border-zinc-800"
@@ -229,7 +221,7 @@ export function ContestantsGrid({
                       {contestant.model.profile_photo_url ? (
                         <Image
                           src={contestant.model.profile_photo_url}
-                          alt={`${contestant.model.first_name} ${contestant.model.last_name}`}
+                          alt={contestant.model.username}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
                           sizes="(max-width: 768px) 50vw, 33vw"
@@ -246,8 +238,7 @@ export function ContestantsGrid({
                     {/* Info */}
                     <div className="relative p-4 -mt-16 z-10">
                       <h3 className="text-base sm:text-lg font-bold text-white truncate">
-                        {contestant.model.first_name}{" "}
-                        {contestant.model.last_name}
+                        {contestant.model.username}
                       </h3>
                       {(contestant.model.city || contestant.model.state) && (
                         <p className="text-xs text-muted-foreground truncate">

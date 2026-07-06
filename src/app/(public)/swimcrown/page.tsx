@@ -60,11 +60,11 @@ export default async function SwimCrownPage() {
     if (actor?.type === "model") {
       const { data: model } = await supabase
         .from("models")
-        .select("profile_photo_url, first_name, username")
+        .select("profile_photo_url, username")
         .eq("user_id", user.id)
         .single();
       avatarUrl = model?.profile_photo_url || "";
-      name = model?.first_name || "";
+      name = model?.username || "";
       username = model?.username || "";
     } else if (actor?.type === "fan") {
       const { data: fan } = await supabase
