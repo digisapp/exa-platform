@@ -159,8 +159,8 @@ export function MessageReactions({
             variant="ghost"
             size="icon"
             className={cn(
-              "h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity",
-              localReactions.length > 0 && "opacity-100"
+              "h-6 w-6 pointer-coarse:h-8 pointer-coarse:w-8 opacity-0 group-hover:opacity-100 pointer-coarse:opacity-60 transition-opacity",
+              localReactions.length > 0 && "opacity-100 pointer-coarse:opacity-100"
             )}
             disabled={isLoading}
           >

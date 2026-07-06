@@ -75,6 +75,13 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  // Touch pause: on iPhone the rAF loop fights finger swipes (kills momentum
+  // scrolling), so any touch/pointer-down pauses auto-scroll and it only
+  // resumes a few seconds after the last touch ends.
+  const [isTouchPaused, setIsTouchPaused] = useState(false);
+  // Battery: don't run the rAF loop at all while the carousel is offscreen.
+  const [isInView, setIsInView] = useState(true);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isAuthed, setIsAuthed] = useState(false);
   const router = useRouter();
 
@@ -95,9 +102,39 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
     }
   };
 
+  // Stop auto-scroll while the carousel is out of the viewport
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  // Clear any pending touch-resume timer on unmount
+  useEffect(() => {
+    return () => {
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    };
+  }, []);
+
+  const pauseForTouch = () => {
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    setIsTouchPaused(true);
+  };
+
+  const resumeAfterTouch = () => {
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = setTimeout(() => setIsTouchPaused(false), 4000);
+  };
+
   // Auto-scroll effect
   useEffect(() => {
-    if (!isAutoScrolling || !scrollContainerRef.current) return;
+    if (!isAutoScrolling || isTouchPaused || !isInView || !scrollContainerRef.current) return;
 
     const container = scrollContainerRef.current;
     let animationId: number;
@@ -120,7 +157,7 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, [isAutoScrolling]);
+  }, [isAutoScrolling, isTouchPaused, isInView]);
 
   const handleScroll = () => {
     if (!scrollContainerRef.current) return;
@@ -178,6 +215,12 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
+          onTouchStart={pauseForTouch}
+          onTouchEnd={resumeAfterTouch}
+          onTouchCancel={resumeAfterTouch}
+          onPointerDown={pauseForTouch}
+          onPointerUp={resumeAfterTouch}
+          onPointerCancel={resumeAfterTouch}
           className="flex gap-4 overflow-x-auto scrollbar-hide px-8 md:px-16 pb-4"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
@@ -202,6 +245,7 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
                       src={model.profile_photo_url}
                       alt={model.first_name || model.username}
                       fill
+                      sizes="280px"
                       className="object-cover"
                     />
                   ) : (

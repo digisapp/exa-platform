@@ -240,9 +240,12 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
           </div>
         )}
 
-        {/* Emoji picker button */}
+        {/* Emoji picker button — wrapper is static on mobile so the picker
+            anchors to (and centers within) the whole input container instead
+            of the button, which pushed it past the card's overflow-hidden on
+            390px screens. */}
         {isLoggedIn && (
-          <div className="relative">
+          <div className="static sm:relative">
             <button
               onClick={() => setShowEmojis((prev) => !prev)}
               className={cn(
@@ -257,7 +260,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
             </button>
 
             {showEmojis && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[320px] rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl z-50 p-2.5">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[min(320px,calc(100vw-4rem))] sm:w-[320px] rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl z-50 p-2.5">
                 <div className="grid grid-cols-8 gap-1">
                   {EMOJI_GRID.map((emoji) => (
                     <button
@@ -268,7 +271,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
                         setShowEmojis(false);
                         inputRef.current?.focus();
                       }}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 hover:scale-110 transition-all text-lg"
+                      className="w-full aspect-square flex items-center justify-center rounded-lg hover:bg-white/10 hover:scale-110 transition-all text-lg"
                     >
                       {emoji}
                     </button>
@@ -298,7 +301,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
             }
           }}
           placeholder={isLoggedIn ? "Post to the wall... Use @ to mention" : "Sign in to post..."}
-          className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-2.5 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-pink-500/40 transition-colors"
+          className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-2.5 text-base md:text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-pink-500/40 transition-colors"
           disabled={isSending}
         />
         {value.length > 0 && (

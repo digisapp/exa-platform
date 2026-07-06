@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Coins, Sparkles, Loader2, Check, Zap, Crown, Star } from "lucide-react";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function BuyCoinsPage() {
   const [loading, setLoading] = useState<number | null>(null);
@@ -26,11 +27,11 @@ export default function BuyCoinsPage() {
         window.location.href = data.url;
       } else {
         console.error("No checkout URL returned");
-        alert("Failed to start checkout. Please try again.");
+        toast.error("Failed to start checkout. Please try again.");
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      alert("Failed to start checkout. Please try again.");
+      toast.error("Failed to start checkout. Please try again.");
     } finally {
       setLoading(null);
     }

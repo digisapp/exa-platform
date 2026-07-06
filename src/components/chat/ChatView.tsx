@@ -92,7 +92,6 @@ export function ChatView({
   const [newMessageCount, setNewMessageCount] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const chatMessagesRef = useRef<ChatMessagesHandle>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const audioInitRef = useRef(false);
   const soundEnabledRef = useRef(true);
@@ -338,10 +337,8 @@ export function ChatView({
       const data = await response.json();
 
       if (response.ok && data.messages) {
-        // Preserve scroll position
-        const container = messagesContainerRef.current;
-        const previousScrollHeight = container?.scrollHeight || 0;
-
+        // Scroll position is preserved inside ChatMessages, which owns the
+        // scroll container (it saves scrollHeight before this prepend lands).
         setMessages((prev) => [...data.messages, ...prev]);
         setHasMore(data.hasMore);
 
@@ -352,13 +349,6 @@ export function ChatView({
         if (data.repliedMessages) {
           setRepliedMessagesMap((prev) => ({ ...prev, ...data.repliedMessages }));
         }
-
-        requestAnimationFrame(() => {
-          if (container) {
-            const newScrollHeight = container.scrollHeight;
-            container.scrollTop = newScrollHeight - previousScrollHeight;
-          }
-        });
       }
     } catch (error) {
       console.error("Failed to load more messages:", error);
@@ -633,7 +623,7 @@ export function ChatView({
   }, []);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] lg:h-full max-md:h-[calc(100vh-180px)] relative">
+    <div className="flex flex-col h-[calc(100dvh-120px)] lg:h-full max-md:h-[calc(100dvh-180px)] relative">
       <ChatHeader
         conversation={conversation}
         currentActor={currentActor}

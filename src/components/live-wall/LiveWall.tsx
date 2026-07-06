@@ -714,7 +714,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
               <div
                 ref={scrollRef}
                 onScroll={handleScroll}
-                className={`overflow-y-auto p-3 space-y-1 ${compact ? "flex-1 min-h-0" : "h-[380px] md:h-[480px]"}`}
+                className={`overflow-y-auto overscroll-contain p-3 space-y-1 ${compact ? "flex-1 min-h-0" : "h-[380px] md:h-[480px]"}`}
               >
                 {messages.length === 0 ? (
                   <div className="flex items-center justify-center h-full">

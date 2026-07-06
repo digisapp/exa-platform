@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Eye, EyeOff, MessageCircle, Coins, Heart } from "lucide-react";
+import { Loader2, ArrowLeft, Eye, EyeOff, MessageCircle, Star, Heart } from "lucide-react";
 
 export default function FanSignupPage() {
   const [email, setEmail] = useState("");
@@ -199,8 +199,8 @@ export default function FanSignupPage() {
               <p className="text-xs text-muted-foreground">Direct Messages</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted/50">
-              <Coins className="h-5 w-5 mx-auto mb-1 text-violet-500" />
-              <p className="text-xs text-muted-foreground">10 Free Coins</p>
+              <Star className="h-5 w-5 mx-auto mb-1 text-violet-500" />
+              <p className="text-xs text-muted-foreground">Follow Your Favorites</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted/50">
               <Heart className="h-5 w-5 mx-auto mb-1 text-red-500" />
@@ -255,7 +255,8 @@ export default function FanSignupPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-2 -m-2 text-muted-foreground hover:text-foreground"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -300,7 +301,7 @@ export default function FanSignupPage() {
                 </div>
                 <div className="text-center text-sm text-muted-foreground">
                   Want to join as a model?{" "}
-                  <Link href="/signup" className="text-pink-500 hover:underline font-medium">
+                  <Link href="/#signup" className="text-pink-500 hover:underline font-medium">
                     Model signup
                   </Link>
                 </div>

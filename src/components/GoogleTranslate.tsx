@@ -58,7 +58,7 @@ export function GoogleTranslate() {
     <>
       <div
         id="google_translate_element"
-        className="fixed bottom-4 right-4 z-50"
+        className="fixed bottom-20 right-4 z-40 mb-[env(safe-area-inset-bottom)] md:bottom-4 md:z-50 md:mb-0"
       />
       <style jsx global>{`
         /* Hide Google Translate top bar that pushes page down */
@@ -79,7 +79,8 @@ export function GoogleTranslate() {
           border: 1px solid #3f3f46;
           border-radius: 8px;
           padding: 8px 12px;
-          font-size: 13px;
+          /* 16px minimum: iOS Safari zooms the page when focusing a smaller select */
+          font-size: 16px;
           font-family: inherit;
           cursor: pointer;
           outline: none;

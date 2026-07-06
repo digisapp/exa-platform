@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useRef, useCallback, useEffect, useLayoutEffect, forwardRef, useImperativeHandle } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { TypingIndicator } from "./TypingIndicator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -74,6 +74,11 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const scrollRafRef = useRef<number | null>(null);
+    const nearBottomRef = useRef(true);
+    // Scroll-anchoring state for loading older messages: saved when a
+    // load-more starts, consumed when the prepended messages land.
+    const prependAnchorRef = useRef<{ scrollHeight: number; scrollTop: number } | null>(null);
+    const firstMessageIdRef = useRef<string | null>(messages[0]?.id ?? null);
 
     const otherName = otherInfo.name;
     const otherAvatar = otherInfo.avatar;
@@ -90,6 +95,56 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
       messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     }, []);
 
+    // Save the container's scroll metrics before asking the parent to prepend
+    // older messages, so we can restore the viewport once they land.
+    const handleLoadMore = useCallback(() => {
+      const container = messagesContainerRef.current;
+      if (container) {
+        prependAnchorRef.current = {
+          scrollHeight: container.scrollHeight,
+          scrollTop: container.scrollTop,
+        };
+      }
+      onLoadMore();
+    }, [onLoadMore]);
+
+    // Restore scroll position after older messages are prepended (detected by
+    // the first message id changing). Runs before paint to avoid a visible
+    // jump — and keeps scrollTop away from the auto-load-more zone so a
+    // single load doesn't cascade-fetch the whole history.
+    useLayoutEffect(() => {
+      const firstId = messages[0]?.id ?? null;
+      const anchor = prependAnchorRef.current;
+      const container = messagesContainerRef.current;
+      if (anchor && container && firstId !== firstMessageIdRef.current) {
+        container.scrollTop = anchor.scrollTop + (container.scrollHeight - anchor.scrollHeight);
+        prependAnchorRef.current = null;
+      } else if (anchor && !loadingMore) {
+        // Load-more finished without prepending (error / empty page)
+        prependAnchorRef.current = null;
+      }
+      firstMessageIdRef.current = firstId;
+    }, [messages, loadingMore]);
+
+    // iOS keyboard handling: when the visual viewport shrinks (keyboard
+    // opening) and the user was at the bottom, keep the latest messages in view.
+    useEffect(() => {
+      const vv = window.visualViewport;
+      if (!vv) return;
+      let lastHeight = vv.height;
+      const handleViewportResize = () => {
+        const shrunk = vv.height < lastHeight;
+        lastHeight = vv.height;
+        if (shrunk && nearBottomRef.current) {
+          requestAnimationFrame(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+          });
+        }
+      };
+      vv.addEventListener("resize", handleViewportResize);
+      return () => vv.removeEventListener("resize", handleViewportResize);
+    }, []);
+
     // Handle scroll to detect position
     const handleScroll = useCallback(() => {
       if (scrollRafRef.current) return;
@@ -100,15 +155,16 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
 
         // Load more when scrolled near the top
         if (container.scrollTop < 100 && hasMore && !loadingMore) {
-          onLoadMore();
+          handleLoadMore();
         }
 
         // Check if near bottom
         const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
         const nearBottom = distanceFromBottom < 150;
+        nearBottomRef.current = nearBottom;
         onScrollStateChange(nearBottom, !nearBottom && messages.length > 5);
       });
-    }, [hasMore, loadingMore, onLoadMore, messages.length, onScrollStateChange]);
+    }, [hasMore, loadingMore, handleLoadMore, messages.length, onScrollStateChange]);
 
     // Find the last own message that was read by the other participant
     const seenMessageId = otherLastReadAt
@@ -146,7 +202,7 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
               <div className="flex justify-center">
                 <Button
                   variant="ghost"
-                  onClick={onLoadMore}
+                  onClick={handleLoadMore}
                   className="text-muted-foreground rounded-full px-6 h-10"
                 >
                   Load earlier messages

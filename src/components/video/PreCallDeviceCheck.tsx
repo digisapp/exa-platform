@@ -40,6 +40,12 @@ export function PreCallDeviceCheck({ callType, onReadyChange }: PreCallDeviceChe
         }
 
         audioCtx = new AudioContext();
+        // iOS Safari can start a context created in a mount effect suspended,
+        // which would pin the mic meter at 0% and look like a broken mic.
+        // getUserMedia just succeeded (user granted access), so resume works.
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume().catch(() => {});
+        }
         const source = audioCtx.createMediaStreamSource(stream);
         const analyser = audioCtx.createAnalyser();
         analyser.fftSize = 256;

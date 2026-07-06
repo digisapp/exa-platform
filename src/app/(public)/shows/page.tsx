@@ -109,7 +109,7 @@ export default async function EventsPage() {
 
       {/* Hero Section with YouTube Video */}
       <div className="relative overflow-hidden">
-        <div className="aspect-[21/9] md:aspect-[3/1] relative">
+        <div className="aspect-video sm:aspect-[21/9] md:aspect-[3/1] relative">
           <iframe
             src="https://www.youtube.com/embed/LRzzpEl7kiU?autoplay=1&mute=1&loop=1&playlist=LRzzpEl7kiU&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
             title="EXA Shows"
@@ -121,8 +121,10 @@ export default async function EventsPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-background/60 to-transparent pointer-events-none" />
         </div>
 
-        {/* Hero Text Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 pointer-events-none">
+        {/* Hero Text — in-flow below the video on phones (the overlay block is
+            taller than a 21:9 hero at 390px and got clipped), absolute overlay
+            from md: up. */}
+        <div className="p-6 pt-4 md:p-12 md:absolute md:bottom-0 md:left-0 md:right-0 md:pointer-events-none">
           <div className="container px-4 md:px-8">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="h-5 w-5 text-pink-400" />
@@ -133,7 +135,7 @@ export default async function EventsPage() {
             <p className="text-[10px] uppercase tracking-[0.3em] text-white/70 font-semibold mb-2 drop-shadow">
               Live Runway
             </p>
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-3 drop-shadow-lg">
+            <h1 className="text-3xl md:text-6xl font-bold text-white mb-3 drop-shadow-lg">
               <span className="exa-gradient-text">EXA Shows</span>
             </h1>
             <p className="text-sm md:text-base text-white/80 max-w-xl drop-shadow">

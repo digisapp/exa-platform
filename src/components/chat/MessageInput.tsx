@@ -75,6 +75,15 @@ export function MessageInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const draftKey = conversationId ? `${DRAFT_PREFIX}${conversationId}` : null;
 
+  // Auto-grow fallback: iOS Safari doesn't support CSS `field-sizing`, which
+  // the shared Textarea relies on. Cap matches the existing max-h-32 (128px).
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 128)}px`;
+  }, [content]);
+
   // Load draft from localStorage on mount
   useEffect(() => {
     if (!draftKey) return;
@@ -405,7 +414,7 @@ export function MessageInput({
   }
 
   return (
-    <div className="border-t border-white/10 bg-white/[0.03] backdrop-blur-sm p-4">
+    <div className="border-t border-white/10 bg-white/[0.03] backdrop-blur-sm p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
       {/* Coin cost indicator - only show for fans */}
       {coinCost > 0 && (
         <div
@@ -610,7 +619,7 @@ export function MessageInput({
           placeholder={placeholder}
           disabled={disabled || sending || uploading}
           maxLength={5000}
-          className="min-h-[48px] max-h-32 resize-none text-[15px] rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:border-pink-400/60 focus-visible:ring-pink-500/20 focus-visible:shadow-[0_0_16px_rgba(236,72,153,0.25)]"
+          className="min-h-[48px] max-h-32 resize-none text-base md:text-[15px] rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:border-pink-400/60 focus-visible:ring-pink-500/20 focus-visible:shadow-[0_0_16px_rgba(236,72,153,0.25)]"
           rows={1}
         />
 

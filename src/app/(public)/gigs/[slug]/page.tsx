@@ -222,7 +222,8 @@ export default async function GigDetailPage({ params }: Props) {
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
-    <div className="min-h-screen bg-background">
+    {/* pb clears the fixed mobile apply bar so it never permanently covers the footer */}
+    <div className={`min-h-screen bg-background ${canApply ? "pb-28 lg:pb-0" : ""}`}>
       <Navbar
         user={user ? {
           id: user.id,
@@ -252,6 +253,7 @@ export default async function GigDetailPage({ params }: Props) {
                 src={gig.cover_image_url}
                 alt={gig.title}
                 fill
+                sizes="100vw"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
@@ -409,7 +411,7 @@ export default async function GigDetailPage({ params }: Props) {
               )}
 
               {/* Apply Card */}
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5 space-y-4">
+              <div id="apply" className="scroll-mt-24 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5 space-y-4">
                 {existingApplication ? (
                   <div className="space-y-4">
                     <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 text-center">
@@ -659,6 +661,38 @@ export default async function GigDetailPage({ params }: Props) {
           &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
         </p>
       </footer>
+
+      {/* Mobile sticky apply bar — jumps to the apply card in the sidebar */}
+      {canApply && (
+        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-violet-500/20 bg-[#120a24]/90 backdrop-blur-md">
+          <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+          <div className="flex items-center justify-between gap-4 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="min-w-0">
+              {gig.compensation_type === "paid" && gig.compensation_amount > 0 ? (
+                <p className="text-sm font-semibold text-green-400">
+                  ${(gig.compensation_amount / 100).toFixed(0)}
+                </p>
+              ) : gig.compensation_type ? (
+                <p className="text-sm font-semibold text-white capitalize">{gig.compensation_type}</p>
+              ) : null}
+              {spotsLeft !== null && (
+                <p className="text-xs text-white/60">
+                  {spotsLeft} of {gig.spots} spots left
+                </p>
+              )}
+            </div>
+            <Button
+              asChild
+              className="flex-shrink-0 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 rounded-xl shadow-lg shadow-pink-500/25"
+            >
+              <a href="#apply">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Apply Now
+              </a>
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
     </CoinBalanceProvider>
   );

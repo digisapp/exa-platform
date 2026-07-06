@@ -310,6 +310,7 @@ function ModelOnboardingContent() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
+                      autoComplete="email"
                     />
                   </div>
                 </div>
@@ -326,6 +327,9 @@ function ModelOnboardingContent() {
                       value={instagram}
                       onChange={(e) => setInstagram(e.target.value)}
                       className="pl-10"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                     />
                   </div>
                 </div>
