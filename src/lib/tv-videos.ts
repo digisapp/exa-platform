@@ -17,15 +17,12 @@ export const TV_VIDEOS: Video[] = [
   { id: "175", youtubeId: "UwyRA9OCwgU", title: "Capristan | Miami Swim Week 2026 | Official Full Show 4K | Exa Shows", category: "MSW" },
   { id: "176", youtubeId: "dS9HjnFX_Yg", title: "Berry Beachy | Full Runway Show 2026 | EXA Swim Shows Miami", category: "MSW" },
   { id: "177", youtubeId: "m6gz3Y2_-lc", title: "Exa Shows Miami Swim Week 2026 | Berry Beachy Showcase", category: "MSW" },
-  { id: "178", youtubeId: "3a5cJhX9dH0", title: "Exa Shows | Miami Swim Week 2026 | Shows Coming Soon", category: "MSW" },
-  { id: "179", youtubeId: "jKe57upWUqo", title: "Berry Beachy Bikini Watch Party | Miami Swim Week 2026 | Exa Shows", category: "Behind the Scenes" },
 
   // Miami Swim Week - Runway Shows
   { id: "1", youtubeId: "QFDBeGQILzY", title: "Exa Models Full Day 1 Show | Miami Swim Week 2025 [4K]", category: "MSW", featured: true },
   { id: "2", youtubeId: "Y1vyiIpJhHA", title: "Exa Models Full Day 2 Show | Miami Swim Week 2025 [4K]", category: "MSW", featured: true },
   { id: "3", youtubeId: "Cc0N7a-eCZw", title: "Exa Swim 4K | Miami Swim Week 2025", category: "MSW" },
   { id: "4", youtubeId: "LyMckCEBd4A", title: "EXA SWIM / Miami Swim Week / Exa Shows", category: "MSW" },
-  { id: "5", youtubeId: "TnoZi5vL7Vk", title: "Exa Swimwear 4K | Fashion Runway Full Show", category: "MSW" },
   { id: "6", youtubeId: "6m3C7xIPB4A", title: "Super Color Swim in 4K | Miami Swim Week 2025 | EXA Swim Shows", category: "MSW" },
   { id: "7", youtubeId: "CyXsa4-yi7U", title: "Color Super Swim Full Show 4K | Miami Swim Week 2025", category: "MSW" },
   { id: "8", youtubeId: "wFvgmtTRbGo", title: "COLOR SUPER Swim Miami Swim Week 2025 [4K]", category: "MSW" },

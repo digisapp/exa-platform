@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Image from "next/image";
-import { Play, X, Search, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Play, X, Search, ChevronLeft, ChevronRight, Sparkles, ArrowRight } from "lucide-react";
 import { type Video, TV_CATEGORIES, CATEGORY_LABELS } from "@/lib/tv-videos";
 
 function VideoThumbnail({
@@ -144,20 +145,35 @@ export function TVGrid({ videos }: { videos: Video[] }) {
   const featuredVideos = useMemo(() => videos.filter((v) => v.featured), [videos]);
   const showFeatured = activeFilter === "All" && !normalizedQuery && featuredVideos.length > 0;
 
-  // Lightbox navigation
+  // Default view groups the catalog into one section per category; filtered or
+  // searched views stay a flat grid.
+  const sections = useMemo(() => {
+    if (activeFilter !== "All" || normalizedQuery) return null;
+    return TV_CATEGORIES.filter((cat) => cat !== "All")
+      .map((cat) => ({ cat, videos: videos.filter((v) => v.category === cat) }))
+      .filter((s) => s.videos.length > 0);
+  }, [videos, activeFilter, normalizedQuery]);
+
+  // Lightbox navigation follows the on-screen order, which differs from the
+  // data-file order when sections are shown.
+  const displayVideos = useMemo(
+    () => (sections ? sections.flatMap((s) => s.videos) : filteredVideos),
+    [sections, filteredVideos]
+  );
+
   const currentIndex = selectedVideo
-    ? filteredVideos.findIndex((v) => v.youtubeId === selectedVideo.youtubeId)
+    ? displayVideos.findIndex((v) => v.youtubeId === selectedVideo.youtubeId)
     : -1;
   const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex >= 0 && currentIndex < filteredVideos.length - 1;
+  const hasNext = currentIndex >= 0 && currentIndex < displayVideos.length - 1;
 
   const goPrev = useCallback(() => {
-    if (hasPrev) openVideo(filteredVideos[currentIndex - 1]);
-  }, [hasPrev, currentIndex, filteredVideos, openVideo]);
+    if (hasPrev) openVideo(displayVideos[currentIndex - 1]);
+  }, [hasPrev, currentIndex, displayVideos, openVideo]);
 
   const goNext = useCallback(() => {
-    if (hasNext) openVideo(filteredVideos[currentIndex + 1]);
-  }, [hasNext, currentIndex, filteredVideos, openVideo]);
+    if (hasNext) openVideo(displayVideos[currentIndex + 1]);
+  }, [hasNext, currentIndex, displayVideos, openVideo]);
 
   useEffect(() => {
     if (!selectedVideo) return;
@@ -213,10 +229,25 @@ export function TVGrid({ videos }: { videos: Video[] }) {
         </div>
       )}
 
+      {/* Casting CTA */}
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-pink-500/20 bg-gradient-to-r from-pink-500/10 to-violet-500/10 px-4 py-3 md:px-6 md:py-4">
+        <p className="text-sm md:text-base text-white/80">
+          Want to walk the next runway?{" "}
+          <span className="text-white font-medium">EXA is casting for upcoming shows.</span>
+        </p>
+        <Link
+          href="/gigs"
+          className="inline-flex items-center gap-1.5 self-start sm:self-auto whitespace-nowrap px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs md:text-sm font-semibold shadow-lg shadow-pink-500/25 hover:opacity-90 transition-opacity"
+        >
+          See casting calls
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
       {/* Sticky filter + search bar */}
       <div className="sticky top-0 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-4 bg-background/85 backdrop-blur-md border-b border-white/5 mb-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible">
             {TV_CATEGORIES.map((cat) => {
               const count =
                 cat === "All"
@@ -268,17 +299,41 @@ export function TVGrid({ videos }: { videos: Video[] }) {
         )}
       </div>
 
-      {/* Video grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredVideos.map((video, i) => (
-          <VideoTile
-            key={video.id}
-            video={video}
-            onClick={() => openVideo(video)}
-            priority={!showFeatured && i < 6}
-          />
-        ))}
-      </div>
+      {/* Video grid — one section per category on the default view, flat when filtered */}
+      {sections ? (
+        <div className="space-y-10">
+          {sections.map(({ cat, videos: sectionVideos }) => (
+            <section key={cat}>
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="text-xs uppercase tracking-[0.25em] text-white/60 font-semibold">
+                  {CATEGORY_LABELS[cat] || cat}
+                </h2>
+                <span className="text-xs text-white/30">({sectionVideos.length})</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sectionVideos.map((video) => (
+                  <VideoTile
+                    key={video.id}
+                    video={video}
+                    onClick={() => openVideo(video)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredVideos.map((video, i) => (
+            <VideoTile
+              key={video.id}
+              video={video}
+              onClick={() => openVideo(video)}
+              priority={!showFeatured && i < 6}
+            />
+          ))}
+        </div>
+      )}
 
       {filteredVideos.length === 0 && (
         <div className="text-center py-20 text-muted-foreground">
@@ -359,7 +414,7 @@ export function TVGrid({ videos }: { videos: Video[] }) {
             </p>
             {currentIndex >= 0 && (
               <p className="text-xs text-white/40">
-                {currentIndex + 1} of {filteredVideos.length}
+                {currentIndex + 1} of {displayVideos.length}
               </p>
             )}
           </div>

@@ -24,13 +24,40 @@ export const metadata: Metadata = {
     url: "https://www.examodels.com/tv",
     type: "website",
     siteName: "EXA Models",
+    // Page-level openGraph replaces the layout's block entirely, so images
+    // must be re-declared here or shares render with no preview.
+    images: [
+      {
+        url: `https://img.youtube.com/vi/${TV_VIDEOS[0].youtubeId}/maxresdefault.jpg`,
+        width: 1280,
+        height: 720,
+        alt: TV_VIDEOS[0].title,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "EXA TV | EXA Models",
     description:
       "Watch runway shows, backstage footage, and highlights from Miami Swim Week, New York Fashion Week, and more.",
+    images: [`https://img.youtube.com/vi/${TV_VIDEOS[0].youtubeId}/maxresdefault.jpg`],
   },
+};
+
+// VideoObject rich-result data for the featured videos only — the full
+// 170+ catalog would add ~40KB to every page load for no extra SEO value.
+const videoJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  itemListElement: TV_VIDEOS.filter((v) => v.featured).map((v, i) => ({
+    "@type": "VideoObject",
+    position: i + 1,
+    name: v.title,
+    thumbnailUrl: `https://img.youtube.com/vi/${v.youtubeId}/hqdefault.jpg`,
+    embedUrl: `https://www.youtube.com/embed/${v.youtubeId}`,
+    contentUrl: `https://www.youtube.com/watch?v=${v.youtubeId}`,
+    url: `https://www.examodels.com/tv?v=${v.youtubeId}`,
+  })),
 };
 
 export default async function TVPage() {
@@ -85,6 +112,10 @@ export default async function TVPage() {
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(videoJsonLd) }}
+      />
       <div className="min-h-screen bg-background">
         <Navbar
           user={
