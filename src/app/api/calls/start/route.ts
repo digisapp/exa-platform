@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     if (suspended) return suspended;
 
     let recipientActor: { id: string } | null = null;
-    let recipientModel: { id: string; username: string | null; first_name: string | null; user_id: string | null; video_call_rate: number | null; voice_call_rate: number | null; email?: string | null; phone?: string | null; video_is_online?: boolean | null } | null = null;
+    let recipientModel: { id: string; username: string | null; first_name: string | null; user_id: string | null; video_call_rate: number | null; voice_call_rate: number | null; email?: string | null; phone?: string | null; video_is_online?: boolean | null; preferred_language?: string | null } | null = null;
     let conversationId: string | null = providedConversationId || null;
 
     // If conversationId provided, get recipient from conversation
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         // Try to get model info (might be a model or fan)
         const { data: model } = await supabase
           .from("models")
-          .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, phone, video_is_online")
+          .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, phone, video_is_online, preferred_language")
           .eq("user_id", recipientActorData.user_id)
           .single();
 
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       // Use recipientUsername to find recipient
       const { data: model } = await supabase
         .from("models")
-        .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, phone, video_is_online")
+        .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, phone, video_is_online, preferred_language")
         .eq("username", recipientUsername)
         .eq("is_approved", true)
         .single();
@@ -319,7 +319,8 @@ export async function POST(request: NextRequest) {
         recipientModel.phone,
         recipientModel.first_name || recipientModel.username || "Model",
         callerName,
-        callType
+        callType,
+        recipientModel.preferred_language || "en"
       ).catch((err) => logger.error(`Failed to send ${callType} call SMS`, err));
     }
 

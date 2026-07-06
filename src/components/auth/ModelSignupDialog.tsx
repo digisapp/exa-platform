@@ -18,16 +18,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { toast } from "sonner";
 import { Loader2, Clock, Sparkles, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { useLocale, type Locale } from "@/i18n";
+import { en } from "@/i18n/dictionaries/en";
+import { es } from "@/i18n/dictionaries/es";
 
 interface ModelSignupDialogProps {
   children: React.ReactNode;
+  /**
+   * Pin the dialog to one language regardless of the visitor's locale —
+   * used on language-specific landing pages like /modelo.
+   */
+  forceLocale?: Locale;
 }
 
-export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
+export function ModelSignupDialog({ children, forceLocale }: ModelSignupDialogProps) {
+  const { locale: contextLocale } = useLocale();
+  const locale = forceLocale ?? contextLocale;
+  const s = locale === "es" ? es.signup : en.signup;
+
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
@@ -69,27 +82,34 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
     }
   };
 
+  // Map server error codes to the visitor's language; fall back to the
+  // server's English message for codes this build doesn't know about.
+  const serverError = (data: { code?: string; error?: string }) =>
+    (data.code && (s.serverErrors as Record<string, string>)[data.code]) ||
+    data.error ||
+    s.errGeneric;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast.error("Please enter your name");
+      toast.error(s.errName);
       return;
     }
 
     if (!instagram.trim()) {
-      toast.error("Please enter your Instagram username");
+      toast.error(s.errInstagram);
       return;
     }
 
     if (/\s/.test(instagram.trim().replace(/^@/, ""))) {
-      toast.error("Instagram usernames don't contain spaces — did you enter your name instead?");
+      toast.error(s.errInstagramSpaces);
       return;
     }
 
     // Catch emails entered in the Instagram field
     if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(instagram.trim())) {
-      toast.error("That looks like an email address — please enter your Instagram username (e.g. @yourhandle)");
+      toast.error(s.errInstagramEmail);
       return;
     }
 
@@ -103,29 +123,35 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
     // Catch other URLs / domains (require protocol or www. or a slash — avoid false-positives on handles like camille.woods)
     const igClean = instagram.trim().replace(/^@/, "");
     if (/^(https?:\/\/|www\.)/i.test(igClean) || /\.[a-z]{2,}\//i.test(igClean)) {
-      toast.error("Please enter your Instagram username only (e.g. @yourhandle), not a URL");
+      toast.error(s.errInstagramUrl);
       return;
     }
 
     if (!email.trim()) {
-      toast.error("Please enter your email");
+      toast.error(s.errEmail);
       return;
     }
 
     // Basic email validation
     if (!email.includes("@") || !email.includes(".")) {
-      toast.error("Please enter a valid email");
+      toast.error(s.errEmailInvalid);
       return;
     }
 
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters");
+      toast.error(s.errPassword);
+      return;
+    }
+
+    // Phone is optional, but a provided number needs enough digits to be real
+    if (phone && phone.replace(/\D/g, "").length < 8) {
+      toast.error(s.errPhone);
       return;
     }
 
     // Date of birth validation (must be 18+)
     if (!dateOfBirth) {
-      toast.error("Please enter your date of birth");
+      toast.error(s.errDob);
       return;
     }
 
@@ -138,13 +164,13 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
     }
 
     if (age < 18) {
-      toast.error("You must be at least 18 years old to apply");
+      toast.error(s.errUnderage);
       return;
     }
 
     // Height validation
     if (!height) {
-      toast.error("Please select your height");
+      toast.error(s.errHeight);
       return;
     }
 
@@ -160,22 +186,23 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
             signup_type: "model",
             display_name: name.trim(),
             instagram_username: instagram.trim().replace("@", ""),
+            preferred_language: locale,
           },
         },
       });
 
       if (authError) {
         if (authError.message.includes("already registered") || authError.message.includes("already been registered")) {
-          throw new Error("This email is already registered. Please sign in instead.");
+          throw new Error(s.serverErrors.email_registered);
         }
         if (authError.message.includes("rate limit")) {
-          throw new Error("Too many attempts. Please wait a moment and try again.");
+          throw new Error(s.serverErrors.rate_limited);
         }
         throw authError;
       }
 
       if (!authData.user) {
-        throw new Error("Failed to create account");
+        throw new Error(s.errGeneric);
       }
 
       // Step 2: Create application + auto-confirm via API
@@ -187,16 +214,17 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
           email: email.toLowerCase().trim(),
           userId: authData.user.id,
           instagram_username: instagram.trim().replace("@", ""),
-          phone: phone.trim() || null,
+          phone: phone || null,
           date_of_birth: dateOfBirth,
           height: height,
+          preferred_language: locale,
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to submit application");
+        throw new Error(serverError(data));
       }
 
       // Step 3: Sign in directly (email is auto-confirmed by the API)
@@ -207,7 +235,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
 
       if (signInError) {
         // If sign-in fails, redirect to sign-in page
-        toast.success("Application submitted! Please sign in.");
+        toast.success(s.successSignin);
         window.location.href = "/signin";
         return;
       }
@@ -215,10 +243,10 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
       // Step 4: Everyone goes through review — imported models get their
       // existing profile linked at approval time (admin approval route
       // matches by email/Instagram), so no separate fast path here.
-      toast.success("Application submitted!");
+      toast.success(s.success);
       window.location.href = "/pending-approval";
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Something went wrong";
+      const message = error instanceof Error ? error.message : s.errGeneric;
       toast.error(message);
     } finally {
       setLoading(false);
@@ -256,15 +284,15 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
               className="h-8 w-auto"
             />
           </div>
-          <DialogTitle className="text-xl">Model Sign Up</DialogTitle>
+          <DialogTitle className="text-xl">{s.title}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">{s.name}</Label>
             <Input
               id="name"
-              placeholder="Your full name"
+              placeholder={s.namePlaceholder}
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={loading}
@@ -273,10 +301,10 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="instagram">Instagram</Label>
+            <Label htmlFor="instagram">{s.instagram}</Label>
             <Input
               id="instagram"
-              placeholder="@yourhandle"
+              placeholder={s.instagramPlaceholder}
               value={instagram}
               onChange={(e) => setInstagram(e.target.value)}
               disabled={loading}
@@ -288,12 +316,12 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{s.email}</Label>
             <div className="relative">
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={s.emailPlaceholder}
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -315,23 +343,22 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
               <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-sm">
                 <p className="font-medium text-green-500 flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
-                  Welcome back!
+                  {s.welcomeBack}
                 </p>
                 <p className="text-muted-foreground text-xs mt-1">
-                  We already have your profile on file. Complete signup and
-                  we&apos;ll link it to your account when you&apos;re approved.
+                  {s.importedNote}
                 </p>
               </div>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="modelPassword">Password</Label>
+            <Label htmlFor="modelPassword">{s.password}</Label>
             <div className="relative">
               <Input
                 id="modelPassword"
                 type={showPassword ? "text" : "password"}
-                placeholder="Create a password"
+                placeholder={s.passwordPlaceholder}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
@@ -343,32 +370,30 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-2 -m-2 text-muted-foreground hover:text-foreground"
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? s.hidePassword : s.showPassword}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Must be at least 8 characters
+              {s.passwordHint}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
+            <Label htmlFor="phone">{s.phone}</Label>
+            <PhoneInput
               id="phone"
-              type="tel"
-              placeholder="+1 (555) 123-4567"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={setPhone}
+              locale={locale}
               disabled={loading}
-              autoComplete="tel"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="dob">Date of Birth</Label>
+              <Label htmlFor="dob">{s.dob}</Label>
               <Input
                 id="dob"
                 type="date"
@@ -382,10 +407,10 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="height">Height</Label>
+              <Label htmlFor="height">{s.height}</Label>
               <Select value={height} onValueChange={setHeight} disabled={loading}>
                 <SelectTrigger id="height">
-                  <SelectValue placeholder="Select height" />
+                  <SelectValue placeholder={s.heightPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                   {heightOptions.map((h) => (
@@ -402,10 +427,10 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
           <div className="p-4 rounded-lg bg-muted/50 text-sm space-y-1">
             <p className="text-muted-foreground flex items-center gap-2">
               <Clock className="h-4 w-4 text-amber-500" />
-              We&apos;ll review your submission within 24 hours
+              {s.reviewNote}
             </p>
             <p className="text-muted-foreground ml-6">
-              Once approved, you&apos;ll get full model access
+              {s.approvedNote}
             </p>
           </div>
 
@@ -417,10 +442,10 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
+                {s.submitting}
               </>
             ) : (
-              "Submit"
+              s.submit
             )}
           </Button>
         </form>

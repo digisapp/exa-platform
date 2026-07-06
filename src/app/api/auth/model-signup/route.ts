@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       }
       if (age < 18) {
         return NextResponse.json(
-          { error: "You must be at least 18 years old to apply" },
+          { error: "You must be at least 18 years old to apply", code: "underage" },
           { status: 400 }
         );
       }
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
 
       if (existingModelByInsta && existingModelByInsta.email?.toLowerCase() !== normalizedEmail) {
         return NextResponse.json(
-          { error: "This Instagram handle is already registered with a different email. Please use the email associated with your Instagram, or contact support." },
+          { error: "This Instagram handle is already registered with a different email. Please use the email associated with your Instagram, or contact support.", code: "instagram_taken" },
           { status: 400 }
         );
       }
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
 
       if (existingAppByInsta && existingAppByInsta.email?.toLowerCase() !== normalizedEmail) {
         return NextResponse.json(
-          { error: "This Instagram handle already has a pending application with a different email." },
+          { error: "This Instagram handle already has a pending application with a different email.", code: "instagram_pending" },
           { status: 400 }
         );
       }
@@ -240,7 +240,7 @@ export async function POST(request: NextRequest) {
 
       if (existingModel?.is_approved) {
         return NextResponse.json(
-          { error: "This email is already registered as a model. Please sign in." },
+          { error: "This email is already registered as a model. Please sign in.", code: "model_exists" },
           { status: 400 }
         );
       }
@@ -278,13 +278,13 @@ export async function POST(request: NextRequest) {
           authError.message.includes("already been registered") ||
           authError.message.includes("Database error")) {
         return NextResponse.json(
-          { error: "This email may already be registered. Try signing in instead." },
+          { error: "This email may already be registered. Try signing in instead.", code: "email_registered" },
           { status: 400 }
         );
       }
       if (authError.message.includes("rate limit")) {
         return NextResponse.json(
-          { error: "Too many attempts. Please wait a moment and try again." },
+          { error: "Too many attempts. Please wait a moment and try again.", code: "rate_limited" },
           { status: 429 }
         );
       }
@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
     // Check for duplicate signup (empty identities means existing user)
     if (authData.user.identities && authData.user.identities.length === 0) {
       return NextResponse.json(
-        { error: "This email is already registered. Please sign in instead." },
+        { error: "This email is already registered. Please sign in instead.", code: "email_registered" },
         { status: 400 }
       );
     }
@@ -327,7 +327,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Model signup error:", error);
     return NextResponse.json(
-      { error: "Failed to submit application. Please try again." },
+      { error: "Failed to submit application. Please try again.", code: "signup_failed" },
       { status: 500 }
     );
   }
