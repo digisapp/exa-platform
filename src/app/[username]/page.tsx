@@ -454,7 +454,11 @@ export default async function ModelProfilePage({ params }: Props) {
         addressRegion: model.state,
       },
     }),
-    sameAs: socialLinks.map(link => link.url),
+    // Gated like the visible social icons — a model who hides her socials
+    // must not have them leak through page-source structured data.
+    ...(model.show_social_media && socialLinks.length > 0 && {
+      sameAs: socialLinks.map(link => link.url),
+    }),
   };
 
   // Generate QR code for desktop scan-to-open
@@ -713,7 +717,7 @@ export default async function ModelProfilePage({ params }: Props) {
 
                   {/* Compact socials — icon-only glass chips with per-platform glow on hover */}
                   {model.show_social_media && (socialLinks.length > 0 || model.email) && (
-                    <div className="flex items-center gap-1.5 mt-3 mb-3 flex-wrap">
+                    <div className="flex items-start gap-1.5 mt-3 mb-3 flex-wrap">
                       {socialLinks.map((link) => {
                         const PLATFORM_GLOW: Record<string, string> = {
                           instagram: "hover:bg-pink-500/30 hover:border-pink-400/60 hover:shadow-[0_0_14px_rgba(236,72,153,0.55)] hover:[&_svg]:text-pink-200",
@@ -730,14 +734,23 @@ export default async function ModelProfilePage({ params }: Props) {
                             target="_blank"
                             rel="noopener noreferrer"
                             title={`@${link.username}${link.followers ? ` · ${formatFollowers(link.followers)}` : ""}`}
-                            className={`w-8 h-8 rounded-full bg-white/12 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${PLATFORM_GLOW[link.platform]}`}
+                            className="flex flex-col items-center gap-0.5"
                           >
-                            {link.platform === "instagram" && <Instagram className="h-3.5 w-3.5 text-white" />}
-                            {link.platform === "tiktok" && <TikTokIcon className="h-3.5 w-3.5 text-white" />}
-                            {link.platform === "snapchat" && <SnapchatIcon className="h-3.5 w-3.5 text-white" />}
-                            {link.platform === "x" && <XIcon className="h-3.5 w-3.5 text-white" />}
-                            {link.platform === "youtube" && <Youtube className="h-3.5 w-3.5 text-white" />}
-                            {link.platform === "twitch" && <Twitch className="h-3.5 w-3.5 text-white" />}
+                            <span className={`w-8 h-8 rounded-full bg-white/12 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${PLATFORM_GLOW[link.platform]}`}>
+                              {link.platform === "instagram" && <Instagram className="h-3.5 w-3.5 text-white" />}
+                              {link.platform === "tiktok" && <TikTokIcon className="h-3.5 w-3.5 text-white" />}
+                              {link.platform === "snapchat" && <SnapchatIcon className="h-3.5 w-3.5 text-white" />}
+                              {link.platform === "x" && <XIcon className="h-3.5 w-3.5 text-white" />}
+                              {link.platform === "youtube" && <Youtube className="h-3.5 w-3.5 text-white" />}
+                              {link.platform === "twitch" && <Twitch className="h-3.5 w-3.5 text-white" />}
+                            </span>
+                            {/* Follower count — social proof was tooltip-only here,
+                                invisible on mobile; circle layout always showed it */}
+                            {link.followers ? (
+                              <span className="text-[9px] font-medium leading-none text-white/60 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                                {formatFollowers(link.followers)}
+                              </span>
+                            ) : null}
                           </a>
                         );
                       })}
@@ -764,6 +777,7 @@ export default async function ModelProfilePage({ params }: Props) {
                     isLoggedIn={!!user}
                     isOwner={isOwner}
                     modelUsername={model.username}
+                    modelId={model.id}
                     modelActorId={modelActorId}
                     modelName={displayName}
                     coinBalance={coinBalance}
@@ -944,6 +958,7 @@ export default async function ModelProfilePage({ params }: Props) {
               isLoggedIn={!!user}
               isOwner={isOwner}
               modelUsername={model.username}
+              modelId={model.id}
               modelActorId={modelActorId}
               modelName={displayName}
               coinBalance={coinBalance}
