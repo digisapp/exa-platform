@@ -267,7 +267,7 @@ export const MessageBubble = memo(function MessageBubble({
       <div className={cn("relative", isOwn ? "items-end" : "items-start")}>
         {/* Action menu (delete + reply) */}
         <div className={cn(
-          "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5",
+          "absolute top-0 opacity-0 group-hover:opacity-100 pointer-coarse:opacity-60 transition-opacity flex items-center gap-0.5",
           isOwn ? "-left-20" : "-right-20",
           isDeleting && "opacity-50 pointer-events-none"
         )}>
@@ -361,7 +361,7 @@ export const MessageBubble = memo(function MessageBubble({
                 autoFocus
                 rows={Math.min(6, Math.max(1, editDraft.split("\n").length))}
                 className={cn(
-                  "w-full text-[15px] leading-relaxed resize-none rounded-lg p-2 outline-none transition-all",
+                  "w-full text-base md:text-[15px] leading-relaxed resize-none rounded-lg p-2 outline-none transition-all",
                   isOwn
                     ? "bg-white/10 text-white placeholder:text-white/40 focus:bg-white/15"
                     : "bg-black/30 text-white placeholder:text-white/40 focus:bg-black/40"
@@ -473,6 +473,7 @@ export const MessageBubble = memo(function MessageBubble({
                 <video
                   src={message.media_url}
                   controls
+                  playsInline
                   className="max-w-full max-h-64 rounded-lg"
                   preload="metadata"
                 />

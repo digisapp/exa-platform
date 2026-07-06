@@ -12,8 +12,17 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+const HEIC_TYPES = ["image/heic", "image/heif"];
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 const MAX_BIO_LENGTH = 1000;
+
+// ISO-BMFF container: bytes 4-8 are "ftyp", 8-12 the major brand.
+// Catches HEIC files that arrive with a generic/wrong content-type.
+function sniffsAsHeic(buffer: Buffer): boolean {
+  if (buffer.length < 12) return false;
+  const box = buffer.subarray(4, 12).toString("ascii");
+  return ["ftypheic", "ftypheix", "ftyphevc", "ftypmif1"].includes(box);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -90,20 +99,35 @@ export async function POST(request: NextRequest) {
       let contentType = file.type;
       let width: number | null = null;
       let height: number | null = null;
+      let processed = false;
       if (isProcessableImage(file.type)) {
         try {
-          const processed = await processImage(inputBuffer, {
+          const result = await processImage(inputBuffer, {
             maxWidth: 1200,
             maxHeight: 1200,
             quality: 90,
           });
-          uploadBuffer = processed.buffer;
-          contentType = processed.contentType;
-          width = processed.width;
-          height = processed.height;
+          uploadBuffer = result.buffer;
+          contentType = result.contentType;
+          width = result.width;
+          height = result.height;
+          processed = true;
         } catch (processError) {
-          logger.error("Application photo processing error, uploading original", processError);
+          logger.error("Application photo processing error", processError);
         }
+      }
+
+      // If sharp couldn't process a HEIC/HEIF photo, don't fall back to raw
+      // bytes: they'd be stored with a .jpg extension (renders broken) and
+      // keep their EXIF/GPS data. Raw fallback stays for jpeg/png/webp only.
+      if (!processed && (HEIC_TYPES.includes(file.type) || sniffsAsHeic(inputBuffer))) {
+        return NextResponse.json(
+          {
+            error:
+              "This photo format isn't supported — please upload a JPEG or PNG (tip: iPhone screenshots and re-saved photos work)",
+          },
+          { status: 415 }
+        );
       }
 
       const extMap: Record<string, string> = {

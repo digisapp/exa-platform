@@ -34,6 +34,30 @@ const t = {
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
 const MAX_BIO_LENGTH = 1000;
+const MAX_UPLOAD_EDGE = 2048;
+
+// Downscale to <=2048px on the long edge and re-encode as JPEG before upload:
+// shrinks 10MB+ cellular uploads and strips EXIF/GPS metadata client-side.
+// On any failure, returns the original file (server still guards formats).
+async function downscaleForUpload(file: File): Promise<Blob> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_UPLOAD_EDGE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.85)
+    );
+    return blob ?? file;
+  } catch {
+    return file;
+  }
+}
 
 export function PendingProfileBuilder({
   lang,
@@ -74,7 +98,14 @@ export function PendingProfileBuilder({
     try {
       const formData = new FormData();
       formData.append("bio", bio.trim());
-      if (photoFile) formData.append("photo", photoFile);
+      if (photoFile) {
+        const upload = await downscaleForUpload(photoFile);
+        formData.append(
+          "photo",
+          upload,
+          upload === photoFile ? photoFile.name : "photo.jpg"
+        );
+      }
 
       const res = await fetch("/api/auth/application-profile", {
         method: "POST",
@@ -130,7 +161,9 @@ export function PendingProfileBuilder({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+            // Deliberately NOT listing image/heic|heif: iOS Safari auto-transcodes
+            // HEIC to JPEG only when the accept attribute excludes HEIC.
+            accept="image/jpeg,image/png,image/webp"
             className="hidden"
             onChange={handleFileSelect}
           />

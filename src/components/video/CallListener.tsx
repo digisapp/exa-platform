@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { IncomingCallDialog } from "./IncomingCallDialog";
+import { unlockRingtoneAudio } from "./ringtone";
 import { toast } from "sonner";
 
 interface CallListenerProps {
@@ -17,6 +18,21 @@ export function CallListener({ actorId }: CallListenerProps) {
     callType?: "video" | "voice";
   } | null>(null);
   const supabase = createClient();
+
+  // Unlock the shared ringtone AudioContext on the first user gesture so iOS
+  // Safari doesn't start it suspended (incoming-call dialogs mount from a
+  // realtime event, which is not a gesture — the oscillators would be silent).
+  useEffect(() => {
+    const events = ["touchstart", "pointerdown", "click"] as const;
+    const unlock = () => {
+      unlockRingtoneAudio();
+      events.forEach((e) => window.removeEventListener(e, unlock, true));
+    };
+    events.forEach((e) => window.addEventListener(e, unlock, { capture: true, once: true }));
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, unlock, true));
+    };
+  }, []);
 
   // Ask for notification permission once so incoming calls can reach a
   // backgrounded tab. Best-effort: some browsers require a user gesture and

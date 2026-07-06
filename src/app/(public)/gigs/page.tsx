@@ -376,10 +376,35 @@ function GigCard({ gig }: { gig: any }) {
                   : gig.location_city || gig.location_state}
               </p>
             )}
+            {(gig.start_at || gig.compensation_type) && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-sm text-white/80">
+                {gig.start_at && (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5 text-violet-400" />
+                    {new Date(gig.start_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                )}
+                {gig.compensation_type && (
+                  <span className="flex items-center gap-1">
+                    <DollarSign className="h-3.5 w-3.5 text-green-400" />
+                    {gig.compensation_type === "paid" && gig.compensation_amount > 0 ? (
+                      <span className="font-medium text-green-400">
+                        ${(gig.compensation_amount / 100).toFixed(0)}
+                      </span>
+                    ) : (
+                      <span className="capitalize">{gig.compensation_type}</span>
+                    )}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Hover Overlay with Full Details */}
-          <div className="absolute inset-0 bg-black/85 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
+          {/* Hover Overlay with Full Details (decorative — card itself is the link) */}
+          <div className="absolute inset-0 bg-black/85 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4 pointer-events-none">
             <div className="space-y-3">
               <h3 className="font-bold text-white text-xl">{gig.title}</h3>
 
@@ -510,7 +535,7 @@ function ApplicationCard({ application }: { application: any }) {
   const StatusIcon = status.icon;
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
+    <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group flex flex-col">
       {/* Portrait Image with Overlay */}
       <div className="aspect-[3/4] relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
         {gig.cover_image_url ? (
@@ -518,6 +543,7 @@ function ApplicationCard({ application }: { application: any }) {
             src={gig.cover_image_url}
             alt={gig.title}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover group-hover:scale-110 transition-transform duration-300"
           />
         ) : (
@@ -556,60 +582,57 @@ function ApplicationCard({ application }: { application: any }) {
           </div>
         </div>
 
-        {/* Hover Overlay with Full Details */}
-        <div className="absolute inset-0 bg-black/85 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
-          <div className="space-y-3">
-            <h3 className="font-bold text-white text-xl">{gig.title}</h3>
+      </div>
 
-            <div className="space-y-2 text-sm">
-              {(gig.location_city || gig.location_state) && (
-                <div className="flex items-center gap-2 text-white/90">
-                  <MapPin className="h-4 w-4 text-pink-400" />
-                  {gig.location_city && gig.location_state
-                    ? `${gig.location_city}, ${gig.location_state}`
-                    : gig.location_city || gig.location_state}
-                </div>
-              )}
-
-              {gig.start_at && (
-                <div className="flex items-center gap-2 text-white/90">
-                  <Calendar className="h-4 w-4 text-violet-400" />
-                  {new Date(gig.start_at).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </div>
-              )}
-
-              {gig.compensation_amount && (
-                <div className="flex items-center gap-2 text-white/90">
-                  <DollarSign className="h-4 w-4 text-green-400" />
-                  <span className="font-medium text-green-400">
-                    ${(gig.compensation_amount / 100).toFixed(0)}
-                  </span>
-                </div>
-              )}
-
-              <div className="flex items-center gap-2 text-white/90">
-                <Clock className="h-4 w-4 text-cyan-400" />
-                Applied {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
-              </div>
+      {/* Details & Actions — always visible */}
+      <div className="p-4 flex flex-col flex-1 gap-3">
+        <div className="space-y-1.5 text-sm">
+          {(gig.location_city || gig.location_state) && (
+            <div className="flex items-center gap-2 text-white/80">
+              <MapPin className="h-4 w-4 text-pink-400 flex-shrink-0" />
+              {gig.location_city && gig.location_state
+                ? `${gig.location_city}, ${gig.location_state}`
+                : gig.location_city || gig.location_state}
             </div>
+          )}
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 pt-2">
-              {application.status === "pending" && (
-                <WithdrawApplicationButton
-                  applicationId={application.id}
-                  gigTitle={gig.title}
-                />
-              )}
-              <Button variant="outline" size="sm" asChild className="border-white/30 text-white hover:bg-white/10">
-                <Link href={`/gigs/${gig.slug}`}>View Details</Link>
-              </Button>
+          {gig.start_at && (
+            <div className="flex items-center gap-2 text-white/80">
+              <Calendar className="h-4 w-4 text-violet-400 flex-shrink-0" />
+              {new Date(gig.start_at).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
             </div>
+          )}
+
+          {gig.compensation_amount && (
+            <div className="flex items-center gap-2 text-white/80">
+              <DollarSign className="h-4 w-4 text-green-400 flex-shrink-0" />
+              <span className="font-medium text-green-400">
+                ${(gig.compensation_amount / 100).toFixed(0)}
+              </span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 text-white/80">
+            <Clock className="h-4 w-4 text-cyan-400 flex-shrink-0" />
+            Applied {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
           </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 mt-auto pt-1">
+          {application.status === "pending" && (
+            <WithdrawApplicationButton
+              applicationId={application.id}
+              gigTitle={gig.title}
+            />
+          )}
+          <Button variant="outline" size="sm" asChild className="border-white/30 text-white hover:bg-white/10">
+            <Link href={`/gigs/${gig.slug}`}>View Details</Link>
+          </Button>
         </div>
       </div>
     </div>
@@ -670,8 +693,8 @@ function OfferCard({ offer }: { offer: any }) {
   const responseStatus = offerResponseConfig[offer.my_response] || offerResponseConfig.pending;
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
-      <div className="aspect-[3/4] relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
+    <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group flex flex-col">
+      <div className="aspect-[4/3] relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
         {/* Brand Logo or Gradient Background */}
         <div className="absolute inset-0 flex items-center justify-center">
           {brandLogo ? (
@@ -716,77 +739,73 @@ function OfferCard({ offer }: { offer: any }) {
           )}
         </div>
 
-        {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-black/85 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
-          <div className="space-y-3">
-            <p className="text-sm text-pink-400 font-medium">{brandName}</p>
-            <h3 className="font-bold text-white text-xl">{offer.title}</h3>
+      </div>
 
-            {offer.description && (
-              <p className="text-sm text-white/80 line-clamp-3">{offer.description}</p>
-            )}
+      {/* Details & Actions — always visible */}
+      <div className="p-4 flex flex-col flex-1 gap-3">
+        {offer.description && (
+          <p className="text-sm text-white/70 line-clamp-3">{offer.description}</p>
+        )}
 
-            <div className="space-y-2 text-sm">
-              {offer.location_name && (
-                <div className="flex items-center gap-2 text-white/90">
-                  <Building2 className="h-4 w-4 text-pink-400" />
-                  {offer.location_name}
-                </div>
-              )}
+        <div className="space-y-1.5 text-sm">
+          {offer.location_name && (
+            <div className="flex items-center gap-2 text-white/80">
+              <Building2 className="h-4 w-4 text-pink-400 flex-shrink-0" />
+              {offer.location_name}
+            </div>
+          )}
 
-              {(offer.location_city || offer.location_state) && (
-                <div className="flex items-center gap-2 text-white/90">
-                  <MapPin className="h-4 w-4 text-pink-400" />
-                  {offer.location_city && offer.location_state
-                    ? `${offer.location_city}, ${offer.location_state}`
-                    : offer.location_city || offer.location_state}
-                </div>
-              )}
+          {(offer.location_city || offer.location_state) && (
+            <div className="flex items-center gap-2 text-white/80">
+              <MapPin className="h-4 w-4 text-pink-400 flex-shrink-0" />
+              {offer.location_city && offer.location_state
+                ? `${offer.location_city}, ${offer.location_state}`
+                : offer.location_city || offer.location_state}
+            </div>
+          )}
 
-              {offer.event_date && (
-                <div className="flex items-center gap-2 text-white/90">
-                  <Calendar className="h-4 w-4 text-violet-400" />
-                  {new Date(offer.event_date).toLocaleDateString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                  {offer.event_time && ` at ${offer.event_time}`}
-                </div>
-              )}
+          {offer.event_date && (
+            <div className="flex items-center gap-2 text-white/80">
+              <Calendar className="h-4 w-4 text-violet-400 flex-shrink-0" />
+              {new Date(offer.event_date).toLocaleDateString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              })}
+              {offer.event_time && ` at ${offer.event_time}`}
+            </div>
+          )}
 
-              {offer.compensation_type && (
-                <div className="flex items-center gap-2 text-white/90">
-                  <DollarSign className="h-4 w-4 text-green-400" />
-                  {offer.compensation_type === "paid" && offer.compensation_amount > 0 ? (
-                    <span className="font-medium text-green-400">
-                      ${(offer.compensation_amount / 100).toFixed(0)}
-                    </span>
-                  ) : offer.compensation_description ? (
-                    <span>{offer.compensation_description}</span>
-                  ) : (
-                    <span className="capitalize">{offer.compensation_type}</span>
-                  )}
-                </div>
-              )}
-
-              {spotsLeft !== null && (
-                <div className="flex items-center gap-2 text-white/90">
-                  <Users className="h-4 w-4 text-cyan-400" />
-                  {spotsLeft} of {offer.spots} spots available
-                </div>
+          {offer.compensation_type && (
+            <div className="flex items-center gap-2 text-white/80">
+              <DollarSign className="h-4 w-4 text-green-400 flex-shrink-0" />
+              {offer.compensation_type === "paid" && offer.compensation_amount > 0 ? (
+                <span className="font-medium text-green-400">
+                  ${(offer.compensation_amount / 100).toFixed(0)}
+                </span>
+              ) : offer.compensation_description ? (
+                <span>{offer.compensation_description}</span>
+              ) : (
+                <span className="capitalize">{offer.compensation_type}</span>
               )}
             </div>
+          )}
 
-            {/* Action Buttons */}
-            <div className="pt-2">
-              <OfferResponseButtons
-                offerId={offer.id}
-                currentStatus={offer.my_response}
-                offerTitle={offer.title}
-              />
+          {spotsLeft !== null && (
+            <div className="flex items-center gap-2 text-white/80">
+              <Users className="h-4 w-4 text-cyan-400 flex-shrink-0" />
+              {spotsLeft} of {offer.spots} spots available
             </div>
-          </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-auto pt-1">
+          <OfferResponseButtons
+            offerId={offer.id}
+            currentStatus={offer.my_response}
+            offerTitle={offer.title}
+          />
         </div>
       </div>
     </div>

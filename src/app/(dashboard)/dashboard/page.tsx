@@ -770,7 +770,7 @@ export default async function DashboardPage() {
                     <p className="text-xs text-white/50 truncate">{item.sub}</p>
                   </div>
                   {item.amount && (
-                    <span className="hidden sm:inline text-sm font-bold text-emerald-400 shrink-0">
+                    <span className="text-sm font-bold text-emerald-400 shrink-0">
                       {item.amount}
                     </span>
                   )}

@@ -133,6 +133,7 @@ export function UpcomingEventsCarousel({ events, scrollPadding = "px-8 md:px-16"
                         src={event.cover_image_url}
                         alt={event.title}
                         fill
+                        sizes="280px"
                         className="object-cover"
                       />
                     ) : (

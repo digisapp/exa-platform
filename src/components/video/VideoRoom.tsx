@@ -138,8 +138,61 @@ export function VideoRoom({
 
     sendHeartbeat();
     const interval = setInterval(sendHeartbeat, 20_000);
-    return () => clearInterval(interval);
+
+    // iOS throttles/suspends background timers. When the page becomes visible
+    // again mid-call, re-assert liveness immediately so a briefly-backgrounded
+    // call doesn't drift toward the sweeper's 90s no-heartbeat window.
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") sendHeartbeat();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [isConnected, sessionId]);
+
+  // Keep the screen awake during calls (voice calls have no camera, so iOS
+  // would auto-lock in ~30-60s, suspend the page, and stop heartbeats — the
+  // sweeper would then end the call). Purely best-effort: wake-lock failures
+  // must never affect the call.
+  useEffect(() => {
+    if (!isConnected) return;
+    if (!("wakeLock" in navigator)) return;
+
+    let sentinel: WakeLockSentinel | null = null;
+    let cancelled = false;
+
+    const requestWakeLock = async () => {
+      try {
+        const lock = await navigator.wakeLock.request("screen");
+        if (cancelled) {
+          lock.release().catch(() => {});
+          return;
+        }
+        sentinel = lock;
+      } catch {
+        // Wake lock denied/unsupported — the call continues regardless.
+      }
+    };
+
+    // Wake locks are auto-released when the page is hidden; re-request when
+    // the user comes back.
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void requestWakeLock();
+    };
+
+    void requestWakeLock();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      sentinel?.release().catch(() => {});
+      sentinel = null;
+    };
+  }, [isConnected]);
 
   const handleTipSuccess = (amount: number, newBalance: number) => {
     setLocalCoinBalance(newBalance);
@@ -165,7 +218,34 @@ export function VideoRoom({
 
   return (
     <ErrorBoundary>
-    <div className="fixed inset-0 z-50 bg-black">
+    <div className="exa-call-room fixed inset-0 z-50 bg-black">
+      {/* Hide LiveKit's built-in control bar: our custom overlay already has
+          mic/camera/hang-up, so on portrait phones the two bars overlap and
+          show duplicate hang-up buttons. Scoped under .exa-call-room.
+          Exception: the bar's start-audio button must stay reachable — LiveKit
+          shows it (via an inline display toggle) only when the browser blocks
+          remote audio playback, which iOS Safari actually does. */}
+      <style>{`
+        .exa-call-room .lk-video-conference { --lk-control-bar-height: 0px; }
+        .exa-call-room .lk-video-conference .lk-control-bar {
+          padding: 0;
+          border: 0;
+          height: 0;
+          min-height: 0;
+          max-height: 0;
+          overflow: visible;
+        }
+        .exa-call-room .lk-video-conference .lk-control-bar > :not(.lk-start-audio-button) {
+          display: none;
+        }
+        .exa-call-room .lk-video-conference .lk-start-audio-button {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 30;
+        }
+      `}</style>
       <LiveKitRoom
         token={token}
         serverUrl={serverUrl}
@@ -173,7 +253,7 @@ export function VideoRoom({
         onConnected={() => setIsConnected(true)}
         onDisconnected={handleDisconnect}
         data-lk-theme="default"
-        style={{ height: "100vh" }}
+        style={{ height: "100%" }}
       >
         <VideoCallContent
           isConnected={isConnected}
@@ -275,13 +355,21 @@ function VideoCallContent({
   const connectionState = useConnectionState();
 
   // Call duration timer — only ticks once the call is answered so the caller
-  // doesn't see a running clock/cost while still ringing.
+  // doesn't see a running clock/cost while still ringing. Duration is derived
+  // from a wall-clock start timestamp (not interval increments) because iOS
+  // throttles background timers, which would make the display undercount.
+  const callStartTsRef = useRef<number | null>(null);
   useEffect(() => {
     if (!isConnected || !billingActive) return;
 
-    const interval = setInterval(() => {
-      setCallDuration((prev) => prev + 1);
-    }, 1000);
+    if (callStartTsRef.current === null) callStartTsRef.current = Date.now();
+    const startTs = callStartTsRef.current;
+
+    const tick = () => {
+      setCallDuration(Math.floor((Date.now() - startTs) / 1000));
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
 
     return () => clearInterval(interval);
   }, [isConnected, billingActive]);
@@ -415,7 +503,7 @@ function VideoCallContent({
 
       {/* Tip Menu Overlay */}
       {showTipMenu && canTip && (
-        <div className="absolute bottom-28 left-0 right-0 z-20 flex justify-center">
+        <div className="absolute bottom-[max(7rem,calc(env(safe-area-inset-bottom)+6rem))] left-0 right-0 z-20 flex justify-center">
           <div className="bg-black/80 backdrop-blur-sm rounded-2xl p-4 mx-4 max-w-sm w-full">
             <div className="flex items-center justify-between mb-3">
               <span className="text-white text-sm font-medium flex items-center gap-2">
@@ -444,7 +532,7 @@ function VideoCallContent({
                     onClick={() => canAfford && !tippingAmount && handleTip(amount)}
                     disabled={!canAfford || !!tippingAmount}
                     className={cn(
-                      "py-2 px-3 rounded-lg text-center transition-all",
+                      "py-2.5 px-3 rounded-lg text-center transition-all",
                       canAfford
                         ? "bg-pink-500/20 hover:bg-pink-500/30 text-pink-400 border border-pink-500/30"
                         : "bg-white/5 text-white/30 cursor-not-allowed"
@@ -464,7 +552,7 @@ function VideoCallContent({
       )}
 
       {/* Custom Controls */}
-      <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center">
+      <div className="absolute bottom-[max(2rem,calc(env(safe-area-inset-bottom)+1rem))] left-0 right-0 z-10 flex justify-center">
         <div className="bg-black/50 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-4">
           <Button
             variant="ghost"

@@ -51,7 +51,7 @@ export default async function ChatsLayout({ children }: LayoutProps) {
   return (
     <div className="mx-auto max-w-7xl">
       {/* Desktop: two-panel layout */}
-      <div className="lg:grid lg:grid-cols-[380px_1fr] lg:h-[calc(100vh-120px)] lg:-my-8">
+      <div className="lg:grid lg:grid-cols-[380px_1fr] lg:h-[calc(100dvh-120px)] lg:-my-8">
         {/* Left panel: conversation list (desktop only) */}
         <div className="hidden lg:flex lg:flex-col lg:border-r lg:overflow-hidden">
           <div className="flex items-center justify-between p-4 border-b">

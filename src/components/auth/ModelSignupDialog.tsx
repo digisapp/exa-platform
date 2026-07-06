@@ -245,7 +245,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center">
           <div className="mx-auto mb-2">
             <Image
@@ -281,6 +281,9 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
               onChange={(e) => setInstagram(e.target.value)}
               disabled={loading}
               required
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
             />
           </div>
 
@@ -302,6 +305,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
                 onBlur={(e) => checkImportedModel(e.target.value)}
                 disabled={loading}
                 required
+                autoComplete="email"
               />
               {checkingEmail && (
                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
@@ -332,12 +336,13 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
                 required
+                autoComplete="new-password"
                 className="pr-10"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 -m-2 text-muted-foreground hover:text-foreground"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -357,6 +362,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               disabled={loading}
+              autoComplete="tel"
             />
           </div>
 
@@ -371,7 +377,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
                 disabled={loading}
                 required
                 max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
-                className="text-sm px-2"
+                className="px-2"
               />
             </div>
 

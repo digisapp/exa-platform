@@ -133,12 +133,23 @@
     font-family: var(--font-sans);
     color: var(--foreground);
     min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  /* Dark mode gradient background */
+  /* Dark mode gradient background.
+     Painted on a fixed pseudo-element instead of background-attachment: fixed,
+     which iOS Safari ignores (stretches the gradient to the full document). */
   .dark body {
+    background: #1a0033;
+  }
+
+  .dark body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
     background: linear-gradient(135deg, #1a0033 0%, #2d1b69 50%, #000033 100%);
-    background-attachment: fixed;
+    pointer-events: none;
   }
 
   /* Light mode */
@@ -397,6 +408,20 @@
   }
 }
 
+/* Lighter orbs on phones: smaller blur radius + fewer layers keeps GPU
+   compositing (battery/jank) in check on iPhone */
+@media (max-width: 640px) {
+  .orb {
+    filter: blur(80px);
+    opacity: 0.4;
+  }
+
+  .orb-4,
+  .orb-5 {
+    display: none;
+  }
+}
+
 /* Profile Image with Gradient Border */
 .profile-image-container {
   position: relative;
@@ -577,6 +602,13 @@ input:focus, textarea:focus, select:focus {
   animation: marquee 20s linear infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-gradient {
+    animation: none;
+  }
+}
+
 /* Gradient Animation */
 @keyframes gradient {
   0% {
@@ -704,7 +736,8 @@ input:focus, textarea:focus, select:focus {
     top: auto !important;
     transform: none !important;
     border-radius: 1.5rem 1.5rem 0 0 !important;
-    max-height: 90vh !important;
+    max-height: 90dvh !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
   }
 
   .mobile-bottom-sheet::before {

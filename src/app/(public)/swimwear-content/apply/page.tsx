@@ -260,6 +260,7 @@ export default function SwimwearApplyPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   disabled={loading}
+                  autoComplete="tel"
                 />
               </div>
             </div>
@@ -277,6 +278,7 @@ export default function SwimwearApplyPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
                 required
+                autoComplete="email"
               />
             </div>
 
@@ -306,6 +308,9 @@ export default function SwimwearApplyPage() {
                   value={instagram}
                   onChange={(e) => setInstagram(e.target.value)}
                   disabled={loading}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                 />
               </div>
             </div>

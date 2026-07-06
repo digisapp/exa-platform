@@ -31,7 +31,7 @@ export function SpanishBanner() {
   if (!show) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-pink-500 to-violet-500 text-white py-3 px-4 text-center text-sm font-medium shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-pink-500 to-violet-500 text-white py-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] text-center text-sm font-medium shadow-lg">
       <div className="flex items-center justify-center gap-3">
         <Globe className="h-4 w-4 flex-shrink-0" />
         <span>

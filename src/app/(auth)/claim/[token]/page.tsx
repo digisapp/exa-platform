@@ -283,6 +283,9 @@ export default function ClaimPage() {
                     className="pl-8 pr-10"
                     placeholder="yourname"
                     disabled={submitting}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
                     {checkingUsername && (
@@ -316,11 +319,13 @@ export default function ClaimPage() {
                     className="pr-10"
                     placeholder="At least 8 characters"
                     disabled={submitting}
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 -m-2 text-muted-foreground hover:text-foreground"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -337,6 +342,7 @@ export default function ClaimPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm your password"
                   disabled={submitting}
+                  autoComplete="new-password"
                 />
                 {confirmPassword && password !== confirmPassword && (
                   <p className="text-xs text-red-500">Passwords don&apos;t match</p>

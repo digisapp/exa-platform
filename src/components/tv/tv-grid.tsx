@@ -279,7 +279,7 @@ export function TVGrid({ videos }: { videos: Video[] }) {
               onChange={(e) => onQueryChange(e.target.value)}
               placeholder="Search videos…"
               aria-label="Search EXA TV videos"
-              className="w-full pl-9 pr-9 py-2 text-sm rounded-full bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:border-pink-500/50 focus:bg-white/10 transition-colors"
+              className="w-full pl-9 pr-9 py-2 text-base md:text-sm rounded-full bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:border-pink-500/50 focus:bg-white/10 transition-colors"
             />
             {query && (
               <button
@@ -370,6 +370,8 @@ export function TVGrid({ videos }: { videos: Video[] }) {
             <X className="h-5 w-5 text-white" />
           </button>
 
+          {/* Desktop arrows — hidden on phones where they overlap the video's
+              tap zones; mobile gets a nav row below the player instead. */}
           {hasPrev && (
             <button
               onClick={(e) => {
@@ -377,7 +379,7 @@ export function TVGrid({ videos }: { videos: Video[] }) {
                 goPrev();
               }}
               aria-label="Previous video"
-              className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              className="hidden sm:flex absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 hover:bg-white/20 items-center justify-center transition-colors"
             >
               <ChevronLeft className="h-6 w-6 text-white" />
             </button>
@@ -389,24 +391,49 @@ export function TVGrid({ videos }: { videos: Video[] }) {
                 goNext();
               }}
               aria-label="Next video"
-              className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              className="hidden sm:flex absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 hover:bg-white/20 items-center justify-center transition-colors"
             >
               <ChevronRight className="h-6 w-6 text-white" />
             </button>
           )}
 
           <div
-            className="w-full max-w-5xl mx-4 aspect-video"
+            className="w-full max-w-5xl mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <iframe
-              key={selectedVideo.youtubeId}
-              src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
-              title={selectedVideo.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full rounded-xl"
-            />
+            <div className="aspect-video">
+              <iframe
+                key={selectedVideo.youtubeId}
+                src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+                title={selectedVideo.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full rounded-xl"
+              />
+            </div>
+
+            {/* Mobile prev/next row — below the player so arrows never sit on
+                top of the video */}
+            {(hasPrev || hasNext) && (
+              <div className="mt-4 flex items-center justify-center gap-6 sm:hidden">
+                <button
+                  onClick={goPrev}
+                  disabled={!hasPrev}
+                  aria-label="Previous video"
+                  className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 flex items-center justify-center transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6 text-white" />
+                </button>
+                <button
+                  onClick={goNext}
+                  disabled={!hasNext}
+                  aria-label="Next video"
+                  className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 flex items-center justify-center transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6 text-white" />
+                </button>
+              </div>
+            )}
           </div>
           <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-1 px-4 pointer-events-none">
             <p className="text-center text-white/80 text-sm font-medium line-clamp-1 max-w-2xl">

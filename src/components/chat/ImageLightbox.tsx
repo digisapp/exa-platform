@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { X, ZoomIn, ZoomOut, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,9 @@ export function ImageLightbox({ src, alt = "Image", isOpen, onClose }: ImageLigh
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  // Active pointers (mouse/touch/pen) for pointer-event based pan + pinch
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchStartRef = useRef<{ distance: number; zoom: number } | null>(null);
 
   // Reset zoom and position when opening
   useEffect(() => {
@@ -88,15 +91,36 @@ export function ImageLightbox({ src, alt = "Image", isOpen, onClose }: ImageLigh
     }
   }, [src]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (zoom > 1) {
+  // Pointer events cover mouse AND touch, so a zoomed image can be panned on
+  // iPhone. Two simultaneous pointers drive a basic pinch-zoom.
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const points = Array.from(pointersRef.current.values());
+    if (points.length === 2) {
+      // Second finger down: switch from panning to pinching
+      setIsDragging(false);
+      pinchStartRef.current = {
+        distance: Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y),
+        zoom,
+      };
+    } else if (points.length === 1 && zoom > 1) {
       setIsDragging(true);
       setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
     }
   }, [zoom, position]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isDragging && zoom > 1) {
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!pointersRef.current.has(e.pointerId)) return;
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const points = Array.from(pointersRef.current.values());
+    if (points.length >= 2 && pinchStartRef.current) {
+      const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+      const { distance: startDistance, zoom: startZoom } = pinchStartRef.current;
+      if (startDistance > 0) {
+        setZoom(Math.max(0.5, Math.min(5, startZoom * (distance / startDistance))));
+      }
+    } else if (isDragging && zoom > 1) {
       setPosition({
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y,
@@ -104,8 +128,14 @@ export function ImageLightbox({ src, alt = "Image", isOpen, onClose }: ImageLigh
     }
   }, [isDragging, dragStart, zoom]);
 
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) {
+      pinchStartRef.current = null;
+    }
+    if (pointersRef.current.size === 0) {
+      setIsDragging(false);
+    }
   }, []);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -126,12 +156,9 @@ export function ImageLightbox({ src, alt = "Image", isOpen, onClose }: ImageLigh
     <div
       className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
       onClick={handleBackdropClick}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
     >
       {/* Controls */}
-      <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+      <div className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 flex items-center gap-2 z-10">
         <Button
           variant="ghost"
           size="icon"
@@ -174,11 +201,15 @@ export function ImageLightbox({ src, alt = "Image", isOpen, onClose }: ImageLigh
       {/* Image */}
       <div
         className={cn(
-          "max-w-[90vw] max-h-[90vh] overflow-hidden",
+          "max-w-[90vw] max-h-[90vh] overflow-hidden touch-none",
           zoom > 1 ? "cursor-grab" : "cursor-zoom-in",
           isDragging && "cursor-grabbing"
         )}
         onWheel={handleWheel}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
       >
         <Image
           src={src}
@@ -190,7 +221,6 @@ export function ImageLightbox({ src, alt = "Image", isOpen, onClose }: ImageLigh
             transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
             transition: isDragging ? "none" : "transform 0.2s ease-out",
           }}
-          onMouseDown={handleMouseDown}
           onClick={(e) => {
             if (!isDragging && zoom === 1) {
               handleZoomIn();
@@ -203,7 +233,7 @@ export function ImageLightbox({ src, alt = "Image", isOpen, onClose }: ImageLigh
 
       {/* Hint */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
-        Scroll to zoom • Drag to pan • ESC to close
+        Pinch or scroll to zoom • Drag to pan • ESC to close
       </div>
     </div>
   );

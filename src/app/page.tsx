@@ -20,6 +20,7 @@ import {
   Home,
 } from "lucide-react";
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
+import { MobileNavSheet } from "@/components/home/MobileNavSheet";
 import { DigisMarqueeBanner } from "@/components/shows/digis-links";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
 import { LiveWall } from "@/components/live-wall/LiveWall";
@@ -224,6 +225,10 @@ export default async function HomePage() {
                   Sign In
                 </Link>
               )}
+              <MobileNavSheet
+                isAuthed={!!user}
+                dashboardHref={currentActor?.type === "admin" ? "/admin" : "/dashboard"}
+              />
             </div>
           </div>
         </nav>
@@ -232,7 +237,7 @@ export default async function HomePage() {
         <section id="signup" className="container px-8 md:px-16 py-6 md:py-10 scroll-mt-20">
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
             {/* Models Side — full width on mobile */}
-            <div className="col-span-2 lg:col-span-1 relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
+            <div className="col-span-2 lg:col-span-1 relative overflow-hidden p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -left-20 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
@@ -253,7 +258,7 @@ export default async function HomePage() {
             </div>
 
             {/* Fans Side */}
-            <div className="relative p-4 md:p-8 rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 transition-all group">
+            <div className="relative overflow-hidden p-4 md:p-8 rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -left-10 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
@@ -274,7 +279,7 @@ export default async function HomePage() {
             </div>
 
             {/* Brands Side */}
-            <div className="relative p-4 md:p-8 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all group">
+            <div className="relative overflow-hidden p-4 md:p-8 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
@@ -631,13 +636,13 @@ export default async function HomePage() {
                 <p className="text-xs text-white/40">
                   &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
                 </p>
-                <Link href="/terms" className="text-xs text-white/40 hover:text-pink-300 transition-colors">
+                <Link href="/terms" className="inline-block py-2 text-xs text-white/40 hover:text-pink-300 transition-colors">
                   Terms
                 </Link>
-                <Link href="/privacy" className="text-xs text-white/40 hover:text-pink-300 transition-colors">
+                <Link href="/privacy" className="inline-block py-2 text-xs text-white/40 hover:text-pink-300 transition-colors">
                   Privacy
                 </Link>
-                <a href="mailto:hello@examodels.com" className="text-xs text-white/40 hover:text-pink-300 transition-colors">
+                <a href="mailto:hello@examodels.com" className="inline-block py-2 text-xs text-white/40 hover:text-pink-300 transition-colors">
                   Contact
                 </a>
               </div>
