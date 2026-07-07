@@ -74,6 +74,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: msg }, { status: 400 });
       }
 
+      // The RPC reports business failures (insufficient coins, not found,
+      // own content) via { success: false } without raising an error
+      if (!rpcData?.success) {
+        const msg = rpcData?.error || "Failed to unlock item";
+        return NextResponse.json(
+          { error: msg },
+          { status: msg.includes("nsufficient") ? 402 : 400 }
+        );
+      }
+
       // Generate a signed URL for the purchased media
       let signedUrl: string | null = null;
       const { data: item } = await service
@@ -108,6 +118,14 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: msg }, { status: 402 });
         }
         return NextResponse.json({ error: msg }, { status: 400 });
+      }
+
+      if (!rpcData?.success) {
+        const msg = rpcData?.error || "Failed to unlock set";
+        return NextResponse.json(
+          { error: msg },
+          { status: msg.includes("nsufficient") ? 402 : 400 }
+        );
       }
 
       return NextResponse.json({ success: true, purchase: rpcData });
