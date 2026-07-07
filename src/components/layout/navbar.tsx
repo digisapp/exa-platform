@@ -31,14 +31,12 @@ import {
   BarChart3,
   FolderHeart,
   FolderDown,
-  Plus,
   Flame,
   Camera,
   FileText,
   Gavel,
   Calendar,
   ArrowUpRight,
-  CircleDollarSign,
   Loader2,
   Gift,
   Briefcase,
@@ -104,9 +102,11 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
   };
 
   // Translated nav links
-  // Models now get Bookings + Bids promoted to the top nav (revenue-critical)
+  // Models: Gigs + Offers are the revenue-critical surfaces — top-level, not buried in the avatar menu
   const translatedModelLinks = [
     { href: "/dashboard", label: t.nav.home, icon: Home },
+    { href: "/gigs", label: t.nav.gigs, icon: Briefcase },
+    { href: "/offers", label: t.nav.offers, icon: Gift },
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
     { href: "/content", label: t.nav.content, icon: Images },
   ];
@@ -115,7 +115,7 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
     { href: "/models", label: t.nav.explore, icon: Users },
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
     { href: "/bids", label: t.nav.bids, icon: Gavel },
-    { href: "/favorites", label: "Favs", icon: Heart },
+    { href: "/favorites", label: t.nav.favorites, icon: Heart },
   ];
   const translatedBrandLinks = [
     { href: "/dashboard", label: t.nav.home, icon: Home },
@@ -145,6 +145,8 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
   // Creators (model/admin) earn coins → show as withdrawable USD.
   // Fans/brands spend coins → show coin balance.
   const isCreator = actorType === "model" || actorType === "admin";
+  // Brands are cyan-coded everywhere else — keep the active accent consistent
+  const activeIconClass = actorType === "brand" ? "text-cyan-400" : "text-pink-400";
   const usdValue = coinsToUsd(coinBalance);
 
   return (
@@ -170,6 +172,7 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
               <Link
                 key={link.href}
                 href={link.href}
+                title={link.label}
                 className={cn(
                   "relative flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-full transition-all",
                   active
@@ -178,7 +181,7 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                 )}
               >
                 <div className="relative">
-                  <link.icon className={cn("h-4 w-4", active && "text-pink-400")} />
+                  <link.icon className={cn("h-4 w-4", active && activeIconClass)} />
                   {link.href === "/chats" && unreadCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-pink-500 text-white rounded-full shadow-[0_0_8px_rgba(236,72,153,0.7)]">
                       {unreadCount > 99 ? "99+" : unreadCount}
@@ -190,7 +193,8 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                     </span>
                   )}
                 </div>
-                <span>{link.label}</span>
+                {/* Icon-only below lg so five links never overflow on tablets */}
+                <span className="hidden lg:inline">{link.label}</span>
                 {/* Active glow underbar */}
                 {active && (
                   <span className="absolute left-3 right-3 -bottom-[1px] h-0.5 bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 rounded-full shadow-[0_0_10px_rgba(255,105,180,0.7)]" />
@@ -300,14 +304,9 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                         {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    {/* Notification badge — fans: bids activity (amber); others: action needed (pink) */}
-                    {notificationCount > 0 && (
-                      <span className={cn(
-                        "absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold text-white rounded-full z-10",
-                        actorType === "fan"
-                          ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]"
-                          : "bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.8)]"
-                      )}>
+                    {/* Action-needed badge. Fans excluded — their Bids nav link already carries this count */}
+                    {notificationCount > 0 && actorType !== "fan" && (
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold text-white rounded-full z-10 bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.8)]">
                         {notificationCount > 9 ? "9+" : notificationCount}
                       </span>
                     )}
@@ -360,42 +359,10 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                     </div>
                   </div>
 
-                  {/* Featured actions — creators */}
+                  {/* Featured actions — creators. Gigs + Offers live in the top nav, not here */}
                   {isCreator && (
                     <>
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
-                        <Link
-                          href="/gigs"
-                          className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-cyan-500/15 to-blue-500/10 border border-cyan-500/25 hover:from-cyan-500/25 hover:to-blue-500/15 hover:border-cyan-500/50 transition-all"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center shrink-0">
-                            <Briefcase className="h-4 w-4 text-cyan-300" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white">{t.nav.gigs}</p>
-                            <p className="text-[11px] text-cyan-300">{t.nav.gigsSubtitle}</p>
-                          </div>
-                          <ArrowUpRight className="h-4 w-4 text-cyan-400 shrink-0" />
-                        </Link>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem asChild className="p-0 focus:bg-transparent mt-1">
-                        <Link
-                          href="/offers"
-                          className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-violet-500/15 to-purple-500/10 border border-violet-500/25 hover:from-violet-500/25 hover:to-purple-500/15 hover:border-violet-500/50 transition-all"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center shrink-0">
-                            <Gift className="h-4 w-4 text-violet-300" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white">{t.nav.offers}</p>
-                            <p className="text-[11px] text-violet-300">{t.nav.offersSubtitle}</p>
-                          </div>
-                          <ArrowUpRight className="h-4 w-4 text-violet-400 shrink-0" />
-                        </Link>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem asChild className="p-0 focus:bg-transparent mt-1">
                         <Link
                           href="/comp-card"
                           className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-pink-500/15 to-violet-500/10 border border-pink-500/25 hover:from-pink-500/25 hover:to-violet-500/15 hover:border-pink-500/50 transition-all"
@@ -457,30 +424,10 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                     </>
                   )}
 
-                  {/* Fan-specific items */}
+                  {/* Fan-specific items — Bids + Favorites live in the top nav, not here */}
                   {actorType === "fan" && (
                     <>
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
-                        <Link
-                          href="/bids"
-                          className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-violet-500/15 to-cyan-500/10 border border-violet-500/25 hover:from-violet-500/25 hover:to-cyan-500/15 hover:border-violet-500/50 transition-all"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center shrink-0">
-                            <Gavel className="h-4 w-4 text-violet-300" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-white">
-                              {t.nav.bids}
-                            </p>
-                            <p className="text-[11px] text-violet-300">
-                              Live auctions
-                            </p>
-                          </div>
-                          <ArrowUpRight className="h-4 w-4 text-violet-400 shrink-0" />
-                        </Link>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem asChild className="p-0 focus:bg-transparent mt-1">
                         <Link
                           href="/boost"
                           className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-orange-500/15 to-pink-500/10 border border-orange-500/25 hover:from-orange-500/25 hover:to-pink-500/15 hover:border-orange-500/50 transition-all"
@@ -497,22 +444,6 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                             </p>
                           </div>
                           <ArrowUpRight className="h-4 w-4 text-orange-400 shrink-0" />
-                        </Link>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem asChild className="p-0 focus:bg-transparent mt-1">
-                        <Link
-                          href="/favorites"
-                          className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-pink-500/15 to-rose-500/10 border border-pink-500/25 hover:from-pink-500/25 hover:to-rose-500/15 hover:border-pink-500/50 transition-all"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center shrink-0">
-                            <Heart className="h-4 w-4 text-pink-300 fill-pink-300" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-white">Favs</p>
-                            <p className="text-[11px] text-pink-300">Your favorite models</p>
-                          </div>
-                          <ArrowUpRight className="h-4 w-4 text-pink-400 shrink-0" />
                         </Link>
                       </DropdownMenuItem>
 
