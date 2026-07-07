@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendNewGigAnnouncementEmail } from "@/lib/email";
+import { postLiveWallSystemMessage } from "@/lib/live-wall-system";
 import { format } from "date-fns";
 
 // Announce a new gig to all models with profile pictures
@@ -84,6 +85,12 @@ export async function POST(request: NextRequest) {
     const gigLocation = gig.location_city && gig.location_state
       ? `${gig.location_city}, ${gig.location_state}`
       : gig.location_city || gig.location_state || undefined;
+
+    // Heartbeat post on the live wall — also revives the wall if it went
+    // quiet (the dashboard collapses it after 7 silent days).
+    await postLiveWallSystemMessage(
+      `New gig: ${gig.title}${gigLocation ? ` · ${gigLocation}` : ""} — applications open`
+    );
 
     // Send emails to all models
     let emailsSent = 0;

@@ -232,7 +232,7 @@ export function LiveWallMessage({
             {message.content}
           </span>
         ) : (
-          <span className="text-xs text-white/40 italic whitespace-nowrap">
+          <span className="text-xs text-white/40 italic text-center max-w-[85%]">
             {message.content}
           </span>
         )}
