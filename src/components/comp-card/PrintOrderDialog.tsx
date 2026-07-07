@@ -11,9 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Printer, Minus, Plus } from "lucide-react";
+import { Loader2, Printer, Minus, Plus, CalendarOff } from "lucide-react";
 import { toast } from "sonner";
 import { PRINT_PRICE_PER_CARD, PRINT_MIN_QUANTITY } from "@/lib/stripe-config";
+import { PRINT_PICKUP_EVENT, isPrintPickupWindowOpen } from "@/lib/comp-card-event";
 
 interface PrintOrderDialogProps {
   open: boolean;
@@ -23,6 +24,7 @@ interface PrintOrderDialogProps {
   lastName: string;
   phone: string;
   onGeneratePdf: () => Promise<Blob>;
+  returnPath?: "/comp-card" | "/comp-card-creator";
 }
 
 export default function PrintOrderDialog({
@@ -33,12 +35,14 @@ export default function PrintOrderDialog({
   lastName,
   phone: initialPhone,
   onGeneratePdf,
+  returnPath,
 }: PrintOrderDialogProps) {
   const [quantity, setQuantity] = useState(PRINT_MIN_QUANTITY);
   const [email, setEmail] = useState(initialEmail);
   const [phone, setPhone] = useState(initialPhone);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState<"select" | "details">("select");
+  const windowOpen = isPrintPickupWindowOpen();
 
   const totalCents = quantity * PRINT_PRICE_PER_CARD;
   const totalDisplay = `$${(totalCents / 100).toFixed(2)}`;
@@ -96,6 +100,7 @@ export default function PrintOrderDialog({
           firstName,
           lastName: lastName || undefined,
           phone: phone?.trim() || undefined,
+          returnPath,
         }),
       });
 
@@ -124,13 +129,35 @@ export default function PrintOrderDialog({
           </DialogTitle>
           <DialogDescription asChild>
             <div className="space-y-1">
-              <p>Professional comp cards on premium cardstock. Be prepared for Miami Swim Week — order in advance and pick up at EXA Models HQ in Miami any day from <strong>May 24–28</strong>.</p>
+              {windowOpen ? (
+                <p>Professional comp cards on premium cardstock. Be prepared for {PRINT_PICKUP_EVENT.name} — order in advance and pick up at {PRINT_PICKUP_EVENT.pickupLocation} any day from <strong>{PRINT_PICKUP_EVENT.pickupWindowLabel}</strong>.</p>
+              ) : (
+                <p>Professional comp cards on premium cardstock, printed for pick up at EXA events.</p>
+              )}
               <p>Questions? Email <a href="mailto:team@examodels.com" className="underline">team@examodels.com</a></p>
             </div>
           </DialogDescription>
         </DialogHeader>
 
-        {step === "select" && (
+        {!windowOpen && (
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 text-center space-y-3">
+            <div className="mx-auto w-12 h-12 rounded-full bg-violet-500/15 ring-1 ring-violet-500/30 flex items-center justify-center">
+              <CalendarOff className="h-6 w-6 text-violet-300" />
+            </div>
+            <p className="text-sm font-semibold text-white">
+              {PRINT_PICKUP_EVENT.name} ordering has ended
+            </p>
+            <p className="text-xs text-muted-foreground">
+              The {PRINT_PICKUP_EVENT.pickupWindowLabel} pickup window is over. You can still
+              download your comp card as a PDF or JPEG — printed pickup returns at the next event.
+            </p>
+            <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+          </div>
+        )}
+
+        {windowOpen && step === "select" && (
           <div className="space-y-6">
             {/* Quantity selector */}
             <div className="space-y-2">
@@ -185,7 +212,7 @@ export default function PrintOrderDialog({
           </div>
         )}
 
-        {step === "details" && (
+        {windowOpen && step === "details" && (
           <div className="space-y-4">
             <div className="rounded-lg bg-muted/50 p-3 flex items-center justify-between text-sm">
               <span className="text-muted-foreground">{quantity} cards</span>
@@ -215,7 +242,7 @@ export default function PrintOrderDialog({
               />
             </div>
             <p className="text-sm text-muted-foreground">
-              Pickup at: <strong>EXA Models HQ, Miami</strong>
+              Pickup at: <strong>{PRINT_PICKUP_EVENT.pickupLocation}</strong>
             </p>
             <div className="flex gap-2">
               <Button
