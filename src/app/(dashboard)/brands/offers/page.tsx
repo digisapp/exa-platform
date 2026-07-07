@@ -59,6 +59,12 @@ interface Offer {
   responses: Response[];
 }
 
+// event_date is a plain YYYY-MM-DD string; parsing it with new Date() gives
+// UTC midnight, which US browsers render as the previous day and treat as
+// "passed" on the morning of the event. Compare/format as dates, not instants.
+const hasEventPassed = (eventDate: string | null | undefined) =>
+  Boolean(eventDate && eventDate < new Date().toLocaleDateString("en-CA"));
+
 interface Response {
   id: string;
   model_id: string;
@@ -292,6 +298,7 @@ export default function BrandOffersPage() {
                         {new Date(offer.event_date).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
+                          timeZone: "UTC",
                         })}
                         {offer.event_time && ` at ${offer.event_time}`}
                       </p>
@@ -339,7 +346,7 @@ export default function BrandOffersPage() {
                     {currentOffer.event_date && (
                       <span className="flex items-center gap-1 text-muted-foreground">
                         <Calendar className="h-4 w-4" />
-                        {new Date(currentOffer.event_date).toLocaleDateString()}
+                        {new Date(currentOffer.event_date).toLocaleDateString("en-US", { timeZone: "UTC" })}
                         {currentOffer.event_time && ` at ${currentOffer.event_time}`}
                       </span>
                     )}
@@ -404,9 +411,7 @@ export default function BrandOffersPage() {
                         Responses ({currentOffer.responses?.length || 0})
                       </h3>
                       {(() => {
-                        const eventPassed = currentOffer.event_date
-                          ? new Date(currentOffer.event_date) < new Date()
-                          : false;
+                        const eventPassed = hasEventPassed(currentOffer.event_date);
                         const acceptedIds = (currentOffer.responses || [])
                           .filter((r) => r.status === "accepted")
                           .map((r) => r.id);
@@ -430,17 +435,15 @@ export default function BrandOffersPage() {
                         No responses yet
                       </p>
                     ) : (
-                      currentOffer.responses
+                      [...currentOffer.responses]
                         .sort((a, b) => {
                           // Sort: accepted/confirmed first, then pending, then declined
                           const order: Record<string, number> = { confirmed: 0, accepted: 1, pending: 2, declined: 3 };
-                          return (order[a.status] || 4) - (order[b.status] || 4);
+                          return (order[a.status] ?? 4) - (order[b.status] ?? 4);
                         })
                         .map((response) => {
                           // Check if event date has passed (for check-in buttons)
-                          const eventPassed = currentOffer.event_date
-                            ? new Date(currentOffer.event_date) < new Date()
-                            : false;
+                          const eventPassed = hasEventPassed(currentOffer.event_date);
                           const canCheckIn = eventPassed && ["accepted", "confirmed"].includes(response.status);
                           const isCheckedIn = response.checked_in_at && !response.no_show;
                           const isNoShow = response.no_show;
@@ -569,7 +572,7 @@ export default function BrandOffersPage() {
                                   className="h-8 w-8"
                                   asChild
                                 >
-                                  <Link href={`/chats?model=${response.model?.username}`}>
+                                  <Link href={`/chats?new=${response.model?.username}`}>
                                     <MessageCircle className="h-4 w-4" />
                                   </Link>
                                 </Button>

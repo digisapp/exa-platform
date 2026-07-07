@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import { toast } from "sonner";
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -97,14 +98,15 @@ export default function OfferDetailPage({
       });
 
       if (res.ok) {
+        toast.success(status === "accepted" ? "Offer accepted!" : "Offer declined");
         await fetchOffer();
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to respond");
+        toast.error(data.error || "Failed to respond");
       }
     } catch (error) {
       console.error("Error responding:", error);
-      alert("Failed to respond to offer");
+      toast.error("Failed to respond to offer");
     } finally {
       setSubmitting(false);
     }
@@ -149,7 +151,8 @@ export default function OfferDetailPage({
 
   let compensation = "";
   if (offer.compensation_type === "paid" && offer.compensation_amount) {
-    compensation = `$${offer.compensation_amount}`;
+    // compensation_amount is stored in cents
+    compensation = `$${(offer.compensation_amount / 100).toLocaleString()}`;
   } else if (offer.compensation_description) {
     compensation = offer.compensation_description;
   }
@@ -247,6 +250,7 @@ export default function OfferDetailPage({
                   weekday: "long",
                   month: "long",
                   day: "numeric",
+                  timeZone: "UTC",
                 })}
                 {offer.event_time && ` at ${offer.event_time}`}
               </p>

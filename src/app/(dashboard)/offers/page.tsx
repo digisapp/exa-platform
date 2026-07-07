@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -61,9 +62,12 @@ export default function OffersPage() {
       if (res.ok) {
         const data = await res.json();
         setOffers(data.offers || []);
+      } else {
+        toast.error("Failed to load offers");
       }
     } catch (error) {
       console.error("Error fetching offers:", error);
+      toast.error("Failed to load offers");
     } finally {
       setLoading(false);
     }
@@ -219,7 +223,8 @@ function OfferCard({
 
   let compensation = "";
   if (offer.compensation_type === "paid" && offer.compensation_amount) {
-    compensation = `$${offer.compensation_amount}`;
+    // compensation_amount is stored in cents
+    compensation = `$${(offer.compensation_amount / 100).toLocaleString()}`;
   } else if (offer.compensation_description) {
     compensation = offer.compensation_description;
   }
@@ -262,6 +267,7 @@ function OfferCard({
                 weekday: "short",
                 month: "short",
                 day: "numeric",
+                timeZone: "UTC",
               })}
               {offer.event_time && ` at ${offer.event_time}`}
             </span>

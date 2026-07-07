@@ -132,16 +132,16 @@ export default async function GigsPage() {
         .order("applied_at", { ascending: false });
       myApplications = applications || [];
 
-      // Get lists the model is in
-      const { data: listItems } = await (supabase as any)
-        .from("brand_list_items")
-        .select("list_id")
+      // Get campaigns the model is in
+      const { data: campaignItems } = await (supabase as any)
+        .from("campaign_models")
+        .select("campaign_id")
         .eq("model_id", model.id);
 
-      const listIds = listItems?.map((item: any) => item.list_id) || [];
+      const campaignIds = campaignItems?.map((item: any) => item.campaign_id) || [];
 
-      if (listIds.length > 0) {
-        // Get offers for those lists with brand info
+      if (campaignIds.length > 0) {
+        // Get open, non-expired offers for those campaigns with brand info
         const { data: offers } = await (supabase
           .from("offers") as any)
           .select(`
@@ -150,10 +150,11 @@ export default async function GigsPage() {
               id,
               brands:brands(id, company_name, logo_url)
             ),
-            list:brand_lists(id, name)
+            campaign:campaigns(id, name)
           `)
-          .in("list_id", listIds)
+          .in("campaign_id", campaignIds)
           .eq("status", "open")
+          .or(`event_date.is.null,event_date.gte.${new Date().toISOString().split("T")[0]}`)
           .order("created_at", { ascending: false });
 
         // Get model's responses

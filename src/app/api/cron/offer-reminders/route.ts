@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
         offer:offers(
           id,
           title,
+          status,
           event_date,
           event_time,
           location_name,
@@ -52,6 +53,8 @@ export async function GET(request: NextRequest) {
     const upcomingResponses = (responses || []).filter((r: any) => {
       const offer = r.offer as Record<string, any>;
       if (!offer?.event_date) return false;
+      // Don't remind models about events the brand cancelled
+      if (offer.status === "cancelled") return false;
       const eventDate = new Date(offer.event_date);
       return eventDate >= in24Hours && eventDate <= in48Hours;
     });

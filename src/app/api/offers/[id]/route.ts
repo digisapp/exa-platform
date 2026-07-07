@@ -8,16 +8,18 @@ const adminClient = createServiceRoleClient();
 const offerPatchSchema = z.object({
   update_response: z.object({
     id: z.string().uuid(),
-    status: z.string(),
+    // Free strings here would corrupt the state machine the respond route,
+    // reminder cron, and reliability score all key off
+    status: z.enum(["pending", "accepted", "declined", "confirmed"]),
   }).optional(),
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(5000).optional(),
   location_name: z.string().max(200).optional(),
   location_city: z.string().max(100).optional(),
   location_state: z.string().max(100).optional(),
-  event_date: z.string().optional(),
-  event_time: z.string().optional(),
-  compensation_type: z.string().optional(),
+  event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date").optional().nullable(),
+  event_time: z.string().max(50).optional(),
+  compensation_type: z.enum(["paid", "tfp", "perks", "exposure"]).optional(),
   compensation_amount: z.number().min(0).optional(),
   compensation_description: z.string().max(2000).optional(),
   spots: z.number().int().min(1).optional(),
