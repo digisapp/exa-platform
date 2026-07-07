@@ -102,9 +102,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ bookings: [], serviceLabels: SERVICE_LABELS });
     }
 
-    // For models, get their model ID
+    // For models, get their model ID (role=client lets a model view bookings they made as a client)
     let modelId: string | null = null;
-    if (role === "model" || actor.type === "model") {
+    if (role !== "client" && (role === "model" || actor.type === "model")) {
       const { data: model } = await supabase.from("models")
         .select("id")
         .eq("user_id", user.id)
@@ -117,43 +117,44 @@ export async function GET(request: NextRequest) {
     }
 
     // Use adminClient to bypass RLS - user is already authenticated above
-    let bookings: any[] = [];
+    const BOOKING_FIELDS = "id, booking_number, model_id, client_id, service_type, service_description, event_date, start_time, duration_hours, location_name, location_city, location_state, is_remote, total_amount, counter_amount, counter_notes, client_notes, status, created_at";
 
-    if (modelId) {
-      const { data, error } = await adminClient.from("bookings")
-        .select("id, booking_number, model_id, client_id, service_type, service_description, event_date, start_time, duration_hours, location_name, location_address, location_city, location_state, is_remote, quoted_rate, total_amount, counter_amount, counter_notes, client_notes, status, model_response_notes, responded_at, confirmed_at, completed_at, cancelled_at, cancelled_by, cancellation_reason, created_at")
-        .eq("model_id", modelId)
-        .order("created_at", { ascending: false });
+    const withOwnerFilter = (query: any) =>
+      modelId ? query.eq("model_id", modelId) : query.eq("client_id", actor.id);
 
-      if (error) {
-        logger.error("Bookings query error (model)", error);
-        return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
-      }
-      bookings = data || [];
-    } else {
-      const { data, error } = await adminClient.from("bookings")
-        .select("id, booking_number, model_id, client_id, service_type, service_description, event_date, start_time, duration_hours, location_name, location_address, location_city, location_state, is_remote, quoted_rate, total_amount, counter_amount, counter_notes, client_notes, status, model_response_notes, responded_at, confirmed_at, completed_at, cancelled_at, cancelled_by, cancellation_reason, created_at")
-        .eq("client_id", actor.id)
-        .order("created_at", { ascending: false });
+    let bookingsQuery = withOwnerFilter(adminClient.from("bookings").select(BOOKING_FIELDS))
+      .order("created_at", { ascending: false });
 
-      if (error) {
-        logger.error("Bookings query error (client)", error);
-        return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
-      }
-      bookings = data || [];
-    }
-
-    // Filter by status in JS instead of SQL to avoid potential issues
     if (status === "pending") {
-      bookings = bookings.filter(b => ["pending", "counter"].includes(b.status));
+      bookingsQuery = bookingsQuery.in("status", ["pending", "counter"]);
     } else if (status === "upcoming") {
-      const today = new Date().toISOString().split("T")[0];
-      bookings = bookings.filter(b => ["accepted", "confirmed"].includes(b.status) && b.event_date >= today);
+      // Includes accepted/confirmed bookings whose event_date has passed —
+      // they still need action (Mark Complete releases escrow)
+      bookingsQuery = bookingsQuery.in("status", ["accepted", "confirmed"]);
     } else if (status === "past") {
-      bookings = bookings.filter(b => ["completed", "cancelled", "no_show", "declined"].includes(b.status));
+      bookingsQuery = bookingsQuery.in("status", ["completed", "cancelled", "no_show", "declined"]);
     } else if (status) {
-      bookings = bookings.filter(b => b.status === status);
+      bookingsQuery = bookingsQuery.eq("status", status);
     }
+
+    const [bookingsResult, pendingCount, upcomingCount, pastCount] = await Promise.all([
+      bookingsQuery,
+      withOwnerFilter(adminClient.from("bookings").select("id", { count: "exact", head: true })).in("status", ["pending", "counter"]),
+      withOwnerFilter(adminClient.from("bookings").select("id", { count: "exact", head: true })).in("status", ["accepted", "confirmed"]),
+      withOwnerFilter(adminClient.from("bookings").select("id", { count: "exact", head: true })).in("status", ["completed", "cancelled", "no_show", "declined"]),
+    ]);
+
+    if (bookingsResult.error) {
+      logger.error("Bookings query error", bookingsResult.error);
+      return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
+    }
+
+    const bookings: any[] = bookingsResult.data || [];
+    const counts = {
+      pending: pendingCount.count ?? 0,
+      upcoming: upcomingCount.count ?? 0,
+      past: pastCount.count ?? 0,
+    };
 
     // Enrich bookings with model and client info using batch queries (avoiding N+1)
     if (bookings.length > 0) {
@@ -201,25 +202,42 @@ export async function GET(request: NextRequest) {
         (brands || []).forEach((b: any) => brandsMap.set(b.id, b));
       }
 
-      // Map data back to bookings
+      // Map data back to bookings — client email only exposed once the booking
+      // is accepted/confirmed/completed, never on pending requests
       for (const booking of bookings) {
         if (booking.model_id) {
           booking.model = modelsMap.get(booking.model_id) || null;
         }
         if (booking.client_id) {
+          const canSeeClientEmail = ["accepted", "confirmed", "completed"].includes(booking.status);
           const clientActor = actorsMap.get(booking.client_id);
           if (clientActor?.type === "fan") {
             const fan = fansMap.get(booking.client_id);
-            booking.client = fan ? { ...fan, type: "fan" } : null;
+            booking.client = fan
+              ? {
+                  display_name: fan.display_name,
+                  avatar_url: fan.avatar_url,
+                  type: "fan",
+                  ...(canSeeClientEmail ? { email: fan.email } : {}),
+                }
+              : null;
           } else if (clientActor?.type === "brand") {
             const brand = brandsMap.get(booking.client_id);
-            booking.client = brand ? { ...brand, type: "brand" } : null;
+            booking.client = brand
+              ? {
+                  company_name: brand.company_name,
+                  contact_name: brand.contact_name,
+                  logo_url: brand.logo_url,
+                  type: "brand",
+                  ...(canSeeClientEmail ? { email: brand.email } : {}),
+                }
+              : null;
           }
         }
       }
     }
 
-    return NextResponse.json({ bookings, serviceLabels: SERVICE_LABELS });
+    return NextResponse.json({ bookings, counts, serviceLabels: SERVICE_LABELS });
   } catch (error) {
     logger.error("Bookings fetch error", error);
     return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
