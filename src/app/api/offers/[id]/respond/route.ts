@@ -152,8 +152,25 @@ export async function POST(
 
       if (updateError) throw updateError;
 
-      if (previousStatus === "accepted") {
+      // Both "accepted" and "confirmed" hold a spot (brands promote accepted
+      // -> confirmed via PATCH), so declining out of either must free it.
+      if (previousStatus === "accepted" || previousStatus === "confirmed") {
         await adminClient.rpc("decrement_offer_spots_filled", { p_offer_id: offerId });
+
+        // Re-open an offer that was auto-closed when it filled, so remaining
+        // invitees can take the freed spot.
+        const { data: freed } = await adminClient
+          .from("offers")
+          .select("status, spots_filled, spots")
+          .eq("id", offerId)
+          .single();
+        if (
+          freed?.status === "closed" &&
+          typeof freed.spots === "number" &&
+          (freed.spots_filled ?? 0) < freed.spots
+        ) {
+          await adminClient.from("offers").update({ status: "open" }).eq("id", offerId);
+        }
       }
     }
 

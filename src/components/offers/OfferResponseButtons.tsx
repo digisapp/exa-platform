@@ -52,13 +52,14 @@ export function OfferResponseButtons({
     }
   }
 
-  // Already responded
-  if (currentStatus === "accepted") {
+  // Already responded — "confirmed" means the brand locked in the booking,
+  // so treat it like accepted (a spot-holding state), not pending.
+  if (currentStatus === "accepted" || currentStatus === "confirmed") {
     return (
       <div className="flex items-center gap-2">
         <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-green-500/20 text-green-400 text-sm font-medium">
           <CheckCircle className="h-4 w-4" />
-          Accepted
+          {currentStatus === "confirmed" ? "Confirmed" : "Accepted"}
         </span>
         <Button
           size="sm"

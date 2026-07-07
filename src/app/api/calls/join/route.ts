@@ -174,24 +174,37 @@ export async function DELETE(request: NextRequest) {
     // Determine status: 'missed' for timeout, 'declined' for manual decline
     const status = reason === 'missed' ? 'missed' : 'declined';
 
-    // Update call session
-    const { error: updateError } = await supabase
+    // Update call session — only if still pending, so a late auto-miss timer
+    // can't overwrite a call that was already answered (active) or ended.
+    const { data: updatedRows, error: updateError } = await supabase
       .from('video_call_sessions')
       .update({
         status,
         ended_at: new Date().toISOString(),
       })
-      .eq('id', sessionId);
+      .eq('id', sessionId)
+      .eq('status', 'pending')
+      .select('id');
 
     if (updateError) {
       logger.error(`Error ${status} call`, updateError);
       return NextResponse.json({ error: `Failed to ${status} call` }, { status: 500 });
     }
 
-    // Add system message for missed calls
+    // No pending row matched — the call already progressed (answered/ended);
+    // don't post a spurious "missed" marker over a live or finished call.
+    if (!updatedRows || updatedRows.length === 0) {
+      return NextResponse.json({ success: true, status: 'noop' });
+    }
+
+    // Add system message for missed calls. Use the service client: the row is
+    // authored as the caller (initiated_by), but this request runs as the
+    // recipient, so the RLS insert policy (sender_id = caller) would reject it.
     if (status === 'missed') {
       const callTypeLabel = callSession.call_type === "voice" ? "voice" : "video";
-      await supabase.from('messages').insert({
+      const { createServiceRoleClient } = await import("@/lib/supabase/service");
+      const service = createServiceRoleClient();
+      await service.from('messages').insert({
         conversation_id: callSession.conversation_id,
         sender_id: callSession.initiated_by,
         content: `Missed ${callTypeLabel} call`,
