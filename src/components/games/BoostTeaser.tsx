@@ -76,7 +76,7 @@ function TeaserCard({
           src={model.profile_photo_url}
           alt={model.username}
           fill
-          sizes="(max-width: 640px) 176px, 208px"
+          sizes="(max-width: 640px) 240px, 208px"
           className="object-cover pointer-events-none"
           draggable={false}
         />
@@ -108,6 +108,36 @@ function TeaserCard({
         </div>
       </div>
     </motion.div>
+  );
+}
+
+function SwipeActionButton({
+  action,
+  onClick,
+  disabled,
+}: {
+  action: "pass" | "like";
+  onClick: () => void;
+  disabled: boolean;
+}) {
+  const isPass = action === "pass";
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={isPass ? "Pass" : "Like"}
+      className={`w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border-2 flex items-center justify-center transition-all disabled:opacity-50 shadow-lg ${
+        isPass
+          ? "border-red-500/50 hover:bg-red-500/20 shadow-red-500/10"
+          : "border-green-500/50 hover:bg-green-500/20 shadow-green-500/10"
+      }`}
+    >
+      {isPass ? (
+        <X className="h-6 w-6 text-red-500" />
+      ) : (
+        <Heart className="h-6 w-6 text-green-500" />
+      )}
+    </button>
   );
 }
 
@@ -207,7 +237,7 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
     <section className="container px-8 md:px-16 py-6">
       <div
         ref={sectionRef}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500/10 via-pink-500/5 to-transparent border border-orange-500/20 p-6 md:p-8"
+        className="relative max-w-4xl mx-auto overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500/10 via-pink-500/5 to-transparent border border-orange-500/20 p-6 md:p-8"
       >
         <div className="absolute -top-20 -right-20 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl opacity-50 pointer-events-none" />
 
@@ -249,18 +279,17 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-4 sm:gap-5">
-                <button
-                  onClick={() => handleSwipe("left")}
-                  disabled={!current}
-                  aria-label="Pass"
-                  className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border-2 border-red-500/50 flex items-center justify-center hover:bg-red-500/20 transition-all disabled:opacity-50 shadow-lg shadow-red-500/10"
-                >
-                  <X className="h-6 w-6 text-red-500" />
-                </button>
+              <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-5">
+                <div className="hidden sm:block">
+                  <SwipeActionButton
+                    action="pass"
+                    onClick={() => handleSwipe("left")}
+                    disabled={!current}
+                  />
+                </div>
 
                 <div className="flex flex-col items-center gap-2.5">
-                  <div className="relative w-44 h-60 sm:w-52 sm:h-72 touch-pan-y">
+                  <div className="relative w-60 h-80 sm:w-52 sm:h-72 touch-pan-y">
                     {deck === null ? (
                       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 ring-1 ring-white/10 animate-pulse" />
                     ) : (
@@ -271,7 +300,7 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
                               src={next.profile_photo_url}
                               alt={next.username}
                               fill
-                              sizes="(max-width: 640px) 176px, 208px"
+                              sizes="(max-width: 640px) 240px, 208px"
                               className="object-cover"
                             />
                             <div className="absolute inset-0 bg-black/40" />
@@ -304,14 +333,25 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleSwipe("right")}
-                  disabled={!current}
-                  aria-label="Like"
-                  className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border-2 border-green-500/50 flex items-center justify-center hover:bg-green-500/20 transition-all disabled:opacity-50 shadow-lg shadow-green-500/10"
-                >
-                  <Heart className="h-6 w-6 text-green-500" />
-                </button>
+                <div className="flex items-center gap-10 sm:hidden">
+                  <SwipeActionButton
+                    action="pass"
+                    onClick={() => handleSwipe("left")}
+                    disabled={!current}
+                  />
+                  <SwipeActionButton
+                    action="like"
+                    onClick={() => handleSwipe("right")}
+                    disabled={!current}
+                  />
+                </div>
+                <div className="hidden sm:block">
+                  <SwipeActionButton
+                    action="like"
+                    onClick={() => handleSwipe("right")}
+                    disabled={!current}
+                  />
+                </div>
               </div>
             )}
           </div>
