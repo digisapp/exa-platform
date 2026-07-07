@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { sendGigApplicationAcceptedEmail, sendGigWaitlistedEmail } from "@/lib/email";
+import { postLiveWallSystemMessage } from "@/lib/live-wall-system";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
 
@@ -90,6 +91,11 @@ async function promoteFromWaitlist(adminClient: SupabaseClient, gigId: string) {
         .select("email, first_name, username")
         .eq("id", app.model_id)
         .single();
+      if (model?.username) {
+        await postLiveWallSystemMessage(
+          `@${model.username} was accepted to ${gig.title} 🎉`
+        );
+      }
       if (model?.email) {
         sendGigApplicationAcceptedEmail({
           to: model.email,
@@ -181,6 +187,19 @@ export async function PATCH(
     // application count on every status change (migration
     // 20260702000001_sync_gig_spots_filled) -- do NOT increment it here too.
     if (status === "accepted" && application.status !== "accepted") {
+      // Heartbeat post on the live wall (username only — real names are
+      // admin-only). Non-fatal; never blocks the accept.
+      const { data: acceptedModel } = await adminClient
+        .from("models")
+        .select("username")
+        .eq("id", application.model_id)
+        .single() as { data: { username: string | null } | null };
+      if (acceptedModel?.username && application.gig?.title) {
+        await postLiveWallSystemMessage(
+          `@${acceptedModel.username} was accepted to ${application.gig.title} 🎉`
+        );
+      }
+
       // Award event badge if gig is linked to an event.
       // NOTE: the DB trigger manage_event_badge() is the canonical awarder and
       // also fires on this same status update. This block is a redundant
