@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, XCircle, UserMinus, UserPlus, ChevronDown, Trash2, Eye, EyeOff, FileText, Pencil } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, UserMinus, UserPlus, ChevronDown, Trash2, Eye, EyeOff, FileText, Pencil, Camera } from "lucide-react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -39,14 +39,18 @@ interface AdminActionProps {
   id: string;
   type: "application" | "model" | "brand" | "designer" | "media" | "model_application";
   onSuccess?: () => void;
+  /** model_application only: application has a profile photo (gates Approve vs Request photo) */
+  hasPhoto?: boolean;
+  /** model_application only: when a photo request was already sent */
+  photoRequestedAt?: string | null;
 }
 
-export function ApproveRejectButtons({ id, type, onSuccess }: AdminActionProps) {
-  const [loading, setLoading] = useState<"approve" | "reject" | "delete" | null>(null);
+export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoRequestedAt }: AdminActionProps) {
+  const [loading, setLoading] = useState<"approve" | "reject" | "delete" | "request_photo" | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const router = useRouter();
 
-  const handleAction = async (action: "approve" | "reject") => {
+  const handleAction = async (action: "approve" | "reject" | "request_photo") => {
     setLoading(action);
 
     try {
@@ -60,7 +64,14 @@ export function ApproveRejectButtons({ id, type, onSuccess }: AdminActionProps) 
           break;
         case "model_application":
           endpoint = `/api/admin/model-applications/${id}`;
-          body = { status: action === "approve" ? "approved" : "rejected" };
+          body = {
+            status:
+              action === "request_photo"
+                ? "request_photo"
+                : action === "approve"
+                  ? "approved"
+                  : "rejected",
+          };
           break;
         case "model":
           endpoint = `/api/admin/models/${id}`;
@@ -91,7 +102,13 @@ export function ApproveRejectButtons({ id, type, onSuccess }: AdminActionProps) 
         throw new Error(data.error || "Failed to update");
       }
 
-      toast.success(action === "approve" ? "Approved!" : "Rejected");
+      toast.success(
+        action === "approve"
+          ? "Approved!"
+          : action === "request_photo"
+            ? "Photo request sent — she'll be auto-approved when it's uploaded"
+            : "Rejected"
+      );
       onSuccess?.();
       router.refresh();
     } catch (error: unknown) {
@@ -194,21 +211,42 @@ export function ApproveRejectButtons({ id, type, onSuccess }: AdminActionProps) 
             </>
           )}
         </Button>
-        <Button
-          size="sm"
-          className="bg-green-500 hover:bg-green-600"
-          onClick={() => handleAction("approve")}
-          disabled={loading !== null}
-        >
-          {loading === "approve" ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <>
-              <CheckCircle className="h-4 w-4 mr-1" />
-              Approve
-            </>
-          )}
-        </Button>
+        {type === "model_application" && hasPhoto === false ? (
+          // No photo → approval would 400; the real action is requesting one.
+          // Upload auto-approves, so this replaces the Approve button entirely.
+          <Button
+            size="sm"
+            className="bg-amber-500 hover:bg-amber-600 text-black"
+            onClick={() => handleAction("request_photo")}
+            disabled={loading !== null}
+            title="Sends a you're-selected email; she's auto-approved the moment she uploads a photo"
+          >
+            {loading === "request_photo" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Camera className="h-4 w-4 mr-1" />
+                {photoRequestedAt ? "Resend photo request" : "Request photo"}
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            className="bg-green-500 hover:bg-green-600"
+            onClick={() => handleAction("approve")}
+            disabled={loading !== null}
+          >
+            {loading === "approve" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Approve
+              </>
+            )}
+          </Button>
+        )}
       </div>
     </>
   );

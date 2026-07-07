@@ -41,7 +41,7 @@ export default async function PendingApprovalPage() {
 
   const { data: application } = await admin
     .from("model_applications")
-    .select("instagram_username, tiktok_username, created_at, email_confirmed_at, status, bio, profile_photo_url")
+    .select("instagram_username, tiktok_username, created_at, email_confirmed_at, status, bio, profile_photo_url, photo_requested_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)

@@ -176,6 +176,8 @@ interface ModelApplication {
   status: string;
   created_at: string;
   email_confirmed_at: string | null;
+  profile_photo_url: string | null;
+  photo_requested_at: string | null;
 }
 
 export default function AdminCommunityPage() {
@@ -416,15 +418,29 @@ export default function AdminCommunityPage() {
                       return (
                         <div key={app.id} className="p-3 rounded-lg bg-muted/50 flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold">
-                              {app.display_name?.charAt(0).toUpperCase() || "?"}
-                            </div>
+                            {app.profile_photo_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={app.profile_photo_url}
+                                alt=""
+                                className="w-10 h-10 rounded-full object-cover ring-1 ring-pink-500/40"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold">
+                                {app.display_name?.charAt(0).toUpperCase() || "?"}
+                              </div>
+                            )}
                             <div>
                               <p className="font-medium flex items-center gap-2">
                                 {app.display_name}
                                 {!app.email_confirmed_at && (
                                   <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
                                     email unconfirmed
+                                  </span>
+                                )}
+                                {app.photo_requested_at && !app.profile_photo_url && (
+                                  <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-400 border border-violet-500/30">
+                                    photo requested
                                   </span>
                                 )}
                               </p>
@@ -445,7 +461,13 @@ export default function AdminCommunityPage() {
                               </div>
                             </div>
                           </div>
-                          <ApproveRejectButtons id={app.id} type="model_application" onSuccess={() => { loadModelApps(); loadStats(); }} />
+                          <ApproveRejectButtons
+                            id={app.id}
+                            type="model_application"
+                            hasPhoto={Boolean(app.profile_photo_url)}
+                            photoRequestedAt={app.photo_requested_at}
+                            onSuccess={() => { loadModelApps(); loadStats(); }}
+                          />
                         </div>
                       );
                     })}

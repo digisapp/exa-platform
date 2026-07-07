@@ -79,6 +79,8 @@ export default function ProfilePage() {
   const [actor, setActor] = useState<Actor | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [originalUsername, setOriginalUsername] = useState<string>("");
+  // Active settings tab — supports deep links like /settings?tab=rates.
+  const [activeTab, setActiveTab] = useState<string>("profile");
   const [usernameStatus, setUsernameStatus] = useState<{
     checking: boolean;
     available: boolean | null;
@@ -441,6 +443,18 @@ export default function ProfilePage() {
       setFollowersLoading(false);
     }
   };
+
+  // Honor deep links like /settings?tab=rates (e.g. the "Set Your Rates" CTA).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab) setActiveTab(tab);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "followers") loadFollowers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, actor]);
 
   const handleFanSave = async () => {
     if (!fan) return;
@@ -1243,7 +1257,7 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      <Tabs defaultValue="profile" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-white/[0.03] border border-white/10 rounded-2xl p-1 h-auto flex-wrap gap-1">
           <TabsTrigger
             value="profile"

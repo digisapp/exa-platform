@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Users, MessageCircle } from "lucide-react";
@@ -38,8 +39,13 @@ export default async function FollowersPage() {
     redirect("/dashboard");
   }
 
-  // Get followers
-  const { data: follows } = await (supabase
+  // Get followers. RLS hides other users' actors/fans/brands rows from the
+  // browser-scoped client, so the embedded actor comes back null for fan and
+  // brand followers (the common case) and the list looks empty. Enrich with the
+  // service-role client instead — scoped to this authenticated model's own
+  // actor.id, so no data outside their followers is exposed.
+  const service = createServiceRoleClient();
+  const { data: follows } = await (service
     .from("follows") as any)
     .select(`
       id,
@@ -68,13 +74,13 @@ export default async function FollowersPage() {
     { data: brands },
   ] = await Promise.all([
     fanActorIds.length > 0
-      ? supabase.from("fans").select("id, display_name, avatar_url").in("id", fanActorIds)
+      ? service.from("fans").select("id, display_name, avatar_url").in("id", fanActorIds)
       : Promise.resolve({ data: [] }),
     modelUserIds.length > 0
-      ? supabase.from("models").select("user_id, username, profile_photo_url").in("user_id", modelUserIds)
+      ? service.from("models").select("user_id, username, profile_photo_url").in("user_id", modelUserIds)
       : Promise.resolve({ data: [] }),
     brandActorIds.length > 0
-      ? (supabase.from("brands") as any).select("id, company_name, logo_url").in("id", brandActorIds)
+      ? (service.from("brands") as any).select("id, company_name, logo_url").in("id", brandActorIds)
       : Promise.resolve({ data: [] }),
   ]);
 

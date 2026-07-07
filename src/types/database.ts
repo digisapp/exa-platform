@@ -5033,6 +5033,8 @@ export type Database = {
           id: string
           instagram_username: string | null
           phone: string | null
+          photo_requested_at: string | null
+          photo_requested_by: string | null
           profile_photo_height: number | null
           profile_photo_url: string | null
           profile_photo_width: number | null
