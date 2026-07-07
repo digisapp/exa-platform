@@ -643,24 +643,32 @@ export default async function DashboardPage() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            {(modelAuctions?.length || 0) > 0 && (
+          {/* Auction actions live here only once the model has auctions —
+              for everyone else the empty state below carries the CTA */}
+          {(modelAuctions?.length || 0) > 0 && (
+            <div className="flex items-center gap-3">
               <Link href="/bids/manage" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
                 Manage bids <ArrowUpRight className="h-3 w-3" />
               </Link>
-            )}
-            <Link href="/bids/new" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
-              <Plus className="h-3 w-3" /> Create EXA Bid
-            </Link>
-          </div>
+              <Link href="/bids/new" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+                <Plus className="h-3 w-3" /> Create EXA Bid
+              </Link>
+            </div>
+          )}
         </header>
         <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
           {inboxItems.length === 0 ? (
-            <div className="col-span-full flex items-center justify-center gap-2 py-4">
+            <div className="col-span-full flex flex-wrap items-center justify-center gap-x-2 gap-y-1 py-4 px-3 text-center">
               <Sparkles className="h-4 w-4 text-white/30 shrink-0" />
               <p className="text-sm text-white/60">
-                All caught up — new offers, bookings, and bids on your auctions will appear here.
+                All caught up — new offers, bookings, and auction bids will appear here.
               </p>
+              <Link
+                href="/bids/new"
+                className="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1 shrink-0"
+              >
+                <Plus className="h-3.5 w-3.5" /> Create an EXA Bid for fans to bid on
+              </Link>
             </div>
           ) : (
             inboxItems.map((item) => {
