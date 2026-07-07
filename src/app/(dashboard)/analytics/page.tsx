@@ -36,6 +36,21 @@ function trendPct(current: number, previous: number): number | null {
   return Math.round(((current - previous) / previous) * 100);
 }
 
+// Analytics rows store ISO 3166-1 alpha-2 codes ("US", "SA") — render as flag + full name
+const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+function countryLabel(code: string): string {
+  const cc = (code || "").trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(cc)) return code || "Unknown";
+  const flag = String.fromCodePoint(...[...cc].map((ch) => 0x1f1e6 + ch.charCodeAt(0) - 65));
+  let name: string | undefined;
+  try {
+    name = regionNames.of(cc);
+  } catch {
+    name = undefined;
+  }
+  return `${flag} ${name && name !== cc ? name : cc}`;
+}
+
 function StatCard({
   label,
   value,
@@ -434,7 +449,7 @@ export default async function AnalyticsPage() {
                 const pct = countryTotal > 0 ? Math.round((count / countryTotal) * 100) : 0;
                 return (
                   <div key={country} className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground flex-1 truncate">{country}</span>
+                    <span className="text-sm text-muted-foreground flex-1 truncate">{countryLabel(country)}</span>
                     <div className="w-20 h-1.5 rounded-full bg-white/[0.06]">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-500"
