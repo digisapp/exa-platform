@@ -27,7 +27,8 @@ export async function GET(request: NextRequest) {
   let dbQuery = supabase
     .from("models")
     .select("id, username, profile_photo_url, city, state", { count: "exact" })
-    .eq("is_approved", true);
+    .eq("is_approved", true)
+    .is("deleted_at", null);
 
   if (query.trim()) {
     // Escape special characters for safe pattern matching

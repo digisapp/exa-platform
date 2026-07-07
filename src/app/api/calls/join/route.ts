@@ -166,13 +166,19 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Call session not found' }, { status: 404 });
     }
 
-    // Verify user is the recipient
-    if (callSession.recipient_id !== actor.id) {
+    // Either party can end an unanswered call: the recipient declines/misses
+    // it, or the initiator (caller) cancels their own outgoing ring. Without
+    // the initiator branch the fan's "cancel" button 403'd and the model kept
+    // ringing a call nobody was on.
+    const isRecipient = callSession.recipient_id === actor.id;
+    const isInitiator = callSession.initiated_by === actor.id;
+    if (!isRecipient && !isInitiator) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 
-    // Determine status: 'missed' for timeout, 'declined' for manual decline
-    const status = reason === 'missed' ? 'missed' : 'declined';
+    // Determine status: 'missed' for timeout / caller-cancelled ring, 'declined'
+    // for a manual decline by the recipient.
+    const status = reason === 'missed' || isInitiator ? 'missed' : 'declined';
 
     // Update call session — only if still pending, so a late auto-miss timer
     // can't overwrite a call that was already answered (active) or ended.
