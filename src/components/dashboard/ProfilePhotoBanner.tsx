@@ -188,7 +188,14 @@ export function ProfilePhotoBanner({
 
   return (
     <>
-      <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-pink-500/[0.08] via-white/[0.03] to-violet-500/[0.08] backdrop-blur-sm overflow-hidden">
+      <section
+        className={cn(
+          "rounded-2xl border backdrop-blur-sm overflow-hidden",
+          profilePhotoUrl
+            ? "border-white/10 bg-gradient-to-br from-pink-500/[0.08] via-white/[0.03] to-violet-500/[0.08]"
+            : "border-amber-500/40 bg-gradient-to-br from-amber-500/[0.10] via-white/[0.03] to-pink-500/[0.06]"
+        )}
+      >
         <div className="p-5 sm:p-6">
           <div className="flex items-center gap-5 sm:gap-7">
             {/* ── Photo cluster: portrait with avatar overlapping its corner ── */}
@@ -264,7 +271,7 @@ export function ProfilePhotoBanner({
               </button>
             </div>
 
-            {/* ── Identity + stats ── */}
+            {/* ── Identity + stats (or the invisible-on-EXA blocking state) ── */}
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <h2 className="text-lg sm:text-xl font-bold text-white truncate">
@@ -272,7 +279,7 @@ export function ProfilePhotoBanner({
                 </h2>
                 {!profilePhotoUrl && (
                   <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 uppercase tracking-wide">
-                    Setup needed
+                    Invisible on EXA
                   </span>
                 )}
               </div>
@@ -285,38 +292,59 @@ export function ProfilePhotoBanner({
                 <ExternalLink className="h-3 w-3 shrink-0" />
               </Link>
 
-              {/* Live stats */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2.5">
-                <span className="flex items-center gap-1.5 text-sm text-white/80">
-                  <Heart className="h-3.5 w-3.5 text-pink-400 fill-pink-400/60" />
-                  <span className="font-semibold text-white">
-                    {compactNumber.format(followerCount)}
-                  </span>
-                  <span className="text-white/50">followers</span>
-                </span>
-                <span className="flex items-center gap-1.5 text-sm text-white/80">
-                  <Eye className="h-3.5 w-3.5 text-cyan-400" />
-                  <span className="font-semibold text-white">
-                    {compactNumber.format(views30d)}
-                  </span>
-                  <span className="text-white/50">views · 30d</span>
-                </span>
-              </div>
+              {profilePhotoUrl ? (
+                <>
+                  {/* Live stats */}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2.5">
+                    <span className="flex items-center gap-1.5 text-sm text-white/80">
+                      <Heart className="h-3.5 w-3.5 text-pink-400 fill-pink-400/60" />
+                      <span className="font-semibold text-white">
+                        {compactNumber.format(followerCount)}
+                      </span>
+                      <span className="text-white/50">followers</span>
+                    </span>
+                    <span className="flex items-center gap-1.5 text-sm text-white/80">
+                      <Eye className="h-3.5 w-3.5 text-cyan-400" />
+                      <span className="font-semibold text-white">
+                        {compactNumber.format(views30d)}
+                      </span>
+                      <span className="text-white/50">views · 30d</span>
+                    </span>
+                  </div>
 
-              {/* What each photo is for */}
-              <div className="mt-2.5 space-y-0.5 text-[11px] leading-relaxed text-white/45">
-                <p>
-                  <span className="font-medium text-white/70">Portrait</span> — the
-                  large photo on your public profile
-                </p>
-                <p className={profilePhotoUrl ? undefined : "text-amber-400/90"}>
-                  <span className={cn("font-medium", profilePhotoUrl ? "text-white/70" : "text-amber-400")}>
-                    Avatar
-                  </span>{" "}
-                  — shown in chats, search &amp; model cards
-                  {!profilePhotoUrl && " (tap the circle to add one)"}
-                </p>
-              </div>
+                  {/* What each photo is for */}
+                  <div className="mt-2.5 space-y-0.5 text-[11px] leading-relaxed text-white/45">
+                    <p>
+                      <span className="font-medium text-white/70">Portrait</span> — the
+                      large photo on your public profile
+                    </p>
+                    <p>
+                      <span className="font-medium text-white/70">Avatar</span> — shown
+                      in chats, search &amp; model cards
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="mt-2.5 text-sm text-white/70 leading-relaxed">
+                    Fans and brands can&apos;t find you yet — models appear on
+                    Explore, in gigs, and in search only after adding a profile
+                    photo.
+                  </p>
+                  <Button
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="mt-3 bg-gradient-to-r from-amber-500 to-pink-500 hover:from-amber-600 hover:to-pink-600 text-white font-semibold shadow-[0_0_16px_rgba(245,158,11,0.35)]"
+                  >
+                    {uploadingAvatar ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Camera className="mr-2 h-4 w-4" />
+                    )}
+                    Add profile photo — takes 30 seconds
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -82,6 +82,17 @@ export async function PATCH(
       );
     }
 
+    // A model without a photo is invisible everywhere (explore, gigs, search),
+    // so approving her only creates a dead profile. Applicants add the photo on
+    // their pending page. (No claim-an-existing-photo edge case: verified
+    // 2026-07-07 that zero unclaimed imported models carry a photo.)
+    if (status === "approved" && !(application as any).profile_photo_url) {
+      return NextResponse.json(
+        { error: "No profile photo yet — a photo is required before approval so the model is actually visible once live. She can add it on her pending page." },
+        { status: 400 }
+      );
+    }
+
     // Update application status
     const { error: updateError } = await supabase
       .from("model_applications")

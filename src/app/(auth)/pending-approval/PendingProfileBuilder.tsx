@@ -7,8 +7,11 @@ import { Camera, Check, Loader2, Sparkles } from "lucide-react";
 
 const t = {
   en: {
-    title: "Get a head start",
-    subtitle: "Add your photo and bio now — you'll go live on EXA the moment you're approved.",
+    title: "Add your photo — required for approval",
+    titleDone: "Looking good!",
+    subtitle: "We can't approve you without a profile photo. Add a bio too and you'll go live on EXA the moment you're approved.",
+    subtitleDone: "Photo saved — add or polish your bio and you'll go live the moment you're approved.",
+    required: "Required",
     choosePhoto: "Choose photo",
     changePhoto: "Change photo",
     bioPlaceholder: "Tell brands and fans who you are and what you're looking for…",
@@ -19,8 +22,11 @@ const t = {
     error: "Couldn't save — please try again",
   },
   es: {
-    title: "Toma ventaja",
-    subtitle: "Agrega tu foto y bio ahora — estarás visible en EXA en cuanto seas aprobada.",
+    title: "Agrega tu foto — requerida para aprobarte",
+    titleDone: "¡Te ves increíble!",
+    subtitle: "No podemos aprobarte sin foto de perfil. Agrega también tu bio y estarás visible en EXA en cuanto seas aprobada.",
+    subtitleDone: "Foto guardada — agrega o mejora tu bio y estarás visible en cuanto seas aprobada.",
+    required: "Requerida",
     choosePhoto: "Elegir foto",
     changePhoto: "Cambiar foto",
     bioPlaceholder: "Cuéntales a marcas y fans quién eres y qué buscas…",
@@ -124,28 +130,42 @@ export function PendingProfileBuilder({
     }
   };
 
+  const hasPhoto = Boolean(photoPreview);
+
   return (
-    <div className="p-4 rounded-lg bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/30 space-y-3">
+    <div
+      className={
+        hasPhoto
+          ? "p-4 rounded-lg bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/30 space-y-3"
+          : "p-4 rounded-lg bg-gradient-to-br from-amber-500/10 via-pink-500/5 to-transparent border border-amber-500/40 space-y-3"
+      }
+    >
       <div>
         <p className="text-sm font-medium flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-pink-400" />
-          {s.title}
+          <Sparkles className={hasPhoto ? "h-4 w-4 text-pink-400" : "h-4 w-4 text-amber-400"} />
+          {hasPhoto ? s.titleDone : s.title}
         </p>
-        <p className="text-xs text-muted-foreground mt-1">{s.subtitle}</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {hasPhoto ? s.subtitleDone : s.subtitle}
+        </p>
       </div>
 
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="relative h-16 w-16 shrink-0 rounded-full overflow-hidden border border-dashed border-pink-500/40 bg-white/5 flex items-center justify-center hover:border-pink-500/70 transition-colors"
+          className={
+            hasPhoto
+              ? "relative h-16 w-16 shrink-0 rounded-full overflow-hidden border border-dashed border-pink-500/40 bg-white/5 flex items-center justify-center hover:border-pink-500/70 transition-colors"
+              : "relative h-16 w-16 shrink-0 rounded-full overflow-hidden border border-dashed border-amber-500/60 bg-white/5 flex items-center justify-center hover:border-amber-400 transition-colors"
+          }
           aria-label={photoPreview ? s.changePhoto : s.choosePhoto}
         >
           {photoPreview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photoPreview} alt="" className="h-full w-full object-cover" />
           ) : (
-            <Camera className="h-6 w-6 text-pink-400/70" />
+            <Camera className="h-6 w-6 text-amber-400/80" />
           )}
         </button>
         <div className="flex-1">
@@ -158,6 +178,11 @@ export function PendingProfileBuilder({
             <Camera className="mr-2 h-4 w-4" />
             {photoPreview ? s.changePhoto : s.choosePhoto}
           </Button>
+          {!hasPhoto && (
+            <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 uppercase tracking-wide align-middle">
+              {s.required}
+            </span>
+          )}
           <input
             ref={fileInputRef}
             type="file"

@@ -17,6 +17,7 @@ const t = {
     yourApp: "Your application:",
     submitted: "Submitted",
     whatsNext: "What happens next?",
+    step0: "Add your profile photo above — required for approval",
     step1: "We verify your social profiles",
     step2: "Approval typically takes less than 24 hours",
     step3: "We'll email you when you're approved",
@@ -38,6 +39,7 @@ const t = {
     yourApp: "Tu solicitud:",
     submitted: "Enviada el",
     whatsNext: "¿Qué pasa después?",
+    step0: "Agrega tu foto de perfil arriba — requerida para aprobarte",
     step1: "Verificamos tus redes sociales",
     step2: "La aprobación toma menos de 24 horas",
     step3: "Te enviaremos un correo cuando seas aprobada",
@@ -223,6 +225,9 @@ export function PendingApprovalView({ application }: { application: PendingAppli
           <div className="p-4 rounded-lg bg-pink-500/10 border border-pink-500/20">
             <p className="text-sm font-medium mb-2">{s.whatsNext}</p>
             <ul className="text-sm text-muted-foreground space-y-1">
+              {!application?.profile_photo_url && (
+                <li className="text-amber-400">• {s.step0}</li>
+              )}
               <li>• {s.step1}</li>
               <li>• {s.step2}</li>
               <li>• {s.step3}</li>
