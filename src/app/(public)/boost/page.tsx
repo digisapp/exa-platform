@@ -110,7 +110,7 @@ export default async function TopModelsPage() {
           </div>
 
           {/* Game Component */}
-          <TopModelsGame initialUser={initialUser} />
+          <TopModelsGame initialUser={initialUser} actorType={actorType} />
         </main>
 
         {/* Bottom Nav for signed-in users on mobile */}

@@ -5,8 +5,9 @@ import { SwipeStack } from "./SwipeStack";
 import { TopModelsLeaderboard } from "./TopModelsLeaderboard";
 import { BoostModal } from "./BoostModal";
 import { GameComplete } from "./GameComplete";
-import { Loader2, Sparkles, Heart, X, HelpCircle, Flame, Share2 } from "lucide-react";
+import { Loader2, Sparkles, Heart, X, HelpCircle, Flame, Share2, MessageCircle, UserPlus } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -15,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -50,17 +52,38 @@ interface TopModelsGameProps {
     id: string;
     coinBalance: number;
   } | null;
+  actorType?: string | null;
 }
 
-const DECK_SIZE = 60;
-const REFILL_THRESHOLD = 10;
+interface MatchModel {
+  id: string;
+  username: string;
+  profile_photo_url: string;
+}
 
-export function TopModelsGame({ initialUser }: TopModelsGameProps) {
+const REFILL_THRESHOLD = 10;
+const MATCHES_STORAGE_KEY = "boostMatches";
+const FOLLOW_TOAST_KEY = "boostFollowToastSeen";
+
+function readStoredMatches(): MatchModel[] {
+  try {
+    const raw = localStorage.getItem(MATCHES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((m) => m && m.id && m.username);
+  } catch {
+    return [];
+  }
+}
+
+export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
   const [models, setModels] = useState<Model[]>([]);
   const seenIdsRef = useRef<Set<string>>(new Set());
   const remainingRef = useRef(0);
   const hasMoreRef = useRef(false);
   const fetchMorePromiseRef = useRef<Promise<number> | null>(null);
+  const pendingVotesRef = useRef<Set<Promise<unknown>>>(new Set());
   const [session, setSession] = useState<Session | null>(null);
   const [coinBalance, setCoinBalance] = useState(initialUser?.coinBalance || 0);
   const [loading, setLoading] = useState(true);
@@ -68,7 +91,13 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   const [gameComplete, setGameComplete] = useState(false);
   const [fingerprint, setFingerprint] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [matches, setMatches] = useState<MatchModel[]>([]);
+  const [showMatches, setShowMatches] = useState(false);
+  const [pendingMatches, setPendingMatches] = useState<MatchModel[]>([]);
+  const [followingPending, setFollowingPending] = useState(false);
   const sounds = useGameSounds();
+
+  const isFan = actorType === "fan";
 
   // Get global coin balance context (for updating navbar balance)
   const coinBalanceContext = useCoinBalanceOptional();
@@ -88,6 +117,84 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
       setShowWelcome(true);
     }
   }, []);
+
+  // Restore matches saved before signup. Anonymous players keep building the
+  // list; a returning fan gets a one-tap "Follow your matches" offer instead.
+  useEffect(() => {
+    const stored = readStoredMatches();
+    if (!initialUser) {
+      if (stored.length > 0) setMatches(stored);
+    } else if (isFan && stored.length > 0) {
+      setPendingMatches(stored);
+    } else if (stored.length > 0) {
+      localStorage.removeItem(MATCHES_STORAGE_KEY);
+    }
+  }, [initialUser, isFan]);
+
+  const addMatch = useCallback(
+    (model: Model) => {
+      const match: MatchModel = {
+        id: model.id,
+        username: model.username,
+        profile_photo_url: model.profile_photo_url,
+      };
+      setMatches((prev) => {
+        if (prev.some((m) => m.id === match.id)) return prev;
+        const next = [...prev, match];
+        if (!initialUser) {
+          try {
+            localStorage.setItem(MATCHES_STORAGE_KEY, JSON.stringify(next));
+          } catch {
+            // localStorage might be unavailable
+          }
+        }
+        return next;
+      });
+    },
+    [initialUser]
+  );
+
+  // One-tap follow for matches liked while anonymous (idempotent — reuses the
+  // favorites endpoint, which upserts)
+  const followPendingMatches = async () => {
+    if (followingPending || pendingMatches.length === 0) return;
+    setFollowingPending(true);
+    let followedCount = 0;
+    try {
+      for (const match of pendingMatches) {
+        try {
+          const res = await fetch("/api/favorites", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ modelId: match.id }),
+          });
+          if (res.ok) followedCount++;
+        } catch {
+          // Skip this one, keep going
+        }
+      }
+    } finally {
+      setFollowingPending(false);
+    }
+    if (followedCount > 0) {
+      try {
+        localStorage.removeItem(MATCHES_STORAGE_KEY);
+      } catch {
+        // localStorage might be unavailable
+      }
+      setMatches((prev) => {
+        const merged = [...prev];
+        for (const match of pendingMatches) {
+          if (!merged.some((m) => m.id === match.id)) merged.push(match);
+        }
+        return merged;
+      });
+      setPendingMatches([]);
+      toast.success(`Following ${followedCount} model${followedCount === 1 ? "" : "s"} — they're in your feed now!`);
+    } else {
+      toast.error("Couldn't follow your matches. Please try again.");
+    }
+  };
 
   // Load streak and spin status from session (Supabase for signed-in users, localStorage for anonymous)
   useEffect(() => {
@@ -156,7 +263,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
     try {
       setLoading(true);
       const res = await fetch(
-        `/api/games/boost?limit=${DECK_SIZE}${fingerprint ? `&fingerprint=${fingerprint}` : ""}`
+        `/api/games/boost${fingerprint ? `?fingerprint=${fingerprint}` : ""}`
       );
       if (!res.ok) throw new Error("Failed to fetch");
 
@@ -193,7 +300,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
     const promise = (async () => {
       try {
         const res = await fetch(
-          `/api/games/boost?limit=${DECK_SIZE}${fingerprint ? `&fingerprint=${fingerprint}` : ""}`
+          `/api/games/boost${fingerprint ? `?fingerprint=${fingerprint}` : ""}`
         );
         if (!res.ok) return 0;
 
@@ -237,6 +344,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   // Handle swipe
   const handleSwipe = async (modelId: string, direction: "left" | "right") => {
     const voteType = direction === "right" ? "like" : "pass";
+    const likedModel = voteType === "like" ? models.find((m) => m.id === modelId) : undefined;
 
     // Update session stats
     setSessionStats((prev) => ({
@@ -246,38 +354,53 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
       pointsGiven: voteType === "like" ? prev.pointsGiven + 1 : prev.pointsGiven,
     }));
 
+    if (likedModel) {
+      addMatch(likedModel);
+    }
+
     maybeRefillDeck();
 
-    try {
-      const res = await fetch("/api/games/boost/vote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model_id: modelId,
-          vote_type: voteType,
-          fingerprint,
-          session_id: session?.sessionId,
-        }),
-      });
+    const votePromise = (async () => {
+      try {
+        const res = await fetch("/api/games/boost/vote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model_id: modelId,
+            vote_type: voteType,
+            fingerprint,
+            session_id: session?.sessionId,
+          }),
+        });
 
-      const data = await res.json().catch(() => ({}));
+        const data = await res.json().catch(() => ({}));
 
-      if (!res.ok) {
-        if (res.status === 429) {
-          toast.info("Whoa, easy! Give it a few seconds before swiping again.");
-        } else {
-          toast.error(data.error || "That swipe didn't count. Please try again.");
+        if (!res.ok) {
+          if (res.status === 429) {
+            toast.info("Whoa, easy! Give it a few seconds before swiping again.");
+          } else {
+            toast.error(data.error || "That swipe didn't count. Please try again.");
+          }
+          return;
         }
-        return;
-      }
 
-      if (data.points_awarded && data.points_awarded > 1) {
-        toast.success(`Boosted! You gave this model ${data.points_awarded} points!`);
+        if (data.followed && likedModel && !localStorage.getItem(FOLLOW_TOAST_KEY)) {
+          localStorage.setItem(FOLLOW_TOAST_KEY, "true");
+          toast.success(`Following @${likedModel.username} — likes build your feed`);
+        }
+
+        if (data.points_awarded && data.points_awarded > 1) {
+          toast.success(`Boosted! You gave this model ${data.points_awarded} points!`);
+        }
+      } catch (error) {
+        console.error("Vote error:", error);
+        toast.error("That swipe didn't count. Check your connection.");
       }
-    } catch (error) {
-      console.error("Vote error:", error);
-      toast.error("That swipe didn't count. Check your connection.");
-    }
+    })();
+
+    pendingVotesRef.current.add(votePromise);
+    votePromise.finally(() => pendingVotesRef.current.delete(votePromise));
+    await votePromise;
   };
 
   // Handle boost
@@ -329,6 +452,8 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
         coinBalanceContext?.setBalance(data.new_balance);
       }
 
+      addMatch(boostModal);
+
       const title = type === "reveal" ? "Boosted & Revealed!" : "Boosted!";
       toast.success(`${title} You gave ${boostModal.username} ${data.points_awarded} points!`);
 
@@ -356,6 +481,12 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
     if (hasMoreRef.current || fetchMorePromiseRef.current) {
       const appended = await fetchMoreModels();
       if (appended > 0) return;
+    }
+
+    // Let in-flight votes land so the final swipe's completion marker is
+    // written before we refetch the session
+    if (pendingVotesRef.current.size > 0) {
+      await Promise.allSettled([...pendingVotesRef.current]);
     }
 
     // Update streak when game completes
@@ -449,6 +580,40 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
         {/* Game Area */}
         <div className="flex-1 flex flex-col items-center pb-8 md:pb-0" aria-live="polite">
+          {initialUser && isFan && pendingMatches.length > 0 && (
+            <div className="w-full max-w-[400px] mb-4 flex items-center justify-between gap-3 p-3 rounded-xl border border-pink-500/30 bg-gradient-to-r from-pink-500/15 via-purple-500/10 to-orange-500/10 shadow-[0_0_16px_rgba(236,72,153,0.15)]">
+              <div className="flex items-center gap-2 min-w-0">
+                <Heart className="h-4 w-4 text-pink-400 fill-pink-400 shrink-0" />
+                <p className="text-sm text-white/90 truncate">
+                  You matched {pendingMatches.length} model{pendingMatches.length === 1 ? "" : "s"} before signing up
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={followPendingMatches}
+                disabled={followingPending}
+                className="shrink-0 bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 shadow-lg shadow-pink-500/25"
+              >
+                {followingPending ? (
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                ) : (
+                  <UserPlus className="h-4 w-4 mr-1.5" />
+                )}
+                Follow all
+              </Button>
+            </div>
+          )}
+
+          {matches.length > 0 && (
+            <button
+              onClick={() => setShowMatches(true)}
+              className="mb-4 flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500/15 to-orange-500/10 border border-pink-500/30 hover:border-pink-500/60 hover:from-pink-500/25 hover:to-orange-500/15 text-sm font-semibold text-white shadow-[0_0_12px_rgba(236,72,153,0.25)] transition-all"
+            >
+              <Heart className="h-4 w-4 text-pink-400 fill-pink-400" />
+              {matches.length} {matches.length === 1 ? "match" : "matches"}
+            </button>
+          )}
+
           {gameComplete ? (
             <GameComplete
               nextResetAt={session?.nextResetAt || null}
@@ -457,6 +622,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
               sessionStats={sessionStats}
               streak={streak}
               isLoggedIn={!!initialUser}
+              matchCount={matches.length}
             />
           ) : models.length > 0 ? (
             <SwipeStack
@@ -482,10 +648,10 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
                 </div>
 
                 <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-pink-400 to-purple-400 text-transparent bg-clip-text">
-                  No models available
+                  That&apos;s today&apos;s lineup
                 </h3>
                 <p className="text-muted-foreground mb-6">
-                  Check back later for more models to discover!
+                  Come back tomorrow for a fresh deck of models!
                 </p>
                 <Button
                   onClick={fetchModels}
@@ -562,6 +728,79 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
         onBoost={handleBoost}
       />
 
+      {/* Matches Sheet */}
+      <Dialog open={showMatches} onOpenChange={setShowMatches}>
+        <DialogContent className="max-w-sm max-h-[85dvh] overflow-y-auto">
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-purple-500/5 to-orange-500/10 pointer-events-none" />
+          <DialogHeader className="relative">
+            <DialogTitle className="flex items-center justify-center gap-2">
+              <Heart className="h-5 w-5 text-pink-400 fill-pink-400" />
+              <span className="bg-gradient-to-r from-pink-400 to-orange-400 text-transparent bg-clip-text font-bold">
+                Your Matches
+              </span>
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground text-center">
+              {initialUser && isFan
+                ? "In your feed now — likes build your feed"
+                : `${matches.length} model${matches.length === 1 ? "" : "s"} you liked today`}
+            </p>
+          </DialogHeader>
+
+          {!initialUser && matches.length > 0 && (
+            <div className="relative">
+              <FanSignupDialog redirectTo="/boost">
+                <Button className="w-full bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 shadow-lg shadow-pink-500/25">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Sign up to follow your {matches.length} match{matches.length === 1 ? "" : "es"}
+                </Button>
+              </FanSignupDialog>
+            </div>
+          )}
+
+          <div className="relative grid grid-cols-3 gap-3 py-2">
+            {matches.map((match) => (
+              <div key={match.id} className="flex flex-col items-center gap-1.5">
+                <Link href={`/${match.username}`} className="group flex flex-col items-center gap-1.5 w-full">
+                  <div className="relative w-full aspect-square rounded-xl overflow-hidden ring-1 ring-pink-500/30 group-hover:ring-pink-500/70 transition-all">
+                    {match.profile_photo_url ? (
+                      <Image
+                        src={match.profile_photo_url}
+                        alt={match.username}
+                        fill
+                        sizes="120px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-pink-500/40 to-purple-500/40 flex items-center justify-center text-white font-bold text-lg">
+                        {(match.username || "?")[0].toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs text-white/70 group-hover:text-white truncate max-w-full transition-colors">
+                    @{match.username}
+                  </span>
+                </Link>
+                {initialUser && isFan && (
+                  <Link
+                    href={`/chats/new?model=${encodeURIComponent(match.username)}`}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-pink-500/15 to-orange-500/10 border border-pink-500/30 hover:border-pink-500/60 text-[11px] font-semibold text-pink-300 hover:text-pink-200 transition-all"
+                  >
+                    <MessageCircle className="h-3 w-3" />
+                    Say hi
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {matches.length === 0 && (
+            <p className="relative text-sm text-muted-foreground text-center py-6">
+              Swipe right on models you like — they&apos;ll show up here.
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Welcome Modal */}
       <Dialog open={showWelcome} onOpenChange={(open) => !open && dismissWelcome()}>
         <DialogContent className="max-w-sm overflow-hidden">
@@ -590,7 +829,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
               <Sparkles className="h-5 w-5 text-yellow-400 animate-pulse" />
             </DialogTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Boost Models up the Leaderboard
+              A fresh deck of ~25 models daily — boost them up the leaderboard
             </p>
           </DialogHeader>
 
@@ -602,7 +841,9 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-green-400">Swipe Right = Like</p>
-                <p className="text-sm text-muted-foreground">Give 1 point to boost their rank</p>
+                <p className="text-sm text-muted-foreground">
+                  {isFan ? "Boost their rank + follow them" : "Give 1 point to boost their rank"}
+                </p>
               </div>
             </div>
 
