@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Trash2, AlertTriangle, Building2, Globe, Users, Handshake } from "lucide-react";
+import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Trash2, AlertTriangle, Building2, Globe, Users, Handshake, Info, ExternalLink } from "lucide-react";
 import Image from "next/image";
 import type { Model, Fan, Actor, Brand } from "@/types/database";
 import { ImageCropper } from "@/components/upload/ImageCropper";
@@ -34,6 +34,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const US_STATES = [
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
@@ -420,88 +428,12 @@ export default function ProfilePage() {
     setFollowersLoading(true);
 
     try {
-      // Get followers
-      const { data: follows } = await (supabase
-        .from("follows") as any)
-        .select(`
-          id,
-          created_at,
-          follower_id,
-          actors!follows_follower_id_fkey (
-            id,
-            type,
-            user_id
-          )
-        `)
-        .eq("following_id", actor.id)
-        .order("created_at", { ascending: false });
-
-      if (!follows) {
-        setFollowers([]);
-        return;
-      }
-
-      // Get follower details based on their type
-      const followerActors = follows.map((f: any) => f.actors).filter(Boolean);
-
-      // Get fan details
-      const fanActorIds = followerActors.filter((a: any) => a.type === "fan").map((a: any) => a.id);
-      const { data: fans } = fanActorIds.length > 0
-        ? await supabase.from("fans").select("id, display_name, avatar_url").in("id", fanActorIds)
-        : { data: [] };
-      const fansMap = new Map((fans || []).map((f: any) => [f.id, f]));
-
-      // Get model details
-      const modelUserIds = followerActors.filter((a: any) => a.type === "model").map((a: any) => a.user_id);
-      const { data: models } = modelUserIds.length > 0
-        ? await supabase.from("models").select("user_id, username, profile_photo_url").in("user_id", modelUserIds)
-        : { data: [] };
-      const modelsMap = new Map((models || []).map((m: any) => [m.user_id, m]));
-
-      // Get brand details
-      const brandActorIds = followerActors.filter((a: any) => a.type === "brand").map((a: any) => a.id);
-      const { data: brands } = brandActorIds.length > 0
-        ? await (supabase.from("brands") as any).select("id, company_name, logo_url").in("id", brandActorIds)
-        : { data: [] };
-      const brandsMap = new Map((brands || []).map((b: any) => [b.id, b]));
-
-      // Build enriched followers list
-      const enrichedFollowers = follows.map((follow: any) => {
-        const followerActor = follow.actors;
-        if (!followerActor) return null;
-
-        let displayName = "Unknown";
-        let avatarUrl = null;
-        let profileUrl = null;
-        const type = followerActor.type;
-
-        if (type === "fan") {
-          const fan = fansMap.get(followerActor.id) as any;
-          displayName = fan?.display_name || "Anonymous Fan";
-          avatarUrl = fan?.avatar_url;
-        } else if (type === "model") {
-          const model = modelsMap.get(followerActor.user_id) as any;
-          displayName = model?.username || "Model";
-          avatarUrl = model?.profile_photo_url;
-          profileUrl = model?.username ? `/${model.username}` : null;
-        } else if (type === "brand") {
-          const brand = brandsMap.get(followerActor.id) as any;
-          displayName = brand?.company_name || "Brand";
-          avatarUrl = brand?.logo_url;
-        }
-
-        return {
-          id: follow.id,
-          actorId: followerActor.id,
-          displayName,
-          avatarUrl,
-          profileUrl,
-          type,
-          followedAt: follow.created_at,
-        };
-      }).filter(Boolean);
-
-      setFollowers(enrichedFollowers);
+      // Follower details live behind RLS (other users' actors/fans rows are
+      // hidden from the browser client), so a server route enriches them.
+      const res = await fetch("/api/model/followers");
+      if (!res.ok) throw new Error("Failed to load followers");
+      const data = await res.json();
+      setFollowers(data.followers || []);
     } catch {
       toast.error("Failed to load followers");
     } finally {
@@ -1581,6 +1513,118 @@ export default function ProfilePage() {
               <CardDescription>Add your username and follower count so brands can discover you</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="rounded-xl border border-pink-500/30 bg-gradient-to-r from-pink-500/10 to-violet-500/10 p-4 space-y-2 shadow-[0_0_16px_rgba(236,72,153,0.15)]">
+                <Label htmlFor="digis_username" className="flex items-center gap-2">
+                  Digis
+                  <span className="text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20 border border-pink-500/30 text-pink-400">Featured on your profile</span>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="What is Digis?"
+                        className="text-pink-400/70 hover:text-pink-300 transition-colors"
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-sm border border-pink-500/20 bg-[#080010]/95 backdrop-blur-xl shadow-[0_0_60px_rgba(236,72,153,0.15)]">
+                      <DialogHeader className="items-center text-center space-y-0">
+                        <div className="mb-4 mx-auto w-16 h-16 rounded-2xl bg-black ring-1 ring-white/15 flex items-center justify-center p-2 shadow-[0_0_20px_rgba(236,72,153,0.3)]">
+                          <Image
+                            src="/digis-logo-white.png"
+                            alt="Digis"
+                            width={48}
+                            height={48}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <DialogTitle className="text-lg font-bold text-white">
+                          What is Digis?
+                        </DialogTitle>
+                        <DialogDescription asChild>
+                          <div className="text-white/60 text-sm leading-relaxed mt-2 text-center space-y-3">
+                            <p>
+                              <span className="text-white font-semibold">Digis</span> is a creator
+                              platform where you monetize your fan base directly —{" "}
+                              <span className="text-pink-300">live streams</span>,{" "}
+                              <span className="text-pink-300">paid chats</span>,{" "}
+                              <span className="text-pink-300">exclusive content</span>, and{" "}
+                              <span className="text-pink-300">EXA fashion shows</span>.
+                            </p>
+                            <p>
+                              Link your account and a featured Digis button appears on your EXA
+                              profile, sending your fans straight to you.
+                            </p>
+                          </div>
+                        </DialogDescription>
+                      </DialogHeader>
+                      <a
+                        href="https://digis.cc"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full"
+                      >
+                        <Button className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white shadow-[0_0_16px_rgba(236,72,153,0.3)]">
+                          <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                          Create your free Digis account
+                        </Button>
+                      </a>
+                      <p className="text-xs text-white/40 text-center">
+                        Already have one? Just enter your username here.
+                      </p>
+                    </DialogContent>
+                  </Dialog>
+                </Label>
+                <Input
+                  id="digis_username"
+                  value={model.digis_username || ""}
+                  onChange={(e) => {
+                    const cleaned = cleanSocialUsername(e.target.value.toLowerCase());
+                    setModel({ ...model, digis_username: cleaned });
+                    checkDigisUsername(cleaned);
+                  }}
+                  placeholder="your-digis-username"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  className={
+                    digisStatus === "found" ? "border-green-500 focus-visible:ring-green-500" :
+                    digisStatus === "not_found" ? "border-amber-500 focus-visible:ring-amber-500" : ""
+                  }
+                />
+                {digisStatus === "checking" && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Checking Digis…
+                  </p>
+                )}
+                {digisStatus === "found" && (
+                  <p className="text-xs text-green-500">
+                    ✓ Linked to {model.digis_username} on Digis
+                  </p>
+                )}
+                {digisStatus === "not_found" && (
+                  <p className="text-xs text-amber-500">
+                    We couldn&apos;t find &ldquo;{model.digis_username}&rdquo; on Digis — double-check the spelling. You can still save.
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Your Digis.cc username (no @). Digis is where you{" "}
+                  <span className="text-pink-400 font-semibold">monetize your fans</span> — live
+                  streams, paid chats, exclusive content, and EXA fashion shows. Add your username
+                  and a featured Digis button appears on your EXA profile.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  New to Digis?{" "}
+                  <a
+                    href="https://digis.cc"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-pink-400 hover:text-pink-300 underline underline-offset-2"
+                  >
+                    Create your free creator account
+                  </a>{" "}
+                  — it takes a minute.
+                </p>
+              </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="instagram">Instagram</Label>
@@ -1691,47 +1735,6 @@ export default function ProfilePage() {
                     onChange={(e) => setModel({ ...model, twitch_username: cleanSocialUsername(e.target.value) })}
                     placeholder="username"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="digis_username" className="flex items-center gap-2">
-                    Digis
-                    <span className="text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20 border border-pink-500/30 text-pink-400">Earn 20% commission</span>
-                  </Label>
-                  <Input
-                    id="digis_username"
-                    value={model.digis_username || ""}
-                    onChange={(e) => {
-                      const cleaned = cleanSocialUsername(e.target.value.toLowerCase());
-                      setModel({ ...model, digis_username: cleaned });
-                      checkDigisUsername(cleaned);
-                    }}
-                    placeholder="your-digis-username"
-                    autoComplete="off"
-                    autoCapitalize="none"
-                    className={
-                      digisStatus === "found" ? "border-green-500 focus-visible:ring-green-500" :
-                      digisStatus === "not_found" ? "border-amber-500 focus-visible:ring-amber-500" : ""
-                    }
-                  />
-                  {digisStatus === "checking" && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                      <Loader2 className="h-3 w-3 animate-spin" /> Checking Digis…
-                    </p>
-                  )}
-                  {digisStatus === "found" && (
-                    <p className="text-xs text-green-500">
-                      ✓ Linked to {model.digis_username} on Digis
-                    </p>
-                  )}
-                  {digisStatus === "not_found" && (
-                    <p className="text-xs text-amber-500">
-                      We couldn&apos;t find &ldquo;{model.digis_username}&rdquo; on Digis — double-check the spelling. You can still save.
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Your Digis.cc username (no @). Fans redirected to Digis from your EXA profile will earn you{" "}
-                    <span className="text-pink-400 font-semibold">20% commission</span> on every ticket sale.
-                  </p>
                 </div>
               </div>
             </CardContent>
