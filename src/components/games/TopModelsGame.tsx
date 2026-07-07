@@ -20,6 +20,12 @@ import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import {
+  type BoostMatch as MatchModel,
+  BOOST_MATCHES_STORAGE_KEY as MATCHES_STORAGE_KEY,
+  readStoredBoostMatches as readStoredMatches,
+  generateBoostFingerprint,
+} from "./boost-shared";
 
 interface Model {
   id: string;
@@ -55,27 +61,8 @@ interface TopModelsGameProps {
   actorType?: string | null;
 }
 
-interface MatchModel {
-  id: string;
-  username: string;
-  profile_photo_url: string;
-}
-
 const REFILL_THRESHOLD = 10;
-const MATCHES_STORAGE_KEY = "boostMatches";
 const FOLLOW_TOAST_KEY = "boostFollowToastSeen";
-
-function readStoredMatches(): MatchModel[] {
-  try {
-    const raw = localStorage.getItem(MATCHES_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((m) => m && m.id && m.username);
-  } catch {
-    return [];
-  }
-}
 
 export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
   const [models, setModels] = useState<Model[]>([]);
@@ -231,31 +218,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
 
   // Generate browser fingerprint
   useEffect(() => {
-    const generateFingerprint = () => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.textBaseline = "top";
-        ctx.font = "14px Arial";
-        ctx.fillText("fingerprint", 2, 2);
-      }
-      const canvasData = canvas.toDataURL();
-      const userAgent = navigator.userAgent;
-      const screenRes = `${screen.width}x${screen.height}`;
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-      // Simple hash function
-      const str = `${canvasData}${userAgent}${screenRes}${timezone}`;
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = (hash << 5) - hash + char;
-        hash = hash & hash;
-      }
-      return Math.abs(hash).toString(36);
-    };
-
-    setFingerprint(generateFingerprint());
+    setFingerprint(generateBoostFingerprint());
   }, []);
 
   // Fetch models and session

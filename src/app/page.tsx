@@ -20,6 +20,7 @@ import {
   Home,
 } from "lucide-react";
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
+import { BoostTeaser } from "@/components/games/BoostTeaser";
 import { MobileNavSheet } from "@/components/home/MobileNavSheet";
 import { DigisMarqueeBanner } from "@/components/shows/digis-links";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
@@ -301,6 +302,9 @@ export default async function HomePage() {
 
           </div>
         </section>
+
+        {/* EXA Boost Teaser — playable mini-deck, fetches client-side on scroll */}
+        <BoostTeaser isLoggedIn={!!user} />
 
         {/* Upcoming Shows + EXA Live Wall (side-by-side on desktop, stacked on
             mobile). Each block renders only when it has something to show:
