@@ -52,7 +52,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${data.title} | EXA Gigs`,
     description: data.description || `Apply for ${data.title} on EXA Models`,
-    robots: { index: false, follow: false },
     openGraph: {
       title: `${data.title} | EXA Gigs`,
       description: data.description || `Apply for ${data.title} on EXA Models`,
@@ -465,7 +464,12 @@ export default async function GigDetailPage({ params }: Props) {
                     isLoggedIn={!!user}
                   />
                 ) : canApply ? (
-                  <ApplyButton gigId={gig.id} modelId={modelId} />
+                  <ApplyButton
+                    gigId={gig.id}
+                    gigSlug={slug}
+                    modelId={modelId}
+                    isLoggedIn={!!user}
+                  />
                 ) : (
                   <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 text-center">
                     {!user ? (

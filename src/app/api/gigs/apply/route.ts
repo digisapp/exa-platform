@@ -8,6 +8,7 @@ import { logger } from "@/lib/logger";
 
 const gigApplySchema = z.object({
   gigId: z.string().uuid(),
+  note: z.string().trim().max(1000).optional(),
 });
 
 // POST - Apply to a gig
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { gigId } = parsed.data;
+    const { gigId, note } = parsed.data;
 
     // Get the model's ID (models are linked by user_id, not actor)
     const { data: model } = await supabase
@@ -99,6 +100,7 @@ export async function POST(request: NextRequest) {
         gig_id: gigId,
         model_id: model.id,
         status: "pending",
+        note: note || null,
       })
       .select()
       .single();
