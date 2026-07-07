@@ -4187,6 +4187,7 @@ export type Database = {
       }
       gigs: {
         Row: {
+          announced_at: string | null
           application_deadline: string | null
           compensation_amount: number | null
           compensation_description: string | null
@@ -4216,6 +4217,7 @@ export type Database = {
           visibility: string | null
         }
         Insert: {
+          announced_at?: string | null
           application_deadline?: string | null
           compensation_amount?: number | null
           compensation_description?: string | null
@@ -4245,6 +4247,7 @@ export type Database = {
           visibility?: string | null
         }
         Update: {
+          announced_at?: string | null
           application_deadline?: string | null
           compensation_amount?: number | null
           compensation_description?: string | null
