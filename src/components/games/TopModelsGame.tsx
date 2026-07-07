@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { SwipeStack } from "./SwipeStack";
 import { TopModelsLeaderboard } from "./TopModelsLeaderboard";
 import { BoostModal } from "./BoostModal";
@@ -52,8 +52,15 @@ interface TopModelsGameProps {
   } | null;
 }
 
+const DECK_SIZE = 60;
+const REFILL_THRESHOLD = 10;
+
 export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   const [models, setModels] = useState<Model[]>([]);
+  const seenIdsRef = useRef<Set<string>>(new Set());
+  const remainingRef = useRef(0);
+  const hasMoreRef = useRef(false);
+  const fetchMorePromiseRef = useRef<Promise<number> | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [coinBalance, setCoinBalance] = useState(initialUser?.coinBalance || 0);
   const [loading, setLoading] = useState(true);
@@ -149,18 +156,24 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
     try {
       setLoading(true);
       const res = await fetch(
-        `/api/games/boost${fingerprint ? `?fingerprint=${fingerprint}` : ""}`
+        `/api/games/boost?limit=${DECK_SIZE}${fingerprint ? `&fingerprint=${fingerprint}` : ""}`
       );
       if (!res.ok) throw new Error("Failed to fetch");
 
       const data = await res.json();
-      setModels(data.models || []);
+      const deck: Model[] = data.models || [];
+      seenIdsRef.current = new Set(deck.map((m) => m.id));
+      remainingRef.current = deck.length;
+      hasMoreRef.current = !!data.hasMore;
+      setModels(deck);
       setSession(data.session);
 
       if (!data.session.canSwipe) {
         setGameComplete(true);
-      } else if (data.models.length === 0) {
+      } else if (deck.length === 0) {
         setGameComplete(true);
+      } else {
+        setGameComplete(false);
       }
     } catch (error) {
       console.error("Failed to fetch models:", error);
@@ -169,6 +182,51 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
       setLoading(false);
     }
   }, [fingerprint]);
+
+  // Fetch the next batch of unswiped models and append them to the deck.
+  // Shares the in-flight promise so a deck-empty check can await a refill
+  // that a threshold prefetch already kicked off.
+  const fetchMoreModels = useCallback((): Promise<number> => {
+    if (fetchMorePromiseRef.current) return fetchMorePromiseRef.current;
+    if (!hasMoreRef.current) return Promise.resolve(0);
+
+    const promise = (async () => {
+      try {
+        const res = await fetch(
+          `/api/games/boost?limit=${DECK_SIZE}${fingerprint ? `&fingerprint=${fingerprint}` : ""}`
+        );
+        if (!res.ok) return 0;
+
+        const data = await res.json();
+        hasMoreRef.current = !!data.hasMore;
+        const fresh: Model[] = (data.models || []).filter(
+          (m: Model) => !seenIdsRef.current.has(m.id)
+        );
+        if (fresh.length > 0) {
+          fresh.forEach((m) => seenIdsRef.current.add(m.id));
+          remainingRef.current += fresh.length;
+          setModels((prev) => [...prev, ...fresh]);
+        }
+        return fresh.length;
+      } catch (error) {
+        console.error("Failed to fetch more models:", error);
+        return 0;
+      } finally {
+        fetchMorePromiseRef.current = null;
+      }
+    })();
+
+    fetchMorePromiseRef.current = promise;
+    return promise;
+  }, [fingerprint]);
+
+  // Top up the deck before it runs dry
+  const maybeRefillDeck = useCallback(() => {
+    remainingRef.current -= 1;
+    if (remainingRef.current <= REFILL_THRESHOLD && hasMoreRef.current) {
+      fetchMoreModels();
+    }
+  }, [fetchMoreModels]);
 
   useEffect(() => {
     if (fingerprint) {
@@ -188,6 +246,8 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
       pointsGiven: voteType === "like" ? prev.pointsGiven + 1 : prev.pointsGiven,
     }));
 
+    maybeRefillDeck();
+
     try {
       const res = await fetch("/api/games/boost/vote", {
         method: "POST",
@@ -200,13 +260,23 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          toast.info("Whoa, easy! Give it a few seconds before swiping again.");
+        } else {
+          toast.error(data.error || "That swipe didn't count. Please try again.");
+        }
+        return;
+      }
 
       if (data.points_awarded && data.points_awarded > 1) {
         toast.success(`Boosted! You gave this model ${data.points_awarded} points!`);
       }
     } catch (error) {
       console.error("Vote error:", error);
+      toast.error("That swipe didn't count. Check your connection.");
     }
   };
 
@@ -229,18 +299,22 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         if (res.status === 401) {
           toast.error(`Sign in required: ${data.error}`);
           return;
         }
+        if (res.status === 429) {
+          toast.info("You're boosting fast! Try again in a few seconds.");
+          return;
+        }
         throw new Error(data.error);
       }
 
-      // Update session stats with boost
-      const boostPoints = type === "super" ? 25 : 5;
+      // Update session stats with the points the server actually awarded
+      const boostPoints = data.points_awarded || 0;
       setSessionStats((prev) => ({
         ...prev,
         likes: prev.likes + 1,
@@ -263,15 +337,27 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
 
       // Remove this model from the stack
       setModels((prev) => prev.filter((m) => m.id !== boostModal.id));
+      maybeRefillDeck();
     } catch (error) {
       console.error("Boost error:", error);
-      toast.error("Failed to boost. Please try again.");
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to boost. Please try again."
+      );
       throw error;
     }
   };
 
   // Handle empty stack
   const handleEmpty = async () => {
+    // If the server still has unswiped models (or a refill is already in
+    // flight), top up instead of completing
+    if (hasMoreRef.current || fetchMorePromiseRef.current) {
+      const appended = await fetchMoreModels();
+      if (appended > 0) return;
+    }
+
     // Update streak when game completes
     if (initialUser && session?.sessionId) {
       // Signed-in user: save to Supabase
@@ -306,7 +392,9 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
       }
     }
 
-    setGameComplete(true);
+    // Refetch so GameComplete renders with the real reset time instead of a
+    // stale "Ready to Play Again!" flash
+    await fetchModels();
   };
 
   // Handle play again
