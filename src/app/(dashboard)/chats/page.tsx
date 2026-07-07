@@ -1,15 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { createServiceRoleClient } from "@/lib/supabase/service";
 import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
 import { BlastDialog } from "@/components/chat/BlastDialog";
 import { MessageCircle } from "lucide-react";
-import { fetchConversationList } from "@/lib/chat-queries";
-
-// Admin client for fetching participant data (bypasses RLS)
-const adminClient = createServiceRoleClient();
+import { getConversationList } from "@/lib/chat-queries";
 
 interface PageProps {
   searchParams: Promise<{ new?: string }>;
@@ -90,7 +86,7 @@ export default async function MessagesPage({ searchParams }: PageProps) {
   }
 
   // Fetch conversations using shared query (same data as layout, but needed for mobile view)
-  const { conversations, fanCount, brandCount } = await fetchConversationList(supabase, adminClient, actor.id);
+  const { conversations, fanCount, brandCount } = await getConversationList(actor.id);
 
   return (
     <>

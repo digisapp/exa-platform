@@ -1,13 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { createServiceRoleClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { BlastDialog } from "@/components/chat/BlastDialog";
 import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
-import { fetchConversationList } from "@/lib/chat-queries";
-
-// Admin client for fetching participant data (bypasses RLS)
-const adminClient = createServiceRoleClient();
+import { Badge } from "@/components/ui/badge";
+import { getConversationList } from "@/lib/chat-queries";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -46,7 +43,11 @@ export default async function ChatsLayout({ children }: LayoutProps) {
     coinBalance = brand?.coin_balance || 0;
   }
 
-  const { conversations, fanCount, brandCount } = await fetchConversationList(supabase, adminClient, actor.id);
+  const { conversations, fanCount, brandCount } = await getConversationList(actor.id);
+
+  const unreadTotal = conversations
+    .filter((c: any) => !c.is_archived)
+    .reduce((sum: number, c: any) => sum + (c.unread_count || 0), 0);
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -55,7 +56,14 @@ export default async function ChatsLayout({ children }: LayoutProps) {
         {/* Left panel: conversation list (desktop only) */}
         <div className="hidden lg:flex lg:flex-col lg:border-r lg:overflow-hidden">
           <div className="flex items-center justify-between p-4 border-b">
-            <h1 className="text-xl font-bold">Chats</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold">Chats</h1>
+              {unreadTotal > 0 && (
+                <Badge variant="secondary" className="bg-pink-500 text-white text-[10px] h-5 min-w-5 px-1.5 justify-center border-0 shadow-[0_0_8px_rgba(236,72,153,0.7)]">
+                  {unreadTotal > 99 ? "99+" : unreadTotal}
+                </Badge>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               {actor.type === "model" && (
                 <BlastDialog fanCount={fanCount} brandCount={brandCount} />

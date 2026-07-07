@@ -415,34 +415,22 @@ export function MessageInput({
 
   return (
     <div className="border-t border-white/10 bg-white/[0.03] backdrop-blur-sm p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-      {/* Coin cost indicator - only show for fans */}
-      {coinCost > 0 && (
-        <div
-          className={cn(
-            "flex items-center gap-2 text-sm mb-2 px-3 py-2 rounded-xl border",
-            hasEnoughCoins
-              ? "text-white/70 bg-amber-500/10 border-amber-500/25"
-              : "text-rose-300 bg-rose-500/10 border-rose-500/30"
-          )}
-        >
+      {/* Low-balance warning — the send button already shows the per-message
+          cost, so the banner only appears when the fan can't afford to send */}
+      {coinCost > 0 && !hasEnoughCoins && (
+        <div className="flex items-center gap-2 text-sm mb-2 px-3 py-2 rounded-xl border text-rose-300 bg-rose-500/10 border-rose-500/30">
           <Coins className="h-4 w-4 text-amber-400" />
-          <span>
-            {hasEnoughCoins
-              ? `${coinCost} coins per message`
-              : `Not enough coins — need ${coinCost}, you have ${coinBalance}`}
-          </span>
-          {!hasEnoughCoins && (
-            <button
-              type="button"
-              onClick={() => setBuyCoinsOpen(true)}
-              className="ml-auto text-xs font-semibold text-pink-300 hover:text-pink-200 whitespace-nowrap"
-            >
-              Get coins →
-            </button>
-          )}
-          <BuyCoinsModal isOpen={buyCoinsOpen} onClose={() => setBuyCoinsOpen(false)} />
+          <span>Not enough coins — need {coinCost}, you have {coinBalance}</span>
+          <button
+            type="button"
+            onClick={() => setBuyCoinsOpen(true)}
+            className="ml-auto text-xs font-semibold text-pink-300 hover:text-pink-200 whitespace-nowrap"
+          >
+            Get coins →
+          </button>
         </div>
       )}
+      <BuyCoinsModal isOpen={buyCoinsOpen} onClose={() => setBuyCoinsOpen(false)} />
 
       {/* Reply-to bar */}
       {replyingTo && (
