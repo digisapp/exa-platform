@@ -43,6 +43,14 @@
     {
       "path": "/api/cron/sweep-stale-calls",
       "schedule": "*/2 * * * *"
+    },
+    {
+      "path": "/api/cron/reset-boost-leaderboards?period=daily",
+      "schedule": "5 0 * * *"
+    },
+    {
+      "path": "/api/cron/reset-boost-leaderboards?period=weekly",
+      "schedule": "10 0 * * 1"
     }
   ]
 }

@@ -60,11 +60,10 @@ export function TopModelsLeaderboard({
     let interval = setInterval(fetchLeaderboard, 60000);
 
     const handleVisibilityChange = () => {
+      clearInterval(interval);
       if (document.visibilityState === "visible") {
         fetchLeaderboard();
         interval = setInterval(fetchLeaderboard, 60000);
-      } else {
-        clearInterval(interval);
       }
     };
 
@@ -153,7 +152,7 @@ export function TopModelsLeaderboard({
       <div className="space-y-2">
         {loading ? (
           // Enhanced loading skeleton
-          Array.from({ length: compact ? 5 : 30 }).map((_, i) => (
+          Array.from({ length: compact ? 5 : 10 }).map((_, i) => (
             <div
               key={i}
               className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 animate-pulse"

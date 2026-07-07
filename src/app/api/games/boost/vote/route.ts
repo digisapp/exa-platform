@@ -13,6 +13,24 @@ const SUPER_COST = 20;
 const BOOST_MULTIPLIER = 5;
 const SUPER_MULTIPLIER = 10;
 
+// Total swipeable models, cached in-module so we don't run a COUNT(*) on
+// every swipe. Only used for session-completion tracking, so slight staleness
+// is fine.
+let totalModelsCache: { value: number; expiresAt: number } | null = null;
+
+async function getTotalSwipeableModels(): Promise<number> {
+  if (totalModelsCache && totalModelsCache.expiresAt > Date.now()) {
+    return totalModelsCache.value;
+  }
+  const { count } = await adminClient
+    .from("models")
+    .select("id", { count: "exact", head: true })
+    .eq("is_approved", true)
+    .not("profile_photo_url", "is", null);
+  totalModelsCache = { value: count || 0, expiresAt: Date.now() + 5 * 60 * 1000 };
+  return totalModelsCache.value;
+}
+
 // POST - Record a vote
 export async function POST(request: NextRequest) {
   try {
@@ -49,8 +67,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate the target model exists and is visible before anything is charged
+    const { data: targetModel } = await adminClient
+      .from("models")
+      .select("id, user_id, is_approved, deleted_at, profile_photo_url")
+      .eq("id", model_id)
+      .maybeSingle();
+
+    if (
+      !targetModel ||
+      !targetModel.is_approved ||
+      targetModel.deleted_at ||
+      !targetModel.profile_photo_url
+    ) {
+      return NextResponse.json(
+        { error: "Model not found" },
+        { status: 404 }
+      );
+    }
+
     // Get actor_id if logged in
     let actorId = null;
+    let actorType: string | null = null;
     let coinBalance = 0;
 
     if (user) {
@@ -61,6 +99,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       actorId = actor?.id;
+      actorType = actor?.type ?? null;
 
       if (actorId) {
         const suspended = await assertNotSuspended(actorId);
@@ -90,6 +129,14 @@ export async function POST(request: NextRequest) {
           .single();
         coinBalance = brand?.coin_balance || 0;
       }
+    }
+
+    // No self-boosting: models can't award points to themselves
+    if (user && targetModel.user_id === user.id && vote_type === "like") {
+      return NextResponse.json(
+        { error: "You can't boost yourself" },
+        { status: 403 }
+      );
     }
 
     // Calculate points and cost
@@ -156,6 +203,44 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Duplicate guard: a session can only swipe each model once per cycle
+    if (session_id) {
+      const { data: sessionRow } = await adminClient
+        .from("top_model_sessions")
+        .select("models_swiped")
+        .eq("id", session_id)
+        .maybeSingle();
+
+      if (sessionRow?.models_swiped?.includes(model_id)) {
+        return NextResponse.json(
+          { error: "You've already swiped on this model" },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Duplicate guard: one paid boost per model per actor per day
+    if (coinsToSpend > 0 && actorId) {
+      const todayStart = new Date();
+      todayStart.setUTCHours(0, 0, 0, 0);
+
+      const { data: existingBoost } = await adminClient
+        .from("top_model_votes")
+        .select("id")
+        .eq("voter_id", actorId)
+        .eq("model_id", model_id)
+        .eq("is_boosted", true)
+        .gte("created_at", todayStart.toISOString())
+        .limit(1);
+
+      if (existingBoost && existingBoost.length > 0) {
+        return NextResponse.json(
+          { error: "You've already boosted this model today. Come back tomorrow!" },
+          { status: 409 }
+        );
+      }
+    }
+
     // Deduct coins if needed.
     // Uses the service-role client: the route has already authenticated the user
     // and derived actorId server-side, and EXECUTE on deduct_coins is revoked
@@ -182,11 +267,11 @@ export async function POST(request: NextRequest) {
     // Record the vote via service-role client: record_top_model_vote is REVOKEd
     // from authenticated/anon so the leaderboard points/coins_spent can't be
     // forged by calling the RPC directly. Points are computed server-side above.
-    const { data: voteRpcData, error: voteError } = await adminClient.rpc(
+    const { data: voteRpcData, error: voteError } = await (adminClient as any).rpc(
       "record_top_model_vote",
       {
-        p_voter_id: actorId || "",
-        p_voter_fingerprint: fingerprint || "",
+        p_voter_id: actorId ?? null,
+        p_voter_fingerprint: fingerprint ?? null,
         p_model_id: model_id,
         p_vote_type: vote_type,
         p_points: points,
@@ -199,6 +284,41 @@ export async function POST(request: NextRequest) {
 
     if (voteError) {
       logger.error("Vote error", voteError);
+
+      // The user already paid — refund before surfacing the failure
+      if (coinsToSpend > 0 && actorId) {
+        const { data: refundResult, error: refundError } = await (adminClient as any).rpc(
+          "add_coins",
+          {
+            p_actor_id: actorId,
+            p_amount: coinsToSpend,
+            p_action: "exa_boost_refund",
+            p_metadata: {
+              model_id,
+              game: "exa_boost",
+              reason: "vote_record_failed",
+              is_super: isSuperBoosted,
+            },
+          }
+        );
+
+        if (refundError || !refundResult) {
+          logger.error(
+            "CRITICAL: exa_boost refund failed after vote record failure — coins deducted with no vote recorded",
+            { actorId, model_id, coinsToSpend, refundError }
+          );
+          return NextResponse.json(
+            { error: "Failed to record vote and the automatic refund failed. Please contact support." },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json(
+          { error: "Failed to record vote. Your coins have been refunded." },
+          { status: 500 }
+        );
+      }
+
       return NextResponse.json(
         { error: "Failed to record vote" },
         { status: 500 }
@@ -207,17 +327,12 @@ export async function POST(request: NextRequest) {
 
     // Mark model as swiped in session
     if (session_id) {
-      // Get total models count
-      const { count } = await supabase
-        .from("models")
-        .select("id", { count: "exact", head: true })
-        .eq("is_approved", true)
-        .not("profile_photo_url", "is", null);
+      const totalModels = await getTotalSwipeableModels();
 
       await supabase.rpc("mark_model_swiped", {
         p_session_id: session_id,
         p_model_id: model_id,
-        p_total_models: count || 0,
+        p_total_models: totalModels,
       });
     }
 
@@ -279,12 +394,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Re-read the balance after the deduct so the client gets the real value
+    let newBalance = coinBalance;
+    if (coinsToSpend > 0 && actorId) {
+      const balanceTable = actorType === "fan" ? "fans" : actorType === "brand" ? "brands" : "models";
+      const { data: balanceRow } = await (adminClient.from(balanceTable) as any)
+        .select("coin_balance")
+        .eq("id", actorId)
+        .single();
+      newBalance = balanceRow?.coin_balance ?? coinBalance - coinsToSpend;
+    }
+
     return NextResponse.json({
       success: true,
       vote_id: voteResult?.vote_id,
       points_awarded: vote_type === "like" ? points : 0,
       coins_spent: coinsToSpend,
-      new_balance: coinBalance - coinsToSpend,
+      new_balance: newBalance,
     });
   } catch (error) {
     logger.error("Vote error", error);

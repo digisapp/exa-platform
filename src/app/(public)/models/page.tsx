@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Flame } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
@@ -166,6 +167,7 @@ export default async function ModelsPage({
     { data: models },
     { count: totalCount },
     { data: featured },
+    { data: trending },
     { data: actor },
   ] = await Promise.all([
     // Models for current page
@@ -182,6 +184,16 @@ export default async function ModelsPage({
       .eq("is_approved", true)
       .is("deleted_at", null)
       .not("profile_photo_url", "is", null)
+      .limit(5) as Promise<{ data: any[] | null }>,
+    // Trending models — this week's EXA Boost leaders
+    (supabase
+      .from("top_model_leaderboard") as any)
+      .select("week_points, models!inner(id, username, profile_photo_url)")
+      .gt("week_points", 0)
+      .eq("models.is_approved", true)
+      .is("models.deleted_at", null)
+      .not("models.profile_photo_url", "is", null)
+      .order("week_points", { ascending: false })
       .limit(5) as Promise<{ data: any[] | null }>,
     // Actor info
     (supabase
@@ -296,6 +308,37 @@ export default async function ModelsPage({
             )
           )}
         </div>
+
+        {/* Trending This Week — EXA Boost weekly leaders */}
+        {trending && trending.length > 0 && (
+          <div className="mb-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-xl bg-orange-500/40 blur-lg opacity-40" />
+                <div className="relative p-2 rounded-xl bg-gradient-to-br from-orange-500/20 to-pink-500/20 ring-1 ring-orange-500/40">
+                  <Flame className="h-[18px] w-[18px] text-orange-400" />
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold">Boosted by fans</p>
+                <h2 className="text-lg md:text-xl font-bold text-white">
+                  <span className="exa-gradient-text">Trending This Week</span>
+                </h2>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {trending.map((entry: any) => (
+                <div key={entry.models.id} className="relative">
+                  <ModelCard model={entry.models} variant="compact" />
+                  <div className="absolute -top-2 -right-2 z-10 pointer-events-none flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white text-[10px] font-semibold shadow-[0_0_12px_rgba(249,115,22,0.5)]">
+                    <Flame className="h-3 w-3" />
+                    Trending
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Featured Models */}
         {featured && featured.length > 0 && (

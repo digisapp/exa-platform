@@ -114,8 +114,8 @@ export function BoostModal({
             <div className="text-center space-y-5">
               {/* Emotional hook */}
               <p className="text-sm text-muted-foreground px-2">
-                Be their biggest supporter! Boosts give <strong className="text-white">5x leaderboard points</strong> and
-                help {model.username} get discovered by brands and fans.
+                Be their biggest supporter! Boosts give <strong className="text-white">5x leaderboard points</strong> —
+                and the top models each week land on Explore&apos;s Trending row.
               </p>
 
               {/* Benefits list */}
@@ -130,17 +130,17 @@ export function BoostModal({
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-purple-500">
                     <Sparkles className="h-4 w-4 text-white" />
                   </div>
-                  <span className="text-left">Increase their <strong className="text-pink-400">visibility & exposure</strong></span>
+                  <span className="text-left">Top weekly models get featured on <strong className="text-pink-400">Explore&apos;s Trending row</strong></span>
                 </div>
                 <div className="flex items-center gap-3 text-sm bg-white/5 rounded-lg px-4 py-2.5">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500">
                     <Heart className="h-4 w-4 text-white" />
                   </div>
-                  <span className="text-left">Show them you <strong className="text-purple-400">believe in them</strong></span>
+                  <span className="text-left"><strong className="text-purple-400">Reveal your name</strong> — Super Boosts notify {model.username} instantly</span>
                 </div>
               </div>
 
-              <Link href="/signin" className="block">
+              <Link href="/signin?redirect=/boost" className="block">
                 <Button className="w-full h-12 text-base bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 hover:from-orange-600 hover:via-pink-600 hover:to-purple-600 shadow-lg shadow-pink-500/25">
                   <Heart className="h-5 w-5 mr-2" />
                   Sign In to Support {model.username}

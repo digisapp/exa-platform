@@ -26,8 +26,8 @@ export const en = {
     // Profile dropdown + featured rows
     withdraw: "Withdraw",
     ready: "ready",
-    boostVisibility: "Boost visibility",
-    priorityInFeeds: "Priority in feeds",
+    boostRanking: "See your ranking & trending status",
+    boostFavorites: "Boost your favorites onto Explore's Trending row",
     viewAsFan: "View as fan",
     shareProfile: "Share profile",
     topUpCoins: "Top up {amount} coins",

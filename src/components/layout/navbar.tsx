@@ -425,7 +425,7 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                               {t.nav.exaBoost}
                             </p>
                             <p className="text-[11px] text-orange-300">
-                              {t.nav.boostVisibility}
+                              {t.nav.boostRanking}
                             </p>
                           </div>
                           <ArrowUpRight className="h-4 w-4 text-orange-400 shrink-0" />
@@ -480,7 +480,7 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                               {t.nav.exaBoost}
                             </p>
                             <p className="text-[11px] text-orange-300">
-                              {t.nav.priorityInFeeds}
+                              {t.nav.boostFavorites}
                             </p>
                           </div>
                           <ArrowUpRight className="h-4 w-4 text-orange-400 shrink-0" />

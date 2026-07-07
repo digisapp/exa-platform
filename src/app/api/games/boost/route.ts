@@ -27,6 +27,8 @@ export async function GET(request: NextRequest) {
     const supabase: any = await createClient();
     const { searchParams } = new URL(request.url);
     const fingerprint = searchParams.get("fingerprint");
+    const limitParam = parseInt(searchParams.get("limit") || "", 10);
+    const limit = Math.min(Math.max(Number.isFinite(limitParam) ? limitParam : 60, 10), 100);
 
     // Get current user if logged in
     const { data: { user } } = await supabase.auth.getUser();
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
     const { data: sessionData, error: sessionError } = await supabase.rpc(
       "get_or_create_top_model_session",
       {
-        p_user_id: user?.id ?? "",
+        p_user_id: user?.id ?? null,
         p_fingerprint: fingerprint,
       }
     );
@@ -68,6 +70,7 @@ export async function GET(request: NextRequest) {
     if (!session.can_swipe) {
       return NextResponse.json({
         models: [],
+        hasMore: false,
         session: {
           canSwipe: false,
           modelsSwiped: session.models_swiped,
@@ -117,9 +120,19 @@ export async function GET(request: NextRequest) {
       query = query.not("id", "in", `(${swipedIds.join(",")})`);
     }
 
-    // Fetch all models
-    const { data: models, error } = await query
-      .order("created_at", { ascending: false });
+    // Fetch one page of the deck (limit + 1 to detect whether more remain)
+    const { data: models, error } = await query.limit(limit + 1);
+
+    if (error) {
+      logger.error("Fetch models error", error);
+      return NextResponse.json(
+        { error: "Failed to fetch models" },
+        { status: 500 }
+      );
+    }
+
+    const hasMore = (models || []).length > limit;
+    const deck = (models || []).slice(0, limit);
 
     // Get today's leaderboard rankings
     const { data: leaderboardData } = await supabase
@@ -136,7 +149,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform models to include points and rank at top level
-    const modelsWithPoints = (models || []).map((model: any) => ({
+    const modelsWithPoints = deck.map((model: any) => ({
       ...model,
       today_points: model.top_model_leaderboard?.today_points || 0,
       total_points: model.top_model_leaderboard?.total_points || 0,
@@ -144,19 +157,12 @@ export async function GET(request: NextRequest) {
       top_model_leaderboard: undefined, // Remove nested object
     }));
 
-    if (error) {
-      logger.error("Fetch models error", error);
-      return NextResponse.json(
-        { error: "Failed to fetch models" },
-        { status: 500 }
-      );
-    }
-
     // Shuffle the models using cryptographically secure randomness
     const shuffledModels = secureShufflePop(modelsWithPoints, modelsWithPoints.length);
 
     return NextResponse.json({
       models: shuffledModels,
+      hasMore,
       session: {
         canSwipe: true,
         modelsSwiped: session.models_swiped,

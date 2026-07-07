@@ -28,8 +28,8 @@ export const es: Dictionary = {
     // Profile dropdown + featured rows
     withdraw: "Retirar",
     ready: "disponibles",
-    boostVisibility: "Impulsa tu visibilidad",
-    priorityInFeeds: "Prioridad en feeds",
+    boostRanking: "Mira tu ranking y tu tendencia",
+    boostFavorites: "Impulsa a tus favoritas a Tendencias en Explorar",
     viewAsFan: "Ver como fan",
     shareProfile: "Compartir perfil",
     topUpCoins: "Recargar {amount} monedas",
