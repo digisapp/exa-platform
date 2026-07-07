@@ -256,11 +256,10 @@ async function handleTripPayment(session: Stripe.Checkout.Session, supabaseAdmin
     return;
   }
 
-  // Atomically increment spots_filled using RPC (prevents race conditions)
-  const { error: rpcError } = await supabaseAdmin.rpc("increment_gig_spots_filled", { gig_id: gigId });
-  if (rpcError) {
-    logger.error("Error incrementing gig spots_filled", rpcError);
-  }
+  // spots_filled is recomputed from the accepted count by trg_sync_gig_spots_filled
+  // (migration 20260702000001) whenever gig_applications.status changes — the
+  // status="accepted" update above already triggered it. Do NOT also call the
+  // superseded increment_gig_spots_filled RPC here; that double-counts.
 }
 
 async function handleCreatorHousePayment(session: Stripe.Checkout.Session, supabaseAdmin: SupabaseClient) {

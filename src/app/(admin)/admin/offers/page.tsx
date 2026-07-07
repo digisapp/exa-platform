@@ -119,6 +119,10 @@ export default function AdminOffersPage() {
     setLoading(true);
     try {
       const response = await fetch("/api/offers");
+      if (!response.ok) {
+        toast.error("Failed to load offers");
+        return;
+      }
       const data = await response.json();
       if (data.offers) {
         setOffers(data.offers);
@@ -140,36 +144,21 @@ export default function AdminOffersPage() {
   }, [supabase]);
 
   const loadCampaigns = useCallback(async (brandId: string) => {
-    // Get the actor id for this brand
-    const { data: actor } = await (supabase
-      .from("actors") as any)
-      .select("id")
-      .eq("id", brandId)
-      .single();
-
-    if (!actor) {
+    // campaigns has no admin RLS policy, so the browser client returns zero
+    // rows for admins — fetch via the service-role admin route instead.
+    try {
+      const res = await fetch(`/api/admin/campaigns?brand_id=${encodeURIComponent(brandId)}`);
+      if (!res.ok) {
+        setCampaigns([]);
+        return;
+      }
+      const data = await res.json();
+      setCampaigns(data.campaigns || []);
+    } catch (err) {
+      console.error("Error loading campaigns:", err);
       setCampaigns([]);
-      return;
     }
-
-    const { data: campaignsData } = await (supabase
-      .from("campaigns") as any)
-      .select(`
-        id,
-        name,
-        brand_id,
-        campaign_models(count)
-      `)
-      .eq("brand_id", brandId)
-      .order("name");
-
-    const campaignsWithCount = (campaignsData || []).map((c: any) => ({
-      ...c,
-      model_count: c.campaign_models?.[0]?.count || 0,
-    }));
-
-    setCampaigns(campaignsWithCount);
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     loadOffers();

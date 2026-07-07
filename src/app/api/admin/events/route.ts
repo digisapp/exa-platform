@@ -219,12 +219,22 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Keep the event's badge label in sync (name/description/icon). Do NOT touch
-    // is_active here — that's the deliberate "retire this badge" switch.
+    // Keep the event's badge label in sync (name/description). Do NOT touch
+    // is_active here — that's the deliberate "retire this badge" switch. Only
+    // overwrite the icon when the admin explicitly supplied a badge_emoji; the
+    // edit form doesn't pre-populate it, so always writing the computed default
+    // would silently reset a custom badge emoji to ⭐ on any unrelated edit.
     const bf = badgeFieldsFor(input);
+    const badgeUpdate: Record<string, unknown> = {
+      name: bf.name,
+      description: bf.description,
+    };
+    if (nn(input.badge_emoji)) {
+      badgeUpdate.icon = bf.icon;
+    }
     await (admin as any)
       .from("badges")
-      .update({ name: bf.name, description: bf.description, icon: bf.icon })
+      .update(badgeUpdate)
       .eq("event_id", id)
       .eq("badge_type", "event");
 

@@ -79,6 +79,8 @@ export default function ProfilePage() {
   const [actor, setActor] = useState<Actor | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [originalUsername, setOriginalUsername] = useState<string>("");
+  // Active settings tab — supports deep links like /settings?tab=rates.
+  const [activeTab, setActiveTab] = useState<string>("profile");
   const [usernameStatus, setUsernameStatus] = useState<{
     checking: boolean;
     available: boolean | null;
@@ -383,6 +385,7 @@ export default function ProfilePage() {
 
         if (fanData) {
           setFan(fanData);
+          setOriginalUsername(fanData.username || "");
         }
       } else if (actorData.type === "brand") {
         // Load brand data
@@ -441,13 +444,29 @@ export default function ProfilePage() {
     }
   };
 
+  // Honor deep links like /settings?tab=rates (e.g. the "Set Your Rates" CTA).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab) setActiveTab(tab);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "followers") loadFollowers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, actor]);
+
   const handleFanSave = async () => {
     if (!fan) return;
     setSaving(true);
 
     try {
-      // Validate username if provided
-      if (fan.username) {
+      // Validate username if provided. Only check availability when it actually
+      // changed — /api/username/check has no self-exclusion, so re-checking the
+      // fan's own unchanged username would always fail ("already taken") and
+      // block every save (display name, phone, etc.).
+      const fanUsernameChanged = (fan.username || "") !== originalUsername;
+      if (fan.username && fanUsernameChanged) {
         if (fan.username.length < 3) {
           throw new Error("Username must be at least 3 characters");
         }
@@ -629,6 +648,8 @@ export default function ProfilePage() {
         allow_tips: (model as any).allow_tips ?? true,
         // Brand collab fields
         open_to_collabs: (model as any).open_to_collabs ?? false,
+        collab_types: (model as any).collab_types ?? [],
+        deactivated: (model as any).deactivated ?? false,
         avg_instagram_impressions: (model as any).avg_instagram_impressions || null,
         avg_tiktok_views: (model as any).avg_tiktok_views || null,
         instagram_collab_rate: (model as any).instagram_collab_rate || null,
@@ -1236,7 +1257,7 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      <Tabs defaultValue="profile" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-white/[0.03] border border-white/10 rounded-2xl p-1 h-auto flex-wrap gap-1">
           <TabsTrigger
             value="profile"

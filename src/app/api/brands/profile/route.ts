@@ -4,11 +4,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { RESERVED_PATHS, USERNAME_REGEX } from "@/lib/reserved-usernames";
 
 const brandProfileSchema = z.object({
   company_name: z.string().min(1, "Company name is required"),
   contact_name: z.string().nullish(),
-  username: z.string().min(3).max(30).nullish(),
+  username: z
+    .string()
+    .min(3)
+    .max(30)
+    .regex(USERNAME_REGEX, "Username can only contain lowercase letters, numbers, dots and underscores")
+    .nullish(),
   bio: z.string().max(5000).nullish(),
   website: z.string().url().nullish(),
   phone: z.string().nullish(),
@@ -54,6 +60,19 @@ export async function PUT(request: NextRequest) {
 
   // Validate username if provided
   if (username) {
+    // Block app-route collisions and reserved names
+    if (RESERVED_PATHS.includes(username)) {
+      return NextResponse.json({ error: "This username is reserved" }, { status: 400 });
+    }
+
+    const { data: reserved } = await adminClient
+      .from("reserved_usernames")
+      .select("username")
+      .eq("username", username)
+      .maybeSingle();
+    if (reserved) {
+      return NextResponse.json({ error: "This username is reserved" }, { status: 400 });
+    }
 
     // Check if username is taken (by another brand)
     const { data: existingBrand } = await adminClient
@@ -75,6 +94,17 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (existingModel) {
+      return NextResponse.json({ error: "Username is already taken" }, { status: 400 });
+    }
+
+    // Check if username is taken by a fan
+    const { data: existingFan } = await adminClient
+      .from("fans")
+      .select("id")
+      .eq("username", username)
+      .single();
+
+    if (existingFan) {
       return NextResponse.json({ error: "Username is already taken" }, { status: 400 });
     }
   }

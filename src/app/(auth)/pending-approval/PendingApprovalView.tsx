@@ -32,6 +32,8 @@ const t = {
     confirmEmailDesc: "Click the link we sent you — we need it before we can approve you.",
     resend: "Resend email",
     resent: "Sent! Check your inbox",
+    selectedTitle: "You've been selected! 🎉",
+    selectedDesc: "Add your profile photo below and your profile goes live instantly — no more waiting.",
   },
   es: {
     title: "Solicitud Pendiente",
@@ -54,6 +56,8 @@ const t = {
     confirmEmailDesc: "Haz clic en el enlace que te enviamos — lo necesitamos antes de poder aprobarte.",
     resend: "Reenviar correo",
     resent: "¡Enviado! Revisa tu bandeja",
+    selectedTitle: "¡Fuiste seleccionada! 🎉",
+    selectedDesc: "Agrega tu foto de perfil abajo y tu perfil se activa al instante — sin más esperas.",
   },
 };
 
@@ -80,6 +84,7 @@ export type PendingApplication = {
   status?: string | null;
   bio?: string | null;
   profile_photo_url?: string | null;
+  photo_requested_at?: string | null;
 };
 
 export function PendingApprovalView({ application }: { application: PendingApplication | null }) {
@@ -190,6 +195,12 @@ export function PendingApprovalView({ application }: { application: PendingAppli
                 </Button>
               </div>
             )
+          )}
+          {application?.status === "pending" && application.photo_requested_at && !application.profile_photo_url && (
+            <div className="p-3 rounded-lg bg-gradient-to-r from-pink-500/15 to-violet-500/10 border border-pink-500/40">
+              <p className="text-sm font-semibold text-pink-400">{s.selectedTitle}</p>
+              <p className="text-xs text-muted-foreground mt-1">{s.selectedDesc}</p>
+            </div>
           )}
           {application?.status === "pending" && (
             <PendingProfileBuilder

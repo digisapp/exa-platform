@@ -160,7 +160,18 @@ export async function GET(request: NextRequest) {
             id,
             brands:brands(id, company_name, logo_url)
           ),
-          campaign:campaigns(id, name)
+          campaign:campaigns(id, name),
+          responses:offer_responses(
+            id,
+            model_id,
+            status,
+            notes,
+            responded_at,
+            created_at,
+            checked_in_at,
+            no_show,
+            model:models(id, username, profile_photo_url, reliability_score, city, state)
+          )
         `)
         .order("created_at", { ascending: false });
 

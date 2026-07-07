@@ -33,7 +33,7 @@ async function awardEventBadge(adminClient: SupabaseClient, eventId: string, mod
 // sends the standard acceptance email. Data analysis (2026-07-04) showed
 // acceptance is the strongest retention driver — 85% of applicants never got
 // one; this manufactures more "yes" moments from the same spots.
-async function promoteFromWaitlist(adminClient: SupabaseClient, gigId: string) {
+async function promoteFromWaitlist(adminClient: SupabaseClient, gigId: string, excludeApplicationId?: string) {
   try {
     // Fresh read — spots_filled was just recomputed by the trigger.
     const { data: gig } = await (adminClient as any)
@@ -47,13 +47,21 @@ async function promoteFromWaitlist(adminClient: SupabaseClient, gigId: string) {
     const freeSpots = gig.spots - (gig.spots_filled ?? 0);
     if (freeSpots <= 0) return;
 
-    const { data: waitlisted } = await (adminClient as any)
+    let waitlistQuery = (adminClient as any)
       .from("gig_applications")
       .select("id, model_id")
       .eq("gig_id", gigId)
       .eq("status", "waitlist")
       .order("applied_at", { ascending: true })
       .limit(freeSpots);
+
+    // When an accepted applicant was just demoted TO waitlist, don't re-promote
+    // that same row — it would silently undo the admin's action.
+    if (excludeApplicationId) {
+      waitlistQuery = waitlistQuery.neq("id", excludeApplicationId);
+    }
+
+    const { data: waitlisted } = await waitlistQuery;
 
     if (!waitlisted?.length) return;
 
@@ -163,6 +171,25 @@ export async function PATCH(
 
     if (fetchError || !application) {
       return NextResponse.json({ error: "Application not found" }, { status: 404 });
+    }
+
+    // Guard capacity on manual accept: don't overfill a full gig or accept into
+    // a gig that is no longer open. (spots_filled is trigger-maintained; we only
+    // read it here.) Re-accepting an already-accepted app is a no-op and skipped.
+    if (status === "accepted" && application.status !== "accepted") {
+      const { data: capacityGig } = await adminClient
+        .from("gigs")
+        .select("spots, spots_filled, status")
+        .eq("id", application.gig_id)
+        .single();
+      if (capacityGig) {
+        if (capacityGig.status !== "open") {
+          return NextResponse.json({ error: "This gig is not open for new acceptances" }, { status: 409 });
+        }
+        if (capacityGig.spots && (capacityGig.spots_filled ?? 0) >= capacityGig.spots) {
+          return NextResponse.json({ error: "All spots for this gig are already filled" }, { status: 409 });
+        }
+      }
     }
 
     // Update application status
@@ -304,9 +331,10 @@ export async function PATCH(
     }
 
     // A spot may have been freed (accepted → anything else): promote the oldest
-    // waitlisted applicant(s) into the freed capacity.
+    // waitlisted applicant(s) into the freed capacity — but never re-promote the
+    // application we just demoted (accepted → waitlist), which would undo it.
     if (application.status === "accepted" && status !== "accepted") {
-      await promoteFromWaitlist(adminClient, application.gig_id);
+      await promoteFromWaitlist(adminClient, application.gig_id, id);
     }
 
     // Log the admin action

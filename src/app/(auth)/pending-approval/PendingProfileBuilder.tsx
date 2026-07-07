@@ -120,6 +120,13 @@ export function PendingProfileBuilder({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || s.error);
 
+      // Photo-request path: the upload just auto-approved her — go straight
+      // to the dashboard instead of leaving her on a stale pending page.
+      if (data.approved) {
+        window.location.href = "/dashboard";
+        return;
+      }
+
       setSavedBio(bio);
       setPhotoFile(null);
       if (data.profile_photo_url) setPhotoPreview(data.profile_photo_url);

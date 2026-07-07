@@ -11,9 +11,11 @@ export function ActivityTracker() {
 
   useEffect(() => {
     const updateActivity = async () => {
-      // Only update once every 5 minutes to avoid excessive API calls
+      // Ping at most once a minute. This MUST stay below the offline-models
+      // cron cutoff (2 min) — otherwise an actively-using model is repeatedly
+      // flagged offline between pings and fans are blocked from calling them.
       const now = Date.now();
-      if (now - lastUpdate.current < 5 * 60 * 1000) {
+      if (now - lastUpdate.current < 60 * 1000) {
         return;
       }
 
@@ -50,8 +52,8 @@ export function ActivityTracker() {
     document.addEventListener("click", handleInteraction);
     document.addEventListener("keydown", handleInteraction);
 
-    // Also update periodically while active (every 5 minutes)
-    const interval = setInterval(updateActivity, 5 * 60 * 1000);
+    // Also update periodically while active (every minute, below the 2-min cutoff)
+    const interval = setInterval(updateActivity, 60 * 1000);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);

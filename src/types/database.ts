@@ -4187,6 +4187,7 @@ export type Database = {
       }
       gigs: {
         Row: {
+          announced_at: string | null
           application_deadline: string | null
           compensation_amount: number | null
           compensation_description: string | null
@@ -4216,6 +4217,7 @@ export type Database = {
           visibility: string | null
         }
         Insert: {
+          announced_at?: string | null
           application_deadline?: string | null
           compensation_amount?: number | null
           compensation_description?: string | null
@@ -4245,6 +4247,7 @@ export type Database = {
           visibility?: string | null
         }
         Update: {
+          announced_at?: string | null
           application_deadline?: string | null
           compensation_amount?: number | null
           compensation_description?: string | null
@@ -5033,6 +5036,8 @@ export type Database = {
           id: string
           instagram_username: string | null
           phone: string | null
+          photo_requested_at: string | null
+          photo_requested_by: string | null
           profile_photo_height: number | null
           profile_photo_url: string | null
           profile_photo_width: number | null
@@ -5057,6 +5062,8 @@ export type Database = {
           id?: string
           instagram_username?: string | null
           phone?: string | null
+          photo_requested_at?: string | null
+          photo_requested_by?: string | null
           profile_photo_height?: number | null
           profile_photo_url?: string | null
           profile_photo_width?: number | null
@@ -5081,6 +5088,8 @@ export type Database = {
           id?: string
           instagram_username?: string | null
           phone?: string | null
+          photo_requested_at?: string | null
+          photo_requested_by?: string | null
           profile_photo_height?: number | null
           profile_photo_url?: string | null
           profile_photo_width?: number | null

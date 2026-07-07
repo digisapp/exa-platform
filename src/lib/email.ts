@@ -435,6 +435,125 @@ export async function sendModelApplicationReceivedEmail({
   }
 }
 
+// "You've been selected — add your photo" — sent when an admin hits Request
+// photo on a pending application. Upload auto-approves, so this is the last
+// step between the applicant and going live.
+export async function sendPhotoRequestEmail({
+  to,
+  modelName,
+  language = "en",
+}: {
+  to: string;
+  modelName: string;
+  language?: string;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const statusUrl = `${BASE_URL}/pending-approval`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const isSpanish = language?.startsWith("es");
+
+    const subject = isSpanish
+      ? "Fuiste seleccionada — falta un paso ✨ - EXA Models"
+      : "You've Been Selected — One Step Left ✨ - EXA Models";
+    const headerTitle = isSpanish ? "¡Fuiste Seleccionada!" : "You've Been Selected!";
+    const headerSubtitle = isSpanish
+      ? "Agrega tu foto y estarás en vivo en EXA"
+      : "Add your photo and you're live on EXA";
+    const greeting = isSpanish ? `Hola ${escapeHtml(modelName)},` : `Hey ${escapeHtml(modelName)},`;
+    const bodyText = isSpanish
+      ? "¡Buenas noticias! Revisamos tu solicitud y queremos que estés en EXA. Solo falta una cosa: tu foto de perfil. Súbela y tu perfil se activa al instante — sin más esperas ni revisiones."
+      : "Great news — we reviewed your application and we want you on EXA. Just one thing is missing: your profile photo. Upload it and your profile goes live instantly — no more waiting, no second review.";
+    const ctaText = isSpanish ? "Agregar Mi Foto" : "Add My Photo";
+    const tipText = isSpanish
+      ? "Tip: una foto clara de tu rostro funciona mejor — es lo primero que ven marcas y fans."
+      : "Tip: a clear photo of your face works best — it's the first thing brands and fans see.";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                ${headerTitle}
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                ${headerSubtitle}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                ${greeting}
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                ${bodyText}
+              </p>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td align="center">
+                    <a href="${statusUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      ${ctaText}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+                ${tipText}
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendModelOnboardingPaymentEmail({
   to,
   name,

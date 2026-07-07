@@ -95,9 +95,22 @@ export default async function ChatPage({ params }: PageProps) {
 
   // Check if there are more messages and prepare the list
   const hasMoreMessages = (allMessages?.length || 0) > 100;
-  const messages = allMessages
+  const messages = (allMessages
     ? (hasMoreMessages ? allMessages.slice(0, 100) : allMessages).reverse()
-    : [];
+    : []
+  ).map((msg: any) => {
+    // Strip media_url from locked PPV messages so it never reaches the client
+    // RSC payload — the media_price/media_viewed_by fields stay so the bubble
+    // can still render the unlock overlay. Mirrors /api/messages/list.
+    if (
+      (msg.media_price ?? 0) > 0 &&
+      msg.sender_id !== actor.id &&
+      !(msg.media_viewed_by ?? []).includes(actor.id)
+    ) {
+      return { ...msg, media_url: null };
+    }
+    return msg;
+  });
 
   // Get other participant(s)
   const { data: participants, error: partError } = await supabase

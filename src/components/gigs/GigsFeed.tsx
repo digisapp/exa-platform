@@ -205,7 +205,7 @@ export function GigsFeed({ gigs, modelApplications, isApproved }: GigsFeedProps)
 
                   <div className="flex items-center justify-between gap-2 mt-auto">
                     {gig.compensation_type === "paid" && gig.compensation_amount ? (
-                      <span className="text-sm font-bold text-emerald-400">${gig.compensation_amount}</span>
+                      <span className="text-sm font-bold text-emerald-400">${(gig.compensation_amount / 100).toLocaleString()}</span>
                     ) : (
                       <span />
                     )}

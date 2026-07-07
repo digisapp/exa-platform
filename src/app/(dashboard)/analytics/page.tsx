@@ -363,7 +363,7 @@ export default async function AnalyticsPage() {
           <div className="relative">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold">Daily Profile Views</h2>
-              {hasData && (
+              {hasData && dailyData.length > 0 && (
                 <span className="text-xs text-muted-foreground">
                   Peak: {Math.max(...dailyData.map((d) => d.views))} views
                 </span>

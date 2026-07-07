@@ -410,7 +410,7 @@ export const MessageBubble = memo(function MessageBubble({
             />
           )}
 
-          {message.media_url && (
+          {(message.media_url || isMediaLocked) && (
             <div className={cn("mt-2", !message.content && "-mt-0")}>
               {isMediaLocked ? (
                 /* Locked PPV media overlay -- uses gradient placeholder, never the real URL */
@@ -455,7 +455,7 @@ export const MessageBubble = memo(function MessageBubble({
               ) : message.media_type?.startsWith("image/") ? (
                 <>
                   <Image
-                    src={message.media_url}
+                    src={message.media_url!}
                     alt="Attached image"
                     width={400}
                     height={256}
@@ -471,7 +471,7 @@ export const MessageBubble = memo(function MessageBubble({
                 </>
               ) : message.media_type?.startsWith("video/") ? (
                 <video
-                  src={message.media_url}
+                  src={message.media_url ?? undefined}
                   controls
                   playsInline
                   className="max-w-full max-h-64 rounded-lg"
@@ -496,7 +496,7 @@ export const MessageBubble = memo(function MessageBubble({
                     </svg>
                   </div>
                   <audio
-                    src={message.media_url}
+                    src={message.media_url ?? undefined}
                     controls
                     className="h-8 flex-1 min-w-0"
                     preload="metadata"
@@ -504,7 +504,7 @@ export const MessageBubble = memo(function MessageBubble({
                 </div>
               ) : (
                 <a
-                  href={message.media_url}
+                  href={message.media_url ?? undefined}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm underline"

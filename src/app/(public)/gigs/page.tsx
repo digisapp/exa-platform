@@ -754,10 +754,10 @@ function OfferCard({ offer }: { offer: any }) {
         {/* Response Status Badge */}
         {offer.my_response !== "pending" && (
           <Badge className={`absolute top-3 right-3 ${
-            offer.my_response === "accepted" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+            offer.my_response === "accepted" || offer.my_response === "confirmed" ? "bg-green-500/10 text-green-500 border-green-500/20" :
             "bg-gray-500/10 text-gray-500 border-gray-500/20"
           }`}>
-            {offer.my_response === "accepted" ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+            {offer.my_response === "accepted" || offer.my_response === "confirmed" ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
             {responseStatus.label}
           </Badge>
         )}

@@ -188,13 +188,10 @@ async function handleInstallmentRetryFailed(
       .eq("registration_id", registrationId)
       .eq("status", "pending");
 
-    // Cancel the registration and free the spot
-    const { data: registration } = await supabaseAdmin
-      .from("workshop_registrations")
-      .select("workshop_id, quantity")
-      .eq("id", registrationId)
-      .single();
-
+    // Cancel the registration. The completed->cancelled transition fires
+    // update_workshop_spots_sold (migration 20260128000002), which decrements
+    // workshops.spots_sold automatically — do NOT decrement manually here too
+    // or the spot count is double-freed (oversell risk).
     await supabaseAdmin
       .from("workshop_registrations")
       .update({
@@ -202,24 +199,6 @@ async function handleInstallmentRetryFailed(
         updated_at: new Date().toISOString(),
       })
       .eq("id", registrationId);
-
-    // Free the spot by decrementing spots_sold
-    if (registration) {
-      const { data: workshop } = await supabaseAdmin
-        .from("workshops")
-        .select("spots_sold")
-        .eq("id", registration.workshop_id)
-        .single();
-
-      if (workshop && workshop.spots_sold > 0) {
-        await supabaseAdmin
-          .from("workshops")
-          .update({
-            spots_sold: Math.max(0, workshop.spots_sold - (registration.quantity || 1)),
-          })
-          .eq("id", registration.workshop_id);
-      }
-    }
 
     // Send cancellation email to the buyer
     const { data: cancelledReg } = await supabaseAdmin

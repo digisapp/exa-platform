@@ -98,8 +98,12 @@ export function IncomingCallDialog({
     onCloseRef.current();
   }, []);
 
-  // Auto-miss after 120 seconds (timeout = missed, not declined)
+  // Auto-miss after 120 seconds (timeout = missed, not declined).
+  // Stop once the call is accepted (callSession set) — otherwise the timer
+  // keeps ticking behind the live VideoRoom and force-ends the active call.
   useEffect(() => {
+    if (callSession) return;
+
     if (timeLeft <= 0) {
       handleMissed();
       return;
@@ -110,7 +114,7 @@ export function IncomingCallDialog({
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [timeLeft, handleMissed]);
+  }, [timeLeft, handleMissed, callSession]);
 
   const handleAccept = async () => {
     setIsJoining(true);

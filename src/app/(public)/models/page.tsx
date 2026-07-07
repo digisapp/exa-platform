@@ -76,6 +76,9 @@ export default async function ModelsPage({
 
   // Helper to apply all active filters to a query
   function applyFilters(q: any): any {
+    // Exclude models who deactivated (hid) their profile. IS NOT TRUE also
+    // keeps legacy null rows visible.
+    q = q.not("deactivated", "is", true);
     if (params.q) {
       const term = sanitizeOrFilterTerm(params.q);
       q = q.ilike("username", `%${term}%`);
