@@ -158,6 +158,9 @@ export default function OfferDetailPage({
   const isAccepted = myResponse?.status === "accepted" || myResponse?.status === "confirmed";
   const isDeclined = myResponse?.status === "declined";
   const spotsAvailable = offer.spots - offer.spots_filled;
+  const isExpired = Boolean(
+    offer.event_date && offer.event_date < new Date().toISOString().split("T")[0]
+  );
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -301,7 +304,7 @@ export default function OfferDetailPage({
       )}
 
       {/* Response Section */}
-      {isPending && offer.status === "open" && (
+      {isPending && offer.status === "open" && !isExpired && (
         <div className="rounded-2xl border border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent p-6 space-y-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -382,10 +385,12 @@ export default function OfferDetailPage({
         </>
       )}
 
-      {offer.status !== "open" && isPending && (
+      {(offer.status !== "open" || isExpired) && isPending && (
         <div className="rounded-xl border border-muted/50 bg-muted/30 p-4">
           <p className="text-sm text-muted-foreground text-center">
-            This offer is no longer accepting responses
+            {isExpired
+              ? "This offer has expired — the event date has passed"
+              : "This offer is no longer accepting responses"}
           </p>
         </div>
       )}

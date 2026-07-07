@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendOfferReceivedEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { listUserEmailsByIds } from "@/lib/auth/list-user-emails";
 import { z } from "zod";
 
 // Zod schema for offer creation validation
@@ -95,6 +96,7 @@ export async function GET(request: NextRequest) {
         `)
         .in("campaign_id", campaignIds)
         .eq("status", "open")
+        .or(`event_date.is.null,event_date.gte.${new Date().toISOString().split("T")[0]}`)
         .order("created_at", { ascending: false });
 
       // Get model's responses - use adminClient
@@ -313,22 +315,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Failed to send offer to models" }, { status: 500 });
       }
 
-      // Get brand name, model details, and user emails in parallel
+      // Get brand name and model details in parallel
       const modelIds = campaignModels.map((item: any) => item.model_id);
-      const [brandResult, modelsResult, usersResult] = await Promise.all([
+      const [brandResult, modelsResult] = await Promise.all([
         adminClient.from("brands").select("company_name").eq("id", offerBrandId).single(),
         adminClient.from("models").select("id, first_name, username, user_id").in("id", modelIds),
-        adminClient.auth.admin.listUsers(),
       ]);
       const brandName = brandResult.data?.company_name || "A brand";
       const models = modelsResult.data;
 
       if (models && models.length > 0) {
-        const userIds = models.map((m: any) => m.user_id);
-        const users = usersResult.data;
-        const userEmails = new Map(
-          users?.users?.filter((u: any) => userIds.includes(u.id)).map((u: any) => [u.id, u.email]) || []
-        );
+        const userIds = models.map((m: any) => m.user_id).filter(Boolean);
+        const userEmails = await listUserEmailsByIds(adminClient, userIds);
 
         // Build location string
         const locationParts = [location_name, location_city, location_state].filter(Boolean);

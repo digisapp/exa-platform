@@ -197,7 +197,7 @@ export default async function DashboardPage() {
       id,
       status,
       offer_id,
-      offers (
+      offers!inner (
         id,
         title,
         event_date,
@@ -213,6 +213,10 @@ export default async function DashboardPage() {
     `)
     .eq("model_id", model.id)
     .eq("status", "pending")
+    .eq("offers.status", "open")
+    .or(`event_date.is.null,event_date.gte.${new Date().toISOString().split("T")[0]}`, {
+      referencedTable: "offers",
+    })
     .order("created_at", { ascending: false })
     .limit(5);
 

@@ -11,6 +11,9 @@ function getNextOccurrence(currentDate: string, pattern: string): Date {
   const date = new Date(currentDate);
 
   switch (pattern) {
+    case "daily":
+      date.setDate(date.getDate() + 1);
+      break;
     case "weekly":
       date.setDate(date.getDate() + 7);
       break;
@@ -47,7 +50,7 @@ export async function GET(request: NextRequest) {
       .from("offers")
       .select(`
         *,
-        list:brand_lists(id, name, brand_id)
+        campaign:campaigns(id, name, brand_id)
       `)
       .eq("is_recurring", true)
       .lt("event_date", today.toISOString().split("T")[0]);
@@ -98,7 +101,7 @@ export async function GET(request: NextRequest) {
           .from("offers")
           .insert({
             brand_id: offer.brand_id,
-            list_id: offer.list_id,
+            campaign_id: offer.campaign_id,
             title: offer.title,
             description: offer.description,
             location_name: offer.location_name,
@@ -128,11 +131,11 @@ export async function GET(request: NextRequest) {
           .update({ is_recurring: false })
           .eq("id", offer.id);
 
-        // Get current list members
+        // Get current campaign members
         const { data: listItems } = await adminClient
-          .from("brand_list_items")
+          .from("campaign_models")
           .select("model_id")
-          .eq("list_id", offer.list_id);
+          .eq("campaign_id", offer.campaign_id);
 
         if (listItems && listItems.length > 0) {
           // Create pending responses
@@ -171,7 +174,7 @@ export async function GET(request: NextRequest) {
             // Build compensation string
             let compensationStr: string | undefined;
             if (offer.compensation_type === "paid" && offer.compensation_amount) {
-              compensationStr = `$${offer.compensation_amount / 100}`;
+              compensationStr = `$${offer.compensation_amount}`;
             } else if (offer.compensation_description) {
               compensationStr = offer.compensation_description;
             }

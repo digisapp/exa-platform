@@ -61,20 +61,6 @@ export async function POST(
       return NextResponse.json({ error: "Offer not found" }, { status: 404 });
     }
 
-    if (offer.status !== "open") {
-      return NextResponse.json({ error: "This offer is no longer open" }, { status: 400 });
-    }
-
-    if (offer.event_date) {
-      const today = new Date().toISOString().split("T")[0];
-      if (offer.event_date < today) {
-        return NextResponse.json(
-          { error: "This offer has expired (the event date has passed)" },
-          { status: 400 }
-        );
-      }
-    }
-
     // Get existing response
     const { data: existingResponse } = await supabase
       .from("offer_responses")
@@ -96,9 +82,23 @@ export async function POST(
     }
     const { status, notes } = parsed.data;
 
-    // Check if accepting and spots are full
-    if (status === "accepted" && offer.spots_filled >= offer.spots) {
-      return NextResponse.json({ error: "Sorry, all spots have been filled" }, { status: 400 });
+    // Accepting requires an open, non-expired offer with spots left.
+    // Declining is always allowed so models can clear stale invites.
+    if (status === "accepted") {
+      if (offer.status !== "open") {
+        return NextResponse.json({ error: "This offer is no longer open" }, { status: 400 });
+      }
+
+      if (offer.event_date && offer.event_date < new Date().toISOString().split("T")[0]) {
+        return NextResponse.json(
+          { error: "This offer has expired (the event date has passed)" },
+          { status: 400 }
+        );
+      }
+
+      if (offer.spots_filled >= offer.spots) {
+        return NextResponse.json({ error: "Sorry, all spots have been filled" }, { status: 400 });
+      }
     }
 
     const previousStatus = existingResponse.status;
