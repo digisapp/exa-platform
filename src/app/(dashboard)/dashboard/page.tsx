@@ -24,18 +24,15 @@ import {
   MessageCircle,
   Gavel,
   Plus,
-  TrendingUp,
   Flame,
   Sparkles,
   Heart,
 } from "lucide-react";
-import { formatCoins } from "@/lib/coin-config";
 import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { ProfilePhotoBanner } from "@/components/dashboard/ProfilePhotoBanner";
 import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
-import { PayoutSetupPrompt } from "@/components/dashboard/PayoutSetupPrompt";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 
 // Helper function to format relative time
@@ -110,8 +107,6 @@ export default async function DashboardPage() {
   const [
     { data: allBookings },
     { data: rawPortfolioPhotos },
-    { data: bankAccount },
-    { data: payoneerAccount },
   ] = await Promise.all([
     // Get pending bookings for this model - use adminClient to bypass RLS
     (adminClient.from("bookings") as any)
@@ -128,18 +123,6 @@ export default async function DashboardPage() {
       .eq("media_type", "image")
       .order("created_at", { ascending: false })
       .limit(50),
-    // Payout methods — drive the payout-setup prompt
-    (adminClient.from("bank_accounts") as any)
-      .select("id")
-      .eq("model_id", model.id)
-      .limit(1)
-      .maybeSingle(),
-    (adminClient.from("payoneer_accounts") as any)
-      .select("id")
-      .eq("model_id", model.id)
-      .eq("status", "active")
-      .limit(1)
-      .maybeSingle(),
   ]);
 
   // Filter for pending/counter bookings in JS
@@ -274,7 +257,6 @@ export default async function DashboardPage() {
   const [
     { data: recentTips },
     { data: recentFollowers },
-    { count: followerCount },
     { data: modelParticipations },
   ] = await Promise.all([
     (adminClient.from("coin_transactions") as any)
@@ -289,9 +271,6 @@ export default async function DashboardPage() {
       .gte("created_at", sevenDaysAgo.toISOString())
       .order("created_at", { ascending: false })
       .limit(10),
-    (adminClient.from("follows") as any)
-      .select("follower_id", { count: "exact", head: true })
-      .eq("following_id", actor.id),
     (supabase.from("conversation_participants") as any)
       .select("conversation_id, last_read_at")
       .eq("actor_id", actor.id),
@@ -609,60 +588,20 @@ export default async function DashboardPage() {
       {/* ── LEFT COLUMN: all dashboard sections ── */}
       <div className="space-y-6">
       {/* ──────────────────────────────────────────────────────
-          PROFILE PHOTOS + KPI RAIL (shared row on desktop)
+          PROFILE PHOTOS — full-width top row
          ────────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {/* Profile photos — left column */}
-        <ProfilePhotoBanner
-          username={model.username || ""}
-          displayName={displayName}
-          profilePhotoUrl={model.profile_photo_url || null}
-          heroPhotoUrl={heroSource?.url ?? model.profile_photo_url ?? null}
-          portfolioPhotos={portfolioPhotos}
-        />
-
-        {/* KPI cards — right column, stacked vertically to match Profile Pictures height */}
-        <div className="grid grid-cols-1 gap-3">
-          <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 transition-all hover:border-amber-500/40 hover:bg-white/[0.08] flex items-center gap-4">
-            <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-amber-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative flex items-center gap-4 w-full">
-              <Coins className="h-5 w-5 text-amber-400 shrink-0" />
-              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Coins</span>
-              <p className="ml-auto text-2xl font-bold tracking-tight">{formatCoins(model.coin_balance || 0)}</p>
-            </div>
-          </Link>
-
-          <Link href="/analytics" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 transition-all hover:border-emerald-500/40 hover:bg-white/[0.08] flex items-center gap-4">
-            <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-emerald-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative flex items-center gap-4 w-full">
-              <TrendingUp className="h-5 w-5 text-emerald-400 shrink-0" />
-              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Views</span>
-              <p className="ml-auto text-2xl font-bold tracking-tight">{(model.profile_views || 0).toLocaleString()}</p>
-            </div>
-          </Link>
-
-          <Link href="/followers" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 transition-all hover:border-pink-500/40 hover:bg-white/[0.08] flex items-center gap-4">
-            <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-pink-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative flex items-center gap-4 w-full">
-              <Heart className="h-5 w-5 text-pink-400 shrink-0" />
-              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Followers</span>
-              <p className="ml-auto text-2xl font-bold tracking-tight">{(followerCount || 0).toLocaleString()}</p>
-            </div>
-          </Link>
-        </div>
-      </section>
+      <ProfilePhotoBanner
+        username={model.username || ""}
+        displayName={displayName}
+        profilePhotoUrl={model.profile_photo_url || null}
+        heroPhotoUrl={heroSource?.url ?? model.profile_photo_url ?? null}
+        portfolioPhotos={portfolioPhotos}
+      />
 
       {/* ──────────────────────────────────────────────────────
           GETTING STARTED — renders only while steps remain
          ────────────────────────────────────────────────────── */}
       <GettingStartedChecklist steps={checklistSteps} />
-
-      {/* Payout setup nudge — only when there are coins to withdraw */}
-      <PayoutSetupPrompt
-        coins={model.coin_balance || 0}
-        needsIdentity={!model.identity_verified_at}
-        needsPayoutMethod={!(model.zelle_info || bankAccount || payoneerAccount)}
-      />
 
       {/* ──────────────────────────────────────────────────────
           GIGS FOR YOU — full-width, prominent placement

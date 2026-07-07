@@ -43,6 +43,7 @@ function StatCard({
   icon: Icon,
   gradient,
   trend,
+  href,
 }: {
   label: string;
   value: number;
@@ -50,8 +51,9 @@ function StatCard({
   icon: React.ElementType;
   gradient: string;
   trend?: number | null;
+  href?: string;
 }) {
-  return (
+  const card = (
     <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-black/40 p-5">
       <div className={`absolute inset-0 opacity-10 bg-gradient-to-br ${gradient} pointer-events-none`} />
       <div className="relative">
@@ -79,6 +81,15 @@ function StatCard({
       </div>
     </div>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block transition-transform hover:scale-[1.02]">
+        {card}
+      </Link>
+    );
+  }
+  return card;
 }
 
 function CardErrorNote() {
@@ -279,6 +290,7 @@ export default async function AnalyticsPage() {
           icon={UserPlus}
           gradient="from-emerald-500 to-teal-600"
           trend={followersTrend}
+          href="/followers"
         />
         <StatCard
           label="Today"
