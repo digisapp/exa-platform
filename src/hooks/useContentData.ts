@@ -27,20 +27,6 @@ export interface ContentItem {
   updated_at: string;
 }
 
-export interface ContentSet {
-  id: string;
-  model_id: string;
-  title: string;
-  description: string | null;
-  cover_item_id: string | null;
-  coin_price: number | null;
-  status: 'draft' | 'live' | 'archived';
-  position: number;
-  item_count: number;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface ContentStats {
   total_items: number;
   portfolio_count: number;
@@ -101,9 +87,11 @@ function buildItemsQueryString(filters: ContentFilters): string {
 export function useContentData() {
   // --- state ---------------------------------------------------------------
   const [items, setItems] = useState<ContentItem[]>([]);
-  const [sets, setSets] = useState<ContentSet[]>([]);
   const [stats, setStats] = useState<ContentStats | null>(null);
   const [loading, setLoading] = useState(true);
+  // Items load through the filter effect, separately from stats — track the
+  // first completion so the page doesn't flash its empty state before items arrive.
+  const [itemsLoaded, setItemsLoaded] = useState(false);
   const [filters, setFilters] = useState<ContentFilters>(DEFAULT_FILTERS);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -123,19 +111,10 @@ export function useContentData() {
       setItems(data.items || []);
     } catch {
       toast.error('Failed to load content items');
+    } finally {
+      setItemsLoaded(true);
     }
   }, [filters]);
-
-  const fetchSets = useCallback(async () => {
-    try {
-      const res = await fetch('/api/content-hub/sets');
-      if (!res.ok) throw new Error('Failed to fetch sets');
-      const data = await res.json();
-      setSets(data.sets || []);
-    } catch {
-      toast.error('Failed to load content sets');
-    }
-  }, []);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -150,9 +129,9 @@ export function useContentData() {
 
   const refreshAll = useCallback(async () => {
     setLoading(true);
-    await Promise.all([fetchItems(), fetchSets(), fetchStats()]);
+    await Promise.all([fetchItems(), fetchStats()]);
     setLoading(false);
-  }, [fetchItems, fetchSets, fetchStats]);
+  }, [fetchItems, fetchStats]);
 
   // --- mutations -----------------------------------------------------------
 
@@ -230,81 +209,29 @@ export function useContentData() {
 
   const bulkAction = useCallback(
     async (action: string, params?: Record<string, unknown>) => {
+      const ids = Array.from(selectedIds);
+      if (ids.length === 0) return;
+      // The bulk API caps ids at 50 per request; Select All can select up to 500
+      const CHUNK_SIZE = 50;
       try {
-        const res = await fetch('/api/content-hub/items/bulk', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: Array.from(selectedIds), action, ...params }),
-        });
-        if (!res.ok) throw new Error('Bulk action failed');
+        for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+          const res = await fetch('/api/content-hub/items/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids.slice(i, i + CHUNK_SIZE), action, ...params }),
+          });
+          if (!res.ok) throw new Error('Bulk action failed');
+        }
         toast.success('Bulk action completed');
         setSelectedIds(new Set());
-        await fetchItems();
+        await Promise.all([fetchItems(), fetchStats()]);
       } catch {
         toast.error('Bulk action failed');
+        // Earlier chunks may have applied — resync
+        await Promise.all([fetchItems(), fetchStats()]);
       }
     },
-    [selectedIds, fetchItems],
-  );
-
-  const createSet = useCallback(
-    async (data: Partial<ContentSet>) => {
-      try {
-        const res = await fetch('/api/content-hub/sets', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error('Failed to create set');
-        toast.success('Content set created');
-        await fetchSets();
-        return await res.json();
-      } catch {
-        toast.error('Failed to create content set');
-        return null;
-      }
-    },
-    [fetchSets],
-  );
-
-  const updateSet = useCallback(
-    async (id: string, data: Partial<ContentSet>) => {
-      // Optimistic update
-      setSets((prev) =>
-        prev.map((s) =>
-          s.id === id ? { ...s, ...data, updated_at: new Date().toISOString() } : s,
-        ),
-      );
-      try {
-        const res = await fetch(`/api/content-hub/sets/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error('Failed to update set');
-        toast.success('Content set updated');
-        return await res.json();
-      } catch {
-        toast.error('Failed to update content set');
-        await fetchSets();
-        return null;
-      }
-    },
-    [fetchSets],
-  );
-
-  const deleteSet = useCallback(
-    async (id: string) => {
-      try {
-        const res = await fetch(`/api/content-hub/sets/${id}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error('Failed to delete set');
-        toast.success('Content set deleted');
-        await Promise.all([fetchSets(), fetchItems()]);
-      } catch {
-        toast.error('Failed to delete content set');
-      }
-    },
-    [fetchSets, fetchItems],
+    [selectedIds, fetchItems, fetchStats],
   );
 
   // -----------------------------------------------------------------------
@@ -355,10 +282,10 @@ export function useContentData() {
   // Effects
   // -----------------------------------------------------------------------
 
-  // Initial data load (sets + stats only, items handled by filter effect)
+  // Initial data load (stats only, items handled by filter effect)
   useEffect(() => {
     setLoading(true);
-    Promise.all([fetchSets(), fetchStats()]).finally(() => setLoading(false));
+    fetchStats().finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -399,15 +326,13 @@ export function useContentData() {
   return {
     // state
     items,
-    sets,
     stats,
-    loading,
+    loading: loading || !itemsLoaded,
     filters,
     selectedIds,
 
     // data fetching
     fetchItems,
-    fetchSets,
     fetchStats,
     refreshAll,
 
@@ -416,9 +341,6 @@ export function useContentData() {
     updateItem,
     deleteItem,
     bulkAction,
-    createSet,
-    updateSet,
-    deleteSet,
 
     // selection
     toggleSelect,
