@@ -12,6 +12,7 @@ const REVEAL_COST = 10;
 const SUPER_COST = 20;
 const BOOST_MULTIPLIER = 5;
 const SUPER_MULTIPLIER = 10;
+const DAILY_DECK_SIZE = 25;
 
 // Total swipeable models, cached in-module so we don't run a COUNT(*) on
 // every swipe. Only used for session-completion tracking, so slight staleness
@@ -26,6 +27,7 @@ async function getTotalSwipeableModels(): Promise<number> {
     .from("models")
     .select("id", { count: "exact", head: true })
     .eq("is_approved", true)
+    .is("deleted_at", null)
     .not("profile_photo_url", "is", null);
   totalModelsCache = { value: count || 0, expiresAt: Date.now() + 5 * 60 * 1000 };
   return totalModelsCache.value;
@@ -325,14 +327,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mark model as swiped in session
+    // Right-swipes from fans also follow the model — feed-building is the
+    // point of the game. Idempotent, and a failure never fails the vote.
+    let followed = false;
+    if (actorId && actorType === "fan" && vote_type === "like" && targetModel.user_id && targetModel.user_id !== user?.id) {
+      try {
+        const { data: modelActor } = await adminClient
+          .from("actors")
+          .select("id")
+          .eq("user_id", targetModel.user_id)
+          .single();
+
+        if (modelActor && modelActor.id !== actorId) {
+          const { error: followError } = await (adminClient.from("follows") as any).upsert(
+            { follower_id: actorId, following_id: modelActor.id },
+            { onConflict: "follower_id,following_id", ignoreDuplicates: true }
+          );
+          if (followError) {
+            logger.error("Boost follow error", followError);
+          } else {
+            followed = true;
+          }
+        }
+      } catch (followError) {
+        logger.error("Boost follow error", followError);
+      }
+    }
+
+    // Mark model as swiped in session. Completion basis is the daily deck
+    // (25, or the full eligible roster when smaller) — server-derived so a
+    // client can't shrink it into an instant completion.
     if (session_id) {
       const totalModels = await getTotalSwipeableModels();
 
       await supabase.rpc("mark_model_swiped", {
         p_session_id: session_id,
         p_model_id: model_id,
-        p_total_models: totalModels,
+        p_total_models: Math.min(DAILY_DECK_SIZE, totalModels),
       });
     }
 
@@ -411,6 +442,7 @@ export async function POST(request: NextRequest) {
       points_awarded: vote_type === "like" ? points : 0,
       coins_spent: coinsToSpend,
       new_balance: newBalance,
+      followed,
     });
   } catch (error) {
     logger.error("Vote error", error);

@@ -17,6 +17,11 @@ function secureShufflePop<T>(arr: T[], count: number): T[] {
   return shuffled.slice(0, count);
 }
 
+// Daily deck: each session cycle serves up to 25 models — a mix of the
+// least-exposed eligible models and a random fill — instead of the full roster.
+const DAILY_DECK_SIZE = 25;
+const LOW_EXPOSURE_COUNT = 13;
+
 // GET - Fetch models for the swipe game
 export async function GET(request: NextRequest) {
   const rateLimitResponse = await checkEndpointRateLimit(request, "game");
@@ -27,8 +32,6 @@ export async function GET(request: NextRequest) {
     const supabase: any = await createClient();
     const { searchParams } = new URL(request.url);
     const fingerprint = searchParams.get("fingerprint");
-    const limitParam = parseInt(searchParams.get("limit") || "", 10);
-    const limit = Math.min(Math.max(Number.isFinite(limitParam) ? limitParam : 60, 10), 100);
 
     // Get current user if logged in
     const { data: { user } } = await supabase.auth.getUser();
@@ -95,7 +98,10 @@ export async function GET(request: NextRequest) {
       swipedIds = sessionRow?.models_swiped || [];
     }
 
-    // Fetch models with profile pictures, excluding already swiped
+    // How many models are left in today's deck for this cycle
+    const deckTarget = Math.max(0, DAILY_DECK_SIZE - swipedIds.length);
+
+    // Fetch eligible models, excluding already swiped
     let query = supabase
       .from("models")
       .select(`
@@ -113,6 +119,7 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq("is_approved", true)
+      .is("deleted_at", null)
       .not("profile_photo_url", "is", null);
 
     // Exclude already swiped models
@@ -120,8 +127,9 @@ export async function GET(request: NextRequest) {
       query = query.not("id", "in", `(${swipedIds.join(",")})`);
     }
 
-    // Fetch one page of the deck (limit + 1 to detect whether more remain)
-    const { data: models, error } = await query.limit(limit + 1);
+    const { data: models, error } = deckTarget > 0
+      ? await query.limit(1000)
+      : { data: [], error: null };
 
     if (error) {
       logger.error("Fetch models error", error);
@@ -131,8 +139,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const hasMore = (models || []).length > limit;
-    const deck = (models || []).slice(0, limit);
+    // Exposure-weighted daily deck: shuffle first so ties break randomly, then
+    // take the least-exposed models (lowest leaderboard points, missing row = 0)
+    // and fill the rest of the deck at random
+    const eligible = secureShufflePop(models || [], (models || []).length);
+    const byExposure = [...eligible].sort(
+      (a: any, b: any) =>
+        (a.top_model_leaderboard?.total_points || 0) -
+        (b.top_model_leaderboard?.total_points || 0)
+    );
+    const lowExposure = byExposure.slice(0, Math.min(LOW_EXPOSURE_COUNT, deckTarget));
+    const lowExposureIds = new Set(lowExposure.map((m: any) => m.id));
+    const randomFill = eligible
+      .filter((m: any) => !lowExposureIds.has(m.id))
+      .slice(0, deckTarget - lowExposure.length);
+    const deck = [...lowExposure, ...randomFill];
 
     // Get today's leaderboard rankings
     const { data: leaderboardData } = await supabase
@@ -160,14 +181,17 @@ export async function GET(request: NextRequest) {
     // Shuffle the models using cryptographically secure randomness
     const shuffledModels = secureShufflePop(modelsWithPoints, modelsWithPoints.length);
 
+    // Today's deck basis: what this cycle actually serves (25 or fewer)
+    const deckTotal = swipedIds.length + shuffledModels.length;
+
     return NextResponse.json({
       models: shuffledModels,
-      hasMore,
+      hasMore: false,
       session: {
         canSwipe: true,
         modelsSwiped: session.models_swiped,
-        totalModels: session.total_models,
-        modelsRemaining: session.total_models - session.models_swiped,
+        totalModels: deckTotal,
+        modelsRemaining: shuffledModels.length,
         nextResetAt: null,
         sessionId: session.session_id,
         currentStreak: session.current_streak,

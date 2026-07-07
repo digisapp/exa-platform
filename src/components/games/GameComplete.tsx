@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Trophy, Clock, RotateCcw, Sparkles, Star, Heart, X, Flame, Zap, UserPlus, Coins, Share2 } from "lucide-react";
-import Link from "next/link";
 import { toast } from "sonner";
+import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
 interface SessionStats {
   likes: number;
   passes: number;
@@ -19,6 +19,7 @@ interface GameCompleteProps {
   sessionStats?: SessionStats;
   streak?: number;
   isLoggedIn?: boolean;
+  matchCount?: number;
 }
 
 export function GameComplete({
@@ -27,6 +28,7 @@ export function GameComplete({
   sessionStats,
   streak = 0,
   isLoggedIn = false,
+  matchCount = 0,
 }: GameCompleteProps) {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
@@ -108,14 +110,18 @@ export function GameComplete({
           </span>
         ) : (
           <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-orange-400 text-transparent bg-clip-text">
-            You&apos;ve Seen Everyone!
+            That&apos;s Today&apos;s Lineup!
           </span>
         )}
       </h2>
 
-      {canPlayAgain && (
+      {canPlayAgain ? (
         <p className="text-muted-foreground mb-4 relative">
-          New models are waiting for you.
+          A fresh deck is waiting for you.
+        </p>
+      ) : (
+        <p className="text-muted-foreground mb-4 relative">
+          Come back tomorrow for a fresh deck of models.
         </p>
       )}
 
@@ -195,16 +201,18 @@ export function GameComplete({
             <div className="flex items-center justify-center gap-2 mb-2">
               <UserPlus className="h-5 w-5 text-purple-400" />
               <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text">
-                Create a Free Account
+                {matchCount > 0 ? "Don't Lose Your Matches" : "Create a Free Account"}
               </span>
             </div>
             <p className="text-sm text-muted-foreground mb-3">
-              Save your stats, keep your streak, and buy coins to boost models!
+              {matchCount > 0
+                ? `Sign up to follow your ${matchCount} match${matchCount === 1 ? "" : "es"} — they'll build your feed.`
+                : "Save your stats, keep your streak, and buy coins to boost models!"}
             </p>
             <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground mb-3">
               <span className="flex items-center gap-1">
-                <Sparkles className="h-3 w-3 text-yellow-400" />
-                Save stats
+                <Heart className="h-3 w-3 text-pink-400" />
+                Follow matches
               </span>
               <span className="flex items-center gap-1">
                 <Flame className="h-3 w-3 text-orange-400" />
@@ -215,14 +223,16 @@ export function GameComplete({
                 Buy coins
               </span>
             </div>
-            <Link href="/fan/signup" className="block">
+            <FanSignupDialog redirectTo="/boost">
               <Button
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg shadow-purple-500/25"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
-                Sign Up Free
+                {matchCount > 0
+                  ? `Sign up to follow your ${matchCount} match${matchCount === 1 ? "" : "es"}`
+                  : "Sign Up Free"}
               </Button>
-            </Link>
+            </FanSignupDialog>
           </div>
         </div>
       )}
