@@ -2697,6 +2697,10 @@ export async function sendOfferReminderEmail({
   brandContact?: string;
 }) {
   try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      logger.info("Skipping offer reminder email - recipient is unsubscribed", { to });
+      return { success: true, skipped: true };
+    }
     const resend = getResendClient();
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
     const dashboardUrl = `${baseUrl}/offers`;

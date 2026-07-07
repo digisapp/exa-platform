@@ -45,7 +45,8 @@ export async function GET(request: NextRequest) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Find recurring offers where event_date has passed and no child exists for next occurrence
+    // Find recurring offers where event_date has passed and no child exists
+    // for the next occurrence. Cancelled offers must not keep recurring.
     const { data: recurringOffers, error } = await adminClient
       .from("offers")
       .select(`
@@ -53,6 +54,7 @@ export async function GET(request: NextRequest) {
         campaign:campaigns(id, name, brand_id)
       `)
       .eq("is_recurring", true)
+      .neq("status", "cancelled")
       .lt("event_date", today.toISOString().split("T")[0]);
 
     if (error) throw error;
@@ -72,8 +74,17 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        // Calculate next occurrence
-        const nextDate = getNextOccurrence(offer.event_date, offer.recurrence_pattern);
+        // Calculate next occurrence, fast-forwarding past any missed periods —
+        // a stale template (e.g. from when this cron was failing) must not
+        // create already-expired instances and email models about past events.
+        const todayStr = today.toISOString().split("T")[0];
+        let nextDate = getNextOccurrence(offer.event_date, offer.recurrence_pattern);
+        while (nextDate.toISOString().split("T")[0] < todayStr) {
+          nextDate = getNextOccurrence(
+            nextDate.toISOString().split("T")[0],
+            offer.recurrence_pattern
+          );
+        }
 
         // Skip if next date is past the end date
         if (offer.recurrence_end_date && nextDate > new Date(offer.recurrence_end_date)) {
@@ -84,11 +95,13 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        // Check if a child offer already exists for this date
+        // Check if a child offer already exists for this date. Children are
+        // linked to the ROOT offer (parent_offer_id below), so the check must
+        // use the same id or it never matches for generation 2+.
         const { data: existingChild } = await adminClient
           .from("offers")
           .select("id")
-          .eq("parent_offer_id", offer.id)
+          .eq("parent_offer_id", offer.parent_offer_id || offer.id)
           .eq("event_date", nextDate.toISOString().split("T")[0])
           .single();
 
@@ -112,6 +125,7 @@ export async function GET(request: NextRequest) {
             compensation_type: offer.compensation_type,
             compensation_amount: offer.compensation_amount,
             compensation_description: offer.compensation_description,
+            deliverables: offer.deliverables,
             spots: offer.spots,
             status: "open",
             // Keep recurring for the next instance to be created
@@ -171,10 +185,10 @@ export async function GET(request: NextRequest) {
             const locationParts = [offer.location_name, offer.location_city, offer.location_state].filter(Boolean);
             const locationStr = locationParts.length > 0 ? locationParts.join(", ") : undefined;
 
-            // Build compensation string
+            // Build compensation string (compensation_amount is stored in cents)
             let compensationStr: string | undefined;
             if (offer.compensation_type === "paid" && offer.compensation_amount) {
-              compensationStr = `$${offer.compensation_amount}`;
+              compensationStr = `$${(offer.compensation_amount / 100).toLocaleString()}`;
             } else if (offer.compensation_description) {
               compensationStr = offer.compensation_description;
             }

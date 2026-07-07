@@ -96,39 +96,65 @@ export async function POST(
         );
       }
 
-      if (offer.spots_filled >= offer.spots) {
-        return NextResponse.json({ error: "Sorry, all spots have been filled" }, { status: 400 });
-      }
     }
 
     const previousStatus = existingResponse.status;
 
-    // Update response
-    const { error: updateError } = await adminClient
-      .from("offer_responses")
-      .update({
-        status,
-        notes,
-        responded_at: new Date().toISOString(),
-      })
-      .eq("id", existingResponse.id);
+    if (status === "accepted") {
+      // Claim the spot atomically: accept_offer_spot locks the offer row,
+      // re-checks capacity, increments spots_filled, and marks the response
+      // accepted in one transaction — two models racing for the last spot
+      // can't both get it, and a double-submit can't double-increment.
+      const { data: claimData, error: claimError } = await adminClient.rpc("accept_offer_spot", {
+        p_offer_id: offerId,
+        p_response_id: existingResponse.id,
+      });
+      const claim = claimData as {
+        success?: boolean;
+        error?: string;
+        spots_filled?: number;
+        total_spots?: number;
+      } | null;
 
-    if (updateError) throw updateError;
+      if (claimError) throw claimError;
+      if (!claim?.success) {
+        return NextResponse.json(
+          { error: claim?.error === "All spots have been filled"
+              ? "Sorry, all spots have been filled"
+              : claim?.error || "Failed to accept offer" },
+          { status: 400 }
+        );
+      }
 
-    // Update spots_filled
-    if (status === "accepted" && previousStatus !== "accepted") {
-      await adminClient.rpc("increment_offer_spots_filled", { p_offer_id: offerId });
+      if (notes !== undefined) {
+        await adminClient
+          .from("offer_responses")
+          .update({ notes })
+          .eq("id", existingResponse.id);
+      }
 
       // Auto-close the offer when all spots are filled
-      const newFilled = (offer.spots_filled ?? 0) + 1;
-      if (offer.spots && newFilled >= offer.spots) {
+      if (claim.total_spots && (claim.spots_filled ?? 0) >= claim.total_spots) {
         await adminClient
           .from("offers")
           .update({ status: "closed" })
           .eq("id", offerId);
       }
-    } else if (previousStatus === "accepted" && status !== "accepted") {
-      await adminClient.rpc("decrement_offer_spots_filled", { p_offer_id: offerId });
+    } else {
+      const { error: updateError } = await adminClient
+        .from("offer_responses")
+        .update({
+          status,
+          notes,
+          responded_at: new Date().toISOString(),
+        })
+        .eq("id", existingResponse.id);
+
+      if (updateError) throw updateError;
+
+      if (previousStatus === "accepted") {
+        await adminClient.rpc("decrement_offer_spots_filled", { p_offer_id: offerId });
+      }
     }
 
     // Notify brand via chat

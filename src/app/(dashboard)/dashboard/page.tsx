@@ -466,7 +466,7 @@ export default async function DashboardPage() {
     const urgency: InboxItem["urgency"] = daysAway < 3 ? "hot" : daysAway < 14 ? "warm" : "normal";
     const amount =
       o.compensation_type === "paid" && o.compensation_amount
-        ? `$${o.compensation_amount}`
+        ? `$${(o.compensation_amount / 100).toLocaleString()}`
         : o.compensation_description || undefined;
     const sub = [
       r.brand?.company_name || "Brand",

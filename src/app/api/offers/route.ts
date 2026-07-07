@@ -14,7 +14,8 @@ const createOfferSchema = z.object({
   location_name: z.string().max(200, "Location name is too long").optional().nullable(),
   location_city: z.string().max(100, "City is too long").optional().nullable(),
   location_state: z.string().max(100, "State is too long").optional().nullable(),
-  event_date: z.string().optional().nullable(),
+  // Dialogs send "" when no date is picked; Postgres rejects "" for DATE
+  event_date: z.string().optional().nullable().transform((v) => v || null),
   event_time: z.string().max(50, "Event time is too long").optional().nullable(),
   compensation_type: z.enum(["paid", "tfp", "perks", "exposure"]).default("perks"),
   compensation_amount: z.number().min(0, "Amount cannot be negative").optional().nullable(),
@@ -71,19 +72,21 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Model not found" }, { status: 404 });
       }
 
-      // Get campaigns the model is in - use adminClient to bypass RLS
-      const { data: campaignItems } = await adminClient
-        .from("campaign_models")
-        .select("campaign_id")
+      // A model is invited to an offer iff they have an offer_responses row
+      // (created at send time). Listing by campaign membership instead would
+      // show offers sent before the model joined the campaign, which the
+      // detail page (RLS) and respond route both reject.
+      const { data: responses } = await adminClient
+        .from("offer_responses")
+        .select("offer_id, status")
         .eq("model_id", model.id);
 
-      const campaignIds = campaignItems?.map((item: any) => item.campaign_id) || [];
+      const offerIds = responses?.map((r: any) => r.offer_id) || [];
 
-      if (campaignIds.length === 0) {
+      if (offerIds.length === 0) {
         return NextResponse.json({ offers: [] });
       }
 
-      // Get offers for those campaigns with brand info - use adminClient
       const { data: offers } = await adminClient
         .from("offers")
         .select(`
@@ -94,31 +97,27 @@ export async function GET(request: NextRequest) {
           ),
           campaign:campaigns(id, name)
         `)
-        .in("campaign_id", campaignIds)
-        .eq("status", "open")
-        .or(`event_date.is.null,event_date.gte.${new Date().toISOString().split("T")[0]}`)
+        .in("id", offerIds)
         .order("created_at", { ascending: false });
 
-      // Get model's responses - use adminClient
-      const offerIds = offers?.map((o: any) => o.id) || [];
-      let responses: any[] = [];
-      if (offerIds.length > 0) {
-        const { data: respData } = await adminClient
-          .from("offer_responses")
-          .select("offer_id, status")
-          .eq("model_id", model.id)
-          .in("offer_id", offerIds);
-        responses = respData || [];
-      }
-
-      // Attach response status to each offer
-      const offersWithResponse = (offers || []).map((offer: any) => {
-        const response = responses.find((r: any) => r.offer_id === offer.id);
-        return {
-          ...offer,
-          my_response: response?.status || null,
-        };
-      });
+      // Keep offers that still need a response (open + not expired) plus the
+      // model's booking history (accepted/confirmed), which would otherwise
+      // vanish the moment an offer fills up and auto-closes.
+      const today = new Date().toISOString().split("T")[0];
+      const offersWithResponse = (offers || [])
+        .map((offer: any) => {
+          const response = responses!.find((r: any) => r.offer_id === offer.id);
+          return {
+            ...offer,
+            my_response: response?.status || null,
+          };
+        })
+        .filter((offer: any) => {
+          const actionable =
+            offer.status === "open" && (!offer.event_date || offer.event_date >= today);
+          const booked = ["accepted", "confirmed"].includes(offer.my_response);
+          return actionable || booked;
+        });
 
       return NextResponse.json({ offers: offersWithResponse });
     } else if (actor.type === "brand") {
@@ -151,8 +150,9 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ offers: offers || [] });
     } else if (actor.type === "admin") {
-      // Admins see all
-      const { data: offers } = await supabase
+      // Admins see all — adminClient because campaigns has no admin RLS
+      // policy, so the joined campaign comes back null on the user client
+      const { data: offers } = await adminClient
         .from("offers")
         .select(`
           *,
@@ -263,8 +263,11 @@ export async function POST(request: NextRequest) {
     // Use the campaign's brand_id for the offer (so admins create on behalf of the brand)
     const offerBrandId = campaign.brand_id;
 
-    // Get models in this campaign first (before creating the offer)
-    const { data: campaignModels } = await supabase
+    // Get models in this campaign first (before creating the offer).
+    // Use adminClient: campaign_models has no admin RLS policy, so the
+    // user-scoped client returns zero rows for admins and the offer would
+    // silently go out to nobody. Ownership was already verified above.
+    const { data: campaignModels } = await adminClient
       .from("campaign_models")
       .select("model_id")
       .eq("campaign_id", campaign_id);
@@ -332,10 +335,10 @@ export async function POST(request: NextRequest) {
         const locationParts = [location_name, location_city, location_state].filter(Boolean);
         const locationStr = locationParts.length > 0 ? locationParts.join(", ") : undefined;
 
-        // Build compensation string
+        // Build compensation string (compensation_amount is stored in cents)
         let compensationStr: string | undefined;
         if (compensation_type === "paid" && compensation_amount) {
-          compensationStr = `$${compensation_amount}`;
+          compensationStr = `$${(compensation_amount / 100).toLocaleString()}`;
         } else if (compensation_description) {
           compensationStr = compensation_description;
         }
