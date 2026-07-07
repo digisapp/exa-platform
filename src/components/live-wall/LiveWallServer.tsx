@@ -1,11 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { LiveWall } from "./LiveWall";
-import { LiveWallQuietCard } from "./LiveWallQuietCard";
-import { LiveWallQuietGate } from "./LiveWallQuietGate";
 import { enrichLiveWallAvatars } from "@/lib/live-wall-avatars";
 
-/** Collapse the wall to a teaser after this many silent days. A new post
- *  (including system heartbeats on gig publish/accept) revives it. */
+/** Tuck the message history behind a "Show recent posts" expander after this
+ *  many silent days. A new post (including system heartbeats on gig
+ *  publish/accept) reopens it. */
 const QUIET_AFTER_DAYS = 7;
 
 interface Props {
@@ -21,7 +20,8 @@ interface Props {
  *
  * The wall is an event-pulse feature: it lights up around shows and goes
  * quiet between them. When the newest message is older than
- * QUIET_AFTER_DAYS, render a compact teaser instead of a dead chat room.
+ * QUIET_AFTER_DAYS, the wall still renders normally (header + input) but
+ * starts with the stale history collapsed — it never announces the lull.
  */
 export async function LiveWallServer({ actorId, actorType, compact }: Props) {
   const supabase = await createClient();
@@ -83,22 +83,12 @@ export async function LiveWallServer({ actorId, actorType, compact }: Props) {
     }
   }
 
-  const wall = (
+  return (
     <LiveWall
       initialMessages={messages}
       currentUser={{ actorId, actorType, coinBalance }}
       compact={compact}
+      startCollapsed={isQuiet}
     />
   );
-
-  if (isQuiet) {
-    return (
-      <LiveWallQuietGate
-        quietCard={<LiveWallQuietCard actorType={actorType} compact={compact} />}
-        wall={wall}
-      />
-    );
-  }
-
-  return wall;
 }

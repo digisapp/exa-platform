@@ -45,6 +45,12 @@ interface Props {
   currentUser: CurrentUser | null;
   /** Sidebar mode: fills container height, no collapse toggle */
   compact?: boolean;
+  /**
+   * Quiet mode: the wall renders normally (header + input) but starts with
+   * the message history tucked behind a "Show recent posts" expander.
+   * Any new post — the viewer's or anyone's via realtime — reopens it.
+   */
+  startCollapsed?: boolean;
 }
 
 // ─── Sound ───────────────────────────────────────────────
@@ -69,11 +75,14 @@ function playChime(ctx: AudioContext) {
   }
 }
 
-export function LiveWall({ initialMessages, currentUser, compact = false }: Props) {
+export function LiveWall({ initialMessages, currentUser, compact = false, startCollapsed = false }: Props) {
   const router = useRouter();
   const [messages, setMessages] = useState<LiveWallMessageData[]>(initialMessages);
   const [isConnected, setIsConnected] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [postsHidden, setPostsHidden] = useState(
+    startCollapsed && initialMessages.length > 0
+  );
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [onlineCount, setOnlineCount] = useState(0);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -168,12 +177,13 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
     messagesRef.current = messages;
   }, [messages]);
 
-  // Auto-scroll when at bottom and new messages arrive
+  // Auto-scroll when at bottom and new messages arrive (also fires when the
+  // hidden message area mounts after "Show recent posts")
   useEffect(() => {
-    if (isExpanded && isAtBottomRef.current) {
+    if (isExpanded && !postsHidden && isAtBottomRef.current) {
       scrollToBottom();
     }
-  }, [messages, isExpanded, scrollToBottom]);
+  }, [messages, isExpanded, postsHidden, scrollToBottom]);
 
   // ─── Supabase Realtime (Postgres Changes + Presence) ──
   useEffect(() => {
@@ -192,6 +202,9 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
             if (prev.some((m) => m.id === newMsg.id)) return prev;
             return [...prev, newMsg].slice(-50);
           });
+
+          // Fresh activity reopens a quiet wall
+          setPostsHidden(false);
 
           // Sound + scroll tracking
           if (!isAtBottomRef.current) {
@@ -291,6 +304,8 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
           const data = await res.json();
           throw new Error(data.error || "Failed to send");
         }
+        // Show the poster their message landing
+        setPostsHidden(false);
         // Scroll to bottom after sending
         setTimeout(scrollToBottom, 100);
       } catch (err: any) {
@@ -557,7 +572,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
       </Dialog>
 
       {/* ── Inline Live Wall ── */}
-      <div className={`rounded-2xl border border-white/10 bg-black/40 backdrop-blur-sm overflow-hidden ${compact ? "flex flex-col h-full" : ""}`}>
+      <div className={`rounded-2xl border border-white/10 bg-black/40 backdrop-blur-sm overflow-hidden ${compact && !postsHidden ? "flex flex-col h-full" : ""}`}>
         {/* Header */}
         <div className="relative">
         <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-white/10 bg-gradient-to-r from-pink-500/[0.03] to-violet-500/[0.03]">
@@ -682,7 +697,17 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
 
         {/* Messages + Input (collapsible) */}
         {(isExpanded || compact) && (
-          <div className={compact ? "flex flex-col flex-1 min-h-0" : "contents"}>
+          <div className={compact && !postsHidden ? "flex flex-col flex-1 min-h-0" : "contents"}>
+            {postsHidden ? (
+              <button
+                onClick={() => setPostsHidden(false)}
+                className="w-full flex items-center justify-center gap-1.5 py-5 text-xs font-semibold text-white/50 hover:text-pink-300 transition-colors"
+              >
+                <ChevronDown className="h-4 w-4" />
+                Show recent posts
+              </button>
+            ) : (
+            <>
             {/* Pinned message (above scroll) */}
             {pinnedMessage && (
               <LiveWallMessage
@@ -763,6 +788,8 @@ export function LiveWall({ initialMessages, currentUser, compact = false }: Prop
                 </button>
               )}
             </div>
+            </>
+            )}
 
             <div className="shrink-0">
               {isViewOnly ? (
