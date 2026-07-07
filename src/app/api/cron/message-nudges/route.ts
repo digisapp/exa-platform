@@ -207,7 +207,7 @@ export async function GET(request: NextRequest) {
       const recipientFirstName = getFirstName(recipientActor);
       const messagePreview = candidate.latestMessage.content || "(Media message)";
       const timeAgo = Math.round((now.getTime() - new Date(candidate.latestMessage.created_at).getTime()) / (1000 * 60 * 60));
-      const conversationUrl = `${baseUrl}/messages?c=${candidate.conversationId}`;
+      const conversationUrl = `${baseUrl}/chats/${candidate.conversationId}`;
 
       try {
         await sendUnreadMessageNudgeEmail({

@@ -422,7 +422,7 @@ export async function POST(request: NextRequest) {
                 recipientDisplayName = recipientBrand?.company_name || "there";
               }
 
-              const conversationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com"}/messages?c=${conversationId}`;
+              const conversationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com"}/chats/${conversationId}`;
 
               sendNewMessageNotificationEmail({
                 to: recipientUser.email,

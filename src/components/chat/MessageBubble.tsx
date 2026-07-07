@@ -410,7 +410,7 @@ export const MessageBubble = memo(function MessageBubble({
             />
           )}
 
-          {message.media_url && (
+          {(message.media_url || isMediaLocked) && (
             <div className={cn("mt-2", !message.content && "-mt-0")}>
               {isMediaLocked ? (
                 /* Locked PPV media overlay -- uses gradient placeholder, never the real URL */

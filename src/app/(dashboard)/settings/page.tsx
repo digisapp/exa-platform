@@ -383,6 +383,7 @@ export default function ProfilePage() {
 
         if (fanData) {
           setFan(fanData);
+          setOriginalUsername(fanData.username || "");
         }
       } else if (actorData.type === "brand") {
         // Load brand data
@@ -446,8 +447,12 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
-      // Validate username if provided
-      if (fan.username) {
+      // Validate username if provided. Only check availability when it actually
+      // changed — /api/username/check has no self-exclusion, so re-checking the
+      // fan's own unchanged username would always fail ("already taken") and
+      // block every save (display name, phone, etc.).
+      const fanUsernameChanged = (fan.username || "") !== originalUsername;
+      if (fan.username && fanUsernameChanged) {
         if (fan.username.length < 3) {
           throw new Error("Username must be at least 3 characters");
         }
@@ -629,6 +634,8 @@ export default function ProfilePage() {
         allow_tips: (model as any).allow_tips ?? true,
         // Brand collab fields
         open_to_collabs: (model as any).open_to_collabs ?? false,
+        collab_types: (model as any).collab_types ?? [],
+        deactivated: (model as any).deactivated ?? false,
         avg_instagram_impressions: (model as any).avg_instagram_impressions || null,
         avg_tiktok_views: (model as any).avg_tiktok_views || null,
         instagram_collab_rate: (model as any).instagram_collab_rate || null,

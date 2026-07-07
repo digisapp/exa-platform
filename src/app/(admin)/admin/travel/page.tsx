@@ -347,7 +347,7 @@ function TripsTab({ supabase }: { supabase: any }) {
                       <>
                         <Button
                           size="sm"
-                          onClick={() => updateAppStatus(app.id, "approved")}
+                          onClick={() => updateAppStatus(app.id, "accepted")}
                           disabled={processingApp === app.id}
                           className="bg-green-500/20 text-green-400 hover:bg-green-500/30"
                         >
@@ -356,7 +356,7 @@ function TripsTab({ supabase }: { supabase: any }) {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => updateAppStatus(app.id, "declined")}
+                          onClick={() => updateAppStatus(app.id, "rejected")}
                           disabled={processingApp === app.id}
                           className="text-red-400 hover:bg-red-500/10"
                         >
@@ -619,7 +619,7 @@ function ApplicantsTab({ supabase }: { supabase: any }) {
   });
 
   const pending = applicants.filter((a) => a.status === "pending").length;
-  const approved = applicants.filter((a) => a.status === "approved").length;
+  const approved = applicants.filter((a) => a.status === "accepted").length;
 
   if (loading) return <LoadingSpinner />;
 
@@ -663,8 +663,8 @@ function ApplicantsTab({ supabase }: { supabase: any }) {
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="declined">Declined</SelectItem>
+            <SelectItem value="accepted">Approved</SelectItem>
+            <SelectItem value="rejected">Declined</SelectItem>
             <SelectItem value="waitlist">Waitlist</SelectItem>
           </SelectContent>
         </Select>
@@ -727,7 +727,7 @@ function ApplicantsTab({ supabase }: { supabase: any }) {
                     <>
                       <Button
                         size="sm"
-                        onClick={() => updateStatus(app.id, "approved")}
+                        onClick={() => updateStatus(app.id, "accepted")}
                         disabled={processingId === app.id}
                         className="bg-green-500/20 text-green-400 hover:bg-green-500/30 border-green-500/30"
                         variant="outline"
@@ -737,7 +737,7 @@ function ApplicantsTab({ supabase }: { supabase: any }) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => updateStatus(app.id, "declined")}
+                        onClick={() => updateStatus(app.id, "rejected")}
                         disabled={processingId === app.id}
                         className="text-red-400 hover:bg-red-500/10"
                       >

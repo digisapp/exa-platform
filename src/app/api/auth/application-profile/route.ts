@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { processImage, isProcessableImage } from "@/lib/image-processing";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import { approveModelApplication } from "@/lib/model-approval";
 
 // Lets a pending applicant add a profile photo + bio while waiting for review.
 // Values live on model_applications and are copied to the models row at
@@ -37,10 +38,12 @@ export async function POST(request: NextRequest) {
 
     const admin = createServiceRoleClient();
 
-    // Only applicants with a pending application can use this endpoint
+    // Only applicants with a pending application can use this endpoint.
+    // Full row: the photo-request auto-approve path needs every field the
+    // approval conversion copies onto the models row.
     const { data: application } = await admin
       .from("model_applications")
-      .select("id, profile_photo_url")
+      .select("*")
       .eq("user_id", user.id)
       .eq("status", "pending")
       .order("created_at", { ascending: false })
@@ -186,8 +189,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to save" }, { status: 500 });
     }
 
+    // Photo-request auto-approve: an admin already selected this applicant
+    // (photo_requested_at) — the photo was the only thing missing, so approve
+    // now instead of making her wait for a second review pass. Failure here
+    // must not fail the save; manual approval stays the fallback.
+    let approved = false;
+    if (
+      updates.profile_photo_url &&
+      (application as any).photo_requested_at &&
+      (application as any).photo_requested_by &&
+      (application as any).email_confirmed_at
+    ) {
+      try {
+        const result = await approveModelApplication({
+          application: { ...application, ...updates },
+          reviewerActorId: (application as any).photo_requested_by,
+        });
+        approved = result.success;
+        if (!result.success) {
+          logger.error("Photo-request auto-approve failed", result.error);
+        }
+      } catch (approveError) {
+        logger.error("Photo-request auto-approve error", approveError);
+      }
+    }
+
     return NextResponse.json({
       success: true,
+      approved,
       profile_photo_url: (updates.profile_photo_url as string) ?? application.profile_photo_url ?? null,
     });
   } catch (error) {
