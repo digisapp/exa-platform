@@ -10233,6 +10233,8 @@ export type Database = {
         Args: { p_model_id: string }
         Returns: {
           today_views: number
+          prev_unique_30d: number
+          prev_views_30d: number
           total_views_30d: number
           unique_visitors_30d: number
         }[]
