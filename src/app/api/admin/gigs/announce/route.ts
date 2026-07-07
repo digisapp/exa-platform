@@ -5,6 +5,10 @@ import { sendNewGigAnnouncementEmail } from "@/lib/email";
 import { postLiveWallSystemMessage } from "@/lib/live-wall-system";
 import { format } from "date-fns";
 
+// A full blast (up to 5000 models at 2/1.1s) can run several minutes — give the
+// serverless function room so it isn't killed mid-send.
+export const maxDuration = 300;
+
 // Announce a new gig to all models with profile pictures
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { gigId } = body;
+    const { gigId, force } = body;
 
     if (!gigId) {
       return NextResponse.json(
@@ -43,7 +47,7 @@ export async function POST(request: NextRequest) {
     // Get gig details
     const { data: gig } = await adminClient
       .from("gigs")
-      .select("id, title, type, slug, start_at, location_city, location_state, cover_image_url")
+      .select("id, title, type, slug, start_at, location_city, location_state, cover_image_url, announced_at")
       .eq("id", gigId)
       .single();
 
@@ -54,11 +58,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get all models with profile pictures (approved models only, capped for safety)
+    // Dedupe: a gig is announced once. Reopening/re-publishing must not re-blast
+    // every approved model. `force: true` allows a deliberate re-send.
+    if (gig.announced_at && !force) {
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        alreadyAnnouncedAt: gig.announced_at,
+        message: "This gig was already announced; skipping to avoid a duplicate blast.",
+      });
+    }
+
+    // Get all models with profile pictures (approved, not deleted, capped)
     const { data: models, error: modelsError } = await adminClient
       .from("models")
       .select("id, email, first_name, username, profile_photo_url")
       .eq("is_approved", true)
+      .is("deleted_at", null)
       .not("profile_photo_url", "is", null)
       .limit(5000);
 
@@ -160,6 +176,12 @@ export async function POST(request: NextRequest) {
     if (failedEmails.length > 0) {
       console.warn(`Gig announcement: ${failedEmails.length} emails failed to send`);
     }
+
+    // Mark announced so a later reopen/re-publish doesn't re-blast everyone.
+    await adminClient
+      .from("gigs")
+      .update({ announced_at: new Date().toISOString() })
+      .eq("id", gigId);
 
     return NextResponse.json({
       success: true,
