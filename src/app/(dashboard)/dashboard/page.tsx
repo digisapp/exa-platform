@@ -104,9 +104,14 @@ export default async function DashboardPage() {
   // wait on the pending page like every other applicant.
   if (!model.is_approved) redirect("/pending-approval");
 
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
   const [
     { data: allBookings },
     { data: rawPortfolioPhotos },
+    { count: followerCount },
+    { count: views30d },
   ] = await Promise.all([
     // Get pending bookings for this model - use adminClient to bypass RLS
     (adminClient.from("bookings") as any)
@@ -123,6 +128,14 @@ export default async function DashboardPage() {
       .eq("media_type", "image")
       .order("created_at", { ascending: false })
       .limit(50),
+    // Identity header stats
+    (adminClient.from("follows") as any)
+      .select("*", { count: "exact", head: true })
+      .eq("following_id", actor.id),
+    (adminClient.from("profile_views") as any)
+      .select("*", { count: "exact", head: true })
+      .eq("model_id", model.id)
+      .gte("view_date", thirtyDaysAgo.toISOString().split("T")[0]),
   ]);
 
   // Filter for pending/counter bookings in JS
@@ -596,6 +609,8 @@ export default async function DashboardPage() {
         profilePhotoUrl={model.profile_photo_url || null}
         heroPhotoUrl={heroSource?.url ?? model.profile_photo_url ?? null}
         portfolioPhotos={portfolioPhotos}
+        followerCount={followerCount || 0}
+        views30d={views30d || 0}
       />
 
       {/* ──────────────────────────────────────────────────────

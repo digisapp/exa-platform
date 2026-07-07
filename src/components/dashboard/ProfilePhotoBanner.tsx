@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Camera, Star, Loader2, ImageOff, Check, ExternalLink } from "lucide-react";
+import { Camera, Star, Loader2, ImageOff, Check, ExternalLink, Heart, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,7 +34,14 @@ interface ProfilePhotoBannerProps {
   /** The resolved hero portrait URL (from getHeroPortrait) */
   heroPhotoUrl: string | null;
   portfolioPhotos: PortfolioPhoto[];
+  followerCount: number;
+  views30d: number;
 }
+
+const compactNumber = new Intl.NumberFormat("en", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
 
 // ---------------------------------------------------------------------------
 // Component
@@ -46,6 +53,8 @@ export function ProfilePhotoBanner({
   profilePhotoUrl: initialProfilePhoto,
   heroPhotoUrl: initialHeroPhoto,
   portfolioPhotos: initialPortfolio,
+  followerCount,
+  views30d,
 }: ProfilePhotoBannerProps) {
   // Avatar state
   const [profilePhotoUrl, setProfilePhotoUrl] = useState(initialProfilePhoto);
@@ -179,35 +188,15 @@ export function ProfilePhotoBanner({
 
   return (
     <>
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+      <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-pink-500/[0.08] via-white/[0.03] to-violet-500/[0.08] backdrop-blur-sm overflow-hidden">
         <div className="p-5 sm:p-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xs font-semibold text-white/60 uppercase tracking-wider">
-                Profile Pictures
-              </h2>
-              {!profilePhotoUrl && (
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 uppercase tracking-wide">
-                  Setup needed
-                </span>
-              )}
-            </div>
-            <Link
-              href={`/${username}`}
-              className="text-[11px] text-pink-400 hover:text-pink-300 flex items-center gap-1 transition-colors"
-            >
-              View profile <ExternalLink className="h-3 w-3" />
-            </Link>
-          </div>
-
-          {/* Portrait + Avatar side by side */}
-          <div className="flex items-center gap-4">
-            {/* ── Portrait (hero) preview ── */}
-            <div className="flex flex-col items-center gap-1.5">
+          <div className="flex items-center gap-5 sm:gap-7">
+            {/* ── Photo cluster: portrait with avatar overlapping its corner ── */}
+            <div className="relative shrink-0 mb-2 mr-4">
+              {/* Portrait (hero) — opens portfolio picker */}
               <button
                 onClick={() => setPickerOpen(true)}
-                className="relative group shrink-0 w-24 h-[120px] sm:w-32 sm:h-[160px] rounded-xl overflow-hidden bg-gradient-to-br from-[#1a0033] to-[#2d1b69] ring-1 ring-white/10 hover:ring-pink-500/50 transition-all"
+                className="relative group block w-28 h-[144px] sm:w-32 sm:h-[164px] rounded-xl overflow-hidden bg-gradient-to-br from-[#1a0033] to-[#2d1b69] ring-1 ring-white/10 hover:ring-pink-500/50 transition-all"
               >
                 {heroPhotoUrl ? (
                   <Image
@@ -224,17 +213,16 @@ export function ProfilePhotoBanner({
                     </span>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Always-visible edit chip (no hover on mobile) */}
+                <span className="absolute top-1.5 right-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[10px] font-medium text-white">
+                  <Camera className="h-3 w-3" /> Edit
+                </span>
+                <div className="absolute inset-0 bg-black/50 hidden sm:flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Camera className="h-4 w-4 text-white" />
                 </div>
               </button>
-              <span className="text-[10px] text-white/40 font-medium">
-                Portrait
-              </span>
-            </div>
 
-            {/* ── Circle avatar ── */}
-            <div className="flex flex-col items-center gap-1.5">
+              {/* Avatar — overlaps the portrait's bottom-right corner */}
               <input
                 ref={avatarInputRef}
                 type="file"
@@ -245,32 +233,90 @@ export function ProfilePhotoBanner({
               <button
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={uploadingAvatar}
-                className="relative group shrink-0"
+                className="absolute -bottom-3 -right-6 group rounded-full shadow-[0_0_20px_rgba(236,72,153,0.35)]"
               >
                 {profilePhotoUrl ? (
                   <Image
                     src={profilePhotoUrl}
                     alt="Avatar"
-                    width={96}
-                    height={96}
-                    className="w-[96px] h-[96px] rounded-full object-cover ring-2 ring-pink-500/40 group-hover:ring-pink-500 transition-all"
+                    width={80}
+                    height={80}
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ring-2 ring-pink-500/60 group-hover:ring-pink-500 transition-all"
                   />
                 ) : (
-                  <div className="w-[96px] h-[96px] rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-xl font-bold ring-2 ring-amber-400/60">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-lg font-bold ring-2 ring-amber-400/70">
                     {initials}
                   </div>
                 )}
-                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  {uploadingAvatar ? (
-                    <Loader2 className="h-4 w-4 text-white animate-spin" />
-                  ) : (
-                    <Camera className="h-4 w-4 text-white" />
+                {/* Always-visible camera badge */}
+                <span
+                  className={cn(
+                    "absolute bottom-0 right-0 w-6 h-6 rounded-full flex items-center justify-center ring-2 ring-[#120a24]",
+                    profilePhotoUrl ? "bg-pink-500" : "bg-amber-500 animate-pulse"
                   )}
-                </div>
+                >
+                  {uploadingAvatar ? (
+                    <Loader2 className="h-3 w-3 text-white animate-spin" />
+                  ) : (
+                    <Camera className="h-3 w-3 text-white" />
+                  )}
+                </span>
               </button>
-              <span className={`text-[10px] font-medium ${profilePhotoUrl ? "text-white/40" : "text-amber-400"}`}>
-                {profilePhotoUrl ? "Avatar" : "Tap to add"}
-              </span>
+            </div>
+
+            {/* ── Identity + stats ── */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h2 className="text-lg sm:text-xl font-bold text-white truncate">
+                  {displayName}
+                </h2>
+                {!profilePhotoUrl && (
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 uppercase tracking-wide">
+                    Setup needed
+                  </span>
+                )}
+              </div>
+
+              <Link
+                href={`/${username}`}
+                className="inline-flex items-center gap-1 text-xs text-pink-400 hover:text-pink-300 transition-colors truncate max-w-full"
+              >
+                examodels.com/{username}
+                <ExternalLink className="h-3 w-3 shrink-0" />
+              </Link>
+
+              {/* Live stats */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2.5">
+                <span className="flex items-center gap-1.5 text-sm text-white/80">
+                  <Heart className="h-3.5 w-3.5 text-pink-400 fill-pink-400/60" />
+                  <span className="font-semibold text-white">
+                    {compactNumber.format(followerCount)}
+                  </span>
+                  <span className="text-white/50">followers</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-sm text-white/80">
+                  <Eye className="h-3.5 w-3.5 text-cyan-400" />
+                  <span className="font-semibold text-white">
+                    {compactNumber.format(views30d)}
+                  </span>
+                  <span className="text-white/50">views · 30d</span>
+                </span>
+              </div>
+
+              {/* What each photo is for */}
+              <div className="mt-2.5 space-y-0.5 text-[11px] leading-relaxed text-white/45">
+                <p>
+                  <span className="font-medium text-white/70">Portrait</span> — the
+                  large photo on your public profile
+                </p>
+                <p className={profilePhotoUrl ? undefined : "text-amber-400/90"}>
+                  <span className={cn("font-medium", profilePhotoUrl ? "text-white/70" : "text-amber-400")}>
+                    Avatar
+                  </span>{" "}
+                  — shown in chats, search &amp; model cards
+                  {!profilePhotoUrl && " (tap the circle to add one)"}
+                </p>
+              </div>
             </div>
           </div>
         </div>
