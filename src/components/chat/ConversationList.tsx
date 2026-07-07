@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Search, MessageSquare, Sparkles, Users, Building2, Pin, Archive, ArchiveRestore, MoreVertical, Coins, Camera, Video, Mic } from "lucide-react";
+import { MessageCircle, Search, MessageSquare, Sparkles, Building2, Pin, Archive, ArchiveRestore, MoreVertical, Coins, Camera, Video, Mic } from "lucide-react";
 import { format, isToday, isYesterday, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { modelDisplayName } from "@/lib/model-display";
@@ -412,26 +412,21 @@ export function ConversationList({ conversations: initialConversations, actorTyp
       {actorType === "model" && (
         <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
           <TabsList className={cn("w-full grid grid-cols-4", compact && "mx-3 w-[calc(100%-1.5rem)]")}>
-            <TabsTrigger value="all" className="gap-1.5">
-              <MessageSquare className="h-4 w-4" />
-              All
-            </TabsTrigger>
-            <TabsTrigger value="fans" className="gap-1.5">
-              <Users className="h-4 w-4" />
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="fans" className="gap-1">
               Fans
               {typeCounts.fans > 0 && (
-                <span className="ml-0.5 text-xs text-muted-foreground">({typeCounts.fans})</span>
+                <span className="text-xs text-muted-foreground">({typeCounts.fans})</span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="brands" className="gap-1.5">
-              <Building2 className="h-4 w-4" />
+            <TabsTrigger value="brands" className="gap-1">
               Brands
               {typeCounts.brands > 0 && (
-                <span className="ml-0.5 text-xs text-muted-foreground">({typeCounts.brands})</span>
+                <span className="text-xs text-muted-foreground">({typeCounts.brands})</span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="archived" className="gap-1.5">
-              <Archive className="h-4 w-4" />
+            <TabsTrigger value="archived" className="gap-1">
+              Archived
               {archivedCount > 0 && (
                 <span className="text-xs text-muted-foreground">({archivedCount})</span>
               )}
@@ -608,6 +603,14 @@ export function ConversationList({ conversations: initialConversations, actorTyp
                   ? "When fans message you, conversations will appear here"
                   : "Start a conversation by visiting a model's profile"}
               </p>
+              {actorType !== "model" && (
+                <Link
+                  href="/models"
+                  className="mt-5 inline-flex items-center justify-center h-10 px-6 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-white text-sm font-semibold shadow-[0_0_24px_rgba(236,72,153,0.45)] hover:shadow-[0_0_32px_rgba(236,72,153,0.65)] active:scale-[0.98] transition-all"
+                >
+                  Browse models
+                </Link>
+              )}
             </>
           )}
         </div>

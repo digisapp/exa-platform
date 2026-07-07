@@ -219,7 +219,7 @@ export const MessageBubble = memo(function MessageBubble({
     return (
       <div
         className={cn(
-          "flex gap-3 max-w-[80%]",
+          "flex gap-3 max-w-[min(80%,36rem)]",
           isOwn ? "ml-auto flex-row-reverse" : ""
         )}
       >
@@ -251,7 +251,7 @@ export const MessageBubble = memo(function MessageBubble({
   return (
     <div
       className={cn(
-        "flex items-end gap-2 max-w-[85%] group",
+        "flex items-end gap-2 max-w-[min(85%,36rem)] group",
         isOwn ? "ml-auto flex-row-reverse" : ""
       )}
     >

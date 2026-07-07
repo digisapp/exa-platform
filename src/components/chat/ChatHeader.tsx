@@ -182,20 +182,23 @@ export function ChatHeader({
           ) : null}
         </div>
 
-        {/* Call buttons grouped */}
+        {/* Call buttons grouped — voice is desktop-only to keep the mobile
+            header from crowding out the participant name */}
         <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1">
-          <VideoCallButton
-            conversationId={conversation.id}
-            coinBalance={localCoinBalance}
-            isModel={currentActor.type === "model"}
-            recipientIsModel={otherParticipantActorType === "model"}
-            recipientActorId={otherParticipantActorId}
-            recipientName={otherName}
-            recipientAvatar={otherAvatar}
-            videoCallRate={otherParticipantModel?.voice_call_rate || 5}
-            callType="voice"
-            onBalanceChange={onBalanceChange}
-          />
+          <div className="hidden sm:block">
+            <VideoCallButton
+              conversationId={conversation.id}
+              coinBalance={localCoinBalance}
+              isModel={currentActor.type === "model"}
+              recipientIsModel={otherParticipantActorType === "model"}
+              recipientActorId={otherParticipantActorId}
+              recipientName={otherName}
+              recipientAvatar={otherAvatar}
+              videoCallRate={otherParticipantModel?.voice_call_rate || 5}
+              callType="voice"
+              onBalanceChange={onBalanceChange}
+            />
+          </div>
           <VideoCallButton
             conversationId={conversation.id}
             coinBalance={localCoinBalance}

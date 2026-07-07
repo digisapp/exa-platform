@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Coins, ChevronDown, RefreshCw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format, isToday, isYesterday, isSameDay, differenceInCalendarDays } from "date-fns";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { Actor, Model } from "@/types/database";
 import type { OtherParticipantInfo } from "./ChatHeader";
@@ -16,6 +16,17 @@ import type { OptimisticMessage } from "./ChatView";
 
 interface TypingUser {
   name: string;
+}
+
+// Centered day-divider label ("Today", "Monday", "March 4")
+function formatDaySeparator(dateStr: string): string {
+  const date = new Date(dateStr);
+  if (isToday(date)) return "Today";
+  if (isYesterday(date)) return "Yesterday";
+  const now = new Date();
+  if (differenceInCalendarDays(now, date) < 7) return format(date, "EEEE");
+  if (date.getFullYear() === now.getFullYear()) return format(date, "MMMM d");
+  return format(date, "MMMM d, yyyy");
 }
 
 export interface ChatMessagesHandle {
@@ -190,7 +201,7 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
             role="log"
             aria-label="Chat messages"
             aria-live="polite"
-            className="flex-1 overflow-y-auto p-4 space-y-4"
+            className="flex-1 overflow-y-auto p-4"
           >
             {/* Load more indicator */}
             {loadingMore && (
@@ -256,17 +267,29 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
             ) : (
               messages.map((message, index) => {
                 const isOwn = message.sender_id === currentActor.id;
-                const showAvatar =
-                  index === 0 ||
-                  messages[index - 1].sender_id !== message.sender_id;
 
                 const isLastMessage = index === messages.length - 1;
                 const nextMessage = messages[index + 1];
-                const isDifferentSender = !!(nextMessage && nextMessage.sender_id !== message.sender_id);
+                const isDifferentSender = !!(nextMessage &&
+                  (nextMessage.sender_id !== message.sender_id || nextMessage.is_system));
                 const hasTimeGap = !!(nextMessage && message.created_at && nextMessage.created_at &&
                   (new Date(nextMessage.created_at).getTime() - new Date(message.created_at).getTime() > 5 * 60 * 1000));
-                const showTimestamp = isLastMessage || isDifferentSender || hasTimeGap;
+                // Avatar + timestamp sit on the last message of a sender group
+                const showAvatar = isLastMessage || isDifferentSender || hasTimeGap;
+                const showTimestamp = showAvatar;
                 const showSeen = message.id === seenMessageId;
+
+                // Grouping relative to the previous message: tight spacing within
+                // a sender group, wider between groups, day divider on date change
+                const prevMessage = index > 0 ? messages[index - 1] : null;
+                const isNewDay = !prevMessage || !message.created_at || !prevMessage.created_at ||
+                  !isSameDay(new Date(prevMessage.created_at), new Date(message.created_at));
+                const gapFromPrev = !!(prevMessage && message.created_at && prevMessage.created_at &&
+                  (new Date(message.created_at).getTime() - new Date(prevMessage.created_at).getTime() > 5 * 60 * 1000));
+                const isGroupedWithPrev = !!prevMessage &&
+                  prevMessage.sender_id === message.sender_id &&
+                  !prevMessage.is_system && !message.is_system &&
+                  !gapFromPrev && !isNewDay;
 
                 // Build reactions from batch-fetched data
                 const rawReactions = reactionsMap[message.id] || [];
@@ -292,7 +315,14 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
                 const isSending = messageStatus === "sending";
 
                 return (
-                  <div key={message._tempId || message.id}>
+                  <div key={message._tempId || message.id} className={isGroupedWithPrev ? "mt-1" : "mt-4"}>
+                    {isNewDay && message.created_at && (
+                      <div className="flex items-center justify-center mb-4">
+                        <span className="px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[11px] font-medium text-white/50">
+                          {formatDaySeparator(message.created_at)}
+                        </span>
+                      </div>
+                    )}
                     <div className={cn(isSending && "opacity-70", isFailed && "opacity-50")}>
                       <MessageBubble
                         message={message}
@@ -384,7 +414,7 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
             )}
 
             {/* Typing indicator */}
-            <div aria-live="polite" aria-atomic="true">
+            <div aria-live="polite" aria-atomic="true" className={typingUsers.length > 0 ? "mt-4" : undefined}>
               {typingUsers.length > 0 && (
                 <TypingIndicator name={typingUsers[0].name} />
               )}

@@ -1,4 +1,18 @@
+import { cache } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
+
+/**
+ * Per-request memoized entry point. The chats layout and page both need this
+ * data in the same render pass; cache() keyed on actorId makes the second
+ * call free instead of re-running ~6 queries.
+ */
+export const getConversationList = cache(async (actorId: string) => {
+  const supabase = await createClient();
+  const adminClient = createServiceRoleClient();
+  return fetchConversationList(supabase, adminClient, actorId);
+});
 
 /**
  * Shared conversation list query used by both chats layout and page.
