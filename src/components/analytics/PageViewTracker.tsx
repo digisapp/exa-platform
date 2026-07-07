@@ -57,7 +57,17 @@ function getModelInfo(pathname: string): { modelUsername?: string } {
     const reserved = [
       "signin", "signup", "dashboard", "profile", "models", "gigs",
       "chats", "wallet", "coins", "content", "admin", "apply",
-      "leaderboard", "onboarding", "favorites", "earnings", "fan"
+      "leaderboard", "onboarding", "favorites", "earnings", "fan",
+      "tv", "shows", "terms", "privacy", "settings", "events",
+      "academy", "analytics", "auth", "bids", "bookings", "boost",
+      "brand", "brands", "call", "campaigns", "comp-card",
+      "comp-card-creator", "contracts", "designers", "error",
+      "exadolls", "followers", "for-models", "fresh-digitals", "go",
+      "guidelines", "model-onboarding", "modelo", "my-bids",
+      "my-content", "offers", "rates", "roster", "runway-workshop",
+      "schedule-call", "shop", "sponsors", "swimcrown",
+      "swimwear-content", "travel", "unsubscribe", "verify-identity",
+      "workshops"
     ];
     if (!reserved.includes(username.toLowerCase())) {
       return { modelUsername: username };
@@ -81,9 +91,6 @@ export function PageViewTracker({ modelId, modelUsername }: PageViewTrackerProps
     const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : "");
     if (fullPath === lastTrackedPath.current) return;
     lastTrackedPath.current = fullPath;
-
-    // Don't track in development (optional - remove if you want dev tracking)
-    // if (process.env.NODE_ENV === "development") return;
 
     const trackPageView = async () => {
       try {

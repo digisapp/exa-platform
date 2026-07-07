@@ -5,6 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { PRINT_PICKUP_EVENT, isPrintPickupWindowOpen } from "@/lib/comp-card-event";
+
+const RETURN_PATHS = ["/comp-card", "/comp-card-creator"] as const;
 
 const schema = z.object({
   orderId: z.string().uuid(),
@@ -13,12 +16,22 @@ const schema = z.object({
   firstName: z.string().min(1).max(100),
   lastName: z.string().max(100).optional(),
   phone: z.string().max(30).optional(),
+  returnPath: z.enum(RETURN_PATHS).optional(),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const rateLimitResponse = await checkEndpointRateLimit(request, "general");
     if (rateLimitResponse) return rateLimitResponse;
+
+    if (!isPrintPickupWindowOpen()) {
+      return NextResponse.json(
+        {
+          error: `Print & pick-up ordering for ${PRINT_PICKUP_EVENT.name} has ended. Follow @examodels for the next event.`,
+        },
+        { status: 410 }
+      );
+    }
 
     const body = await request.json();
     const parsed = schema.safeParse(body);
@@ -96,7 +109,7 @@ export async function POST(request: NextRequest) {
       ],
       mode: "payment",
       success_url: `${baseUrl}/comp-card-creator/print-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/comp-card-creator?cancelled=true`,
+      cancel_url: `${baseUrl}${parsed.data.returnPath || "/comp-card-creator"}?cancelled=true`,
       customer_email: parsed.data.email,
       metadata: {
         type: "comp_card_print",

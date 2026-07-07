@@ -25,6 +25,7 @@ import {
   ZoomIn,
   ImageDown,
   Printer,
+  Share2,
 } from "lucide-react";
 import PrintOrderDialog from "@/components/comp-card/PrintOrderDialog";
 import { MiamiDigitalsBanner } from "@/components/comp-card/MiamiDigitalsBanner";
@@ -35,6 +36,7 @@ import {
   photoToBase64,
   isAcceptedImage,
 } from "@/lib/comp-card-utils";
+import { PRINT_PICKUP_EVENT, isPrintPickupWindowOpen } from "@/lib/comp-card-event";
 
 interface ModelData {
   id: string;
@@ -73,22 +75,40 @@ export default function CompCardPage() {
   const [photos, setPhotos] = useState<PortfolioPhoto[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportingJpeg, setExportingJpeg] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [qrCodePreview, setQrCodePreview] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [logoVariant, setLogoVariant] = useState<"white" | "black" | "none">("white");
   const [nameFontScale, setNameFontScale] = useState(1.0);
+  const [nameMode, setNameMode] = useState<"real" | "username">("real");
+
+  const printWindowOpen = isPrintPickupWindowOpen();
 
   // Hero photo repositioning (object-position %) and zoom
   const [heroPos, setHeroPos] = useState({ x: 50, y: 50 });
   const [heroZoom, setHeroZoom] = useState(1);
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+  const [repositionActive, setRepositionActive] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0, startX: 50, startY: 50 });
   const prevHeroId = useRef<string | null>(null);
+
+  useEffect(() => {
+    setIsCoarsePointer(window.matchMedia("(pointer: coarse)").matches);
+  }, []);
+
+  // On touch devices the hero stays scroll-transparent until "Tap to adjust"
+  const repositionEnabled = !isCoarsePointer || repositionActive;
+  const heroPosRef = useRef(heroPos);
+  heroPosRef.current = heroPos;
+  const repositionEnabledRef = useRef(repositionEnabled);
+  repositionEnabledRef.current = repositionEnabled;
 
   // Reset position and zoom when front photo changes
   const currentHeroId = selectedIds[0] ?? null;
@@ -108,13 +128,17 @@ export default function CompCardPage() {
     if (!el) return;
 
     const onPointerDown = (e: PointerEvent) => {
-      // Only on the photo area
-      if ((e.target as HTMLElement).tagName === "IMG" || el.contains(e.target as Node)) {
-        dragging.current = true;
-        dragStart.current = { x: e.clientX, y: e.clientY, startX: heroPos.x, startY: heroPos.y };
-        el.setPointerCapture(e.pointerId);
-        e.preventDefault();
-      }
+      if (!repositionEnabledRef.current) return;
+      if ((e.target as HTMLElement).closest("button")) return;
+      dragging.current = true;
+      dragStart.current = {
+        x: e.clientX,
+        y: e.clientY,
+        startX: heroPosRef.current.x,
+        startY: heroPosRef.current.y,
+      };
+      el.setPointerCapture(e.pointerId);
+      e.preventDefault();
     };
 
     const onPointerMove = (e: PointerEvent) => {
@@ -144,65 +168,78 @@ export default function CompCardPage() {
       el.removeEventListener("pointerup", onPointerUp);
       el.removeEventListener("pointercancel", onPointerUp);
     };
-  });
+  }, [loading]);
 
   const fetchData = useCallback(async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-    setUserEmail(user.email || "");
-
-    const { data: modelData } = await supabase
-      .from("models")
-      .select(
-        "id, first_name, last_name, username, height, bust, waist, hips, eye_color, hair_color, dress_size, shoe_size, instagram_name, city, state, profile_photo_url"
-      )
-      .eq("user_id", user.id)
-      .single();
-
-    if (!modelData) {
-      setLoading(false);
-      return;
-    }
-
-    setModel(modelData);
-
-    // Generate QR code for preview
+    setLoading(true);
+    setLoadError(false);
     try {
-      const QRCode = (await import("qrcode")).default;
-      const profileUrl = `https://www.examodels.com/${modelData.username || ""}`;
-      const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 200, margin: 1 });
-      setQrCodePreview(qrDataUrl);
-    } catch {
-      // QR code preview is non-critical
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) return;
+      setUserEmail(user.email || "");
+
+      const { data: modelData, error: modelError } = await supabase
+        .from("models")
+        .select(
+          "id, first_name, last_name, username, height, bust, waist, hips, eye_color, hair_color, dress_size, shoe_size, instagram_name, city, state, profile_photo_url"
+        )
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (modelError) throw modelError;
+      if (!modelData) return;
+
+      setModel(modelData);
+      if (!modelData.first_name && modelData.username) {
+        setNameMode("username");
+      }
+
+      // Generate QR code for preview
+      try {
+        const QRCode = (await import("qrcode")).default;
+        const profileUrl = `https://www.examodels.com/${modelData.username || ""}`;
+        const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 200, margin: 1 });
+        setQrCodePreview(qrDataUrl);
+      } catch {
+        // QR code preview is non-critical
+      }
+
+      // Fetch portfolio photos from content_items (single source of truth)
+      const resolveMediaUrl = (url: string) =>
+        url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
+
+      const { data: contentData, error: contentError } = await (supabase as any)
+        .from("content_items")
+        .select("id, media_url, title, created_at")
+        .eq("model_id", modelData.id)
+        .eq("status", "portfolio")
+        .eq("media_type", "image")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (contentError) throw contentError;
+
+      const allPhotos = (contentData || []).map((p: any) => ({
+        id: p.id, url: resolveMediaUrl(p.media_url), photo_url: resolveMediaUrl(p.media_url), is_primary: false, display_order: 0,
+      }));
+      setPhotos(allPhotos);
+
+      // Pre-select the first MAX_PHOTOS portfolio photos
+      if (allPhotos.length > 0) {
+        const initial = allPhotos.slice(0, Math.min(MAX_PHOTOS, allPhotos.length));
+        setSelectedIds(initial.map((p: any) => p.id));
+      }
+    } catch (error) {
+      console.error("Comp card load error:", error);
+      setLoadError(true);
+      toast.error("Failed to load your comp card data");
+    } finally {
+      setLoading(false);
     }
-
-    // Fetch portfolio photos from content_items (single source of truth)
-    const resolveMediaUrl = (url: string) =>
-      url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
-
-    const { data: contentData } = await (supabase as any)
-      .from("content_items")
-      .select("id, media_url, title, created_at")
-      .eq("model_id", modelData.id)
-      .eq("status", "portfolio")
-      .eq("media_type", "image")
-      .order("created_at", { ascending: false })
-      .limit(50);
-
-    const allPhotos = (contentData || []).map((p: any) => ({
-      id: p.id, url: resolveMediaUrl(p.media_url), photo_url: resolveMediaUrl(p.media_url), is_primary: false, display_order: 0,
-    }));
-    setPhotos(allPhotos);
-
-    // Pre-select first 4 portfolio photos
-    if (allPhotos.length > 0) {
-      const initial = allPhotos.slice(0, Math.min(MAX_PHOTOS, allPhotos.length));
-      setSelectedIds(initial.map((p: any) => p.id));
-    }
-
-    setLoading(false);
   }, [supabase]);
 
   useEffect(() => {
@@ -228,13 +265,19 @@ export default function CompCardPage() {
 
   // Upload one file via signed URL → /api/upload/complete persists it as a portfolio
   // content_item, so it survives refresh and shows up alongside existing photos.
+  // HEIC/HEIF is converted to JPEG server-side by /api/upload/complete.
   const uploadOne = async (file: File): Promise<PortfolioPhoto | null> => {
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    const fileType =
+      file.type ||
+      (ext === "heic" ? "image/heic" : ext === "heif" ? "image/heif" : "");
+
     const signedRes = await fetch("/api/upload/signed-url", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         fileName: file.name,
-        fileType: file.type,
+        fileType,
         fileSize: file.size,
         title: null,
       }),
@@ -244,7 +287,7 @@ export default function CompCardPage() {
 
     const putRes = await fetch(signed.signedUrl, {
       method: "PUT",
-      headers: { "Content-Type": file.type },
+      headers: { "Content-Type": fileType },
       body: file,
     });
     if (!putRes.ok) throw new Error("Direct upload to storage failed");
@@ -260,24 +303,17 @@ export default function CompCardPage() {
     });
     const complete = await completeRes.json().catch(() => ({}));
     if (!completeRes.ok) throw new Error(complete?.error || "Failed to complete upload");
+    if (!complete.contentItemId || !complete.url) {
+      throw new Error("Upload finished but the photo could not be added. Please refresh and try again.");
+    }
 
-    // /api/upload/complete inserts into content_items but doesn't return its id.
-    // Re-fetch the most recent portfolio item for this model to pick it up.
-    if (!model) return null;
-    const { data } = await (supabase as any)
-      .from("content_items")
-      .select("id, media_url")
-      .eq("model_id", model.id)
-      .eq("status", "portfolio")
-      .eq("media_type", "image")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-    if (!data) return null;
-    const url = data.media_url.startsWith("http")
-      ? data.media_url
-      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${data.media_url}`;
-    return { id: data.id, url, photo_url: url, is_primary: false, display_order: 0 };
+    return {
+      id: complete.contentItemId,
+      url: complete.url,
+      photo_url: complete.url,
+      is_primary: false,
+      display_order: 0,
+    };
   };
 
   // Handle file upload from device
@@ -335,9 +371,54 @@ export default function CompCardPage() {
 
   const logoColor = logoVariant === "black" ? "#000000" : logoVariant === "white" ? "#ffffff" : null;
   const nameColor = logoVariant === "black" ? "#000000" : "#ffffff";
-  const previewNameFontPx = model?.first_name
-    ? Math.round(Math.min(68, Math.round(360 / Math.max(model.first_name.length, 1) / 0.62)) * nameFontScale)
+
+  // What gets printed on the card: real name (default) or @username
+  const displayModel: ModelData | null = model
+    ? nameMode === "username" && model.username
+      ? { ...model, first_name: `@${model.username}`, last_name: null }
+      : model
+    : null;
+  const frontName = displayModel?.first_name || "";
+  const filePrefix =
+    nameMode === "username" && model?.username
+      ? model.username
+      : `${model?.first_name || "Model"}${model?.last_name ? `-${model.last_name}` : ""}`;
+
+  const previewNameFontPx = frontName
+    ? Math.round(Math.min(68, Math.round(360 / Math.max(frontName.length, 1) / 0.62)) * nameFontScale)
     : 68;
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const generatePdfBlob = async (): Promise<Blob> => {
+    const dm = displayModel;
+    if (!dm || selectedIds.length === 0) throw new Error("No photos selected");
+    const photoBase64: string[] = [];
+    for (let idx = 0; idx < selectedIds.length; idx++) {
+      const id = selectedIds[idx];
+      const photo = photos.find((p) => p.id === id);
+      let b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
+      if (idx === 0 && b64) b64 = await cropToPosition(b64, heroPos.x, heroPos.y, heroZoom);
+      if (b64) photoBase64.push(b64);
+    }
+    const QRCode = (await import("qrcode")).default;
+    const profileUrl = `https://www.examodels.com/${dm.username || ""}`;
+    const qrCodeBase64 = await QRCode.toDataURL(profileUrl, { width: 200, margin: 1 });
+    const { pdf } = await import("@react-pdf/renderer");
+    const { default: CompCardPDF } = await import("@/components/comp-card/CompCardPDF");
+    return pdf(
+      CompCardPDF({ model: dm, photos: photoBase64, logoColor, nameColor, nameFontScale, qrCodeUrl: qrCodeBase64 })
+    ).toBlob();
+  };
 
   const handleExportPDF = async () => {
     if (!model || selectedIds.length === 0) {
@@ -348,48 +429,8 @@ export default function CompCardPage() {
     fetch("/api/comp-card-creator/track-export", { method: "POST" }).catch(() => {});
     setExporting(true);
     try {
-      // Convert selected photos to base64
-      const photoBase64: string[] = [];
-
-      for (let idx = 0; idx < selectedIds.length; idx++) {
-        const id = selectedIds[idx];
-        const photo = photos.find((p) => p.id === id);
-        let b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
-
-        // Pre-crop the hero photo (first) to match the user's repositioning + zoom
-        if (idx === 0 && b64) {
-          b64 = await cropToPosition(b64, heroPos.x, heroPos.y, heroZoom);
-        }
-
-        if (b64) photoBase64.push(b64);
-      }
-
-      // Generate QR code
-      const QRCode = (await import("qrcode")).default;
-      const profileUrl = `https://www.examodels.com/${model.username || ""}`;
-      const qrCodeBase64 = await QRCode.toDataURL(profileUrl, { width: 200, margin: 1 });
-
-      // Dynamic import to avoid SSR issues
-      const { pdf } = await import("@react-pdf/renderer");
-      const { default: CompCardPDF } = await import(
-        "@/components/comp-card/CompCardPDF"
-      );
-
-      const blob = await pdf(
-        CompCardPDF({ model, photos: photoBase64, logoColor, nameColor, nameFontScale, qrCodeUrl: qrCodeBase64 })
-      ).toBlob();
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      const firstName = model.first_name || "Model";
-      const lastName = model.last_name || "";
-      link.download = `${firstName}${lastName ? `-${lastName}` : ""}-CompCard.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
+      const blob = await generatePdfBlob();
+      downloadBlob(blob, `${filePrefix}-CompCard.pdf`);
       toast.success("Comp card downloaded!");
     } catch (error) {
       console.error("PDF export error:", error);
@@ -399,28 +440,40 @@ export default function CompCardPage() {
     }
   };
 
-  const generatePdfBlob = async (): Promise<Blob> => {
-    if (!model || selectedIds.length === 0) throw new Error("No photos selected");
-    const photoBase64: string[] = [];
-    for (let idx = 0; idx < selectedIds.length; idx++) {
-      const id = selectedIds[idx];
-      const photo = photos.find((p) => p.id === id);
-      let b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
-      if (idx === 0 && b64) b64 = await cropToPosition(b64, heroPos.x, heroPos.y, heroZoom);
-      if (b64) photoBase64.push(b64);
+  const handleShare = async () => {
+    if (!model || selectedIds.length === 0) {
+      toast.error("Select at least one photo");
+      return;
     }
-    const QRCode = (await import("qrcode")).default;
-    const profileUrl = `https://www.examodels.com/${model.username || ""}`;
-    const qrCodeBase64 = await QRCode.toDataURL(profileUrl, { width: 200, margin: 1 });
-    const { pdf } = await import("@react-pdf/renderer");
-    const { default: CompCardPDF } = await import("@/components/comp-card/CompCardPDF");
-    return pdf(
-      CompCardPDF({ model, photos: photoBase64, logoColor, nameColor, nameFontScale, qrCodeUrl: qrCodeBase64 })
-    ).toBlob();
+
+    fetch("/api/comp-card-creator/track-export", { method: "POST" }).catch(() => {});
+    setSharing(true);
+    try {
+      const blob = await generatePdfBlob();
+      const file = new File([blob], `${filePrefix}-CompCard.pdf`, {
+        type: "application/pdf",
+      });
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: `${filePrefix} — Comp Card` });
+          return;
+        } catch (err) {
+          if ((err as Error).name === "AbortError") return;
+        }
+      }
+      downloadBlob(blob, `${filePrefix}-CompCard.pdf`);
+      toast.success("Comp card downloaded — attach it anywhere!");
+    } catch (error) {
+      console.error("Share error:", error);
+      toast.error("Failed to generate comp card. Please try again.");
+    } finally {
+      setSharing(false);
+    }
   };
 
   const handleExportJPEG = async () => {
-    if (!model || selectedIds.length === 0) {
+    const dm = displayModel;
+    if (!dm || selectedIds.length === 0) {
       toast.error("Select at least one photo");
       return;
     }
@@ -437,15 +490,14 @@ export default function CompCardPage() {
           img.src = src;
         });
 
-      const downloadCanvas = (canvas: HTMLCanvasElement, filename: string) => {
-        const url = canvas.toDataURL("image/jpeg", 0.95);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      };
+      const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob> =>
+        new Promise((resolve, reject) => {
+          canvas.toBlob(
+            (blob) => (blob ? resolve(blob) : reject(new Error("Failed to encode image"))),
+            "image/jpeg",
+            0.95
+          );
+        });
 
       // Convert selected photos to base64 (same as PDF flow)
       const photoBase64: string[] = [];
@@ -458,10 +510,6 @@ export default function CompCardPage() {
         }
         if (b64) photoBase64.push(b64);
       }
-
-      const firstName = model.first_name || "Model";
-      const lastName = model.last_name || "";
-      const filePrefix = `${firstName}${lastName ? `-${lastName}` : ""}`;
 
       // ── FRONT CARD ──
       // 5.5 x 8.5 at 200 DPI = 1100 x 1700
@@ -515,7 +563,7 @@ export default function CompCardPage() {
       }
 
       // First name at bottom
-      if (model.first_name) {
+      if (dm.first_name) {
         if (!document.fonts.check("900 1em PoppinsBlack")) {
           const poppinsFont = new FontFace("PoppinsBlack", `url(${window.location.origin}/fonts/Poppins-Black.ttf)`);
           await Promise.race([
@@ -523,7 +571,7 @@ export default function CompCardPage() {
             new Promise<void>((_, reject) => setTimeout(() => reject(new Error("Font load timeout")), 8000)),
           ]);
         }
-        const nameLen = model.first_name.length;
+        const nameLen = dm.first_name.length;
         const baseCanvasFontSize = nameLen <= 4 ? 230 : nameLen <= 5 ? 205 : nameLen <= 6 ? 184 : nameLen <= 7 ? 162 : nameLen <= 8 ? 143 : nameLen <= 9 ? 127 : nameLen <= 10 ? 113 : nameLen <= 11 ? 100 : nameLen <= 12 ? 89 : 78;
         const canvasFontSize = Math.round(baseCanvasFontSize * nameFontScale);
         const canvasLetterSpacing = nameLen <= 6 ? 6 : nameLen <= 9 ? 4 : 2;
@@ -532,10 +580,10 @@ export default function CompCardPage() {
         fCtx.textAlign = "center";
         fCtx.textBaseline = "bottom";
         fCtx.letterSpacing = `${canvasLetterSpacing}px`;
-        fCtx.fillText(model.first_name.toUpperCase(), FW / 2, FH - 80);
+        fCtx.fillText(dm.first_name.toUpperCase(), FW / 2, FH - 80);
       }
 
-      downloadCanvas(frontCanvas, `${filePrefix}-CompCard-Front.jpg`);
+      const frontBlob = await canvasToBlob(frontCanvas);
 
       // ── BACK CARD ──
       const BW = 1100;
@@ -553,7 +601,7 @@ export default function CompCardPage() {
       let curY = PAD;
 
       // Full name
-      const fullNameStr = [model.first_name, model.last_name].filter(Boolean).join(" ") || "Model";
+      const fullNameStr = [dm.first_name, dm.last_name].filter(Boolean).join(" ") || "Model";
       bCtx.font = "bold 39px Helvetica, Arial, sans-serif";
       bCtx.fillStyle = "#111111";
       bCtx.textAlign = "center";
@@ -564,14 +612,14 @@ export default function CompCardPage() {
 
       // Measurements
       const meas: { label: string; value: string }[] = [];
-      if (model.height) meas.push({ label: "HEIGHT", value: model.height });
-      if (model.bust) meas.push({ label: "BUST", value: model.bust });
-      if (model.waist) meas.push({ label: "WAIST", value: model.waist });
-      if (model.hips) meas.push({ label: "HIPS", value: model.hips });
-      if (model.eye_color) meas.push({ label: "EYES", value: model.eye_color });
-      if (model.hair_color) meas.push({ label: "HAIR", value: model.hair_color });
-      if (model.dress_size) meas.push({ label: "DRESS", value: model.dress_size });
-      if (model.shoe_size) meas.push({ label: "SHOES", value: model.shoe_size });
+      if (dm.height) meas.push({ label: "HEIGHT", value: dm.height });
+      if (dm.bust) meas.push({ label: "BUST", value: dm.bust });
+      if (dm.waist) meas.push({ label: "WAIST", value: dm.waist });
+      if (dm.hips) meas.push({ label: "HIPS", value: dm.hips });
+      if (dm.eye_color) meas.push({ label: "EYES", value: dm.eye_color });
+      if (dm.hair_color) meas.push({ label: "HAIR", value: dm.hair_color });
+      if (dm.dress_size) meas.push({ label: "DRESS", value: dm.dress_size });
+      if (dm.shoe_size) meas.push({ label: "SHOES", value: dm.shoe_size });
 
       if (meas.length > 0) {
         const measItemW = BW / meas.length;
@@ -642,12 +690,12 @@ export default function CompCardPage() {
       bCtx.fillStyle = "#000000";
       bCtx.letterSpacing = "0px";
       let fTextY = footerY;
-      if (model.username) {
-        bCtx.fillText(`examodels.com/${model.username}`, PAD, fTextY);
+      if (dm.username) {
+        bCtx.fillText(`examodels.com/${dm.username}`, PAD, fTextY);
         fTextY += 32;
       }
-      if (model.instagram_name) {
-        bCtx.fillText(`@${model.instagram_name}`, PAD, fTextY);
+      if (dm.instagram_name) {
+        bCtx.fillText(`@${dm.instagram_name}`, PAD, fTextY);
         fTextY += 32;
       }
       bCtx.fillText("team@examodels.com", PAD, fTextY);
@@ -669,15 +717,33 @@ export default function CompCardPage() {
 
       // Right: QR code
       const QRCode = (await import("qrcode")).default;
-      const profileUrl = `https://www.examodels.com/${model.username || ""}`;
+      const profileUrl = `https://www.examodels.com/${dm.username || ""}`;
       const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 300, margin: 1 });
       const qrImg = await loadImg(qrDataUrl);
       const qrSize = 150;
       bCtx.drawImage(qrImg, BW - PAD - qrSize, footerY, qrSize, qrSize);
 
-      // Small delay so both downloads trigger
-      await new Promise((r) => setTimeout(r, 500));
-      downloadCanvas(bCanvas, `${filePrefix}-CompCard-Back.jpg`);
+      const backBlob = await canvasToBlob(bCanvas);
+      const files = [
+        new File([frontBlob], `${filePrefix}-CompCard-Front.jpg`, { type: "image/jpeg" }),
+        new File([backBlob], `${filePrefix}-CompCard-Back.jpg`, { type: "image/jpeg" }),
+      ];
+
+      // iOS Safari drops the second of two programmatic downloads — share both
+      // files as one action when the browser supports it.
+      if (navigator.canShare?.({ files })) {
+        try {
+          await navigator.share({ files, title: `${filePrefix} — Comp Card` });
+          toast.success("Comp card shared!");
+          return;
+        } catch (err) {
+          if ((err as Error).name === "AbortError") return;
+        }
+      }
+
+      downloadBlob(frontBlob, files[0].name);
+      await new Promise((r) => setTimeout(r, 300));
+      downloadBlob(backBlob, files[1].name);
 
       toast.success("Comp card images downloaded!");
     } catch (error) {
@@ -706,15 +772,9 @@ export default function CompCardPage() {
     : [];
 
   const fullName =
-    model && (model.first_name || model.last_name)
-      ? [model.first_name, model.last_name].filter(Boolean).join(" ")
+    displayModel && (displayModel.first_name || displayModel.last_name)
+      ? [displayModel.first_name, displayModel.last_name].filter(Boolean).join(" ")
       : "Model";
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const location =
-    model && (model.city || model.state)
-      ? [model.city, model.state].filter(Boolean).join(", ")
-      : null;
 
   // Get preview image URL for a selected ID
   const getPreviewUrl = (id: string): string => {
@@ -732,6 +792,21 @@ export default function CompCardPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="container max-w-4xl mx-auto px-4 py-12 text-center">
+        <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Comp Card</h1>
+        <p className="text-muted-foreground mb-6">
+          Something went wrong loading your comp card data.
+        </p>
+        <Button onClick={fetchData} variant="outline">
+          Try Again
+        </Button>
       </div>
     );
   }
@@ -839,7 +914,7 @@ export default function CompCardPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
             multiple
             onChange={handleFileUpload}
             className="hidden"
@@ -863,7 +938,7 @@ export default function CompCardPage() {
                     Upload from device
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    JPG, PNG, or WebP — {MAX_PHOTOS - selectedIds.length} slot{MAX_PHOTOS - selectedIds.length === 1 ? "" : "s"} remaining
+                    JPG, PNG, WebP, or HEIC — {MAX_PHOTOS - selectedIds.length} slot{MAX_PHOTOS - selectedIds.length === 1 ? "" : "s"} remaining
                   </span>
                 </>
               )}
@@ -973,6 +1048,45 @@ export default function CompCardPage() {
             </button>
           </div>
 
+          {/* Display name toggle */}
+          {model.username && (
+            <div className="flex items-center gap-1.5 mb-4">
+              <span className="text-xs text-muted-foreground mr-1">Display name</span>
+              {(
+                [
+                  ["real", "Real name"],
+                  ["username", `@${model.username}`],
+                ] as const
+              ).map(([v, label]) => (
+                <button
+                  key={v}
+                  onClick={() => setNameMode(v)}
+                  className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
+                    nameMode === v
+                      ? "bg-white text-black border-white"
+                      : "bg-transparent text-zinc-400 border-zinc-600 hover:border-zinc-400"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Missing printed name notice */}
+          {!frontName && (
+            <div className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground">
+                No name will print on your card.{" "}
+                <Link href="/settings" className="text-amber-500 hover:text-amber-400 underline">
+                  Add your first name in Settings
+                </Link>
+                {model.username ? " or switch to @username above." : "."}
+              </p>
+            </div>
+          )}
+
           <div className="space-y-4">
             {/* ── FRONT PREVIEW ── */}
             <div>
@@ -981,8 +1095,12 @@ export default function CompCardPage() {
                 <CardContent className="p-0">
                   <div
                     ref={heroRef}
-                    className="bg-black aspect-[5.5/8.5] relative select-none touch-none overflow-hidden"
-                    style={{ cursor: previewUrls.length > 0 ? "grab" : undefined }}
+                    className={cn(
+                      "bg-black aspect-[5.5/8.5] relative select-none overflow-hidden",
+                      repositionEnabled && previewUrls.length > 0 && "touch-none",
+                      isCoarsePointer && repositionActive && "ring-2 ring-pink-500/60"
+                    )}
+                    style={{ cursor: previewUrls.length > 0 && repositionEnabled ? "grab" : undefined }}
                   >
                     {/* Hero photo full-bleed */}
                     {previewUrls.length > 0 ? (
@@ -998,11 +1116,36 @@ export default function CompCardPage() {
                           }}
                           draggable={false}
                         />
-                        {/* Reposition hint */}
-                        <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1 pointer-events-none">
-                          <Move className="h-3 w-3 text-white/80" />
-                          <span className="text-[10px] text-white/80">Drag to reposition</span>
-                        </div>
+                        {/* Reposition hint / tap-to-adjust toggle */}
+                        {isCoarsePointer ? (
+                          repositionActive ? (
+                            <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
+                              <div className="flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1 pointer-events-none">
+                                <Move className="h-3 w-3 text-pink-400" />
+                                <span className="text-[10px] text-white/90">Drag to move · slider to zoom</span>
+                              </div>
+                              <button
+                                onClick={() => setRepositionActive(false)}
+                                className="bg-pink-500 hover:bg-pink-600 text-white text-[10px] font-semibold rounded-full px-2.5 py-1 transition-colors"
+                              >
+                                Done
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setRepositionActive(true)}
+                              className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-2.5 py-1 hover:bg-black/70 transition-colors"
+                            >
+                              <Move className="h-3 w-3 text-white/80" />
+                              <span className="text-[10px] text-white/80">Tap to adjust</span>
+                            </button>
+                          )
+                        ) : (
+                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1 pointer-events-none">
+                            <Move className="h-3 w-3 text-white/80" />
+                            <span className="text-[10px] text-white/80">Drag to reposition</span>
+                          </div>
+                        )}
                         {/* Logo text at top center */}
                         {logoColor && (
                           <div className="absolute top-0 left-0 right-0 flex justify-center pt-6 z-10 pointer-events-none">
@@ -1015,17 +1158,17 @@ export default function CompCardPage() {
                           </div>
                         )}
                         {/* Name at bottom */}
-                        {model.first_name && (
+                        {frontName && (
                           <div className="absolute bottom-0 left-0 right-0 px-2 pb-6 text-center pointer-events-none">
                             <p
                               className={`${poppinsBlack.className} uppercase leading-none whitespace-nowrap`}
                               style={{
                                 color: nameColor,
                                 fontSize: `${previewNameFontPx}px`,
-                                letterSpacing: model.first_name.length > 9 ? "0.02em" : "0.04em",
+                                letterSpacing: frontName.length > 9 ? "0.02em" : "0.04em",
                               }}
                             >
-                              {model.first_name}
+                              {frontName}
                             </p>
                           </div>
                         )}
@@ -1190,28 +1333,50 @@ export default function CompCardPage() {
                 </>
               )}
             </Button>
-            <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
-              <p className="font-semibold text-sm text-white flex items-center gap-1.5 mb-1">
-                <Printer className="h-4 w-4 text-violet-400" />
-                Print &amp; Pick Up — Miami Swim Week
-              </p>
-              <p className="text-xs text-zinc-400 mb-3">Professional cardstock · Pick up at EXA HQ Miami · $3/card</p>
-              <Button
-                onClick={() => setPrintDialogOpen(true)}
-                disabled={selectedIds.length === 0}
-                className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
-              >
-                Order Printed Cards
-              </Button>
-            </div>
+            <Button
+              onClick={handleShare}
+              disabled={sharing || selectedIds.length === 0}
+              variant="outline"
+              className="w-full"
+            >
+              {sharing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Preparing...
+                </>
+              ) : (
+                <>
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share Comp Card
+                </>
+              )}
+            </Button>
+            {printWindowOpen && (
+              <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
+                <p className="font-semibold text-sm text-white flex items-center gap-1.5 mb-1">
+                  <Printer className="h-4 w-4 text-violet-400" />
+                  Print &amp; Pick Up — {PRINT_PICKUP_EVENT.name}
+                </p>
+                <p className="text-xs text-zinc-400 mb-3">Professional cardstock · Pick up at {PRINT_PICKUP_EVENT.pickupLocation} · $3/card</p>
+                <Button
+                  onClick={() => setPrintDialogOpen(true)}
+                  disabled={selectedIds.length === 0}
+                  className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
+                >
+                  Order Printed Cards
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Miami Digitals Promo */}
-      <div className="mt-8">
-        <MiamiDigitalsBanner />
-      </div>
+      {/* Digitals Promo (self-hides once the event window closes) */}
+      {printWindowOpen && (
+        <div className="mt-8">
+          <MiamiDigitalsBanner />
+        </div>
+      )}
 
       <PrintOrderDialog
         open={printDialogOpen}
@@ -1221,6 +1386,7 @@ export default function CompCardPage() {
         lastName={model?.last_name || ""}
         phone=""
         onGeneratePdf={generatePdfBlob}
+        returnPath="/comp-card"
       />
     </div>
   );

@@ -24,6 +24,18 @@ const bookingPatchSchema = z.object({
   cancellationReason: z.string().trim().max(2000).optional().nullable(),
 });
 
+// Past-tense success messages per action
+const ACTION_MESSAGES: Record<string, string> = {
+  accept: "Booking accepted",
+  decline: "Booking declined",
+  counter: "Counter offer sent",
+  accept_counter: "Counter offer accepted",
+  confirm: "Booking confirmed",
+  cancel: "Booking cancelled",
+  complete: "Booking marked complete",
+  no_show: "Booking marked as no-show",
+};
+
 // Service type labels
 const SERVICE_LABELS: Record<string, string> = {
   photoshoot_hourly: "Photoshoot (Hourly)",
@@ -121,6 +133,10 @@ export async function GET(
       .maybeSingle() : { data: null };
 
     if (clientActor) {
+      // Client contact details only exposed to the model once the booking is
+      // accepted/confirmed/completed, never on pending requests
+      const canSeeClientContact =
+        isClient || isAdmin || ["accepted", "confirmed", "completed"].includes(booking.status || "");
       if (clientActor.type === "fan") {
         const { data: fan } = await supabase
           .from("fans")
@@ -128,7 +144,9 @@ export async function GET(
           .eq("id", clientActor.id)
           .maybeSingle();
         if (fan) {
-          bookingData.client = { ...fan, type: "fan" };
+          bookingData.client = canSeeClientContact
+            ? { ...fan, type: "fan" }
+            : { display_name: fan.display_name, avatar_url: fan.avatar_url, type: "fan" };
         }
       } else if (clientActor.type === "brand") {
         const { data: brand } = await supabase
@@ -137,7 +155,9 @@ export async function GET(
           .eq("id", clientActor.id)
           .maybeSingle();
         if (brand) {
-          bookingData.client = { ...(brand as Record<string, any>), type: "brand" };
+          bookingData.client = canSeeClientContact
+            ? { ...(brand as Record<string, any>), type: "brand" }
+            : { company_name: brand.company_name, contact_name: brand.contact_name, logo_url: brand.logo_url, type: "brand" };
         }
       }
     }
@@ -767,7 +787,7 @@ export async function PATCH(
     return NextResponse.json({
       success: true,
       booking: updatedBooking,
-      message: `Booking ${action}ed successfully`,
+      message: ACTION_MESSAGES[action] || "Booking updated",
     });
   } catch (error: any) {
     logger.error("Booking update error", error, { debugInfo });

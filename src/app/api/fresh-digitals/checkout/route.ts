@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { PRINT_PICKUP_EVENT, isPrintPickupWindowOpen } from "@/lib/comp-card-event";
 
 const PRICE_CENTS = 12500; // $125
 const BASE_URL =
@@ -24,6 +25,15 @@ export async function POST(request: NextRequest) {
   try {
     const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
     if (rateLimitResponse) return rateLimitResponse;
+
+    if (!isPrintPickupWindowOpen()) {
+      return NextResponse.json(
+        {
+          error: `This ${PRINT_PICKUP_EVENT.name} shoot has ended. Follow @examodels for the next one.`,
+        },
+        { status: 410 }
+      );
+    }
 
     const body = await request.json();
     const parsed = checkoutSchema.safeParse(body);
@@ -81,8 +91,7 @@ export async function POST(request: NextRequest) {
             currency: "usd",
             product_data: {
               name: "EXA Digitals — Miami Beach",
-              description:
-                "Sunday, May 24th · Professional digitals by EXA photographer + 20 printed comp cards",
+              description: `${PRINT_PICKUP_EVENT.digitalsDateLongLabel} · Professional digitals by EXA photographer + 20 printed comp cards`,
             },
             unit_amount: amountCents,
           },

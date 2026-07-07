@@ -70,19 +70,32 @@ export async function toBase64(url: string): Promise<string> {
 }
 
 /**
+ * Max longest side for embedded photos — keeps exported PDFs/JPEGs small and
+ * stays under iOS Safari's canvas pixel limits (mirrors cropToPosition's cap).
+ */
+const MAX_PHOTO_DIMENSION = 1600;
+
+/**
  * For photos — loads via <img> element which reliably applies EXIF rotation
- * in all modern browsers, then draws to canvas to produce a normalized JPEG.
+ * in all modern browsers, then draws to canvas to produce a normalized JPEG,
+ * downscaled to MAX_PHOTO_DIMENSION on the longest side.
  */
 export function photoToBase64(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
+      const scale = Math.min(
+        1,
+        MAX_PHOTO_DIMENSION / Math.max(img.naturalWidth, img.naturalHeight),
+      );
+      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
       const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+      canvas.width = w;
+      canvas.height = h;
       const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(img, 0, 0, w, h);
       resolve(canvas.toDataURL("image/jpeg", 0.92));
     };
     img.onerror = () => reject(new Error("Failed to load image"));
@@ -91,12 +104,22 @@ export function photoToBase64(url: string): Promise<string> {
 }
 
 /**
- * Returns true for standard image types we accept (JPEG, PNG, WebP, GIF).
- * HEIC/HEIF are not supported — users should convert to JPEG first.
+ * Returns true for image types we accept (JPEG, PNG, WebP, GIF, HEIC/HEIF).
+ * HEIC/HEIF is converted to JPEG server-side by /api/upload/complete;
+ * browsers often report an empty MIME type for it, so also check extension.
  */
 export function isAcceptedImage(file: File): boolean {
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  return allowedTypes.includes(file.type);
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/heic",
+    "image/heif",
+  ];
+  if (allowedTypes.includes(file.type)) return true;
+  const ext = file.name.split(".").pop()?.toLowerCase() || "";
+  return ext === "heic" || ext === "heif";
 }
 
 /**

@@ -12,10 +12,14 @@ import {
   BarChart3,
   ExternalLink,
   QrCode,
+  HelpCircle,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { QRCodeDownloadButton } from "@/components/profile/QRCodeDownloadButton";
+import { DailyViewsChart } from "@/components/analytics/DailyViewsChart";
+import { logger } from "@/lib/logger";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -53,44 +57,12 @@ function StatCard({
   );
 }
 
-function BarChart({ data }: { data: { date: string; views: number }[] }) {
-  const max = Math.max(...data.map((d) => d.views), 1);
-
+function CardErrorNote() {
   return (
-    <div className="flex items-end gap-[3px] h-28">
-      {data.map((day, i) => {
-        const height = Math.max((day.views / max) * 100, day.views > 0 ? 4 : 1);
-        const showLabel = i === 0 || i === 14 || i === 29;
-        return (
-          <div key={day.date} className="flex-1 flex flex-col items-center gap-1.5 group">
-            <div className="relative w-full flex items-end" style={{ height: "108px" }}>
-              <div
-                className="w-full rounded-sm transition-all cursor-default"
-                style={{
-                  height: `${height}%`,
-                  background:
-                    day.views > 0
-                      ? "linear-gradient(to top, #ec4899cc, #a855f7aa)"
-                      : "rgba(255,255,255,0.04)",
-                }}
-                title={`${new Date(day.date + "T12:00:00").toLocaleDateString("en", {
-                  month: "short",
-                  day: "numeric",
-                })}: ${day.views} views`}
-              />
-            </div>
-            {showLabel && (
-              <span className="text-[8px] text-zinc-600 whitespace-nowrap">
-                {new Date(day.date + "T12:00:00").toLocaleDateString("en", {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-            )}
-          </div>
-        );
-      })}
-    </div>
+    <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+      <AlertTriangle className="h-3.5 w-3.5 text-amber-500/70" />
+      Couldn&apos;t load this data
+    </p>
   );
 }
 
@@ -123,18 +95,28 @@ export default async function AnalyticsPage() {
   const serviceClient = createServiceRoleClient();
 
   const [
-    { data: statsData },
-    { data: dailyRaw },
-    { data: devicesRaw },
-    { data: countriesRaw },
-    { data: sourcesRaw },
+    { data: statsData, error: statsError },
+    { data: dailyRaw, error: dailyError },
+    { data: devicesRaw, error: devicesError },
+    { data: countriesRaw, error: countriesError },
+    { data: sourcesRaw, error: sourcesError },
   ] = await Promise.all([
-    (serviceClient.rpc as any)("get_analytics_stats", { p_model_id: model.id }),
-    (serviceClient.rpc as any)("get_analytics_daily", { p_model_id: model.id }),
-    (serviceClient.rpc as any)("get_analytics_devices", { p_model_id: model.id }),
-    (serviceClient.rpc as any)("get_analytics_countries", { p_model_id: model.id }),
-    (serviceClient.rpc as any)("get_analytics_sources", { p_model_id: model.id }),
+    serviceClient.rpc("get_analytics_stats", { p_model_id: model.id }),
+    serviceClient.rpc("get_analytics_daily", { p_model_id: model.id }),
+    serviceClient.rpc("get_analytics_devices", { p_model_id: model.id }),
+    serviceClient.rpc("get_analytics_countries", { p_model_id: model.id }),
+    serviceClient.rpc("get_analytics_sources", { p_model_id: model.id }),
   ]);
+
+  for (const [name, error] of [
+    ["get_analytics_stats", statsError],
+    ["get_analytics_daily", dailyError],
+    ["get_analytics_devices", devicesError],
+    ["get_analytics_countries", countriesError],
+    ["get_analytics_sources", sourcesError],
+  ] as const) {
+    if (error) logger.error(`Analytics RPC failed: ${name}`, undefined, { message: error.message });
+  }
 
   const stats = statsData?.[0] || { total_views_30d: 0, unique_visitors_30d: 0, today_views: 0 };
   const totalViews30d = Number(stats.total_views_30d) || 0;
@@ -151,25 +133,33 @@ export default async function AnalyticsPage() {
   (devicesRaw || []).forEach((d: { device: string; views: number }) => {
     deviceMap[d.device] = Number(d.views) || 0;
   });
+  const deviceTotal = Object.values(deviceMap).reduce((sum, n) => sum + n, 0);
+  const otherDevices = deviceTotal - ((deviceMap.mobile || 0) + (deviceMap.desktop || 0) + (deviceMap.tablet || 0));
 
   // Top countries (already sorted and limited by RPC)
   const topCountries: [string, number][] = (countriesRaw || []).map(
     (c: { country: string; views: number }) => [c.country, Number(c.views) || 0] as [string, number]
   );
+  const countryTotal = topCountries.reduce((sum, [, n]) => sum + n, 0);
 
-  // Top sources (already sorted and limited by RPC)
-  const topSources: [string, number][] = (sourcesRaw || []).map(
-    (s: { source: string; views: number }) => [s.source, Number(s.views) || 0] as [string, number]
-  );
+  // Top sources (already sorted and limited by RPC); drop internal referrers from historical rows
+  const isInternalSource = (source: string) => {
+    const s = source.toLowerCase();
+    return s.includes("examodels.com") || s.endsWith(".vercel.app") || s.startsWith("localhost");
+  };
+  const topSources: [string, number][] = (sourcesRaw || [])
+    .map((s: { source: string; views: number }) => [s.source, Number(s.views) || 0] as [string, number])
+    .filter(([source]) => !isInternalSource(source));
+  const sourceTotal = topSources.reduce((sum, [, n]) => sum + n, 0);
 
   const hasData = totalViews30d > 0;
 
   // Generate QR code for the profile URL
   const profileUrl = `https://www.examodels.com/${model.username}`;
   const qrDataUrl = await QRCode.toDataURL(profileUrl, {
-    width: 200,
+    width: 512,
     margin: 2,
-    color: { dark: "#ffffff", light: "#09090b" },
+    color: { dark: "#09090b", light: "#ffffff" },
     errorCorrectionLevel: "M",
   });
 
@@ -196,12 +186,23 @@ export default async function AnalyticsPage() {
             )}
           </p>
         </div>
-        <span className="text-xs text-muted-foreground bg-white/5 border border-white/10 rounded-full px-3 py-1">
+        <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground bg-white/5 border border-white/10 rounded-full px-3 py-1">
           Last 30 days
         </span>
       </div>
 
       {/* Stats grid */}
+      {statsError ? (
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold">Analytics is temporarily unavailable</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              We couldn&apos;t load your view stats right now. Your data is safe — try refreshing in a minute.
+            </p>
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
           label="Profile Views"
@@ -232,6 +233,7 @@ export default async function AnalyticsPage() {
           gradient="from-amber-500 to-orange-600"
         />
       </div>
+      )}
 
       {/* QR Code + Daily Chart */}
       <div className="grid md:grid-cols-3 gap-4">
@@ -245,13 +247,17 @@ export default async function AnalyticsPage() {
             </h2>
             {/* QR code image */}
             <div className="flex justify-center mb-3">
-              <img
-                src={qrDataUrl}
-                alt="Profile QR Code"
-                width={160}
-                height={160}
-                className="rounded-xl"
-              />
+              <div className="rounded-2xl p-[2px] bg-gradient-to-br from-pink-500 via-violet-500 to-cyan-500 shadow-[0_0_20px_rgba(236,72,153,0.25)]">
+                <div className="rounded-[14px] bg-white p-2">
+                  <img
+                    src={qrDataUrl}
+                    alt="Profile QR Code"
+                    width={144}
+                    height={144}
+                    className="rounded-lg"
+                  />
+                </div>
+              </div>
             </div>
             <p className="text-[11px] text-center text-muted-foreground mb-4 break-all">
               examodels.com/{model.username}
@@ -266,7 +272,7 @@ export default async function AnalyticsPage() {
         <div className="md:col-span-2 relative overflow-hidden rounded-2xl border border-white/[0.08] bg-black/40 p-6">
           <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-violet-500/5 pointer-events-none" />
           <div className="relative">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold">Daily Profile Views</h2>
               {hasData && (
                 <span className="text-xs text-muted-foreground">
@@ -274,8 +280,14 @@ export default async function AnalyticsPage() {
                 </span>
               )}
             </div>
-            <BarChart data={dailyData} />
-            {!hasData && (
+            {dailyError ? (
+              <div className="h-32 flex items-center justify-center">
+                <CardErrorNote />
+              </div>
+            ) : (
+              <DailyViewsChart data={dailyData} />
+            )}
+            {!hasData && !dailyError && !statsError && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <Eye className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
@@ -295,7 +307,9 @@ export default async function AnalyticsPage() {
         {/* Devices */}
         <div className="rounded-2xl border border-white/[0.08] bg-black/40 p-5">
           <h3 className="text-sm font-semibold mb-4">Devices</h3>
-          {!hasData ? (
+          {devicesError ? (
+            <CardErrorNote />
+          ) : deviceTotal === 0 ? (
             <p className="text-sm text-muted-foreground">No data yet</p>
           ) : (
             <div className="space-y-4">
@@ -303,9 +317,10 @@ export default async function AnalyticsPage() {
                 { key: "mobile", label: "Mobile", icon: Smartphone },
                 { key: "desktop", label: "Desktop", icon: Monitor },
                 { key: "tablet", label: "Tablet", icon: Tablet },
+                ...(otherDevices > 0 ? [{ key: "other", label: "Other", icon: HelpCircle }] : []),
               ].map(({ key, label, icon: Icon }) => {
-                const count = deviceMap[key] || 0;
-                const pct = totalViews30d > 0 ? Math.round((count / totalViews30d) * 100) : 0;
+                const count = key === "other" ? otherDevices : deviceMap[key] || 0;
+                const pct = deviceTotal > 0 ? Math.round((count / deviceTotal) * 100) : 0;
                 return (
                   <div key={key} className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
@@ -335,12 +350,14 @@ export default async function AnalyticsPage() {
             <Globe className="h-4 w-4 text-muted-foreground" />
             Top Countries
           </h3>
-          {topCountries.length === 0 ? (
+          {countriesError ? (
+            <CardErrorNote />
+          ) : topCountries.length === 0 ? (
             <p className="text-sm text-muted-foreground">No data yet</p>
           ) : (
             <div className="space-y-3">
               {topCountries.map(([country, count]) => {
-                const pct = totalViews30d > 0 ? Math.round((count / totalViews30d) * 100) : 0;
+                const pct = countryTotal > 0 ? Math.round((count / countryTotal) * 100) : 0;
                 return (
                   <div key={country} className="flex items-center gap-3">
                     <span className="text-sm text-muted-foreground flex-1 truncate">{country}</span>
@@ -361,12 +378,14 @@ export default async function AnalyticsPage() {
         {/* Traffic Sources */}
         <div className="rounded-2xl border border-white/[0.08] bg-black/40 p-5">
           <h3 className="text-sm font-semibold mb-4">Traffic Sources</h3>
-          {topSources.length === 0 ? (
+          {sourcesError ? (
+            <CardErrorNote />
+          ) : topSources.length === 0 ? (
             <p className="text-sm text-muted-foreground">No data yet</p>
           ) : (
             <div className="space-y-3">
               {topSources.map(([source, count]) => {
-                const pct = totalViews30d > 0 ? Math.round((count / totalViews30d) * 100) : 0;
+                const pct = sourceTotal > 0 ? Math.round((count / sourceTotal) * 100) : 0;
                 return (
                   <div key={source} className="flex items-center gap-3">
                     <span className="text-sm text-muted-foreground flex-1 truncate">{source}</span>

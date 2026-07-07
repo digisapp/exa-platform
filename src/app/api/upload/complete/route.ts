@@ -186,8 +186,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Also write to content_items (single source of truth for portfolio/video)
+    let contentItemId: string | null = null;
     if (modelId && (assetType === "portfolio" || assetType === "video")) {
-      await (adminClient as any)
+      const { data: contentItem } = await (adminClient as any)
         .from("content_items")
         .insert({
           model_id: modelId,
@@ -197,7 +198,10 @@ export async function POST(request: NextRequest) {
           status: "portfolio",
           ...(normalizedWidth !== null ? { width: normalizedWidth } : {}),
           ...(normalizedHeight !== null ? { height: normalizedHeight } : {}),
-        });
+        })
+        .select("id")
+        .single();
+      contentItemId = contentItem?.id ?? null;
     }
 
     return NextResponse.json({
@@ -206,6 +210,7 @@ export async function POST(request: NextRequest) {
       storagePath,
       mediaAsset,
       assetType,
+      contentItemId,
     });
   } catch (error) {
     logger.error("Upload complete route error", error);
