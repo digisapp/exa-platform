@@ -3,8 +3,11 @@
 import { Camera, MapPin, Calendar, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { PRINT_PICKUP_EVENT, isPrintPickupWindowOpen } from "@/lib/comp-card-event";
 
 export function MiamiDigitalsBanner() {
+  if (!isPrintPickupWindowOpen()) return null;
+
   return (
     <div className="relative overflow-hidden rounded-xl border border-pink-500/20 bg-gradient-to-r from-pink-500/5 via-black/30 to-violet-500/5 p-4 md:p-5">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -22,7 +25,7 @@ export function MiamiDigitalsBanner() {
           <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[11px] text-muted-foreground/70">
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3 text-pink-400" />
-              Sun, May 24th
+              {PRINT_PICKUP_EVENT.digitalsDateLabel}
             </span>
             <span className="flex items-center gap-1">
               <MapPin className="h-3 w-3 text-pink-400" />

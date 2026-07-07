@@ -34,6 +34,26 @@ function getOS(userAgent: string): string {
   return "Other";
 }
 
+// Treat internal/preview referrers as direct traffic
+function normalizeReferrer(referrer: string | null | undefined, requestHost: string | null): string | null {
+  if (!referrer) return null;
+  try {
+    const host = new URL(referrer).hostname.toLowerCase().replace(/^www\./, "");
+    const ownHosts = new Set(["examodels.com", "localhost"]);
+    if (requestHost) ownHosts.add(requestHost.toLowerCase().replace(/^www\./, "").split(":")[0]);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (appUrl) {
+      try {
+        ownHosts.add(new URL(appUrl).hostname.toLowerCase().replace(/^www\./, ""));
+      } catch {}
+    }
+    if (ownHosts.has(host) || host.endsWith(".vercel.app")) return null;
+    return referrer;
+  } catch {
+    return null;
+  }
+}
+
 // Determine page type from path
 function getPageType(path: string): string {
   if (path === "/" || path === "") return "home";
@@ -128,16 +148,32 @@ export async function POST(request: NextRequest) {
 
     // Resolve model_id from username if not provided directly
     let resolvedModelId = modelId || null;
+    let modelUserId: string | null = null;
     if (!resolvedModelId && modelUsername) {
-      const { data: modelRow } = await (serviceClient as any)
+      const { data: modelRow } = await serviceClient
         .from("models")
-        .select("id")
-        .ilike("username", modelUsername)
+        .select("id, user_id")
+        .eq("username", modelUsername.toLowerCase())
         .maybeSingle();
-      if (modelRow) resolvedModelId = modelRow.id;
+      if (modelRow) {
+        resolvedModelId = modelRow.id;
+        modelUserId = modelRow.user_id;
+      }
+    } else if (resolvedModelId && user) {
+      const { data: modelRow } = await serviceClient
+        .from("models")
+        .select("user_id")
+        .eq("id", resolvedModelId)
+        .maybeSingle();
+      if (modelRow) modelUserId = modelRow.user_id;
     }
 
-    const { error } = await (serviceClient as any).from("page_views").insert({
+    // Don't count models viewing their own profile
+    if (user && modelUserId && modelUserId === user.id) {
+      return NextResponse.json({ success: true });
+    }
+
+    const { error } = await serviceClient.from("page_views").insert({
       page_path: path,
       page_type: pageType,
       model_id: resolvedModelId,
@@ -145,7 +181,7 @@ export async function POST(request: NextRequest) {
       visitor_id: visitorId,
       session_id: sessionId || null,
       user_id: user?.id || null,
-      referrer: referrer || null,
+      referrer: normalizeReferrer(referrer, request.headers.get("host")),
       user_agent: userAgent.slice(0, 500),
       ip_hash: ipHash,
       device_type: deviceType,

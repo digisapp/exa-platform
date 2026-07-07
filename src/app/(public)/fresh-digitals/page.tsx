@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import {
   Camera,
   Calendar,
+  CalendarOff,
   MapPin,
   CheckCircle,
   Sparkles,
@@ -22,6 +23,7 @@ import {
   Instagram,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { PRINT_PICKUP_EVENT, isPrintPickupWindowOpen } from "@/lib/comp-card-event";
 
 export default function MiamiDigitalsPage() {
   return (
@@ -100,7 +102,7 @@ function MiamiDigitalsContent() {
             <span className="exa-gradient-text">You&apos;re Booked!</span>
           </h1>
           <p className="text-white/70">
-            We&apos;ll send you the exact Miami Beach location and time details to your email before May 24th.
+            We&apos;ll send you the exact Miami Beach location and time details to your email before the shoot on {PRINT_PICKUP_EVENT.digitalsDateLongLabel}.
           </p>
           <p className="text-sm text-white/60">
             Questions? DM us on Instagram{" "}
@@ -112,6 +114,51 @@ function MiamiDigitalsContent() {
             >
               @examodels
             </a>
+          </p>
+          <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/comp-card-creator"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 hover:border-pink-500/40 text-white text-sm font-semibold transition-all"
+            >
+              Create Your Comp Card
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-white text-sm font-bold shadow-[0_0_16px_rgba(236,72,153,0.4)] hover:shadow-[0_0_24px_rgba(236,72,153,0.6)] transition-all"
+            >
+              Back to EXA
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isPrintPickupWindowOpen()) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="max-w-md w-full rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-transparent p-8 text-center space-y-4 shadow-[0_0_28px_rgba(167,139,250,0.2)]">
+          <div className="relative inline-flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-violet-500/40 blur-2xl" />
+            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-violet-500/25 to-pink-500/25 ring-1 ring-violet-500/40 flex items-center justify-center">
+              <CalendarOff className="h-8 w-8 text-violet-300" />
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-white">
+            <span className="exa-gradient-text">This Event Has Ended</span>
+          </h1>
+          <p className="text-white/70">
+            EXA Digitals for {PRINT_PICKUP_EVENT.name} wrapped on {PRINT_PICKUP_EVENT.digitalsDateLongLabel}.
+            Follow{" "}
+            <a
+              href="https://instagram.com/examodels"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-pink-300 hover:text-pink-200 transition-colors"
+            >
+              @examodels
+            </a>{" "}
+            to catch the next shoot.
           </p>
           <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
             <Link
@@ -195,7 +242,7 @@ function MiamiDigitalsContent() {
                   <Calendar className="h-5 w-5 text-pink-300" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white">Sunday, May 24th</p>
+                  <p className="font-semibold text-white">{PRINT_PICKUP_EVENT.digitalsDateLongLabel}</p>
                   <p className="text-sm text-white/60">Right before Miami Swim Week castings begin</p>
                 </div>
               </div>
