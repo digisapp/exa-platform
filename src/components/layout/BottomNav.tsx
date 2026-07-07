@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home, MessageCircle, Users, Images, Megaphone, Heart, Calendar } from "lucide-react";
+import { Home, MessageCircle, Users, Images, Megaphone, Heart, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n";
 
@@ -142,16 +142,16 @@ export function BottomNav({ user, actorType, unreadCount = 0, notificationCount 
           <span className="text-[10px] font-medium">{t.nav.chats}</span>
         </NavItem>
 
-        {/* 4th slot: Bookings (model) | Favorites (fan) | Campaigns (brand) */}
+        {/* 4th slot: Gigs (model) | Favorites (fan) | Campaigns (brand) */}
         {actorType === "model" ? (
-          <NavItem href="/bookings" active={isActive("/bookings")}>
-            <Calendar className={cn("transition-all", isActive("/bookings") ? "h-[22px] w-[22px] text-cyan-400" : "h-5 w-5")} />
-            <span className="text-[10px] font-medium">{t.nav.bookings}</span>
+          <NavItem href="/gigs" active={isActive("/gigs")}>
+            <Briefcase className={cn("transition-all", isActive("/gigs") ? "h-[22px] w-[22px] text-cyan-400" : "h-5 w-5")} />
+            <span className="text-[10px] font-medium">{t.nav.gigs}</span>
           </NavItem>
         ) : actorType === "fan" ? (
           <NavItem href="/favorites" active={isActive("/favorites")}>
             <Heart className={cn("transition-all", isActive("/favorites") ? "h-[22px] w-[22px] text-pink-400 fill-pink-400" : "h-5 w-5")} />
-            <span className="text-[10px] font-medium">Favs</span>
+            <span className="text-[10px] font-medium">{t.nav.favorites}</span>
           </NavItem>
         ) : (
           <NavItem href="/campaigns" active={isActive("/campaigns")}>
