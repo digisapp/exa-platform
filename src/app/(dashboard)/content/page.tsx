@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useContentData, ContentItem, ContentFilters } from '@/hooks/useContentData';
+import { useContentData, ContentItem } from '@/hooks/useContentData';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -121,13 +121,14 @@ export default function ContentPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [modelUsername, setModelUsername] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState('');
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Dialogs
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editItem, setEditItem] = useState<ContentItem | null>(null);
   const [deleteConfirmItem, setDeleteConfirmItem] = useState<ContentItem | null>(null);
   const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
+  const [bulkPpvOpen, setBulkPpvOpen] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   // Fetch model username on mount
   useEffect(() => {
@@ -147,28 +148,14 @@ export default function ContentPage() {
     loadProfile();
   }, []);
 
-  // Debounced search
+  // Search — the hook already debounces item fetches by 300ms
   const handleSearchChange = useCallback(
     (value: string) => {
       setSearchInput(value);
-      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-      searchTimerRef.current = setTimeout(() => {
-        setFilter('search', value);
-      }, 300);
+      setFilter('search', value);
     },
     [setFilter],
   );
-
-  useEffect(() => {
-    return () => {
-      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    };
-  }, []);
-
-  // Scheduled items for Drops tab
-  // ---------------------------------------------------------------------------
-  // Header
-  // ---------------------------------------------------------------------------
 
   return (
     <div className="min-h-screen bg-background">
@@ -312,6 +299,8 @@ export default function ContentPage() {
                 onDeleteItem={setDeleteConfirmItem}
                 onUpload={() => setUploadOpen(true)}
                 onBulkPrice={() => setBulkPriceOpen(true)}
+                onBulkPPV={() => setBulkPpvOpen(true)}
+                onBulkDelete={() => setBulkDeleteOpen(true)}
               />
             </TabsContent>
 
@@ -339,7 +328,10 @@ export default function ContentPage() {
             if (!open) setEditItem(null);
           }}
           updateItem={updateItem}
-          deleteItem={deleteItem}
+          onRequestDelete={() => {
+            setDeleteConfirmItem(editItem);
+            setEditItem(null);
+          }}
         />
       )}
 
@@ -381,10 +373,48 @@ export default function ContentPage() {
         onOpenChange={setBulkPriceOpen}
         selectedCount={selectedIds.size}
         onConfirm={(price) => {
-          bulkAction('set_price', { coin_price: price });
+          bulkAction('update_price', { coin_price: price });
           setBulkPriceOpen(false);
         }}
       />
+
+      {/* Bulk PPV Dialog — setting items to PPV requires a price, otherwise they're invisible to fans */}
+      <BulkPriceDialog
+        open={bulkPpvOpen}
+        onOpenChange={setBulkPpvOpen}
+        selectedCount={selectedIds.size}
+        title="Make PPV"
+        description={`Set the unlock price for ${selectedIds.size} selected item${selectedIds.size > 1 ? 's' : ''}. They'll appear as locked PPV content on your profile.`}
+        onConfirm={(price) => {
+          bulkAction('update_status', { status: 'exclusive', coin_price: price });
+          setBulkPpvOpen(false);
+        }}
+      />
+
+      {/* Bulk Delete Confirm */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} item{selectedIds.size > 1 ? 's' : ''}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedIds.size} selected item{selectedIds.size > 1 ? 's' : ''}?
+              The files will be permanently removed. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                bulkAction('delete');
+                setBulkDeleteOpen(false);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
   );
@@ -407,6 +437,8 @@ function AllTab({
   onDeleteItem,
   onUpload,
   onBulkPrice,
+  onBulkPPV,
+  onBulkDelete,
 }: {
   items: ContentItem[];
   filters: { status: string | null; media_type: string | null; sort: string; order: string };
@@ -420,6 +452,8 @@ function AllTab({
   onDeleteItem: (item: ContentItem) => void;
   onUpload: () => void;
   onBulkPrice: () => void;
+  onBulkPPV: () => void;
+  onBulkDelete: () => void;
 }) {
   const hasSelection = selectedIds.size > 0;
 
@@ -438,13 +472,13 @@ function AllTab({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => bulkAction('set_status', { status: 'private' })}>
+              <DropdownMenuItem onClick={() => bulkAction('update_status', { status: 'private' })}>
                 Private
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => bulkAction('set_status', { status: 'portfolio' })}>
+              <DropdownMenuItem onClick={() => bulkAction('update_status', { status: 'portfolio' })}>
                 Public
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => bulkAction('set_status', { status: 'exclusive' })}>
+              <DropdownMenuItem onClick={onBulkPPV}>
                 PPV
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -458,7 +492,7 @@ function AllTab({
             variant="outline"
             size="sm"
             className="text-destructive hover:text-destructive"
-            onClick={() => bulkAction('delete')}
+            onClick={onBulkDelete}
           >
             <Trash2 className="mr-1 h-3 w-3" />
             Delete
@@ -555,10 +589,19 @@ function ContentItemCard({
 
   return (
     <div
-      className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border bg-muted"
+      className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
+      role="button"
+      tabIndex={0}
+      aria-label={`Edit ${item.title || 'content item'}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={onEdit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onEdit();
+        }
+      }}
     >
       {/* Media */}
       {item.media_type === 'video' ? (
@@ -617,6 +660,13 @@ function ContentItemCard({
         )}
       </div>
 
+      {/* Unlock count — bottom left, PPV items only */}
+      {item.status === 'exclusive' && item.unlock_count > 0 && (
+        <span className="absolute bottom-2 left-2 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">
+          {item.unlock_count} unlock{item.unlock_count === 1 ? '' : 's'}
+        </span>
+      )}
+
 
       {/* Hover overlay */}
       <div
@@ -661,13 +711,13 @@ function ItemEditDialog({
   open,
   onOpenChange,
   updateItem,
-  deleteItem,
+  onRequestDelete,
 }: {
   item: ContentItem;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   updateItem: (id: string, data: Partial<ContentItem>) => Promise<ContentItem | null>;
-  deleteItem: (id: string) => Promise<void>;
+  onRequestDelete: () => void;
 }) {
   const [title, setTitle] = useState(item.title || '');
   const [description, setDescription] = useState(item.description || '');
@@ -677,6 +727,10 @@ function ItemEditDialog({
   const mediaUrl = getMediaUrl(item.media_url);
 
   const handleSave = async () => {
+    if (status === 'exclusive' && coinPrice < 1) {
+      toast.error('PPV content needs a price of at least 1 coin — fans never see 0-coin PPV items.');
+      return;
+    }
     setSaving(true);
     await updateItem(item.id, {
       title: title || null,
@@ -685,11 +739,6 @@ function ItemEditDialog({
       coin_price: status === 'exclusive' ? coinPrice : 0,
     });
     setSaving(false);
-    onOpenChange(false);
-  };
-
-  const handleDelete = async () => {
-    await deleteItem(item.id);
     onOpenChange(false);
   };
 
@@ -748,7 +797,14 @@ function ItemEditDialog({
           {/* Status */}
           <div className="space-y-1.5">
             <Label>Status</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as ContentItem['status'])}>
+            <Select
+              value={status}
+              onValueChange={(v) => {
+                const next = v as ContentItem['status'];
+                setStatus(next);
+                if (next === 'exclusive' && coinPrice < 1) setCoinPrice(100);
+              }}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -769,7 +825,7 @@ function ItemEditDialog({
                 <Input
                   id="edit-price"
                   type="number"
-                  min={0}
+                  min={1}
                   max={10000}
                   value={coinPrice}
                   onChange={(e) => setCoinPrice(Number(e.target.value))}
@@ -788,7 +844,7 @@ function ItemEditDialog({
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button variant="destructive" onClick={onRequestDelete}>
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </Button>
@@ -1022,14 +1078,17 @@ function UploadDialog({
   const cameraImageRef = useRef<HTMLInputElement>(null);
   const cameraVideoRef = useRef<HTMLInputElement>(null);
 
-  // Cleanup previews on unmount
+  // Cleanup previews on unmount only. Keying this on [files] revoked blob URLs
+  // that were still displayed every time progress/status updates replaced the array.
+  const filesRef = useRef<UploadFile[]>([]);
+  filesRef.current = files;
   useEffect(() => {
     return () => {
-      files.forEach((f) => {
+      filesRef.current.forEach((f) => {
         if (f.preview) URL.revokeObjectURL(f.preview);
       });
     };
-  }, [files]);
+  }, []);
 
   // Reset form on close
   useEffect(() => {
@@ -1213,6 +1272,10 @@ function UploadDialog({
       toast.error('Select at least one file');
       return;
     }
+    if (status === 'exclusive' && coinPrice < 1) {
+      toast.error('PPV content needs a price of at least 1 coin — fans never see 0-coin PPV items.');
+      return;
+    }
 
     setUploading(true);
     let successCount = 0;
@@ -1329,11 +1392,13 @@ function UploadDialog({
             className="hidden"
             onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }}
           />
+          {/* capture="user" defaults to the front camera (models mostly shoot themselves);
+              the native camera UI still allows flipping */}
           <input
             ref={cameraImageRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            capture="environment"
+            capture="user"
             className="hidden"
             onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }}
           />
@@ -1341,7 +1406,7 @@ function UploadDialog({
             ref={cameraVideoRef}
             type="file"
             accept="video/mp4,video/quicktime,video/webm"
-            capture="environment"
+            capture="user"
             className="hidden"
             onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }}
           />
@@ -1385,7 +1450,11 @@ function UploadDialog({
             <Label>Status</Label>
             <Select
               value={status}
-              onValueChange={(v) => setStatus(v as typeof status)}
+              onValueChange={(v) => {
+                const next = v as typeof status;
+                setStatus(next);
+                if (next === 'exclusive' && coinPrice < 1) setCoinPrice(100);
+              }}
               disabled={uploading}
             >
               <SelectTrigger>
@@ -1408,7 +1477,7 @@ function UploadDialog({
                 <Input
                   id="upload-price"
                   type="number"
-                  min={0}
+                  min={1}
                   max={10000}
                   value={coinPrice}
                   onChange={(e) => setCoinPrice(Number(e.target.value))}
@@ -1459,21 +1528,26 @@ function BulkPriceDialog({
   onOpenChange,
   selectedCount,
   onConfirm,
+  title = 'Set Price',
+  description,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   selectedCount: number;
   onConfirm: (price: number) => void;
+  title?: string;
+  description?: string;
 }) {
-  const [price, setPrice] = useState(0);
+  const [price, setPrice] = useState(100);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Set Price</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Set the coin price for {selectedCount} selected item{selectedCount > 1 ? 's' : ''}.
+            {description ||
+              `Set the coin price for ${selectedCount} selected item${selectedCount > 1 ? 's' : ''}.`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -1481,7 +1555,7 @@ function BulkPriceDialog({
             <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="number"
-              min={0}
+              min={1}
               max={10000}
               value={price}
               onChange={(e) => setPrice(Number(e.target.value))}
@@ -1495,7 +1569,7 @@ function BulkPriceDialog({
             <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button className="flex-1" onClick={() => onConfirm(price)}>
+            <Button className="flex-1" disabled={price < 1} onClick={() => onConfirm(price)}>
               Apply
             </Button>
           </div>

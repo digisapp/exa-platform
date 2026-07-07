@@ -41,7 +41,7 @@ export async function PATCH(
     // Verify ownership
     const { data: existing, error: fetchError } = await service
       .from("content_items")
-      .select("id, model_id")
+      .select("id, model_id, status, coin_price")
       .eq("id", id)
       .single();
 
@@ -59,6 +59,17 @@ export async function PATCH(
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    // 0-coin PPV items are filtered out of every fan-facing query — reject the
+    // resulting state instead of silently hiding the item
+    const nextStatus = parsed.data.status ?? existing.status;
+    const nextPrice = parsed.data.coin_price ?? existing.coin_price ?? 0;
+    if (nextStatus === "exclusive" && nextPrice < 1) {
+      return NextResponse.json(
+        { error: "PPV content needs a coin price of at least 1" },
         { status: 400 }
       );
     }
@@ -107,7 +118,7 @@ export async function DELETE(
     // Verify ownership and get media_url for cleanup
     const { data: existing, error: fetchError } = await service
       .from("content_items")
-      .select("id, model_id, media_url")
+      .select("id, model_id, media_url, preview_url")
       .eq("id", id)
       .single();
 
@@ -139,14 +150,15 @@ export async function DELETE(
         .or(`url.eq.${existing.media_url},photo_url.eq.${existing.media_url},storage_path.eq.${existing.media_url}`);
     }
 
-    // Clean up storage file
-    if (existing.media_url) {
-      const storagePath = existing.media_url.startsWith("http")
-        ? existing.media_url.split("/portfolio/").pop()
-        : existing.media_url;
-      if (storagePath) {
-        await service.storage.from("portfolio").remove([storagePath]);
-      }
+    // Clean up storage files (media + generated preview)
+    const pathsToRemove = [existing.media_url, existing.preview_url]
+      .filter(Boolean)
+      .map((url: string) =>
+        url.startsWith("http") ? url.split("/portfolio/").pop() : url,
+      )
+      .filter(Boolean) as string[];
+    if (pathsToRemove.length > 0) {
+      await service.storage.from("portfolio").remove(pathsToRemove);
     }
 
     return NextResponse.json({ success: true });

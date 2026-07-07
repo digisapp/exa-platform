@@ -9,18 +9,24 @@ import { processImage } from "@/lib/image-processing";
 
 export const runtime = "nodejs";
 
-const createItemSchema = z.object({
-  media_url: z.string().min(1, "media_url is required"),
-  media_type: z.enum(["image", "video"]),
-  title: z.string().max(200).optional().nullable(),
-  description: z.string().max(1000).optional().nullable(),
-  preview_url: z.string().optional().nullable(),
-  status: z.enum(["private", "portfolio", "exclusive"]).default("private"),
-  coin_price: z.number().int().min(0).max(10000).default(0),
-  tags: z.array(z.string()).optional().nullable(),
-  publish_at: z.string().datetime().optional().nullable(),
-  set_id: z.string().uuid().optional().nullable(),
-});
+const createItemSchema = z
+  .object({
+    media_url: z.string().min(1, "media_url is required"),
+    media_type: z.enum(["image", "video"]),
+    title: z.string().max(200).optional().nullable(),
+    description: z.string().max(1000).optional().nullable(),
+    preview_url: z.string().optional().nullable(),
+    status: z.enum(["private", "portfolio", "exclusive"]).default("private"),
+    coin_price: z.number().int().min(0).max(10000).default(0),
+    tags: z.array(z.string()).optional().nullable(),
+    publish_at: z.string().datetime().optional().nullable(),
+    set_id: z.string().uuid().optional().nullable(),
+  })
+  // 0-coin PPV items are filtered out of every fan-facing query — reject instead of silently hiding
+  .refine((d) => d.status !== "exclusive" || d.coin_price >= 1, {
+    message: "PPV content needs a coin price of at least 1",
+    path: ["coin_price"],
+  });
 
 export async function GET(request: NextRequest) {
   try {
@@ -129,6 +135,7 @@ export async function POST(request: NextRequest) {
     // are left alone.
     let width: number | null = null;
     let height: number | null = null;
+    let generatedPreviewUrl: string | null = null;
     const mediaUrl = parsed.data.media_url;
     if (parsed.data.media_type === "image" && !/^https?:\/\//i.test(mediaUrl)) {
       try {
@@ -152,6 +159,36 @@ export async function POST(request: NextRequest) {
         if (upErr) throw upErr;
         width = processed.width;
         height = processed.height;
+
+        // Generate a heavily blurred low-res preview so locked PPV items never
+        // have to expose the full media as their teaser (the fan UI's CSS blur
+        // is trivially bypassed via the network tab).
+        if (!parsed.data.preview_url) {
+          try {
+            const preview = await processImage(inputBuf, {
+              maxWidth: 512,
+              maxHeight: 512,
+              quality: 50,
+              format: "jpeg",
+              blur: 24,
+            });
+            const previewPath = `${mediaUrl.replace(/\.[^.]+$/, "")}_preview.jpg`;
+            const { error: pvErr } = await service.storage
+              .from("portfolio")
+              .upload(previewPath, preview.buffer, {
+                contentType: "image/jpeg",
+                cacheControl: "31536000",
+                upsert: true,
+              });
+            if (!pvErr) generatedPreviewUrl = previewPath;
+          } catch (previewError) {
+            logger.error("[content-hub/items] Preview generation failed", previewError, {
+              media_url: mediaUrl,
+              model_id: modelId,
+            });
+            // Non-fatal — locked items without a preview render a placeholder
+          }
+        }
       } catch (normalizeError) {
         logger.error("[content-hub/items] Image normalize failed", normalizeError, {
           media_url: mediaUrl,
@@ -166,6 +203,7 @@ export async function POST(request: NextRequest) {
       .insert({
         ...parsed.data,
         media_url: mediaUrl,
+        preview_url: parsed.data.preview_url ?? generatedPreviewUrl,
         model_id: modelId,
         ...(width !== null ? { width } : {}),
         ...(height !== null ? { height } : {}),

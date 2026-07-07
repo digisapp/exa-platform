@@ -11,6 +11,8 @@ export async function processImage(
     maxHeight?: number;
     quality?: number;
     format?: "jpeg" | "png" | "webp";
+    /** Gaussian blur sigma — used for locked-content preview images */
+    blur?: number;
   }
 ): Promise<{ buffer: Buffer; contentType: string; width: number | null; height: number | null }> {
   const {
@@ -18,6 +20,7 @@ export async function processImage(
     maxHeight = 2048,
     quality = 85,
     format,
+    blur,
   } = options || {};
 
   let image = sharp(buffer);
@@ -37,6 +40,10 @@ export async function processImage(
         withoutEnlargement: true,
       });
     }
+  }
+
+  if (blur && blur > 0) {
+    image = image.blur(blur);
   }
 
   // Determine output format

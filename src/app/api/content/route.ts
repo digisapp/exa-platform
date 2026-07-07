@@ -1,9 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { getActorId, getActorInfo, getModelId } from "@/lib/ids";
+import { getActorId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
-import { z } from "zod";
 import { logger } from "@/lib/logger";
 
 // Extract storage path from either a raw path or an expired signed URL
@@ -23,16 +22,6 @@ async function toSignedUrl(rawUrl: string | null | undefined): Promise<string | 
   const { data } = await service.storage.from("portfolio").createSignedUrl(path, 3600);
   return data?.signedUrl ?? null;
 }
-
-// Zod schema for content creation validation
-const createContentSchema = z.object({
-  title: z.string().max(200, "Title is too long").optional().nullable(),
-  description: z.string().max(1000, "Description is too long").optional().nullable(),
-  mediaUrl: z.string().min(1, "Media URL is required"), // accepts both full URLs and storage paths
-  mediaType: z.enum(["image", "video"], { message: "Media type must be image or video" }),
-  previewUrl: z.string().min(1).optional().nullable(), // accepts both full URLs and storage paths
-  coinPrice: z.number().int("Price must be a whole number").min(0, "Price cannot be negative").max(10000, "Price is too high"),
-});
 
 // Get premium content for a model
 export async function GET(request: NextRequest) {
@@ -137,16 +126,27 @@ export async function GET(request: NextRequest) {
       const isFree = item.coin_price === 0;
       const isUnlocked = isFree || unlockedIds.includes(item.id) || isOwner;
 
-      // Fall back to media_url as preview source if no dedicated preview (old content)
-      const previewSource = item.preview_url || item.media_url;
+      // Locked items only get a dedicated preview (blurred low-res generated at
+      // upload). Falling back to the full media as "preview" let anyone rip the
+      // paid file from the network tab — the fan UI's CSS blur was the only gate.
+      const hasDistinctPreview = !!item.preview_url && item.preview_url !== item.media_url;
+      const previewSource = isUnlocked
+        ? item.preview_url || item.media_url
+        : hasDistinctPreview
+          ? item.preview_url
+          : null;
 
       const [freshPreviewUrl, freshMediaUrl] = await Promise.all([
         toSignedUrl(previewSource),
         isUnlocked ? toSignedUrl(mediaUrlMap.get(item.id) ?? null) : Promise.resolve(null),
       ]);
 
+      // Never return the raw media_url (storage path) — the portfolio bucket is
+      // public, so the path alone is enough to fetch the full file unpaid.
+      const { media_url: _rawMediaUrl, ...safeItem } = item;
+
       return {
-        ...item,
+        ...safeItem,
         preview_url: freshPreviewUrl ?? previewSource,
         isUnlocked,
         mediaUrl: freshMediaUrl,
@@ -156,186 +156,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ content: contentWithStatus });
   } catch (error) {
     logger.error("Content fetch error", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-
-// Create new premium content (models only)
-export async function POST(request: NextRequest) {
-  try {
-    // as any needed: nullable field mismatches with typed query results and RPC parameters
-    const supabase: any = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Rate limit check
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) {
-      return rateLimitResponse;
-    }
-
-    // Use helpers to get actor info and model ID
-    const actorInfo = await getActorInfo(supabase, user.id);
-
-    if (!actorInfo || (actorInfo.type !== "model" && actorInfo.type !== "admin")) {
-      return NextResponse.json(
-        { error: "Only models can create content" },
-        { status: 403 }
-      );
-    }
-
-    const modelId = await getModelId(supabase, user.id);
-
-    if (!modelId) {
-      return NextResponse.json(
-        { error: "Model profile not found" },
-        { status: 404 }
-      );
-    }
-
-    const body = await request.json();
-
-    // Validate request body with Zod schema
-    const validationResult = createContentSchema.safeParse(body);
-    if (!validationResult.success) {
-      const firstError = validationResult.error.issues[0];
-      return NextResponse.json(
-        { error: firstError.message },
-        { status: 400 }
-      );
-    }
-
-    const { title, description, mediaUrl, mediaType, previewUrl, coinPrice } = validationResult.data;
-
-    // Use media URL as preview if no preview provided (will be blurred by frontend)
-    const finalPreviewUrl = previewUrl || mediaUrl;
-
-    const { data: content, error } = await supabase
-      .from("content_items")
-      .insert({
-        model_id: modelId,
-        title: title || null,
-        description: description || null,
-        media_url: mediaUrl,
-        media_type: mediaType,
-        preview_url: finalPreviewUrl,
-        coin_price: coinPrice,
-        status: "exclusive",
-      })
-      .select()
-      .single();
-
-    if (error) {
-      logger.error("Error creating content", error);
-      return NextResponse.json(
-        { error: "Failed to create content" },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ content });
-  } catch (err) {
-    logger.error("Content creation error", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-
-// Delete premium content (models only)
-export async function DELETE(request: NextRequest) {
-  try {
-    // as any needed: nullable field mismatches with typed query results and RPC parameters
-    const supabase: any = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Rate limit check
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) {
-      return rateLimitResponse;
-    }
-
-    const { searchParams } = new URL(request.url);
-    const contentId = searchParams.get("id");
-
-    if (!contentId) {
-      return NextResponse.json(
-        { error: "Content ID required" },
-        { status: 400 }
-      );
-    }
-
-    // Use helper to get model ID
-    const modelId = await getModelId(supabase, user.id);
-
-    if (!modelId) {
-      return NextResponse.json({ error: "Model not found" }, { status: 400 });
-    }
-
-    // Fetch item first to get media_url for storage cleanup
-    const service = createServiceRoleClient();
-    const { data: existing } = await (service as any)
-      .from("content_items")
-      .select("id, model_id, media_url")
-      .eq("id", contentId)
-      .eq("model_id", modelId)
-      .single();
-
-    if (!existing) {
-      return NextResponse.json({ error: "Content not found" }, { status: 404 });
-    }
-
-    // Delete from content_items
-    const { error } = await (service as any)
-      .from("content_items")
-      .delete()
-      .eq("id", contentId);
-
-    if (error) {
-      logger.error("Error deleting content", error);
-      return NextResponse.json(
-        { error: "Failed to delete content" },
-        { status: 500 }
-      );
-    }
-
-    // Clean up matching media_assets record
-    if (existing.media_url) {
-      await (service as any)
-        .from("media_assets")
-        .delete()
-        .eq("model_id", modelId)
-        .or(`url.eq.${existing.media_url},photo_url.eq.${existing.media_url},storage_path.eq.${existing.media_url}`);
-    }
-
-    // Clean up storage file
-    if (existing.media_url) {
-      const storagePath = extractStoragePath(existing.media_url);
-      if (storagePath) {
-        await service.storage.from("portfolio").remove([storagePath]);
-      }
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    logger.error("Content deletion error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

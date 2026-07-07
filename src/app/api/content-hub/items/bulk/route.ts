@@ -71,9 +71,15 @@ export async function POST(request: NextRequest) {
         if (!status) {
           return NextResponse.json({ error: "status is required for update_status" }, { status: 400 });
         }
+        // Setting items to PPV without a price leaves them invisible to fans
+        // (fan queries filter coin_price > 0), so the UI sends both together
         ({ error } = await service
           .from("content_items")
-          .update({ status, updated_at: new Date().toISOString() })
+          .update({
+            status,
+            ...(status === "exclusive" && coin_price !== undefined ? { coin_price } : {}),
+            updated_at: new Date().toISOString(),
+          })
           .in("id", ids));
         break;
       }
@@ -91,7 +97,7 @@ export async function POST(request: NextRequest) {
         // Fetch media_urls before deleting for storage cleanup
         const { data: itemsToDelete } = await service
           .from("content_items")
-          .select("id, media_url")
+          .select("id, media_url, preview_url")
           .in("id", ids);
 
         // Delete from content_items
@@ -106,8 +112,10 @@ export async function POST(request: NextRequest) {
             .map((item: any) => item.media_url)
             .filter(Boolean);
 
-          // Extract storage paths for deletion
-          const storagePaths = mediaUrls
+          // Extract storage paths for deletion (media + generated previews)
+          const storagePaths = itemsToDelete
+            .flatMap((item: any) => [item.media_url, item.preview_url])
+            .filter(Boolean)
             .map((url: string) => {
               if (!url.startsWith("http")) return url;
               const match = url.match(/\/object\/(?:sign|public)\/[^/]+\/(.+?)(?:\?|$)/);
