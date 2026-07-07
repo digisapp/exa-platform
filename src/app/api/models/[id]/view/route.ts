@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
@@ -43,8 +44,9 @@ export async function POST(
       return NextResponse.json({ success: true, counted: false, reason: "not_approved" });
     }
 
-    // Increment profile views
-    const { error } = await supabase
+    // Increment profile views (service role: visitors have no UPDATE policy on models)
+    const serviceClient = createServiceRoleClient();
+    const { error } = await serviceClient
       .from("models")
       .update({ profile_views: (model.profile_views || 0) + 1 })
       .eq("id", modelId);
