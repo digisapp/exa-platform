@@ -132,9 +132,14 @@ export default async function DashboardLayout({
           const endsBefore = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
           const [offers, bookings, auctions, unreadNotifications] = await Promise.all([
             (supabase.from("offer_responses") as any)
-              .select("id", { count: "exact", head: true })
+              .select("id, offers!inner(id)", { count: "exact", head: true })
               .eq("model_id", modelRow.id)
-              .eq("status", "pending"),
+              .eq("status", "pending")
+              .eq("offers.status", "open")
+              .or(
+                `event_date.is.null,event_date.gte.${new Date().toISOString().split("T")[0]}`,
+                { referencedTable: "offers" }
+              ),
             (supabase.from("bookings") as any)
               .select("id", { count: "exact", head: true })
               .eq("model_id", modelRow.id)

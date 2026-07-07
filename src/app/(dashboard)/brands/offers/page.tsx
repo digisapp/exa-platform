@@ -52,7 +52,7 @@ interface Offer {
   spots_filled: number;
   status: string;
   created_at: string;
-  list: {
+  campaign: {
     id: string;
     name: string;
   } | null;
@@ -261,7 +261,7 @@ export default function BrandOffersPage() {
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium truncate">{offer.title}</h3>
                         <p className="text-xs text-muted-foreground truncate">
-                          {offer.list?.name || "Unknown list"}
+                          {offer.campaign?.name || "Unknown campaign"}
                         </p>
                       </div>
                       <Badge
@@ -311,7 +311,7 @@ export default function BrandOffersPage() {
                     <div>
                       <CardTitle>{currentOffer.title}</CardTitle>
                       <CardDescription className="mt-1">
-                        Sent to {currentOffer.list?.name || "list"}
+                        Sent to {currentOffer.campaign?.name || "campaign"}
                         {" · "}
                         {formatDistanceToNow(new Date(currentOffer.created_at), { addSuffix: true })}
                       </CardDescription>

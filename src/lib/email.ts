@@ -1963,7 +1963,7 @@ export async function sendOfferReceivedEmail({
     }
     const resend = getResendClient();
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
-    const offerUrl = `${baseUrl}/models/offers/${offerId}`;
+    const offerUrl = `${baseUrl}/offers/${offerId}`;
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -2699,7 +2699,7 @@ export async function sendOfferReminderEmail({
   try {
     const resend = getResendClient();
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
-    const dashboardUrl = `${baseUrl}/models/offers`;
+    const dashboardUrl = `${baseUrl}/offers`;
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
