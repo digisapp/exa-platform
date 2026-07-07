@@ -13,10 +13,7 @@ const adminClient = createSupabaseClient(
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { GigsFeed } from "@/components/gigs/GigsFeed";
-import { MswAvailabilityCard } from "@/components/dashboard/MswAvailabilityCard";
-import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -31,7 +28,6 @@ import {
   Flame,
   Sparkles,
   Heart,
-  Clock,
 } from "lucide-react";
 import { formatCoins } from "@/lib/coin-config";
 import { FanDashboard } from "./FanDashboard";
@@ -254,29 +250,7 @@ export default async function DashboardPage() {
     .select("gig_id, status")
     .eq("model_id", model.id);
 
-  // Check if model is confirmed for Miami Swim Week 2026
-  const { data: mswEvent } = await (adminClient.from("events") as any)
-    .select("id")
-    .eq("slug", "miami-swim-week-2026")
-    .maybeSingle();
-  let mswConfirmedGigId: string | null = null;
-  if (mswEvent) {
-    const { data: mswGigs } = await (adminClient.from("gigs") as any)
-      .select("id")
-      .eq("event_id", mswEvent.id);
-    const mswGigIds = (mswGigs || []).map((g: any) => g.id);
-    if (mswGigIds.length > 0) {
-      const { data: mswApp } = await (adminClient.from("gig_applications") as any)
-        .select("gig_id")
-        .in("gig_id", mswGigIds)
-        .eq("model_id", model.id)
-        .eq("status", "accepted")
-        .maybeSingle();
-      if (mswApp) mswConfirmedGigId = mswApp.gig_id;
-    }
-  }
-
-  // Get model's auctions for EXA Bids section
+  // Get model's auctions for the priority inbox
   const { data: modelAuctions } = await (supabase as any)
     .from("auctions")
     .select("id, title, status, current_bid, starting_price, bid_count, ends_at, category")
@@ -295,6 +269,7 @@ export default async function DashboardPage() {
   const [
     { data: recentTips },
     { data: recentFollowers },
+    { count: followerCount },
     { data: modelParticipations },
   ] = await Promise.all([
     (adminClient.from("coin_transactions") as any)
@@ -309,6 +284,9 @@ export default async function DashboardPage() {
       .gte("created_at", sevenDaysAgo.toISOString())
       .order("created_at", { ascending: false })
       .limit(10),
+    (adminClient.from("follows") as any)
+      .select("follower_id", { count: "exact", head: true })
+      .eq("following_id", actor.id),
     (supabase.from("conversation_participants") as any)
       .select("conversation_id, last_read_at")
       .eq("actor_id", actor.id),
@@ -443,11 +421,8 @@ export default async function DashboardPage() {
     .slice(0, 10);
 
   // ============================================
-  // 7-DAY AGGREGATES + TOP TIPPERS
+  // TOP TIPPERS · 7d
   // ============================================
-  const tips7dTotal = (recentTips || []).reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
-
-
   const tipperTotals = new Map<string, number>();
   for (const tip of recentTips || []) {
     const sid = tip.metadata?.sender_id || tip.metadata?.tipper_actor_id;
@@ -533,7 +508,18 @@ export default async function DashboardPage() {
   }
 
   for (const a of (modelAuctions || [])) {
-    if (a.status !== "active") continue; // drafts not "inbox-worthy"
+    if (a.status === "draft") {
+      inboxItems.push({
+        id: `auction-${a.id}`,
+        kind: "auction",
+        urgency: "normal",
+        title: a.title,
+        sub: "Draft · finish & publish",
+        href: `/bids/${a.id}/edit`,
+        sortKey: 100_000,
+      });
+      continue;
+    }
     const endsTs = a.ends_at ? new Date(a.ends_at).getTime() : Number.MAX_SAFE_INTEGER;
     const hoursLeft = Math.max(0, (endsTs - nowMs) / 3_600_000);
     const urgency: InboxItem["urgency"] = hoursLeft < 6 ? "hot" : hoursLeft < 24 ? "warm" : "normal";
@@ -664,12 +650,12 @@ export default async function DashboardPage() {
             </div>
           </Link>
 
-          <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 transition-all hover:border-pink-500/40 hover:bg-white/[0.08] flex items-center gap-4">
+          <Link href="/followers" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 transition-all hover:border-pink-500/40 hover:bg-white/[0.08] flex items-center gap-4">
             <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-pink-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-center gap-4 w-full">
               <Heart className="h-5 w-5 text-pink-400 shrink-0" />
-              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Tips · 7d</span>
-              <p className="ml-auto text-2xl font-bold tracking-tight">{formatCoins(tips7dTotal)}</p>
+              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Followers</span>
+              <p className="ml-auto text-2xl font-bold tracking-tight">{(followerCount || 0).toLocaleString()}</p>
             </div>
           </Link>
         </div>
@@ -692,15 +678,6 @@ export default async function DashboardPage() {
       </section>
 
       {/* ──────────────────────────────────────────────────────
-          MIAMI SWIM WEEK AVAILABILITY — only for confirmed models
-         ────────────────────────────────────────────────────── */}
-      {mswConfirmedGigId && (
-        <section>
-          <MswAvailabilityCard gigId={mswConfirmedGigId} />
-        </section>
-      )}
-
-      {/* ──────────────────────────────────────────────────────
           PRIORITY INBOX — full-width
          ────────────────────────────────────────────────────── */}
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
@@ -714,18 +691,24 @@ export default async function DashboardPage() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1 text-xs text-white/50">
-            <Clock className="h-3.5 w-3.5" /> sorted by urgency
+          <div className="flex items-center gap-3">
+            {(modelAuctions?.length || 0) > 0 && (
+              <Link href="/bids/manage" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+                Manage bids <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            )}
+            <Link href="/bids/new" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+              <Plus className="h-3 w-3" /> Create EXA Bid
+            </Link>
           </div>
         </header>
         <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
           {inboxItems.length === 0 ? (
-            <div className="col-span-full text-center py-10">
-              <div className="p-4 rounded-full bg-white/5 inline-block mb-3">
-                <Sparkles className="h-7 w-7 text-white/30" />
-              </div>
-              <p className="text-sm text-white/60">All caught up — no urgent items.</p>
-              <p className="text-xs text-white/50 mt-1">New offers, bookings, and ending auctions will appear here.</p>
+            <div className="col-span-full flex items-center justify-center gap-2 py-4">
+              <Sparkles className="h-4 w-4 text-white/30 shrink-0" />
+              <p className="text-sm text-white/60">
+                All caught up — new offers, bookings, and bids on your auctions will appear here.
+              </p>
             </div>
           ) : (
             inboxItems.map((item) => {
@@ -786,83 +769,6 @@ export default async function DashboardPage() {
       </div>
 
       {/* ──────────────────────────────────────────────────────
-          EXA BIDS — full-width
-         ────────────────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-transparent overflow-hidden">
-        <header className="flex items-center justify-between p-5 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <Gavel className="h-5 w-5 text-violet-400" />
-            <h2 className="text-base font-semibold">Your EXA Bids</h2>
-            {(modelAuctions?.length || 0) > 0 && (
-              <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                {modelAuctions?.length}
-              </span>
-            )}
-          </div>
-          <Link href="/bids/manage" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
-            Manage <ArrowUpRight className="h-3 w-3" />
-          </Link>
-        </header>
-        <div className="p-3">
-          {(modelAuctions?.length || 0) > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-              {modelAuctions?.map((auction: any) => (
-                <Link
-                  key={auction.id}
-                  href={auction.status === "draft" ? `/bids/${auction.id}/edit` : `/bids/${auction.id}`}
-                  className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] hover:border-violet-500/40 transition-all"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500/30 to-pink-500/30 flex items-center justify-center shrink-0">
-                    <Gavel className="h-5 w-5 text-violet-300" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{auction.title}</p>
-                    <p className="text-xs text-white/50">
-                      {auction.bid_count || 0} bids
-                      {auction.status === "active" && auction.ends_at && (
-                        <> · ends {new Date(auction.ends_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</>
-                      )}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-amber-400">
-                      {(auction.current_bid || auction.starting_price || 0).toLocaleString()}c
-                    </p>
-                    <Badge
-                      variant="outline"
-                      className={
-                        auction.status === "active"
-                          ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 text-[10px] px-1.5 py-0"
-                          : "bg-amber-500/10 text-amber-300 border-amber-500/30 text-[10px] px-1.5 py-0"
-                      }
-                    >
-                      {auction.status === "active" ? "Live" : "Draft"}
-                    </Badge>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="p-4 rounded-full bg-violet-500/10 inline-block mb-3">
-                <Gavel className="h-7 w-7 text-violet-400" />
-              </div>
-              <p className="text-sm text-white/70">No EXA Bids yet</p>
-              <p className="text-xs text-white/50 mt-1 max-w-xs mx-auto">
-                Let fans and brands compete in real-time bids for your exclusive content & experiences.
-              </p>
-              <Button asChild size="sm" className="mt-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
-                <Link href="/bids/new">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Create EXA Bid
-                </Link>
-              </Button>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ──────────────────────────────────────────────────────
           ACTIVITY — full-width
          ────────────────────────────────────────────────────── */}
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
@@ -874,16 +780,17 @@ export default async function DashboardPage() {
         </header>
         <div className="p-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-1">
           {activityFeed.length === 0 ? (
-            <div className="col-span-full text-center py-6">
-              <p className="text-sm text-white/60">No activity this week.</p>
-              <p className="text-xs text-white/50 mt-1">Share your profile to get tips, follows, and messages.</p>
+            <div className="col-span-full flex flex-wrap items-center justify-center gap-x-2 gap-y-1 py-4 px-3 text-center">
+              <p className="text-sm text-white/60">
+                No activity this week — share your profile to get tips, follows, and messages.
+              </p>
               {model.username && (
-                <Button asChild size="sm" variant="outline" className="mt-3 border-pink-500/40 text-pink-300 hover:bg-pink-500/10 hover:text-pink-200">
-                  <Link href={`/${model.username}`}>
-                    View your public profile
-                    <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
-                  </Link>
-                </Button>
+                <Link
+                  href={`/${model.username}`}
+                  className="text-sm text-pink-400 hover:text-pink-300 flex items-center gap-1 shrink-0"
+                >
+                  View your profile <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
               )}
             </div>
           ) : (
