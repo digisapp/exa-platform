@@ -4,7 +4,8 @@ import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Gigs",
-  robots: { index: false, follow: false },
+  description:
+    "Apply to fashion shows, photoshoots, travel experiences, and brand campaigns on EXA Models.",
 };
 
 // Cache page for 2 minutes - gig availability changes more frequently
@@ -187,12 +188,27 @@ export default async function GigsPage() {
     .eq("visibility", "public")
     .order("start_at", { ascending: true }) as { data: any[] | null };
 
-  // Group by type
-  const shows = gigs?.filter((o) => o.type === "show") || [];
-  const photoshoots = gigs?.filter((o) => o.type === "photoshoot") || [];
-  const travel = gigs?.filter((o) => o.type === "travel") || [];
-  const campaigns = gigs?.filter((o) => ["campaign", "content"].includes(o.type)) || [];
-  const fun = gigs?.filter((o) => o.type === "fun") || [];
+  // Past events prove gigs are real when the open catalog is thin
+  let pastGigs: any[] = [];
+  if (!gigs || gigs.length === 0) {
+    const { data: completed } = await supabase
+      .from("gigs")
+      .select("*")
+      .eq("status", "completed")
+      .eq("visibility", "public")
+      .order("start_at", { ascending: false })
+      .limit(3) as { data: any[] | null };
+    pastGigs = completed || [];
+  }
+
+  // Group by type — tabs render only for types that have open gigs
+  const typeTabs = [
+    { value: "shows", label: "Shows", gigs: gigs?.filter((o) => o.type === "show") || [] },
+    { value: "photoshoots", label: "Photoshoots", gigs: gigs?.filter((o) => o.type === "photoshoot") || [] },
+    { value: "travel", label: "Travel", gigs: gigs?.filter((o) => o.type === "travel") || [] },
+    { value: "campaigns", label: "Campaigns", gigs: gigs?.filter((o) => ["campaign", "content"].includes(o.type)) || [] },
+    { value: "fun", label: "Fun", gigs: gigs?.filter((o) => o.type === "fun") || [] },
+  ].filter((t) => t.gigs.length > 0);
 
   const displayName = actorType === "fan"
     ? profileData?.display_name
@@ -236,11 +252,11 @@ export default async function GigsPage() {
               </TabsTrigger>
             )}
             <TabsTrigger value="all">All ({gigs?.length || 0})</TabsTrigger>
-            <TabsTrigger value="shows">Shows ({shows.length})</TabsTrigger>
-            <TabsTrigger value="photoshoots">Photoshoots ({photoshoots.length})</TabsTrigger>
-            <TabsTrigger value="travel">Travel ({travel.length})</TabsTrigger>
-            <TabsTrigger value="campaigns">Campaigns ({campaigns.length})</TabsTrigger>
-            <TabsTrigger value="fun">Fun ({fun.length})</TabsTrigger>
+            {typeTabs.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value}>
+                {tab.label} ({tab.gigs.length})
+              </TabsTrigger>
+            ))}
             {model && (
               <TabsTrigger value="my-applications" className="gap-1">
                 <ClipboardList className="h-4 w-4" />
@@ -257,27 +273,28 @@ export default async function GigsPage() {
 
           <TabsContent value="all" className="space-y-6">
             <GigGrid gigs={gigs || []} />
+            {(!gigs || gigs.length === 0) && pastGigs.length > 0 && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-lg font-semibold">Recent shows on EXA</h2>
+                  <p className="text-sm text-white/50">
+                    A look at what models booked through EXA.
+                  </p>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {pastGigs.map((gig) => (
+                    <GigCard key={gig.id} gig={gig} completed />
+                  ))}
+                </div>
+              </div>
+            )}
           </TabsContent>
 
-          <TabsContent value="shows" className="space-y-6">
-            <GigGrid gigs={shows} />
-          </TabsContent>
-
-          <TabsContent value="photoshoots" className="space-y-6">
-            <GigGrid gigs={photoshoots} />
-          </TabsContent>
-
-          <TabsContent value="travel" className="space-y-6">
-            <GigGrid gigs={travel} />
-          </TabsContent>
-
-          <TabsContent value="campaigns" className="space-y-6">
-            <GigGrid gigs={campaigns} />
-          </TabsContent>
-
-          <TabsContent value="fun" className="space-y-6">
-            <GigGrid gigs={fun} />
-          </TabsContent>
+          {typeTabs.map((tab) => (
+            <TabsContent key={tab.value} value={tab.value} className="space-y-6">
+              <GigGrid gigs={tab.gigs} />
+            </TabsContent>
+          ))}
 
           {model && (
             <TabsContent value="my-applications" className="space-y-6">
@@ -326,10 +343,10 @@ function GigGrid({ gigs }: { gigs: any[] }) {
   );
 }
 
-function GigCard({ gig }: { gig: any }) {
+function GigCard({ gig, completed = false }: { gig: any; completed?: boolean }) {
   const Icon = typeIcons[gig.type] || Sparkles;
   const spotsLeft = gig.spots ? gig.spots - (gig.spots_filled || 0) : null;
-  const isUrgent = spotsLeft !== null && spotsLeft <= 5;
+  const isUrgent = !completed && spotsLeft !== null && spotsLeft <= 5;
 
   return (
     <Link href={`/gigs/${gig.slug}`}>
@@ -363,6 +380,12 @@ function GigCard({ gig }: { gig: any }) {
             </Badge>
           )}
 
+          {completed && (
+            <Badge className="absolute top-3 right-3 bg-white/10 text-white/80 border-white/20">
+              Completed
+            </Badge>
+          )}
+
           {/* Bottom Title Bar - Always Visible */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 pt-12">
             <h3 className="font-semibold text-white text-lg line-clamp-2">{gig.title}</h3>
@@ -382,7 +405,14 @@ function GigCard({ gig }: { gig: any }) {
                     {new Date(gig.start_at).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
+                      ...(completed ? { year: "numeric" } : {}),
                     })}
+                  </span>
+                )}
+                {completed && (gig.spots_filled || 0) > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Users className="h-3.5 w-3.5 text-cyan-400" />
+                    {gig.spots_filled} models booked
                   </span>
                 )}
                 {gig.compensation_type && (
@@ -446,10 +476,16 @@ function GigCard({ gig }: { gig: any }) {
                   </div>
                 )}
 
-                {spotsLeft !== null && (
+                {spotsLeft !== null && !completed && (
                   <div className="flex items-center gap-2 text-white/90">
                     <Users className="h-4 w-4 text-cyan-400" />
                     {spotsLeft} of {gig.spots} spots available
+                  </div>
+                )}
+                {completed && (gig.spots_filled || 0) > 0 && (
+                  <div className="flex items-center gap-2 text-white/90">
+                    <Users className="h-4 w-4 text-cyan-400" />
+                    {gig.spots_filled} models booked through EXA
                   </div>
                 )}
               </div>
