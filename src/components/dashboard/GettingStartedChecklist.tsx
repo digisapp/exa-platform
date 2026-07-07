@@ -27,7 +27,7 @@ export function GettingStartedChecklist({ steps }: { steps: ChecklistStep[] }) {
       <header className="flex items-center justify-between p-5 border-b border-white/5">
         <div className="flex items-center gap-2">
           <Rocket className="h-5 w-5 text-pink-400" />
-          <h2 className="text-base font-semibold">Get set up to earn</h2>
+          <h2 className="text-base font-semibold">Get discovered on EXA</h2>
         </div>
         <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">
           {doneCount}/{steps.length} done

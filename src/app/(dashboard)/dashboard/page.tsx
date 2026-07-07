@@ -35,6 +35,7 @@ import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { ProfilePhotoBanner } from "@/components/dashboard/ProfilePhotoBanner";
 import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
+import { PayoutSetupPrompt } from "@/components/dashboard/PayoutSetupPrompt";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 
 // Helper function to format relative time
@@ -127,7 +128,7 @@ export default async function DashboardPage() {
       .eq("media_type", "image")
       .order("created_at", { ascending: false })
       .limit(50),
-    // Payout methods — drive the getting-started checklist
+    // Payout methods — drive the payout-setup prompt
     (adminClient.from("bank_accounts") as any)
       .select("id")
       .eq("model_id", model.id)
@@ -591,20 +592,6 @@ export default async function DashboardPage() {
       href: "/content",
       done: portfolioPhotos.length > 0,
     },
-    {
-      key: "identity",
-      title: "Verify your identity",
-      description: "A one-time ID check that unlocks payouts.",
-      href: "/verify-identity",
-      done: Boolean(model.identity_verified_at),
-    },
-    {
-      key: "payout",
-      title: "Add a payout method",
-      description: "Zelle, bank account, or Payoneer — so you can cash out your earnings.",
-      href: "/wallet",
-      done: Boolean(model.zelle_info || bankAccount || payoneerAccount),
-    },
   ];
 
   return (
@@ -665,6 +652,13 @@ export default async function DashboardPage() {
           GETTING STARTED — renders only while steps remain
          ────────────────────────────────────────────────────── */}
       <GettingStartedChecklist steps={checklistSteps} />
+
+      {/* Payout setup nudge — only when there are coins to withdraw */}
+      <PayoutSetupPrompt
+        coins={model.coin_balance || 0}
+        needsIdentity={!model.identity_verified_at}
+        needsPayoutMethod={!(model.zelle_info || bankAccount || payoneerAccount)}
+      />
 
       {/* ──────────────────────────────────────────────────────
           GIGS FOR YOU — full-width, prominent placement
