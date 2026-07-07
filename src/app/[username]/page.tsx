@@ -978,7 +978,6 @@ export default async function ModelProfilePage({ params }: Props) {
           {eventBadges && eventBadges.length > 0 && (
             <BadgeWall
               items={eventBadges.map((eb: any) => ({
-                icon: eb.badges?.icon ?? null,
                 shortName: eb.badges?.events?.short_name || eb.badges?.name || "Show",
                 year: eb.badges?.events?.year ?? null,
                 name: eb.badges?.events?.name || eb.badges?.name || "",
