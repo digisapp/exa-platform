@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import {
   Eye,
   Users,
+  UserPlus,
   TrendingUp,
   Globe,
   Smartphone,
@@ -29,25 +30,48 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+// Percent change vs the previous window; null when there's no baseline
+function trendPct(current: number, previous: number): number | null {
+  if (previous <= 0) return null;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
 function StatCard({
   label,
   value,
   sub,
   icon: Icon,
   gradient,
+  trend,
 }: {
   label: string;
   value: number;
   sub: string;
   icon: React.ElementType;
   gradient: string;
+  trend?: number | null;
 }) {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-black/40 p-5">
       <div className={`absolute inset-0 opacity-10 bg-gradient-to-br ${gradient} pointer-events-none`} />
       <div className="relative">
-        <div className={`inline-flex p-2 rounded-xl bg-gradient-to-br ${gradient} mb-3`}>
-          <Icon className="h-4 w-4 text-white" />
+        <div className="flex items-start justify-between mb-3">
+          <div className={`inline-flex p-2 rounded-xl bg-gradient-to-br ${gradient}`}>
+            <Icon className="h-4 w-4 text-white" />
+          </div>
+          {trend !== null && trend !== undefined && (
+            <span
+              className={`text-[11px] font-semibold tabular-nums rounded-full px-2 py-0.5 border ${
+                trend >= 0
+                  ? "text-emerald-400 border-emerald-500/20 bg-emerald-500/10"
+                  : "text-rose-400 border-rose-500/20 bg-rose-500/10"
+              }`}
+              title="vs previous 30 days"
+            >
+              {trend >= 0 ? "+" : ""}
+              {trend}%
+            </span>
+          )}
         </div>
         <p className="text-2xl font-black tabular-nums">{value.toLocaleString()}</p>
         <p className="text-xs font-medium text-foreground mt-0.5">{label}</p>
@@ -94,18 +118,35 @@ export default async function AnalyticsPage() {
   // Use RPC functions for database-level aggregation (instead of loading all rows)
   const serviceClient = createServiceRoleClient();
 
+  const now = Date.now();
+  const cutoff30d = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const cutoff60d = new Date(now - 60 * 24 * 60 * 60 * 1000).toISOString();
+
   const [
     { data: statsData, error: statsError },
     { data: dailyRaw, error: dailyError },
     { data: devicesRaw, error: devicesError },
     { data: countriesRaw, error: countriesError },
     { data: sourcesRaw, error: sourcesError },
+    { count: newFollowers30d, error: followersError },
+    { count: prevFollowers30d },
   ] = await Promise.all([
     serviceClient.rpc("get_analytics_stats", { p_model_id: model.id }),
     serviceClient.rpc("get_analytics_daily", { p_model_id: model.id }),
     serviceClient.rpc("get_analytics_devices", { p_model_id: model.id }),
     serviceClient.rpc("get_analytics_countries", { p_model_id: model.id }),
     serviceClient.rpc("get_analytics_sources", { p_model_id: model.id }),
+    serviceClient
+      .from("follows")
+      .select("*", { count: "exact", head: true })
+      .eq("following_id", actor.id)
+      .gte("created_at", cutoff30d),
+    serviceClient
+      .from("follows")
+      .select("*", { count: "exact", head: true })
+      .eq("following_id", actor.id)
+      .gte("created_at", cutoff60d)
+      .lt("created_at", cutoff30d),
   ]);
 
   for (const [name, error] of [
@@ -114,14 +155,24 @@ export default async function AnalyticsPage() {
     ["get_analytics_devices", devicesError],
     ["get_analytics_countries", countriesError],
     ["get_analytics_sources", sourcesError],
+    ["follows count", followersError],
   ] as const) {
     if (error) logger.error(`Analytics RPC failed: ${name}`, undefined, { message: error.message });
   }
 
-  const stats = statsData?.[0] || { total_views_30d: 0, unique_visitors_30d: 0, today_views: 0 };
+  const stats = statsData?.[0] || {
+    total_views_30d: 0,
+    unique_visitors_30d: 0,
+    today_views: 0,
+    prev_views_30d: 0,
+    prev_unique_30d: 0,
+  };
   const totalViews30d = Number(stats.total_views_30d) || 0;
   const uniqueVisitors = Number(stats.unique_visitors_30d) || 0;
   const todayViews = Number(stats.today_views) || 0;
+  const viewsTrend = trendPct(totalViews30d, Number(stats.prev_views_30d) || 0);
+  const uniqueTrend = trendPct(uniqueVisitors, Number(stats.prev_unique_30d) || 0);
+  const followersTrend = trendPct(newFollowers30d || 0, prevFollowers30d || 0);
 
   // Daily chart data (already filled with 0s by the RPC)
   const dailyData: { date: string; views: number }[] = (dailyRaw || []).map(
@@ -154,8 +205,9 @@ export default async function AnalyticsPage() {
 
   const hasData = totalViews30d > 0;
 
-  // Generate QR code for the profile URL
-  const profileUrl = `https://www.examodels.com/${model.username}`;
+  // Generate QR code for the profile URL — tagged so scans show up as
+  // "QR Code" in Traffic Sources instead of Direct
+  const profileUrl = `https://www.examodels.com/${model.username}?utm_source=qr`;
   const qrDataUrl = await QRCode.toDataURL(profileUrl, {
     width: 512,
     margin: 2,
@@ -203,13 +255,14 @@ export default async function AnalyticsPage() {
           </div>
         </div>
       ) : (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         <StatCard
           label="Profile Views"
           value={totalViews30d}
           sub="Last 30 days"
           icon={Eye}
           gradient="from-pink-500 to-rose-600"
+          trend={viewsTrend}
         />
         <StatCard
           label="Unique Visitors"
@@ -217,6 +270,15 @@ export default async function AnalyticsPage() {
           sub="Last 30 days"
           icon={Users}
           gradient="from-violet-500 to-purple-600"
+          trend={uniqueTrend}
+        />
+        <StatCard
+          label="New Followers"
+          value={newFollowers30d || 0}
+          sub="Last 30 days"
+          icon={UserPlus}
+          gradient="from-emerald-500 to-teal-600"
+          trend={followersTrend}
         />
         <StatCard
           label="Today"
