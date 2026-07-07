@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useId } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -96,6 +96,11 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const supabaseRef = useRef(createClient());
+  // Unique per mount. The dashboard renders TWO LiveWall copies (mobile +
+  // desktop, CSS-hidden not conditional); a shared channel topic on the
+  // singleton client makes realtime-js tear the channel down on the second
+  // subscribe ("binding mismatch"), killing live posts/tips for everyone.
+  const channelIdRef = useRef(`live-wall-${useId()}`);
   const isAtBottomRef = useRef(true);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const audioInitRef = useRef(false);
@@ -188,7 +193,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
   // ─── Supabase Realtime (Postgres Changes + Presence) ──
   useEffect(() => {
     const supabase = supabaseRef.current;
-    const channel = supabase.channel("live-wall", {
+    const channel = supabase.channel(channelIdRef.current, {
       config: { presence: { key: currentUser?.actorId || `anon-${Math.random().toString(36).slice(2)}` } },
     });
 

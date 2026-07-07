@@ -57,7 +57,8 @@ export async function GET() {
       .from("models")
       .select("id, user_id, username, profile_photo_url, city, state, points_cached, is_approved")
       .in("user_id", userIds)
-      .eq("is_approved", true);
+      .eq("is_approved", true)
+      .is("deleted_at", null);
 
     // Preserve follow order and attach favorited_at timestamp
     const modelsByUserId = new Map((models || []).map((m: any) => [m.user_id, m]));
