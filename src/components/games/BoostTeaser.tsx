@@ -76,7 +76,7 @@ function TeaserCard({
           src={model.profile_photo_url}
           alt={model.username}
           fill
-          sizes="(max-width: 640px) 240px, 208px"
+          sizes="(max-width: 640px) 304px, 208px"
           className="object-cover pointer-events-none"
           draggable={false}
         />
@@ -234,14 +234,14 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
   const next = deck?.[index + 1];
 
   return (
-    <section className="container px-8 md:px-16 py-6">
+    <section className="container px-4 md:px-16 py-6">
       <div
         ref={sectionRef}
-        className="relative max-w-4xl mx-auto overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500/10 via-pink-500/5 to-transparent border border-orange-500/20 p-6 md:p-8"
+        className="relative max-w-2xl mx-auto overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500/10 via-pink-500/5 to-transparent border border-orange-500/20 p-5 md:p-8"
       >
         <div className="absolute -top-20 -right-20 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl opacity-50 pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6 md:gap-10">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6 md:gap-8">
           <div className="md:flex-1">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-7 h-7 rounded-lg bg-orange-500/20 flex items-center justify-center">
@@ -289,7 +289,7 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
                 </div>
 
                 <div className="flex flex-col items-center gap-2.5">
-                  <div className="relative w-60 h-80 sm:w-52 sm:h-72 touch-pan-y">
+                  <div className="relative w-[min(19rem,74vw)] aspect-[3/4] sm:w-52 sm:h-72 sm:aspect-auto touch-pan-y">
                     {deck === null ? (
                       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 ring-1 ring-white/10 animate-pulse" />
                     ) : (
@@ -300,7 +300,7 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
                               src={next.profile_photo_url}
                               alt={next.username}
                               fill
-                              sizes="(max-width: 640px) 240px, 208px"
+                              sizes="(max-width: 640px) 304px, 208px"
                               className="object-cover"
                             />
                             <div className="absolute inset-0 bg-black/40" />
