@@ -45,6 +45,7 @@ import { NotificationBell } from "@/components/layout/NotificationBell";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
+import { useUnreadCount } from "@/components/layout/UnreadCountProvider";
 import { useTranslation } from "@/i18n";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
@@ -77,8 +78,9 @@ const DROPDOWN_GLASS_CLASS =
 const DROPDOWN_ITEM_CLASS =
   "cursor-pointer rounded-lg px-2.5 py-2 text-sm text-white/80 focus:bg-white/10 focus:text-white data-[highlighted]:bg-white/10 data-[highlighted]:text-white";
 
-export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0, bellCount = 0 }: NavbarProps) {
+export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, notificationCount = 0, bellCount = 0 }: NavbarProps) {
   const pathname = usePathname();
+  const unreadCount = useUnreadCount(unreadCountProp);
   const coinBalanceContext = useCoinBalanceOptional();
   const coinBalance = coinBalanceContext?.balance ?? 0;
   const { t } = useTranslation();

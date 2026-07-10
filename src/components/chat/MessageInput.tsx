@@ -390,7 +390,16 @@ export function MessageInput({
       type: item.type === "video" ? "video/mp4" : "image/jpeg",
       preview: item.url,
     });
-    // If it's PPV content, we could add price info here
+    // Carry the library item's PPV price onto the attachment so it's charged
+    // when sent. Without this, a priced library item was silently attached for
+    // free.
+    if (item.coinPrice && item.coinPrice > 0) {
+      setMediaPrice(item.coinPrice);
+      setShowPriceInput(true);
+    } else {
+      setMediaPrice(null);
+      setShowPriceInput(false);
+    }
   };
 
   const removeAttachment = () => {

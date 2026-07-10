@@ -3858,6 +3858,7 @@ export type Database = {
           flagged_for_review_reason: string | null
           id: string
           is_suspended: boolean | null
+          last_active_at: string | null
           phone: string | null
           preferred_language: string | null
           purged_at: string | null
@@ -3883,6 +3884,7 @@ export type Database = {
           flagged_for_review_reason?: string | null
           id?: string
           is_suspended?: boolean | null
+          last_active_at?: string | null
           phone?: string | null
           preferred_language?: string | null
           purged_at?: string | null
@@ -3908,6 +3910,7 @@ export type Database = {
           flagged_for_review_reason?: string | null
           id?: string
           is_suspended?: boolean | null
+          last_active_at?: string | null
           phone?: string | null
           preferred_language?: string | null
           purged_at?: string | null

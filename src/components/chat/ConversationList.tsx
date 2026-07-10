@@ -127,13 +127,18 @@ export function ConversationList({ conversations: initialConversations, actorTyp
           if (conv.conversation_id !== msg.conversation_id) return conv;
           // Increment unread count for messages from others (not our own sends)
           const isOwnMessage = msg.sender_id === currentActorId;
+          // Never hold a locked PPV media_url in list state — match the
+          // server-side inbox stripping. The preview keys off media_type, so
+          // the "Sent a photo" label still shows.
+          const isLockedPpv =
+            !isOwnMessage && (msg.media_price ?? 0) > 0;
           return {
             ...conv,
             lastMessage: {
               content: msg.content,
               created_at: msg.created_at,
               sender_id: msg.sender_id,
-              media_url: msg.media_url,
+              media_url: isLockedPpv ? null : msg.media_url,
               media_type: msg.media_type,
               is_system: msg.is_system,
             },
@@ -212,15 +217,17 @@ export function ConversationList({ conversations: initialConversations, actorTyp
       return message.content;
     }
 
-    // Media-only message
-    if (message.media_url) {
-      if (message.media_type?.startsWith("image/")) {
+    // Media-only message. Key off media_type, not media_url: locked PPV media
+    // has its media_url stripped server-side (so it can't leak from the inbox),
+    // but we still want to show a "Sent a photo/video" label.
+    if (message.media_type) {
+      if (message.media_type.startsWith("image/")) {
         return "Sent a photo";
       }
-      if (message.media_type?.startsWith("video/")) {
+      if (message.media_type.startsWith("video/")) {
         return "Sent a video";
       }
-      if (message.media_type?.startsWith("audio/")) {
+      if (message.media_type.startsWith("audio/")) {
         return "Sent a voice message";
       }
       return "Sent an attachment";
@@ -525,7 +532,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
                       {isTipMessage(conv.lastMessage) && (
                         <Coins className="h-3 w-3 text-amber-500 flex-shrink-0" />
                       )}
-                      {!conv.lastMessage?.is_system && conv.lastMessage?.media_url && !conv.lastMessage?.content && (
+                      {!conv.lastMessage?.is_system && conv.lastMessage?.media_type && !conv.lastMessage?.content && (
                         conv.lastMessage.media_type?.startsWith("image/") ? (
                           <Camera className="h-3 w-3 text-pink-500 flex-shrink-0" />
                         ) : conv.lastMessage.media_type?.startsWith("video/") ? (

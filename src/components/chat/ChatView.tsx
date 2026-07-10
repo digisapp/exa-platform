@@ -104,6 +104,49 @@ export function ChatView({
     soundEnabledRef.current = soundEnabled;
   }, [soundEnabled]);
 
+  // Persist failed outgoing messages across reloads. They otherwise lived only
+  // in React state, so a refresh silently dropped the un-sent bubble and its
+  // Retry affordance — the user assumed the message went through. Hydrate any
+  // stored failures on mount, then keep localStorage in sync with the current
+  // failed set. Runs before the persist effect below so a fresh mount revives
+  // before it can overwrite storage.
+  const failedStorageKey = `chatFailed:${conversation.id}`;
+  const failedHydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (failedHydratedRef.current) return;
+    failedHydratedRef.current = true;
+    try {
+      const raw = localStorage.getItem(failedStorageKey);
+      if (!raw) return;
+      const stored = JSON.parse(raw) as OptimisticMessage[];
+      if (!Array.isArray(stored) || stored.length === 0) return;
+      setMessages((prev) => {
+        const existing = new Set(prev.map((m) => m._tempId).filter(Boolean));
+        const revived = stored
+          .filter((m) => m._tempId && !existing.has(m._tempId))
+          .map((m) => ({ ...m, _status: "failed" as const }));
+        return revived.length ? [...prev, ...revived] : prev;
+      });
+    } catch {
+      try { localStorage.removeItem(failedStorageKey); } catch { /* noop */ }
+    }
+  }, [failedStorageKey]);
+
+  useEffect(() => {
+    if (!failedHydratedRef.current) return;
+    try {
+      const failed = messages.filter((m) => m._status === "failed");
+      if (failed.length === 0) {
+        localStorage.removeItem(failedStorageKey);
+      } else {
+        localStorage.setItem(failedStorageKey, JSON.stringify(failed));
+      }
+    } catch {
+      // Storage unavailable/full — non-fatal, retry UI still works in-session
+    }
+  }, [messages, failedStorageKey]);
+
   // Initialize audio context on first user interaction (required by browsers).
   // Restore saved preference from localStorage.
   useEffect(() => {
@@ -172,7 +215,10 @@ export function ChatView({
         avatar: fan.avatar_url,
         username: fan.username || null,
         type: "fan" as const,
-        lastActive: null,
+        // Surface fan presence to the model — the activity tracker keeps
+        // fans.last_active_at fresh, and the header applies the same 5-minute
+        // "Online" heuristic it uses for models.
+        lastActive: fan.last_active_at ?? null,
       };
     }
 
@@ -315,6 +361,9 @@ export function ChatView({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ conversationId: conversation.id }),
         });
+        // Nudge the nav unread badge to re-fetch now that this thread is read,
+        // so it drops immediately instead of staying stale until a navigation.
+        window.dispatchEvent(new Event("exa:unread-refresh"));
       } catch (err) {
         console.error("Failed to mark messages as read:", err);
       }

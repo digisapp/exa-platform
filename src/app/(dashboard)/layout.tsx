@@ -6,6 +6,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { DashboardClientWrapper } from "@/components/layout/DashboardClientWrapper";
 import { ActivityTracker } from "@/components/ActivityTracker";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
+import { UnreadCountProvider } from "@/components/layout/UnreadCountProvider";
 import { RouteFocusManager } from "@/components/layout/RouteFocusManager";
 import { SuspensionBanner } from "@/components/layout/SuspensionBanner";
 
@@ -192,6 +193,7 @@ export default async function DashboardLayout({
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
+      <UnreadCountProvider initialCount={unreadCount}>
       <div className="min-h-screen bg-background">
         <RouteFocusManager />
         <ActivityTracker />
@@ -223,6 +225,7 @@ export default async function DashboardLayout({
           notificationCount={notificationCount}
         />
       </div>
+      </UnreadCountProvider>
     </CoinBalanceProvider>
   );
 }
