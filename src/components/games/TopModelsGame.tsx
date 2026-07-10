@@ -548,7 +548,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
               <div className="flex items-center gap-2 min-w-0">
                 <Heart className="h-4 w-4 text-pink-400 fill-pink-400 shrink-0" />
                 <p className="text-sm text-white/90 truncate">
-                  You matched {pendingMatches.length} model{pendingMatches.length === 1 ? "" : "s"} before signing up
+                  You liked {pendingMatches.length} model{pendingMatches.length === 1 ? "" : "s"} before signing up
                 </p>
               </div>
               <Button
@@ -573,7 +573,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
               className="mb-4 flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500/15 to-orange-500/10 border border-pink-500/30 hover:border-pink-500/60 hover:from-pink-500/25 hover:to-orange-500/15 text-sm font-semibold text-white shadow-[0_0_12px_rgba(236,72,153,0.25)] transition-all"
             >
               <Heart className="h-4 w-4 text-pink-400 fill-pink-400" />
-              {matches.length} {matches.length === 1 ? "match" : "matches"}
+              {matches.length} {initialUser && isFan ? "following" : "liked"}
             </button>
           )}
 
@@ -585,7 +585,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
               sessionStats={sessionStats}
               streak={streak}
               isLoggedIn={!!initialUser}
-              matchCount={matches.length}
+              likedCount={matches.length}
             />
           ) : models.length > 0 ? (
             <SwipeStack
@@ -633,12 +633,12 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
               <button
                 onClick={async () => {
                   const shareUrl = `${window.location.origin}/boost`;
-                  const shareText = "Play EXA Boost - Swipe and boost your favorite models!";
+                  const shareText = "Play EXA Spotlight - Swipe and boost your favorite models!";
 
                   if (navigator.share) {
                     try {
                       await navigator.share({
-                        title: "EXA Boost",
+                        title: "EXA Spotlight",
                         text: shareText,
                         url: shareUrl,
                       });
@@ -699,7 +699,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
             <DialogTitle className="flex items-center justify-center gap-2">
               <Heart className="h-5 w-5 text-pink-400 fill-pink-400" />
               <span className="bg-gradient-to-r from-pink-400 to-orange-400 text-transparent bg-clip-text font-bold">
-                Your Matches
+                {initialUser && isFan ? "Following" : "Models you liked"}
               </span>
             </DialogTitle>
             <p className="text-sm text-muted-foreground text-center">
@@ -714,7 +714,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
               <FanSignupDialog redirectTo="/boost">
                 <Button className="w-full bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 shadow-lg shadow-pink-500/25">
                   <UserPlus className="h-4 w-4 mr-2" />
-                  Sign up to follow your {matches.length} match{matches.length === 1 ? "" : "es"}
+                  Sign up to follow the {matches.length} model{matches.length === 1 ? "" : "s"} you liked
                 </Button>
               </FanSignupDialog>
             </div>
@@ -787,7 +787,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
             <DialogTitle className="text-center text-2xl flex items-center justify-center gap-2">
               <Sparkles className="h-5 w-5 text-yellow-400 animate-pulse" />
               <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-orange-400 text-transparent bg-clip-text font-bold">
-                Welcome to EXA Boost
+                Welcome to EXA Spotlight
               </span>
               <Sparkles className="h-5 w-5 text-yellow-400 animate-pulse" />
             </DialogTitle>

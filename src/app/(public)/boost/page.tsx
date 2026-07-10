@@ -6,11 +6,11 @@ import { TopModelsGame } from "@/components/games/TopModelsGame";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 
 export const metadata: Metadata = {
-  title: "EXA Boost | EXA Models",
+  title: "EXA Spotlight | EXA Models",
   description:
     "Boost your favorite models to the top of the leaderboard! Swipe, like, and help them trend.",
   openGraph: {
-    title: "EXA Boost | EXA Models",
+    title: "EXA Spotlight | EXA Models",
     description: "Swipe, like, and boost your favorite models to the top!",
     type: "website",
   },
@@ -101,7 +101,7 @@ export default async function TopModelsPage() {
                 <path d="M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z" />
               </svg>
               <span className="relative text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-pink-400 via-purple-400 via-50% to-orange-400 text-transparent bg-clip-text bg-[length:200%_auto] animate-[gradient_3s_linear_infinite]">
-                EXA Boost
+                EXA Spotlight
               </span>
               <svg className="w-6 h-6 text-yellow-400 animate-[spin_3s_linear_infinite_reverse]" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z" />

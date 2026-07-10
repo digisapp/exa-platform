@@ -339,7 +339,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       )}
 
       {/* ──────────────────────────────────────────────
-          EXA Boost — compact entry card
+          EXA Spotlight — compact entry card
          ────────────────────────────────────────────── */}
       <Link
         href="/boost"
@@ -350,7 +350,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
             <Flame className="h-5 w-5 text-orange-300" />
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-white text-sm">EXA Boost</p>
+            <p className="font-semibold text-white text-sm">EXA Spotlight</p>
             <p className="text-xs text-white/60 truncate">Swipe to discover models — likes build your feed</p>
           </div>
         </div>
@@ -560,7 +560,10 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
           {/* Live Bids */}
           <LiveBidsPanel auctions={sidebarAuctions} />
 
-          {/* Discover Models */}
+          {/* Discover Models — only once a fan has favorites. New fans get the
+              featured-avatar nudge strip up top, so we avoid stacking two
+              competing "browse models" blocks on the same screen. */}
+          {favoriteModels.length > 0 && (
           <div className="rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
             <header className="flex items-center justify-between p-4 border-b border-white/5">
               <div className="flex items-center gap-2">
@@ -599,6 +602,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
               )}
             </div>
           </div>
+          )}
 
         </div>
       </div>

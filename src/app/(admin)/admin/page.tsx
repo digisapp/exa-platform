@@ -145,7 +145,7 @@ export default async function AdminPage() {
       subtitle: (pendingCalls || 0) > 0 ? `${pendingCalls} pending` : undefined,
     },
     { href: "/admin/travel", label: "EXA Travel", icon: Plane, color: "violet", featured: true },
-    { href: "/admin/boost", label: "EXA Boost", icon: Flame, color: "orange", featured: true },
+    { href: "/admin/boost", label: "EXA Spotlight", icon: Flame, color: "orange", featured: true },
     { href: "/admin/swimcrown", label: "SwimCrown", icon: Crown, color: "amber" },
     { href: "/admin/exa-dolls", label: "EXA Dolls", icon: Sparkles, color: "pink", featured: true },
     { href: "/admin/stickers", label: "EXA Stickers", icon: Sparkles, color: "violet", featured: true },
