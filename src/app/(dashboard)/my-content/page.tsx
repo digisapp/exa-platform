@@ -130,7 +130,7 @@ export default function MyContentPage() {
           <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/20 to-violet-500/20">
             <FolderHeart className="h-6 w-6 text-pink-500" />
           </div>
-          <h1 className="text-3xl font-bold">My Content</h1>
+          <h1 className="text-3xl font-bold">My Library</h1>
         </div>
         <p className="text-muted-foreground">
           All your purchased content in one place

@@ -303,7 +303,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* EXA Boost Teaser — playable mini-deck, fetches client-side on scroll */}
+        {/* EXA Spotlight Teaser — playable mini-deck, fetches client-side on scroll */}
         <BoostTeaser isLoggedIn={!!user} />
 
         {/* Upcoming Shows + EXA Live Wall (side-by-side on desktop, stacked on
@@ -562,7 +562,7 @@ export default async function HomePage() {
                   </li>
                   <li>
                     <Link href="/boost" className="text-white/70 hover:text-pink-300 transition-colors">
-                      EXA Boost
+                      EXA Spotlight
                     </Link>
                   </li>
                   <li>

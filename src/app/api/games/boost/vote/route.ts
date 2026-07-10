@@ -410,8 +410,8 @@ export async function POST(request: NextRequest) {
         if (modelActor) {
           const notificationTitle = isSuperBoosted ? "SUPER BOOST!" : "You got boosted!";
           const notificationBody = isSuperBoosted
-            ? `${voterName} gave you a SUPER BOOST in EXA Boost! You gained ${points} points!`
-            : `${voterName} boosted you in EXA Boost! You gained ${points} points.`;
+            ? `${voterName} gave you a SUPER BOOST in EXA Spotlight! You gained ${points} points!`
+            : `${voterName} boosted you in EXA Spotlight! You gained ${points} points.`;
 
           // as any needed: notification uses actor_id/body/data fields and exa_boost type not in typed schema
           await (supabase.from("notifications") as any).insert({

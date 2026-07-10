@@ -19,7 +19,7 @@ interface GameCompleteProps {
   sessionStats?: SessionStats;
   streak?: number;
   isLoggedIn?: boolean;
-  matchCount?: number;
+  likedCount?: number;
 }
 
 export function GameComplete({
@@ -28,7 +28,7 @@ export function GameComplete({
   sessionStats,
   streak = 0,
   isLoggedIn = false,
-  matchCount = 0,
+  likedCount = 0,
 }: GameCompleteProps) {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
@@ -36,13 +36,13 @@ export function GameComplete({
   const handleShare = async () => {
     const pointsText = sessionStats?.pointsGiven ? `${sessionStats.pointsGiven} points` : "some love";
     const streakText = streak > 1 ? ` 🔥 ${streak}-day streak!` : "";
-    const shareText = `I just gave ${pointsText} on EXA Boost!${streakText} Play now and boost your favorite models!`;
+    const shareText = `I just gave ${pointsText} on EXA Spotlight!${streakText} Play now and boost your favorite models!`;
     const shareUrl = `${window.location.origin}/boost`;
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "EXA Boost",
+          title: "EXA Spotlight",
           text: shareText,
           url: shareUrl,
         });
@@ -201,18 +201,18 @@ export function GameComplete({
             <div className="flex items-center justify-center gap-2 mb-2">
               <UserPlus className="h-5 w-5 text-purple-400" />
               <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text">
-                {matchCount > 0 ? "Don't Lose Your Matches" : "Create a Free Account"}
+                {likedCount > 0 ? "Follow the Models You Liked" : "Create a Free Account"}
               </span>
             </div>
             <p className="text-sm text-muted-foreground mb-3">
-              {matchCount > 0
-                ? `Sign up to follow your ${matchCount} match${matchCount === 1 ? "" : "es"} — they'll build your feed.`
+              {likedCount > 0
+                ? `Sign up to follow the ${likedCount} model${likedCount === 1 ? "" : "s"} you liked — they'll build your feed.`
                 : "Save your stats, keep your streak, and buy coins to boost models!"}
             </p>
             <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground mb-3">
               <span className="flex items-center gap-1">
                 <Heart className="h-3 w-3 text-pink-400" />
-                Follow matches
+                Follow models
               </span>
               <span className="flex items-center gap-1">
                 <Flame className="h-3 w-3 text-orange-400" />
@@ -228,8 +228,8 @@ export function GameComplete({
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg shadow-purple-500/25"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
-                {matchCount > 0
-                  ? `Sign up to follow your ${matchCount} match${matchCount === 1 ? "" : "es"}`
+                {likedCount > 0
+                  ? `Sign up to follow the ${likedCount} model${likedCount === 1 ? "" : "s"} you liked`
                   : "Sign Up Free"}
               </Button>
             </FanSignupDialog>

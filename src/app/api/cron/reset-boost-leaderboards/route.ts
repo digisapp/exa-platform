@@ -5,7 +5,7 @@ import { logger } from "@/lib/logger";
 const supabase = createServiceRoleClient();
 
 // GET /api/cron/reset-boost-leaderboards?period=daily|weekly
-// Resets the EXA Boost leaderboard periods so the Explore "Trending this week"
+// Resets the EXA Spotlight leaderboard periods so the Explore "Trending this week"
 // row and the in-game Today/Week tabs reflect the current period.
 // daily → runs at 00:05 UTC every day, weekly → 00:10 UTC on Mondays.
 export async function GET(request: NextRequest) {

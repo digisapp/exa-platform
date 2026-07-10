@@ -248,7 +248,7 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
                 <Flame className="h-4 w-4 text-orange-300" />
               </div>
               <span className="text-xs font-bold tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-400">
-                EXA BOOST
+                EXA SPOTLIGHT
               </span>
             </div>
             <p className="text-white/70 text-sm md:text-base">
@@ -262,19 +262,19 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
                 {likedCount > 0 && (
                   <p className="flex items-center gap-1.5 text-white/80 text-sm font-medium">
                     <Heart className="h-4 w-4 text-pink-400 fill-pink-400" />
-                    You matched {likedCount} model{likedCount === 1 ? "" : "s"}
+                    You liked {likedCount} model{likedCount === 1 ? "" : "s"}
                   </p>
                 )}
                 <Link
                   href="/boost"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white text-sm font-semibold shadow-lg shadow-orange-500/25 transition-all"
                 >
-                  Keep playing on EXA Boost
+                  Keep playing on EXA Spotlight
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 {likedCount > 0 && !isLoggedIn && (
                   <p className="text-xs text-white/50">
-                    Sign up on EXA Boost to follow your matches
+                    Sign up on EXA Spotlight to follow the models you liked
                   </p>
                 )}
               </div>

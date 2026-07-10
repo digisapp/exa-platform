@@ -188,7 +188,7 @@ export default async function ModelsPage({
       .is("deleted_at", null)
       .not("profile_photo_url", "is", null)
       .limit(5) as Promise<{ data: any[] | null }>,
-    // Trending models — this week's EXA Boost leaders
+    // Trending models — this week's EXA Spotlight leaders
     (supabase
       .from("top_model_leaderboard") as any)
       .select("week_points, models!inner(id, username, profile_photo_url)")
@@ -312,7 +312,7 @@ export default async function ModelsPage({
           )}
         </div>
 
-        {/* Trending This Week — EXA Boost weekly leaders */}
+        {/* Trending This Week — EXA Spotlight weekly leaders */}
         {trending && trending.length > 0 && (
           <div className="mb-10">
             <div className="flex items-center gap-3 mb-4">

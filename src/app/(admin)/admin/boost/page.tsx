@@ -145,7 +145,7 @@ export default function AdminBoostPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 text-transparent bg-clip-text">
-                EXA Boost Analytics
+                EXA Spotlight Analytics
               </h1>
               <p className="text-sm text-muted-foreground">Game performance and player insights</p>
             </div>
