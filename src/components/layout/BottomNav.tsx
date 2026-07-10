@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Home, MessageCircle, Users, Images, Megaphone, Heart, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n";
+import { useUnreadCount } from "@/components/layout/UnreadCountProvider";
 
 interface BottomNavProps {
   user: {
@@ -43,8 +44,9 @@ function NavItem({
   );
 }
 
-export function BottomNav({ user, actorType, unreadCount = 0, notificationCount = 0 }: BottomNavProps) {
+export function BottomNav({ user, actorType, unreadCount: unreadCountProp = 0, notificationCount = 0 }: BottomNavProps) {
   const pathname = usePathname();
+  const unreadCount = useUnreadCount(unreadCountProp);
   const { t } = useTranslation();
 
   const homePath = actorType === "admin" ? "/admin" : "/dashboard";

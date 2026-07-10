@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -53,6 +54,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const suspended = await assertNotSuspended(actor.id);
+    if (suspended) return suspended;
 
     // Verify the message exists and user is a participant
     const { data: message } = await supabase

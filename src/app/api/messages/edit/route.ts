@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -49,6 +50,9 @@ export async function POST(request: NextRequest) {
     if (!sender) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
+
+    const suspended = await assertNotSuspended(sender.id);
+    if (suspended) return suspended;
 
     // Fetch message — verify ownership, edit window, and that it has text content
     const { data: message } = await (supabase

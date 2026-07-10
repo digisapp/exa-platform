@@ -185,6 +185,18 @@ export function ChatHeader({
         {/* Call buttons grouped — voice is desktop-only to keep the mobile
             header from crowding out the participant name */}
         <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1">
+          {/* Per-minute cost hint, shown only when the current user pays to
+              call (fan/brand → model). Sets expectations before the tap; the
+              exact amount is still confirmed in the call dialog. */}
+          {otherParticipantActorType === "model" && currentActor.type !== "model" && (
+            <span
+              className="hidden sm:inline-flex items-center gap-0.5 pl-2 pr-0.5 text-[11px] font-medium text-amber-300/90 whitespace-nowrap"
+              title="Calls cost coins per minute"
+            >
+              {otherParticipantModel?.video_call_rate || 5}
+              <span className="opacity-70">/min</span>
+            </span>
+          )}
           <div className="hidden sm:block">
             <VideoCallButton
               conversationId={conversation.id}
