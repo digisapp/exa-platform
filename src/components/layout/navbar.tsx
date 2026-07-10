@@ -436,9 +436,6 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                             <p className="text-sm font-semibold text-white">
                               {t.nav.exaBoost}
                             </p>
-                            <p className="text-[11px] text-orange-300">
-                              {t.nav.boostFavorites}
-                            </p>
                           </div>
                           <ArrowUpRight className="h-4 w-4 text-orange-400 shrink-0" />
                         </Link>

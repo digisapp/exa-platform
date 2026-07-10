@@ -58,6 +58,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
     { data: myBids },
     { data: recentContent },
     { data: trendingContent },
+    { data: freeContent },
     { data: myUnlocks },
   ] = await Promise.all([
     (supabase.from("follows") as any)
@@ -111,7 +112,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .select(`
         id, title, description, media_type, preview_url, media_url,
         coin_price, unlock_count, created_at,
-        model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified)
+        model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified, is_approved, deleted_at)
       `)
       .eq("status", "exclusive")
       .gt("coin_price", 0)
@@ -122,13 +123,29 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .select(`
         id, title, description, media_type, preview_url, media_url,
         coin_price, unlock_count, created_at,
-        model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified)
+        model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified, is_approved, deleted_at)
       `)
       .eq("status", "exclusive")
       .gt("coin_price", 0)
       .gt("unlock_count", 0)
       .order("unlock_count", { ascending: false })
       .limit(30),
+    // Free content pool — public portfolio + any free exclusive posts. This is the
+    // bulk of the feed: there are thousands of free portfolio items vs ~130 paid
+    // exclusives, so the feed leads with free discovery and treats paid as upsell.
+    // Only content from approved, non-deleted models (inner-join filter).
+    (supabase as any).from("content_items")
+      .select(`
+        id, title, description, media_type, preview_url, media_url,
+        coin_price, unlock_count, created_at,
+        model:models!content_items_model_id_fkey!inner(id, username, profile_photo_url, is_verified, is_approved, deleted_at)
+      `)
+      .in("status", ["portfolio", "exclusive"])
+      .eq("coin_price", 0)
+      .eq("model.is_approved", true)
+      .is("model.deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(400),
     // Fan's already-unlocked content
     (supabase as any).from("content_purchases")
       .select("item_id")
@@ -197,112 +214,113 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   const rotationPeriod = Math.floor(daysSinceEpoch / 3);
   const featuredModels = seededShuffle(allFeaturedModels || [], rotationPeriod).slice(0, 8);
 
-  // Build the "For You" feed
+  // Build the "For You" feed.
+  // Strategy: lead with FREE content (public portfolio photos + any free posts) so
+  // the feed reads as a discovery surface, not a paywall. There are thousands of
+  // free items vs ~130 paid exclusives, so free dominates and paid is interspersed
+  // as a minority upsell. Followed models come first; discovery fills the rest with
+  // a per-model cap for variety and a daily shuffle so the ordering isn't frozen.
   const unlockedIds = new Set((myUnlocks || []).map((u: any) => u.item_id));
   const followedModelIds = new Set(favoriteModels.map((m: any) => m.id));
   const seenContentIds = new Set<string>();
 
-  const feedItems: FeedItem[] = [];
+  const FEED_CAP = 40;
+  const PAID_EVERY = 4; // in discovery, drop one paid upsell after every N free items
+  const MAX_PER_MODEL = 3; // followed cap
+  const DISCOVER_PER_MODEL = 2; // tighter cap for discovery variety
 
-  // Add content from followed models first (prioritized). Scan BOTH the recent
-  // and trending pools — a followed model's content often lives only in trending
-  // (older but popular), and the discover fill below skips followed models, so
-  // without this their content would disappear from the feed entirely.
-  for (const content of [...(recentContent || []), ...(trendingContent || [])]) {
-    if (!content.model || seenContentIds.has(content.id)) continue;
-    if (!followedModelIds.has(content.model.id)) continue;
-    seenContentIds.add(content.id);
-    const isUnlocked = unlockedIds.has(content.id);
-    feedItems.push({
+  const modelOk = (c: any) => c.model && c.model.is_approved !== false && !c.model.deleted_at;
+
+  // Free content is always viewable. Portfolio media lives in media_url (its
+  // preview_url is usually null), so surface media_url as the preview and mark it
+  // unlocked — no blur, opens straight to full view. Paid keeps its blurred teaser.
+  const toFeedItem = (content: any, isFollowed: boolean): FeedItem => {
+    const isPaid = (content.coin_price ?? 0) > 0;
+    const isUnlocked = isPaid ? unlockedIds.has(content.id) : true;
+    return {
       type: "content",
       id: content.id,
       model: content.model,
       title: content.title,
       description: content.description,
       media_type: content.media_type,
-      preview_url: content.preview_url,
-      coin_price: content.coin_price,
-      unlock_count: content.unlock_count,
+      preview_url: isPaid ? content.preview_url : content.media_url,
+      coin_price: content.coin_price ?? 0,
+      unlock_count: content.unlock_count ?? 0,
       created_at: content.created_at,
       isUnlocked,
       mediaUrl: isUnlocked ? content.media_url : null,
-      isFollowed: true,
-    });
-  }
+      isFollowed,
+    };
+  };
 
-  // Mix in live auctions
-  for (const auction of (liveAuctions || []).slice(0, 4)) {
-    if (!auction.model) continue;
-    const myBid = myBidMap.get(auction.id);
-    feedItems.push({
-      type: "auction",
-      id: auction.id,
-      model: { ...auction.model, is_verified: auction.model.is_verified ?? false },
-      title: auction.title,
-      category: auction.category,
-      cover_image_url: auction.cover_image_url,
-      current_bid: auction.current_bid,
-      starting_price: auction.starting_price,
-      bid_count: auction.bid_count || 0,
-      ends_at: auction.ends_at,
-      myBidStatus: myBid?.status || null,
-    });
-  }
-
-  // Fill with trending/recent content from non-followed models
-  const allNonFollowed = [
-    ...(trendingContent || []),
+  // Followed models first — their free + paid content, newest first, capped per model.
+  const followedItems: FeedItem[] = [];
+  const followedPerModel = new Map<string, number>();
+  const followedPool = [
+    ...(freeContent || []),
     ...(recentContent || []),
-  ];
-  for (const content of allNonFollowed) {
-    if (feedItems.length >= 40) break;
-    if (!content.model || seenContentIds.has(content.id)) continue;
-    if (followedModelIds.has(content.model.id)) continue; // already added above
+    ...(trendingContent || []),
+  ]
+    .filter((c: any) => modelOk(c) && followedModelIds.has(c.model.id))
+    .sort((a: any, b: any) => (a.created_at < b.created_at ? 1 : -1));
+  for (const content of followedPool) {
+    if (seenContentIds.has(content.id)) continue;
+    const n = followedPerModel.get(content.model.id) || 0;
+    if (n >= MAX_PER_MODEL) continue;
     seenContentIds.add(content.id);
-    const isUnlocked = unlockedIds.has(content.id);
-    feedItems.push({
-      type: "content",
-      id: content.id,
-      model: content.model,
-      title: content.title,
-      description: content.description,
-      media_type: content.media_type,
-      preview_url: content.preview_url,
-      coin_price: content.coin_price,
-      unlock_count: content.unlock_count,
-      created_at: content.created_at,
-      isUnlocked,
-      mediaUrl: isUnlocked ? content.media_url : null,
-      isFollowed: false,
-    });
+    followedPerModel.set(content.model.id, n + 1);
+    followedItems.push(toFeedItem(content, true));
   }
 
-  // Re-sign any storage paths / expired signed URLs for feed content
+  // Discovery fill from non-followed models, capped per model for variety.
+  const discoverPerModel = new Map<string, number>();
+  const takeDiscover = (pool: any[]): FeedItem[] => {
+    const out: FeedItem[] = [];
+    for (const content of pool) {
+      if (!modelOk(content) || seenContentIds.has(content.id)) continue;
+      if (followedModelIds.has(content.model.id)) continue;
+      const n = discoverPerModel.get(content.model.id) || 0;
+      if (n >= DISCOVER_PER_MODEL) continue;
+      seenContentIds.add(content.id);
+      discoverPerModel.set(content.model.id, n + 1);
+      out.push(toFeedItem(content, false));
+    }
+    return out;
+  };
+
+  const freeDiscover = takeDiscover(seededShuffle(freeContent || [], daysSinceEpoch));
+  const paidDiscover = takeDiscover(
+    seededShuffle([...(trendingContent || []), ...(recentContent || [])], daysSinceEpoch)
+  );
+
+  // Interleave: free-dominant, one paid upsell every PAID_EVERY free items.
+  const discoverItems: FeedItem[] = [];
+  let pi = 0;
+  for (let i = 0; i < freeDiscover.length; i++) {
+    discoverItems.push(freeDiscover[i]);
+    if ((i + 1) % PAID_EVERY === 0 && pi < paidDiscover.length) {
+      discoverItems.push(paidDiscover[pi++]);
+    }
+  }
+  while (pi < paidDiscover.length) discoverItems.push(paidDiscover[pi++]);
+
+  const sortedFeed: FeedItem[] = [...followedItems, ...discoverItems].slice(0, FEED_CAP);
+
+  // Re-sign any storage paths / expired signed URLs for feed content. Free items
+  // reuse the same media_url for preview + full view, so sign it once.
   const service = createServiceRoleClient();
   await Promise.all(
-    feedItems.map(async (item) => {
-      if (item.type === "content") {
-        const [freshPreview, freshMedia] = await Promise.all([
-          toSignedUrl(item.preview_url, service),
-          item.isUnlocked ? toSignedUrl(item.mediaUrl, service) : Promise.resolve(null),
-        ]);
-        item.preview_url = freshPreview;
-        if (item.isUnlocked) item.mediaUrl = freshMedia;
+    sortedFeed.map(async (item) => {
+      if (item.type !== "content") return;
+      const sameMedia = item.isUnlocked && item.mediaUrl === item.preview_url;
+      const freshPreview = await toSignedUrl(item.preview_url, service);
+      item.preview_url = freshPreview;
+      if (item.isUnlocked) {
+        item.mediaUrl = sameMedia ? freshPreview : await toSignedUrl(item.mediaUrl, service);
       }
     })
   );
-
-  // Interleave: followed content first, then alternate auction/trending
-  // Sort followed content by date, keep auctions interspersed
-  // Content-only feed — auctions live in the sidebar LiveBidsPanel
-  const followedItems = feedItems.filter(i => i.type === "content" && i.isFollowed);
-  // Rotate the discover fill daily so the feed isn't a frozen unlock_count ranking
-  // (which made every fan see the same handful of models on every load).
-  const discoverItems = seededShuffle(
-    feedItems.filter(i => i.type === "content" && !i.isFollowed),
-    daysSinceEpoch
-  );
-  const sortedFeed: FeedItem[] = [...followedItems, ...discoverItems];
 
   // Sidebar auctions: attach myBidStatus from the fan's bid map
   const sidebarAuctions = (liveAuctions || [])
