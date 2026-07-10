@@ -112,12 +112,12 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
     { href: "/content", label: t.nav.content, icon: Images },
   ];
+  // Fans: keep the top nav to the daily loop (browse → chat). Bids + Favorites
+  // are secondary and live in the avatar dropdown to avoid a cluttered bar.
   const translatedFanLinks = [
     { href: "/dashboard", label: t.nav.home, icon: Home },
     { href: "/models", label: t.nav.explore, icon: Users },
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
-    { href: "/bids", label: t.nav.bids, icon: Gavel },
-    { href: "/favorites", label: t.nav.favorites, icon: Heart },
   ];
   const translatedBrandLinks = [
     { href: "/dashboard", label: t.nav.home, icon: Home },
@@ -187,11 +187,6 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                   {link.href === "/chats" && unreadCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-pink-500 text-white rounded-full shadow-[0_0_8px_rgba(236,72,153,0.7)]">
                       {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  )}
-                  {link.href === "/bids" && notificationCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-amber-500 text-white rounded-full shadow-[0_0_8px_rgba(245,158,11,0.7)]">
-                      {notificationCount > 9 ? "9+" : notificationCount}
                     </span>
                   )}
                 </div>
@@ -306,8 +301,8 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                         {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    {/* Action-needed badge. Fans excluded — their Bids nav link already carries this count */}
-                    {notificationCount > 0 && actorType !== "fan" && (
+                    {/* Action-needed badge (fans: outbid/winning count; Bids now lives inside this menu) */}
+                    {notificationCount > 0 && (
                       <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold text-white rounded-full z-10 bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.8)]">
                         {notificationCount > 9 ? "9+" : notificationCount}
                       </span>
@@ -426,7 +421,7 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                     </>
                   )}
 
-                  {/* Fan-specific items — Bids + Favorites live in the top nav, not here */}
+                  {/* Fan-specific items — Bids + Favorites moved here to keep the top nav lean */}
                   {actorType === "fan" && (
                     <>
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
@@ -452,9 +447,26 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                       <DropdownMenuSeparator className="bg-white/10 my-1.5" />
 
                       <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
+                        <Link href="/favorites" className="w-full">
+                          <Heart className="mr-2 h-4 w-4 text-pink-400" />
+                          {t.nav.favorites}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
+                        <Link href="/bids" className="w-full flex items-center">
+                          <Gavel className="mr-2 h-4 w-4 text-amber-400" />
+                          {t.nav.bids}
+                          {notificationCount > 0 && (
+                            <span className="ml-auto min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-amber-500 text-white rounded-full">
+                              {notificationCount > 9 ? "9+" : notificationCount}
+                            </span>
+                          )}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
                         <Link href="/my-content" className="w-full">
                           <FolderHeart className="mr-2 h-4 w-4 text-pink-400" />
-                          {t.nav.myContent}
+                          {t.nav.myLibrary}
                         </Link>
                       </DropdownMenuItem>
                     </>
