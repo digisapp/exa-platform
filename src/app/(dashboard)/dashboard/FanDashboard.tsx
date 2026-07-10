@@ -104,7 +104,9 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .select("auction_id, amount, status")
       .eq("bidder_id", actorId)
       .in("status", ["winning", "active", "outbid"]),
-    // Recent exclusive content (last 30 days) for feed
+    // Newest exclusive content for feed. No date window: exclusive paid content
+    // is posted rarely, so a 30-day filter empties this pool and kills the feed's
+    // fresh/followed arm. Latest-50 keeps it populated and still recency-ordered.
     (supabase as any).from("content_items")
       .select(`
         id, title, description, media_type, preview_url, media_url,
@@ -113,7 +115,6 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       `)
       .eq("status", "exclusive")
       .gt("coin_price", 0)
-      .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
       .order("created_at", { ascending: false })
       .limit(50),
     // Trending exclusive content (top unlocks, all time)
@@ -203,8 +204,11 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
 
   const feedItems: FeedItem[] = [];
 
-  // Add content from followed models first (prioritized)
-  for (const content of (recentContent || [])) {
+  // Add content from followed models first (prioritized). Scan BOTH the recent
+  // and trending pools — a followed model's content often lives only in trending
+  // (older but popular), and the discover fill below skips followed models, so
+  // without this their content would disappear from the feed entirely.
+  for (const content of [...(recentContent || []), ...(trendingContent || [])]) {
     if (!content.model || seenContentIds.has(content.id)) continue;
     if (!followedModelIds.has(content.model.id)) continue;
     seenContentIds.add(content.id);
@@ -292,7 +296,12 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   // Sort followed content by date, keep auctions interspersed
   // Content-only feed — auctions live in the sidebar LiveBidsPanel
   const followedItems = feedItems.filter(i => i.type === "content" && i.isFollowed);
-  const discoverItems = feedItems.filter(i => i.type === "content" && !i.isFollowed);
+  // Rotate the discover fill daily so the feed isn't a frozen unlock_count ranking
+  // (which made every fan see the same handful of models on every load).
+  const discoverItems = seededShuffle(
+    feedItems.filter(i => i.type === "content" && !i.isFollowed),
+    daysSinceEpoch
+  );
   const sortedFeed: FeedItem[] = [...followedItems, ...discoverItems];
 
   // Sidebar auctions: attach myBidStatus from the fan's bid map
