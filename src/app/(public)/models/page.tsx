@@ -36,7 +36,6 @@ interface SearchParams {
   q?: string;
   state?: string;
   level?: string;
-  sort?: string;
   focus?: string;
   height?: string;
   collabs?: string;
@@ -137,31 +136,36 @@ export default async function ModelsPage({
   const currentPage = Math.max(1, parseInt(params.page || "1", 10) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
 
+  // The curated Trending/Featured rows ignore filters, so only show them on the
+  // default, unfiltered first-page view — and dedup their models out of the grid
+  // below so the same faces don't appear twice on one screen.
+  const hasActiveFilters = !!(
+    params.q || params.state || params.level || params.focus || params.height ||
+    params.collabs || params.platform || params.cpm || params.cpm_sort ||
+    params.engagement || params.ig_followers || params.tt_followers
+  );
+  const showDiscoveryRows = currentPage === 1 && !hasActiveFilters;
+
   // Build models query with specific fields instead of SELECT *
   let modelsQuery = applyFilters(
     supabase.from("models").select(MODEL_CARD_FIELDS).eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
   );
 
-  // Sort — always prioritize recently-active models at the top; nulls (never active) go last
-  modelsQuery = modelsQuery.order("last_active_at", { ascending: false, nullsFirst: false });
-
-  switch (params.sort) {
-    case "followers":
-      modelsQuery = modelsQuery.order("instagram_followers", { ascending: false, nullsFirst: false });
-      break;
-    default:
-      modelsQuery = modelsQuery.order("created_at", { ascending: false });
-  }
-
-  // CPM sort — only applies when collabs filter is active
-  if (params.collabs === "1") {
+  // Sort — recently-active models first by default; nulls (never active) go last,
+  // with created_at as a stable tiebreaker. When a brand requests a CPM sort
+  // (collab tool), it must take precedence, so apply it as the primary order.
+  const cpmSortActive =
+    params.collabs === "1" && (params.cpm_sort === "cpm_low" || params.cpm_sort === "cpm_high");
+  if (cpmSortActive) {
     const cpmCol = params.platform === "tiktok" ? "tiktok_cpm" : "instagram_cpm";
-    if (params.cpm_sort === "cpm_low") {
-      modelsQuery = modelsQuery.order(cpmCol, { ascending: true, nullsFirst: false });
-    } else if (params.cpm_sort === "cpm_high") {
-      modelsQuery = modelsQuery.order(cpmCol, { ascending: false, nullsFirst: false });
-    }
+    modelsQuery = modelsQuery.order(cpmCol, {
+      ascending: params.cpm_sort === "cpm_low",
+      nullsFirst: false,
+    });
   }
+  modelsQuery = modelsQuery
+    .order("last_active_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false });
 
   modelsQuery = modelsQuery.range(offset, offset + PAGE_SIZE - 1);
 
@@ -209,6 +213,16 @@ export default async function ModelsPage({
   const totalPages = Math.ceil((totalCount || 0) / PAGE_SIZE);
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
+
+  // Models already surfaced in the Trending/Featured rows are removed from the
+  // main grid to avoid showing the same model twice on the first-page view.
+  const highlightedIds = showDiscoveryRows
+    ? new Set<string>([
+        ...((trending as any[])?.map((t) => t.models?.id).filter(Boolean) ?? []),
+        ...((featured as any[])?.map((f) => f.id).filter(Boolean) ?? []),
+      ])
+    : new Set<string>();
+  const gridModels = (models || []).filter((m: any) => !highlightedIds.has(m.id));
 
   // Now run actor-dependent queries in parallel
   let favoriteModelIds: string[] = [];
@@ -313,7 +327,7 @@ export default async function ModelsPage({
         </div>
 
         {/* Trending This Week — EXA Spotlight weekly leaders */}
-        {trending && trending.length > 0 && (
+        {showDiscoveryRows && trending && trending.length > 0 && (
           <div className="mb-10">
             <div className="flex items-center gap-3 mb-4">
               <div className="relative">
@@ -323,7 +337,6 @@ export default async function ModelsPage({
                 </div>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold">Boosted by fans</p>
                 <h2 className="text-lg md:text-xl font-bold text-white">
                   <span className="exa-gradient-text">Trending This Week</span>
                 </h2>
@@ -344,7 +357,7 @@ export default async function ModelsPage({
         )}
 
         {/* Featured Models */}
-        {featured && featured.length > 0 && (
+        {showDiscoveryRows && featured && featured.length > 0 && (
           <div className="mb-10">
             <div className="flex items-center gap-3 mb-4">
               <div className="relative">
@@ -376,7 +389,7 @@ export default async function ModelsPage({
         {/* Results */}
         <div className="mt-6">
           <ModelsGrid
-            models={models || []}
+            models={gridModels}
             isLoggedIn={!!user}
             favoriteModelIds={favoriteModelIds}
             actorType={actorType}
