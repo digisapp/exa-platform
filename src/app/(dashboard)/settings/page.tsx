@@ -92,8 +92,10 @@ export default function ProfilePage() {
   const digisCheckSeq = useRef(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  // JSON snapshot of the last-persisted model, for "unsaved changes" detection.
+  // JSON snapshots of the last-persisted record, for "unsaved changes" detection.
   const [savedModelStr, setSavedModelStr] = useState<string>("");
+  const [savedFanStr, setSavedFanStr] = useState<string>("");
+  const [savedBrandStr, setSavedBrandStr] = useState<string>("");
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -307,6 +309,17 @@ export default function ProfilePage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Upload failed");
       setBrand((prev) => prev ? { ...prev, logo_url: data.url } : prev);
+      // Logo is already persisted — keep the dirty-state baseline in sync.
+      setSavedBrandStr((prev) => {
+        if (!prev) return prev;
+        try {
+          const snap = JSON.parse(prev);
+          snap.logo_url = data.url;
+          return JSON.stringify(snap);
+        } catch {
+          return prev;
+        }
+      });
       toast.success("Logo updated!");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
@@ -400,6 +413,7 @@ export default function ProfilePage() {
 
         if (fanData) {
           setFan(fanData);
+          setSavedFanStr(JSON.stringify(fanData));
           setOriginalUsername(fanData.username || "");
         }
       } else if (actorData.type === "brand") {
@@ -412,6 +426,7 @@ export default function ProfilePage() {
 
         if (brandData) {
           setBrand(brandData);
+          setSavedBrandStr(JSON.stringify(brandData));
         } else {
           // Brand record doesn't exist - create it
           const { data: newBrand, error: createError } = await (supabase
@@ -430,6 +445,7 @@ export default function ProfilePage() {
             console.error("Failed to create brand record:", createError);
           } else if (newBrand) {
             setBrand(newBrand as Brand);
+            setSavedBrandStr(JSON.stringify(newBrand));
           }
         }
       }
@@ -471,15 +487,21 @@ export default function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, actor]);
 
-  // Have any model fields changed since the last save/load?
+  // Have any fields changed since the last save/load, per actor type?
   const hasUnsavedChanges =
     !!model && savedModelStr !== "" && JSON.stringify(model) !== savedModelStr;
+  const hasUnsavedFanChanges =
+    !!fan && savedFanStr !== "" && JSON.stringify(fan) !== savedFanStr;
+  const hasUnsavedBrandChanges =
+    !!brand && savedBrandStr !== "" && JSON.stringify(brand) !== savedBrandStr;
+  const hasUnsavedEdits =
+    hasUnsavedChanges || hasUnsavedFanChanges || hasUnsavedBrandChanges;
 
   // Warn before leaving with unsaved edits. `beforeunload` covers browser-level
   // exits (refresh, tab close, URL change); the capture-phase click listener
   // covers in-app navigation, which the App Router can't otherwise block.
   useEffect(() => {
-    if (!hasUnsavedChanges) return;
+    if (!hasUnsavedEdits) return;
 
     const message =
       locale === "es"
@@ -530,7 +552,7 @@ export default function ProfilePage() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("click", handleClick, true);
     };
-  }, [hasUnsavedChanges, locale]);
+  }, [hasUnsavedEdits, locale]);
 
   const handleFanSave = async () => {
     if (!fan) return;
@@ -569,6 +591,7 @@ export default function ProfilePage() {
         .eq("id", fan.id);
 
       if (error) throw error;
+      setSavedFanStr(JSON.stringify(fan));
       toast.success("Settings saved!");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to save";
@@ -602,6 +625,7 @@ export default function ProfilePage() {
         throw new Error(data.error || "Failed to save");
       }
 
+      setSavedBrandStr(JSON.stringify(brand));
       toast.success("Settings saved!");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to save";
@@ -903,6 +927,12 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
 
+            {hasUnsavedFanChanges && (
+              <p className="flex items-center gap-2 text-xs text-amber-400">
+                <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                You have unsaved changes
+              </p>
+            )}
             <Button
               onClick={handleFanSave}
               disabled={saving}
@@ -1168,6 +1198,12 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
+        {hasUnsavedBrandChanges && (
+          <p className="flex items-center gap-2 text-xs text-amber-400">
+            <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+            You have unsaved changes
+          </p>
+        )}
         <Button
           onClick={handleBrandSave}
           disabled={saving}
