@@ -27,6 +27,9 @@ interface Props {
   onClose: () => void;
   /** Positioning supplied by the parent (portal-anchored, fixed). */
   style?: React.CSSProperties;
+  /** Trigger button — excluded from the outside-click check so its own
+      click toggles the picker closed instead of mousedown-close → click-reopen. */
+  triggerRef?: React.RefObject<HTMLElement | null>;
 }
 
 const CATEGORIES = [
@@ -41,7 +44,7 @@ const CATEGORIES = [
   { id: "effects", label: "FX" },
 ];
 
-export function StickerPicker({ onSelect, onClose, style }: Props) {
+export function StickerPicker({ onSelect, onClose, style, triggerRef }: Props) {
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -66,7 +69,11 @@ export function StickerPicker({ onSelect, onClose, style }: Props) {
   // Close on outside click
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        containerRef.current && !containerRef.current.contains(target) &&
+        !(triggerRef?.current && triggerRef.current.contains(target))
+      ) {
         onClose();
       }
     };
@@ -76,7 +83,7 @@ export function StickerPicker({ onSelect, onClose, style }: Props) {
       clearTimeout(t);
       document.removeEventListener("mousedown", onDocClick);
     };
-  }, [onClose]);
+  }, [onClose, triggerRef]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -109,10 +116,10 @@ export function StickerPicker({ onSelect, onClose, style }: Props) {
     <div
       ref={containerRef}
       style={style}
-      className="max-w-[calc(100vw-16px)] rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl overflow-hidden"
+      className="max-w-[calc(100vw-16px)] flex flex-col rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl overflow-hidden"
     >
       {/* Header: search */}
-      <div className="p-2.5 border-b border-white/10">
+      <div className="shrink-0 p-2.5 border-b border-white/10">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
           <input
@@ -126,7 +133,7 @@ export function StickerPicker({ onSelect, onClose, style }: Props) {
       </div>
 
       {/* Category tabs */}
-      <div className="flex gap-1 px-2 py-2 border-b border-white/10 overflow-x-auto scrollbar-none">
+      <div className="shrink-0 flex gap-1 px-2 py-2 border-b border-white/10 overflow-x-auto scrollbar-none">
         {CATEGORIES.map((c) => (
           <button
             key={c.id || "all"}
@@ -144,7 +151,7 @@ export function StickerPicker({ onSelect, onClose, style }: Props) {
       </div>
 
       {/* Grid */}
-      <div className="max-h-[280px] overflow-y-auto p-2">
+      <div className="max-h-[280px] min-h-0 flex-1 overflow-y-auto p-2">
         {loading ? (
           <div className="py-12 text-center text-white/40">
             <Loader2 className="h-5 w-5 animate-spin inline" />
@@ -179,7 +186,7 @@ export function StickerPicker({ onSelect, onClose, style }: Props) {
       </div>
 
       {/* Footer hint */}
-      <div className="px-3 py-1.5 border-t border-white/10 text-[10px] text-white/30 flex items-center gap-1">
+      <div className="shrink-0 px-3 py-1.5 border-t border-white/10 text-[10px] text-white/30 flex items-center gap-1">
         <Sparkles className="h-3 w-3 text-pink-400/60" />
         EXA original stickers
       </div>
