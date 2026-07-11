@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { RESERVED_PATHS } from "@/lib/reserved-usernames";
 
 const reserveUsernameSchema = z.object({
   username: z.string().min(1),
@@ -10,16 +11,6 @@ const reserveUsernameSchema = z.object({
   reserved_for: z.string().nullish(),
   notes: z.string().nullish(),
 });
-
-// Reserved paths that conflict with app routes
-const RESERVED_PATHS = [
-  'signin', 'signup', 'models', 'gigs', 'dashboard', 'profile', 'messages',
-  'leaderboard', 'admin', 'onboarding', 'brands', 'designers', 'media',
-  'api', 'auth', '_next', 'favicon.ico', 'wallet', 'content', 'coins',
-  'earnings', 'fan', 'opportunities', 'settings', 'notifications', 'search',
-  'explore', 'trending', 'popular', 'new', 'hot', 'top', 'best', 'featured',
-  'favorites', 'chats', 'claim', 'forgot-password', 'rates', 'book', 'booking',
-];
 
 export async function GET(request: NextRequest) {
   try {
