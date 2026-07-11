@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimitAsync } from "@/lib/rate-limit";
 import { assertNotSuspended } from "@/lib/auth/suspension";
@@ -127,6 +128,9 @@ export async function POST(request: NextRequest) {
     const batchSize = 10;
     let sentCount = 0;
     const errors: string[] = [];
+    // Track which inserts actually landed — unread counters must only be
+    // bumped for those, or partially failed blasts leave phantom badges.
+    const sentConversationIds: string[] = [];
 
     for (let i = 0; i < targetConversations.length; i += batchSize) {
       const batch = targetConversations.slice(i, i + batchSize);
@@ -156,6 +160,7 @@ export async function POST(request: NextRequest) {
       results.forEach((result, index) => {
         if (result.status === "fulfilled") {
           sentCount++;
+          sentConversationIds.push(batch[index].conversation_id);
         } else {
           errors.push(`Failed to send to conversation ${batch[index].conversation_id}`);
         }
@@ -165,12 +170,17 @@ export async function POST(request: NextRequest) {
     // Bump recipients' unread counters so the blast actually surfaces a badge.
     // The direct inserts above (unlike send_message_with_coins) don't touch
     // unread_count, and RLS blocks updating another participant's row, so this
-    // goes through a guarded SECURITY DEFINER RPC.
-    if (sentCount > 0) {
-      const blastedConversationIds = targetConversations.map((p) => p.conversation_id);
-      const { error: unreadError } = await (supabase as any).rpc(
+    // goes through a SECURITY DEFINER RPC. The RPC is service-role-only
+    // (20260711100001, per the RPC lockdown convention) — auth already
+    // happened above, so the sender is passed explicitly.
+    if (sentConversationIds.length > 0) {
+      const serviceClient = createServiceRoleClient();
+      const { error: unreadError } = await (serviceClient as any).rpc(
         "increment_unread_for_conversations",
-        { p_conversation_ids: blastedConversationIds }
+        {
+          p_conversation_ids: sentConversationIds,
+          p_sender_actor_id: actor.id,
+        }
       );
       if (unreadError) {
         logger.error("Blast unread increment failed", unreadError);

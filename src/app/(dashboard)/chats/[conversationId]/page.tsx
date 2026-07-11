@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { redirect, notFound } from "next/navigation";
-import { ChatView } from "@/components/chat/ChatView";
+import { ChatView, type ChatParticipantFan } from "@/components/chat/ChatView";
+import type { ChatParticipantModel } from "@/components/chat/ChatHeader";
 import type { Message, Actor, Model, Fan, Brand } from "@/types/database";
 
 // Admin client for fetching participant data (bypasses RLS)
@@ -146,16 +147,21 @@ export default async function ChatPage({ params }: PageProps) {
     }
 
     if (otherActor) {
-      // Get model/fan/brand data based on actor type
-      let otherModel: Model | null = null;
-      let otherFan: Fan | null = null;
+      // Get model/fan/brand data based on actor type.
+      // Both selects are deliberately narrowed to the columns the chat UI
+      // consumes: full rows serialize into the client RSC payload, which
+      // leaked fan PII (email/phone/coin_balance/flag reasons) to models and
+      // model real names (first_name/last_name — admin-only per
+      // src/lib/model-display.ts) to fans.
+      let otherModel: ChatParticipantModel | null = null;
+      let otherFan: ChatParticipantFan | null = null;
       let otherBrand: Brand | null = null;
 
       if (otherActor.type === "model" && otherActor.user_id) {
         // Models use user_id to lookup
         const { data } = await supabase
           .from("models")
-          .select("*")
+          .select("id, username, profile_photo_url, last_active_at, message_rate, voice_call_rate, video_call_rate")
           .eq("user_id", otherActor.user_id)
           .maybeSingle();
         otherModel = data;
@@ -163,9 +169,9 @@ export default async function ChatPage({ params }: PageProps) {
         // Fans use actor.id as their id (use admin client to bypass RLS)
         const { data } = await adminClient
           .from("fans")
-          .select("*")
+          .select("id, username, display_name, avatar_url, last_active_at")
           .eq("id", otherActorId)
-          .maybeSingle() as { data: Fan | null };
+          .maybeSingle() as { data: ChatParticipantFan | null };
         otherFan = data;
       } else if (otherActor.type === "brand") {
         // Brands use actor.id as their id

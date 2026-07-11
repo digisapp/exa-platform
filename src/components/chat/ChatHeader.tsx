@@ -31,6 +31,23 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { Actor, Model, Conversation } from "@/types/database";
 
+/**
+ * The slice of a model row the chat UI is allowed to see about the OTHER
+ * participant. Deliberately narrow: full model rows carry admin-only PII
+ * (first_name/last_name — see src/lib/model-display.ts). The RSC page selects
+ * exactly these columns, so widen this type together with that select.
+ */
+export type ChatParticipantModel = Pick<
+  Model,
+  | "id"
+  | "username"
+  | "profile_photo_url"
+  | "last_active_at"
+  | "message_rate"
+  | "voice_call_rate"
+  | "video_call_rate"
+>;
+
 export interface OtherParticipantInfo {
   name: string;
   avatar: string | null;
@@ -44,7 +61,7 @@ interface ChatHeaderProps {
   currentActor: Actor;
   otherParticipantActorId: string;
   otherParticipantActorType: string;
-  otherParticipantModel?: Model | null;
+  otherParticipantModel?: ChatParticipantModel | null;
   otherInfo: OtherParticipantInfo;
   otherInitials: string;
   canTip: boolean;
@@ -108,6 +125,34 @@ export function ChatHeader({
   const isOnline = !!(
     otherInfo.lastActive &&
     new Date().getTime() - new Date(otherInfo.lastActive).getTime() < 5 * 60 * 1000
+  );
+
+  // The current user pays per minute only when calling a model (fan/brand →
+  // model). ?? keeps an explicit 0 rate (free calls) instead of coercing it
+  // to the default like || would.
+  const paysToCall =
+    otherParticipantActorType === "model" && currentActor.type !== "model";
+  const voiceCallRate = otherParticipantModel?.voice_call_rate ?? 5;
+  const videoCallRate = otherParticipantModel?.video_call_rate ?? 5;
+
+  const rateHint = (rate: number, kind: "voice" | "video") => (
+    <span
+      className="inline-flex items-center gap-0.5 pl-2 pr-0.5 text-[11px] font-medium text-amber-300/90 whitespace-nowrap"
+      title={
+        rate === 0
+          ? `${kind === "voice" ? "Voice" : "Video"} calls are free`
+          : `${kind === "voice" ? "Voice" : "Video"} calls cost coins per minute`
+      }
+    >
+      {rate === 0 ? (
+        "Free"
+      ) : (
+        <>
+          {rate}
+          <span className="opacity-70">/min</span>
+        </>
+      )}
+    </span>
   );
 
   return (
@@ -185,19 +230,12 @@ export function ChatHeader({
         {/* Call buttons grouped — voice is desktop-only to keep the mobile
             header from crowding out the participant name */}
         <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1">
-          {/* Per-minute cost hint, shown only when the current user pays to
-              call (fan/brand → model). Sets expectations before the tap; the
-              exact amount is still confirmed in the call dialog. */}
-          {otherParticipantActorType === "model" && currentActor.type !== "model" && (
-            <span
-              className="hidden sm:inline-flex items-center gap-0.5 pl-2 pr-0.5 text-[11px] font-medium text-amber-300/90 whitespace-nowrap"
-              title="Calls cost coins per minute"
-            >
-              {otherParticipantModel?.video_call_rate || 5}
-              <span className="opacity-70">/min</span>
-            </span>
-          )}
-          <div className="hidden sm:block">
+          {/* Per-minute cost hints, shown only when the current user pays to
+              call (fan/brand → model). Each button gets its own rate — voice
+              and video are priced independently. Sets expectations before the
+              tap; the exact amount is still confirmed in the call dialog. */}
+          <div className="hidden sm:flex items-center">
+            {paysToCall && rateHint(voiceCallRate, "voice")}
             <VideoCallButton
               conversationId={conversation.id}
               coinBalance={localCoinBalance}
@@ -206,11 +244,14 @@ export function ChatHeader({
               recipientActorId={otherParticipantActorId}
               recipientName={otherName}
               recipientAvatar={otherAvatar}
-              videoCallRate={otherParticipantModel?.voice_call_rate || 5}
+              videoCallRate={voiceCallRate}
               callType="voice"
               onBalanceChange={onBalanceChange}
             />
           </div>
+          {paysToCall && (
+            <span className="hidden sm:inline-flex">{rateHint(videoCallRate, "video")}</span>
+          )}
           <VideoCallButton
             conversationId={conversation.id}
             coinBalance={localCoinBalance}
@@ -219,7 +260,7 @@ export function ChatHeader({
             recipientActorId={otherParticipantActorId}
             recipientName={otherName}
             recipientAvatar={otherAvatar}
-            videoCallRate={otherParticipantModel?.video_call_rate || 5}
+            videoCallRate={videoCallRate}
             callType="video"
             onBalanceChange={onBalanceChange}
           />
