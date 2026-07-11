@@ -140,7 +140,7 @@ export function BoostModal({
                 </div>
               </div>
 
-              <Link href="/signin?redirect=/boost" className="block">
+              <Link href="/signin?redirect=/spotlight" className="block">
                 <Button className="w-full h-12 text-base bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 hover:from-orange-600 hover:via-pink-600 hover:to-purple-600 shadow-lg shadow-pink-500/25">
                   <Heart className="h-5 w-5 mr-2" />
                   Sign In to Support {model.username}

@@ -87,6 +87,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/boost',
+        destination: '/spotlight',
+        permanent: true,
+      },
+      {
         source: '/events',
         destination: '/shows',
         permanent: true,

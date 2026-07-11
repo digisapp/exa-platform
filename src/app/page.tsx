@@ -561,7 +561,7 @@ export default async function HomePage() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/boost" className="text-white/70 hover:text-pink-300 transition-colors">
+                    <Link href="/spotlight" className="text-white/70 hover:text-pink-300 transition-colors">
                       EXA Spotlight
                     </Link>
                   </li>

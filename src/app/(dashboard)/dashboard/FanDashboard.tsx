@@ -369,7 +369,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
           EXA Spotlight — compact entry card
          ────────────────────────────────────────────── */}
       <Link
-        href="/boost"
+        href="/spotlight"
         className="flex items-center justify-between gap-3 p-3.5 rounded-2xl border border-orange-500/30 bg-gradient-to-r from-orange-500/15 via-pink-500/10 to-transparent hover:from-orange-500/25 hover:via-pink-500/15 hover:border-orange-500/60 shadow-[0_0_16px_rgba(249,115,22,0.15)] hover:shadow-[0_0_24px_rgba(249,115,22,0.3)] transition-all group"
       >
         <div className="flex items-center gap-3 min-w-0">

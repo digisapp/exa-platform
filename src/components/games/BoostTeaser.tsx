@@ -266,7 +266,7 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
                   </p>
                 )}
                 <Link
-                  href="/boost"
+                  href="/spotlight"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white text-sm font-semibold shadow-lg shadow-orange-500/25 transition-all"
                 >
                   Keep playing on EXA Spotlight

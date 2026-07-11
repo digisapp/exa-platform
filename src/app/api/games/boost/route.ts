@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import crypto from "crypto";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+
+const adminClient = createServiceRoleClient();
 
 /**
  * Fisher-Yates shuffle using crypto.randomInt for unbiased randomness.
@@ -154,6 +157,53 @@ export async function GET(request: NextRequest) {
       .filter((m: any) => !lowExposureIds.has(m.id))
       .slice(0, deckTarget - lowExposure.length);
     const deck = [...lowExposure, ...randomFill];
+
+    // Cycle exhausted: the player has swiped everything we can serve them this
+    // cycle, but the fixed 25-model completion threshold was never reached
+    // (fewer than 25 models are actually servable — RLS-visible pool smaller
+    // than the admin count, or votes dropped to rate-limits). Without this the
+    // session's completed_at never gets set: canSwipe stays true, GET keeps
+    // returning an empty deck with no reset time, and the client shows a
+    // phantom "Ready to Play Again!" that reloads the same empty deck forever
+    // (and models_swiped never clears, so it never self-heals). Mark it
+    // complete so the 24h cooldown + reset kicks in like a normal finish.
+    if (deck.length === 0 && swipedIds.length > 0 && session.session_id) {
+      const { data: completedRow } = await adminClient
+        .from("top_model_sessions")
+        .select("completed_at")
+        .eq("id", session.session_id)
+        .single();
+
+      let completedAt = completedRow?.completed_at as string | null;
+      if (!completedAt) {
+        const { data: updated } = await adminClient
+          .from("top_model_sessions")
+          .update({ completed_at: new Date().toISOString() })
+          .eq("id", session.session_id)
+          .select("completed_at")
+          .single();
+        completedAt = (updated?.completed_at as string | null) ?? new Date().toISOString();
+      }
+
+      const nextResetAt = new Date(
+        new Date(completedAt).getTime() + 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      return NextResponse.json({
+        models: [],
+        hasMore: false,
+        session: {
+          canSwipe: false,
+          modelsSwiped: session.models_swiped,
+          totalModels: session.total_models,
+          nextResetAt,
+          sessionId: session.session_id,
+          currentStreak: session.current_streak,
+          longestStreak: session.longest_streak,
+          lastPlayDate: session.last_play_date,
+        },
+      });
+    }
 
     // Get today's leaderboard rankings
     const { data: leaderboardData } = await supabase
