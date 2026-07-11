@@ -8,7 +8,7 @@ const PROTECTED_PATHS = [
   '/chats',
   '/settings',
   '/admin',
-  '/content',
+  '/studio',
   '/earnings',
   '/coins',
   '/wallet',
@@ -23,7 +23,7 @@ const PROTECTED_PATHS = [
 // Routes that require model approval (subset of protected paths)
 const MODEL_APPROVED_PATHS = [
   '/dashboard',
-  '/content',
+  '/studio',
   '/earnings',
   '/wallet',
   '/bookings',

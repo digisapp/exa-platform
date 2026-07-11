@@ -6,6 +6,7 @@ export const es: Dictionary = {
     home: "Inicio",
     chats: "Mensajes",
     content: "Contenido",
+    studio: "Studio",
     explore: "Explorar",
     favorites: "Favoritos",
     campaigns: "Campañas",
@@ -131,7 +132,7 @@ export const es: Dictionary = {
 
   // Content
   content: {
-    title: "Mi Contenido",
+    title: "Mi Studio",
     upload: "Subir",
     uploadContent: "Subir Contenido",
     portfolio: "Público",

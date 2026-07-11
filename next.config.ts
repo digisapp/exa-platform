@@ -82,6 +82,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/content',
+        destination: '/studio',
+        permanent: true,
+      },
+      {
         source: '/events',
         destination: '/shows',
         permanent: true,

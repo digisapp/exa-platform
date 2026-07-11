@@ -63,7 +63,7 @@ function getPageType(path: string): string {
   if (path === "/settings") return "settings";
   if (path === "/chats" || path.startsWith("/chats/")) return "chats";
   if (path === "/wallet" || path === "/coins") return "wallet";
-  if (path === "/content") return "content";
+  if (path === "/studio") return "studio";
   if (path === "/signin" || path === "/signup") return "auth";
   if (path === "/apply") return "apply";
   if (path.startsWith("/gigs/")) return "gig_detail";
