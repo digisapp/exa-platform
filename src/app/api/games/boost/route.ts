@@ -20,9 +20,17 @@ function secureShufflePop<T>(arr: T[], count: number): T[] {
   return shuffled.slice(0, count);
 }
 
-// Daily deck: each session cycle serves up to 25 models — a mix of the
-// least-exposed eligible models and a random fill — instead of the full roster.
-const DAILY_DECK_SIZE = 25;
+// A play cycle lets the user swipe through the ENTIRE eligible roster (every
+// approved, non-deleted model with a profile photo) before the 24h cooldown
+// resets the deck — so every model with a picture is guaranteed exposure each
+// cycle, not just a capped subset. SESSION_DECK_CAP is a safety ceiling that
+// matches the eligible-fetch limit below; completion normally happens when the
+// roster is exhausted, not when the cap is hit. Models are served PAGE_SIZE at
+// a time and the client pages through via hasMore, so we never ship the whole
+// roster in one response. Within each page we front-load the least-exposed
+// eligible models and fill the rest at random.
+const SESSION_DECK_CAP = 1000;
+const PAGE_SIZE = 30;
 const LOW_EXPOSURE_COUNT = 13;
 
 // GET - Fetch models for the swipe game
@@ -101,8 +109,11 @@ export async function GET(request: NextRequest) {
       swipedIds = sessionRow?.models_swiped || [];
     }
 
-    // How many models are left in today's deck for this cycle
-    const deckTarget = Math.max(0, DAILY_DECK_SIZE - swipedIds.length);
+    // Serve one page at a time, bounded by how many models are left in this
+    // cycle before the session cap. Normally the cap isn't the limiter — the
+    // eligible roster running out is (handled by the empty-deck branch below).
+    const remainingInSession = Math.max(0, SESSION_DECK_CAP - swipedIds.length);
+    const deckTarget = Math.min(PAGE_SIZE, remainingInSession);
 
     // Fetch eligible models, excluding already swiped
     let query = supabase
@@ -231,16 +242,30 @@ export async function GET(request: NextRequest) {
     // Shuffle the models using cryptographically secure randomness
     const shuffledModels = secureShufflePop(modelsWithPoints, modelsWithPoints.length);
 
-    // Today's deck basis: what this cycle actually serves (25 or fewer)
-    const deckTotal = swipedIds.length + shuffledModels.length;
+    // More to serve if the eligible pool (after excluding this page) still has
+    // unswiped models and we haven't hit the session cap. When true, the client
+    // pages the rest of the roster in via hasMore.
+    const eligibleThisFetch = (models || []).length;
+    const servedTotal = swipedIds.length + shuffledModels.length;
+    const hasMore =
+      shuffledModels.length > 0 &&
+      eligibleThisFetch > shuffledModels.length &&
+      servedTotal < SESSION_DECK_CAP;
+
+    // Progress basis: everything the player will see this cycle = already
+    // swiped + all still-eligible models (capped at the session ceiling).
+    const sessionTotal = Math.min(
+      SESSION_DECK_CAP,
+      swipedIds.length + eligibleThisFetch
+    );
 
     return NextResponse.json({
       models: shuffledModels,
-      hasMore: false,
+      hasMore,
       session: {
         canSwipe: true,
         modelsSwiped: session.models_swiped,
-        totalModels: deckTotal,
+        totalModels: sessionTotal,
         modelsRemaining: shuffledModels.length,
         nextResetAt: null,
         sessionId: session.session_id,
