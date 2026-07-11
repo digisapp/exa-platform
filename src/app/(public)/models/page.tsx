@@ -190,6 +190,7 @@ export default async function ModelsPage({
       .eq("is_featured", true)
       .eq("is_approved", true)
       .is("deleted_at", null)
+      .not("deactivated", "is", true)
       .not("profile_photo_url", "is", null)
       .limit(5) as Promise<{ data: any[] | null }>,
     // Trending models — this week's EXA Spotlight leaders
@@ -199,6 +200,7 @@ export default async function ModelsPage({
       .gt("week_points", 0)
       .eq("models.is_approved", true)
       .is("models.deleted_at", null)
+      .not("models.deactivated", "is", true)
       .not("models.profile_photo_url", "is", null)
       .order("week_points", { ascending: false })
       .limit(5) as Promise<{ data: any[] | null }>,
@@ -214,12 +216,19 @@ export default async function ModelsPage({
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
 
+  // A model can be both featured and topping the weekly leaderboard — trending
+  // wins, so drop it from the Featured row to avoid duplicate cards.
+  const trendingIds = new Set<string>(
+    (trending as any[])?.map((t) => t.models?.id).filter(Boolean) ?? []
+  );
+  const featuredRow = ((featured as any[]) ?? []).filter((m) => !trendingIds.has(m.id));
+
   // Models already surfaced in the Trending/Featured rows are removed from the
   // main grid to avoid showing the same model twice on the first-page view.
   const highlightedIds = showDiscoveryRows
     ? new Set<string>([
-        ...((trending as any[])?.map((t) => t.models?.id).filter(Boolean) ?? []),
-        ...((featured as any[])?.map((f) => f.id).filter(Boolean) ?? []),
+        ...trendingIds,
+        ...featuredRow.map((f) => f.id).filter(Boolean),
       ])
     : new Set<string>();
   const gridModels = (models || []).filter((m: any) => !highlightedIds.has(m.id));
@@ -357,7 +366,7 @@ export default async function ModelsPage({
         )}
 
         {/* Featured Models */}
-        {showDiscoveryRows && featured && featured.length > 0 && (
+        {showDiscoveryRows && featuredRow.length > 0 && (
           <div className="mb-10">
             <div className="flex items-center gap-3 mb-4">
               <div className="relative">
@@ -374,7 +383,7 @@ export default async function ModelsPage({
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {featured.map((model) => (
+              {featuredRow.map((model) => (
                 <ModelCard key={model.id} model={model} variant="compact" />
               ))}
             </div>

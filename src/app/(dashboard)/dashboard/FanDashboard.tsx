@@ -83,6 +83,8 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       `)
       .eq("is_approved", true)
       .is("deleted_at", null)
+      // IS NOT TRUE also keeps legacy null rows visible
+      .not("deactivated", "is", true)
       .not("profile_photo_url", "is", null)
       .not("profile_photo_url", "ilike", "%cdninstagram.com%")
       .not("profile_photo_url", "ilike", "%instagram%")
@@ -112,7 +114,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .select(`
         id, title, description, media_type, preview_url, media_url,
         coin_price, unlock_count, created_at,
-        model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified, is_approved, deleted_at)
+        model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified, is_approved, deleted_at, deactivated)
       `)
       .eq("status", "exclusive")
       .gt("coin_price", 0)
@@ -123,7 +125,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .select(`
         id, title, description, media_type, preview_url, media_url,
         coin_price, unlock_count, created_at,
-        model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified, is_approved, deleted_at)
+        model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified, is_approved, deleted_at, deactivated)
       `)
       .eq("status", "exclusive")
       .gt("coin_price", 0)
@@ -138,12 +140,13 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .select(`
         id, title, description, media_type, preview_url, media_url,
         coin_price, unlock_count, created_at,
-        model:models!content_items_model_id_fkey!inner(id, username, profile_photo_url, is_verified, is_approved, deleted_at)
+        model:models!content_items_model_id_fkey!inner(id, username, profile_photo_url, is_verified, is_approved, deleted_at, deactivated)
       `)
       .in("status", ["portfolio", "exclusive"])
       .eq("coin_price", 0)
       .eq("model.is_approved", true)
       .is("model.deleted_at", null)
+      .not("model.deactivated", "is", true)
       .order("created_at", { ascending: false })
       .limit(400),
     // Fan's already-unlocked content
@@ -229,7 +232,9 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   const MAX_PER_MODEL = 3; // followed cap
   const DISCOVER_PER_MODEL = 2; // tighter cap for discovery variety
 
-  const modelOk = (c: any) => c.model && c.model.is_approved !== false && !c.model.deleted_at;
+  // deactivated !== true keeps legacy null rows visible (matches /models applyFilters)
+  const modelOk = (c: any) =>
+    c.model && c.model.is_approved !== false && !c.model.deleted_at && c.model.deactivated !== true;
 
   // Free content is always viewable. Portfolio media lives in media_url (its
   // preview_url is usually null), so surface media_url as the preview and mark it
@@ -289,9 +294,17 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
     return out;
   };
 
-  const freeDiscover = takeDiscover(seededShuffle(freeContent || [], daysSinceEpoch));
+  // Fold the fan's actorId into the shuffle seed so each fan gets their own
+  // discover ordering — still deterministic within the day (no Math.random).
+  let fanHash = 0;
+  for (let i = 0; i < actorId.length; i++) {
+    fanHash = (fanHash * 31 + actorId.charCodeAt(i)) & 0x7fffffff;
+  }
+  const discoverSeed = (daysSinceEpoch + fanHash) & 0x7fffffff;
+
+  const freeDiscover = takeDiscover(seededShuffle(freeContent || [], discoverSeed));
   const paidDiscover = takeDiscover(
-    seededShuffle([...(trendingContent || []), ...(recentContent || [])], daysSinceEpoch)
+    seededShuffle([...(trendingContent || []), ...(recentContent || [])], discoverSeed)
   );
 
   // Interleave: free-dominant, one paid upsell every PAID_EVERY free items.

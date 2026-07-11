@@ -1,51 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Coins, Gavel, Sparkles, ChevronDown, Heart } from "lucide-react";
-import { formatCoins } from "@/lib/coin-config";
+import { Coins, Sparkles, ChevronDown, Heart } from "lucide-react";
 import { PremiumContentCard } from "@/components/content/PremiumContentCard";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
-export type FeedItem =
-  | {
-      type: "content";
-      id: string;
-      model: {
-        username: string;
-        profile_photo_url: string | null;
-        is_verified: boolean;
-      };
-      title: string | null;
-      description: string | null;
-      media_type: string;
-      preview_url: string | null;
-      coin_price: number;
-      unlock_count: number;
-      created_at: string;
-      isUnlocked: boolean;
-      mediaUrl: string | null;
-      isFollowed: boolean;
-    }
-  | {
-      type: "auction";
-      id: string;
-      model: {
-        username: string;
-        profile_photo_url: string | null;
-        is_verified: boolean;
-      };
-      title: string;
-      category: string | null;
-      cover_image_url: string | null;
-      current_bid: number;
-      starting_price: number;
-      bid_count: number;
-      ends_at: string;
-      myBidStatus: string | null;
-    };
+export type FeedItem = {
+  type: "content";
+  id: string;
+  model: {
+    username: string;
+    profile_photo_url: string | null;
+    is_verified: boolean;
+  };
+  title: string | null;
+  description: string | null;
+  media_type: string;
+  preview_url: string | null;
+  coin_price: number;
+  unlock_count: number;
+  created_at: string;
+  isUnlocked: boolean;
+  mediaUrl: string | null;
+  isFollowed: boolean;
+};
 
 interface ForYouFeedProps {
   items: FeedItem[];
@@ -53,43 +33,6 @@ interface ForYouFeedProps {
 }
 
 const PAGE_SIZE = 8;
-const MAX_AUCTIONS = 2;
-
-function useAuctionCountdowns(items: FeedItem[]) {
-  const getTimeLeft = useCallback((endsAt: string): string => {
-    const end = new Date(endsAt);
-    const now = new Date();
-    const diffMs = end.getTime() - now.getTime();
-    if (diffMs <= 0) return "Ended";
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 60) return `${diffMins}m left`;
-    if (diffHours < 24) return `${diffHours}h left`;
-    return `${diffDays}d left`;
-  }, []);
-
-  const buildMap = useCallback(() => {
-    const map: Record<string, string> = {};
-    for (const item of items) {
-      if (item.type === "auction") {
-        map[item.id] = getTimeLeft(item.ends_at);
-      }
-    }
-    return map;
-  }, [items, getTimeLeft]);
-
-  const [countdowns, setCountdowns] = useState(buildMap);
-
-  useEffect(() => {
-    setCountdowns(buildMap());
-    const interval = setInterval(() => setCountdowns(buildMap()), 30_000);
-    return () => clearInterval(interval);
-  }, [buildMap]);
-
-  return countdowns;
-}
 
 export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
   // Sync balance when prop changes (e.g. navigation back to page)
@@ -99,26 +42,13 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
   }, [coinBalance]);
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const countdowns = useAuctionCountdowns(items);
 
   const handleUnlock = (_contentId: string, newBalance: number) => {
     setBalance(newBalance);
   };
 
-  const totalAuctions = items.filter((i) => i.type === "auction").length;
-  // Cap auctions at MAX_AUCTIONS in the visible feed
-  let auctionsSeen = 0;
-  const cappedItems = items.reduce<FeedItem[]>((acc, item) => {
-    if (item.type === "auction") {
-      auctionsSeen++;
-      if (auctionsSeen > MAX_AUCTIONS) return acc;
-    }
-    acc.push(item);
-    return acc;
-  }, []);
-  const visibleItems = cappedItems.slice(0, visibleCount);
-  const hasMore = visibleCount < cappedItems.length;
-  const hasHiddenAuctions = totalAuctions > MAX_AUCTIONS;
+  const visibleItems = items.slice(0, visibleCount);
+  const hasMore = visibleCount < items.length;
 
   if (items.length === 0) {
     return (
@@ -144,10 +74,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
         For You
       </h3>
       <div className="space-y-4">
-        {(() => {
-          let auctionCount = 0;
-          return visibleItems.map((item) => {
-          if (item.type === "content") {
+        {visibleItems.map((item) => {
             const modelName = item.model.username;
             return (
               <div key={`content-${item.id}`} className="rounded-xl border border-border/50 bg-card overflow-hidden">
@@ -204,77 +131,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
                 </div>
               </div>
             );
-          }
-
-          if (item.type === "auction") {
-            auctionCount++;
-            const modelName = item.model.username;
-            const price = item.current_bid || item.starting_price;
-            const isWinning = item.myBidStatus === "winning";
-            const isOutbid = item.myBidStatus === "outbid";
-            const timeLeft = countdowns[item.id] || "…";
-            const hasEnded = timeLeft === "Ended";
-            const isLastVisibleAuction = auctionCount === Math.min(MAX_AUCTIONS, totalAuctions);
-            return (
-              <div key={`auction-${item.id}`}>
-                <Link
-                  href={`/bids/${item.id}`}
-                  className="block rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-pink-500/5 overflow-hidden hover:border-violet-500/40 transition-colors"
-                >
-                  {item.cover_image_url && (
-                    <div className="relative aspect-[3/1] bg-zinc-900">
-                      <Image
-                        src={item.cover_image_url}
-                        alt={item.title}
-                        fill
-                        className="object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      <div className="absolute bottom-2 left-3 flex items-center gap-1 text-white/90">
-                        <Gavel className="h-3.5 w-3.5" />
-                        <span className="text-xs font-medium">{hasEnded ? "Auction Ended" : "Live Bid"}</span>
-                      </div>
-                    </div>
-                  )}
-                  <div className="p-3 flex items-center gap-3">
-                    <Avatar className="h-9 w-9 shrink-0 border border-violet-500/30">
-                      <AvatarImage src={item.model.profile_photo_url || undefined} />
-                      <AvatarFallback className="bg-zinc-700 text-zinc-300 text-sm">
-                        {modelName[0] || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">{item.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {modelName} · {item.bid_count} {item.bid_count === 1 ? "bid" : "bids"} · {timeLeft}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="flex items-center gap-1 text-amber-400">
-                        <Coins className="h-3.5 w-3.5" />
-                        <span className="text-sm font-bold">{formatCoins(price)}</span>
-                      </div>
-                      {isWinning && <p className="text-xs text-amber-400 font-medium">Winning</p>}
-                      {isOutbid && <p className="text-xs text-red-400 font-medium">Outbid</p>}
-                    </div>
-                  </div>
-                </Link>
-                {isLastVisibleAuction && hasHiddenAuctions && (
-                  <div className="flex justify-center mt-2">
-                    <Button asChild variant="ghost" size="sm" className="text-violet-400 hover:text-violet-300 gap-1.5">
-                      <Link href="/bids">
-                        <Gavel className="h-3.5 w-3.5" />
-                        View All Bids
-                      </Link>
-                    </Button>
-                  </div>
-                )}
-              </div>
-            );
-          }
-          return null;
-        });
-        })()}
+        })}
       </div>
 
       {/* Load More */}
