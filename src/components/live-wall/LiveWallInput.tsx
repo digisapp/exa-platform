@@ -51,7 +51,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
   // Wall card's `overflow-hidden` — otherwise they get clipped inside the box,
   // especially on a short wall or when opening upward past the top edge. Anchor
   // each popup above its trigger button, clamped to the viewport.
-  type PopupPos = { left: number; bottom: number; width: number };
+  type PopupPos = { left: number; bottom: number; width: number; maxHeight: number };
   const [stickerPos, setStickerPos] = useState<PopupPos | null>(null);
   const [emojiPos, setEmojiPos] = useState<PopupPos | null>(null);
 
@@ -64,13 +64,20 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
       let left = r.left + r.width / 2 - width / 2;
       left = Math.max(8, Math.min(left, vw - width - 8));
       // Anchor the popup's bottom just above the button; it grows upward.
+      // Cap its height to the space above the button so it never clips off
+      // the top of a short viewport (content scrolls instead).
       const bottom = window.innerHeight - r.top + 8;
-      return { left, bottom, width };
+      const maxHeight = Math.max(120, r.top - 16);
+      return { left, bottom, width, maxHeight };
     },
     []
   );
 
   useEffect(() => {
+    // Drop stale coordinates on close so reopening after a scroll doesn't
+    // flash the popup at its old position for a frame.
+    if (!showEmojis) setEmojiPos(null);
+    if (!showStickers) setStickerPos(null);
     if (!showEmojis && !showStickers) return;
     const update = () => {
       if (showEmojis) setEmojiPos(computePopupPos(emojiBtnRef.current, 320));
@@ -297,11 +304,13 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
           <StickerPicker
             onSelect={handleStickerSelect}
             onClose={() => setShowStickers(false)}
+            triggerRef={stickerBtnRef}
             style={{
               position: "fixed",
               left: stickerPos.left,
               bottom: stickerPos.bottom,
               width: stickerPos.width,
+              maxHeight: stickerPos.maxHeight,
               zIndex: 60,
             }}
           />,
@@ -331,8 +340,8 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
         {showEmojis && emojiPos && createPortal(
           <div
             ref={emojiPopupRef}
-            className="fixed z-[60] rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl p-2.5"
-            style={{ left: emojiPos.left, bottom: emojiPos.bottom, width: emojiPos.width }}
+            className="fixed z-[60] rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl p-2.5 overflow-y-auto"
+            style={{ left: emojiPos.left, bottom: emojiPos.bottom, width: emojiPos.width, maxHeight: emojiPos.maxHeight }}
           >
             <div className="grid grid-cols-8 gap-1">
               {EMOJI_GRID.map((emoji) => (

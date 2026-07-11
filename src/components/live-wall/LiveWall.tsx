@@ -93,7 +93,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
   const [coinBalance, setCoinBalance] = useState(currentUser?.coinBalance ?? 0);
   const [isMicroTipping, setIsMicroTipping] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [infoPos, setInfoPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [infoPos, setInfoPos] = useState<{ top: number; left: number; width: number; maxHeight: number } | null>(null);
   const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -120,10 +120,14 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
     if (!wall || !btn) return;
     const wallRect = wall.getBoundingClientRect();
     const btnRect = btn.getBoundingClientRect();
+    const top = btnRect.bottom + 6;
+    // Cap the popover to the space below the button so it never runs off the
+    // bottom of the viewport (content scrolls instead).
     setInfoPos({
-      top: btnRect.bottom + 6,
+      top,
       left: wallRect.left + 12,
       width: wallRect.width - 24,
+      maxHeight: Math.max(160, window.innerHeight - top - 16),
     });
   }, []);
 
@@ -144,7 +148,12 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
 
   // Keep the portal popover pinned to the button as the page scrolls/resizes
   useEffect(() => {
-    if (!showInfo) return;
+    if (!showInfo) {
+      // Drop stale coordinates on close so reopening after a scroll doesn't
+      // flash the popover at its old position for a frame.
+      setInfoPos(null);
+      return;
+    }
     computeInfoPos();
     const handler = () => computeInfoPos();
     window.addEventListener("scroll", handler, true);
@@ -684,7 +693,11 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
             {/* Outer ambient glow */}
             <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-pink-500/25 via-violet-500/15 to-pink-500/25 rounded-3xl scale-110 pointer-events-none" />
 
-            <div ref={infoRef} className="relative w-full max-w-xs rounded-2xl border border-pink-500/40 bg-gradient-to-b from-[#1e0f2e]/98 to-[#0d0818]/98 backdrop-blur-xl shadow-2xl shadow-pink-500/20 p-5 overflow-hidden">
+            <div
+              ref={infoRef}
+              className="relative w-full max-w-xs rounded-2xl border border-pink-500/40 bg-gradient-to-b from-[#1e0f2e]/98 to-[#0d0818]/98 backdrop-blur-xl shadow-2xl shadow-pink-500/20 p-5 overflow-x-hidden overflow-y-auto"
+              style={{ maxHeight: infoPos.maxHeight }}
+            >
               {/* Top shimmer line */}
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-pink-500/60 to-transparent" />
 

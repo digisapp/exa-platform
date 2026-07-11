@@ -2063,8 +2063,10 @@ export default function ProfilePage() {
       </Tabs>
 
       {/* Save Button - sticky at the bottom on every breakpoint so it's always
-          reachable without scrolling to the end of a long form. */}
-      <div className="sticky bottom-0 z-10 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-sm border-t">
+          reachable without scrolling to the end of a long form. On mobile it
+          sits above the fixed BottomNav (h-16 + safe-area inset) so the Save
+          button isn't occluded. */}
+      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-0 z-10 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-sm border-t">
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs min-w-0">
             {hasUnsavedChanges ? (
