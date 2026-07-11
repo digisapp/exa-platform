@@ -75,6 +75,11 @@ interface Event {
   has_venue_map?: boolean | null;
   countdown_at?: string | null;
   schedule?: ScheduleEntry[] | null;
+  // 🎟️ Tickets toggle: approved models promote this show on their profile.
+  promote_tickets_on_profiles?: boolean | null;
+  // 🏅 Badges toggle: mirrors the event badge's is_active. Merged in by
+  // fetchEvents (it lives on the badges table, not events).
+  badges_enabled?: boolean;
 }
 
 const EMPTY_EVENT_FORM = {
@@ -97,6 +102,10 @@ const EMPTY_EVENT_FORM = {
   has_casting_call: false,
   countdown_at: "",
   schedule: [] as ScheduleEntry[],
+  // Approved models promote this show's ticket link on their profile.
+  promote_tickets_on_profiles: false,
+  // Award the show badge to accepted models when the show completes.
+  badges_enabled: true,
 };
 
 interface TicketTier {
@@ -210,7 +219,26 @@ export default function AdminEventsPage() {
       console.error("Error fetching events:", error);
       toast.error("Failed to fetch events");
     } else {
-      setEvents(data || []);
+      const evts = data || [];
+      // The 🏅 Badges toggle reflects the event badge's is_active, which lives on
+      // the badges table. Fetch it for all events and merge onto each row so the
+      // edit dialog can seed the switch without an extra per-open query.
+      const eventIds = evts.map((e) => e.id);
+      let activeMap = new Map<string, boolean>();
+      if (eventIds.length) {
+        const { data: badgeRows } = await (supabase as any)
+          .from("badges")
+          .select("event_id, is_active")
+          .eq("badge_type", "event")
+          .in("event_id", eventIds) as { data: { event_id: string; is_active: boolean }[] | null };
+        activeMap = new Map((badgeRows || []).map((b) => [b.event_id, b.is_active]));
+      }
+      setEvents(
+        evts.map((e) => ({
+          ...e,
+          badges_enabled: activeMap.has(e.id) ? activeMap.get(e.id) : true,
+        }))
+      );
     }
     setLoading(false);
   }, [supabase]);
@@ -461,6 +489,8 @@ export default function AdminEventsPage() {
         has_casting_call: event.has_casting_call ?? false,
         countdown_at: event.countdown_at || "",
         schedule: event.schedule ?? [],
+        promote_tickets_on_profiles: event.promote_tickets_on_profiles ?? false,
+        badges_enabled: event.badges_enabled ?? true,
       });
     } else {
       setEditingEvent(null);
@@ -741,8 +771,39 @@ export default function AdminEventsPage() {
                 />
               </div>
 
+              {/* 🎟️ Tickets on model profiles */}
+              <div className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2 mb-3">
+                <div>
+                  <Label className="text-sm">🎟️ Promote tickets on model profiles</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    {eventForm.promote_tickets_on_profiles
+                      ? "ON — approved models show this show’s “Get Tickets” link (with their affiliate code) until the show is over."
+                      : "OFF — approved models won’t show a ticket link for this show."}
+                  </p>
+                </div>
+                <Switch
+                  checked={eventForm.promote_tickets_on_profiles}
+                  onCheckedChange={(v) => setEventForm({ ...eventForm, promote_tickets_on_profiles: v })}
+                />
+              </div>
+
               {/* Feature toggles */}
               <div className="grid grid-cols-1 gap-2 mb-3">
+                {/* 🏅 Runway badges */}
+                <div className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2">
+                  <div>
+                    <Label className="text-sm">🏅 Award runway badge on completion</Label>
+                    <p className="text-[11px] text-muted-foreground">
+                      {eventForm.badges_enabled
+                        ? "ON — accepted models earn this show’s badge when you mark the show “completed”."
+                        : "OFF — no badge is awarded (already-earned badges are kept)."}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={eventForm.badges_enabled}
+                    onCheckedChange={(v) => setEventForm({ ...eventForm, badges_enabled: v })}
+                  />
+                </div>
                 <div className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2">
                   <div>
                     <Label className="text-sm">Casting-call CTA</Label>

@@ -227,42 +227,12 @@ export async function PATCH(
         );
       }
 
-      // Award event badge if gig is linked to an event.
-      // NOTE: the DB trigger manage_event_badge() is the canonical awarder and
-      // also fires on this same status update. This block is a redundant
-      // safeguard and MUST keep the same gating as the trigger -- in particular
-      // the is_active=true filter below (see migration
-      // 20260701000001_badge_award_respect_is_active). If you change the award
-      // criteria here, change the trigger too, or the two paths will diverge.
-      if (application.gig?.event_id) {
-        // Find the badge for this event
-        const { data: badge } = await adminClient
-          .from("badges")
-          .select("id")
-          .eq("event_id", application.gig.event_id)
-          .eq("badge_type", "event")
-          .eq("is_active", true)
-          .single();
-
-        if (badge) {
-          // Award the badge (upsert to avoid duplicates)
-          const { error: badgeError } = await adminClient
-            .from("model_badges")
-            .upsert(
-              {
-                model_id: application.model_id,
-                badge_id: badge.id,
-                earned_at: new Date().toISOString(),
-              },
-              { onConflict: "model_id,badge_id" }
-            );
-
-          if (badgeError) {
-            console.error("Badge award error:", badgeError);
-            // Non-fatal - application was already updated
-          }
-        }
-      }
+      // NOTE: the event badge is intentionally NOT awarded here anymore.
+      // Badges are now granted when the EVENT is marked 'completed' (DB function
+      // award_event_completion_points, migration 20260711000001), so a badge
+      // reads as "walked this show" rather than "confirmed to walk". Acceptance
+      // only makes the model eligible for the badge and turns on their profile
+      // ticket link (driven by the accepted application, see the profile page).
     }
 
     // If un-accepting (reject, revert to pending, or move to waitlist), remove

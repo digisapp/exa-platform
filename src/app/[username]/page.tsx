@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -29,7 +30,6 @@ import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 import { BioExpand } from "@/components/model/BioExpand";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
-import { BadgeWall } from "@/components/profile/BadgeWall";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 import {
   DigisHeroProfileButton,
@@ -195,74 +195,65 @@ export default async function ModelProfilePage({ params }: Props) {
     }
   }
 
-  // Get model's event badges (using separate queries due to FK relationship issue)
-  const { data: modelBadgesRaw } = await supabase
-    .from("model_badges")
-    .select(`
-      earned_at,
-      badge_id,
-      badges!inner (
-        id,
-        slug,
-        name,
-        icon,
-        badge_type,
-        is_active,
-        event_id
-      )
-    `)
-    .eq("model_id", model.id)
-    .eq("badges.badge_type", "event") as { data: any[] | null };
-    // NOTE: intentionally NOT filtering badges.is_active here. The trophy wall
-    // shows every earned badge (a retired/over show is still a trophy). The
-    // "Get Tickets" promo ticker is gated separately on event status + is_active
-    // via `promoBadge` below.
+  // The profile "Catch me on the Runway — Get Tickets" ticker promotes a show
+  // the model is APPROVED for (an accepted gig application on a gig linked to
+  // the event) that HASN'T HAPPENED YET and has ticket promotion turned on by an
+  // admin (events.promote_tickets_on_profiles, the 🎟️ toggle).
+  //
+  // This is deliberately driven by ACCEPTED gig_applications, NOT by badges:
+  // badges are now awarded only when the show is marked 'completed', so a model
+  // walking an upcoming show has no badge yet — the accepted application is the
+  // approval signal. gig_applications is owner-only under RLS, so this runs on
+  // the service-role client (a public profile viewer couldn't read it otherwise);
+  // only non-sensitive, already-public event promo fields are exposed.
+  const todayStr = (() => {
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  })();
 
-  // Fetch event details for each badge
-  let eventBadges: any[] | null = null;
-  if (modelBadgesRaw && modelBadgesRaw.length > 0) {
-    const eventIds = modelBadgesRaw.map(mb => mb.badges?.event_id).filter(Boolean);
-    // Guard against empty array — .in("id", []) throws in Supabase-js
-    const { data: eventsData } = eventIds.length > 0 ? await supabase
-      .from("events")
-      .select("id, slug, name, short_name, year, badge_image_url, status, start_date")
-      .in("id", eventIds) as { data: any[] | null } : { data: [] };
+  let promoBadge: any = null;
+  {
+    const svc = createServiceRoleClient();
+    // Events this model has an accepted gig application for.
+    const { data: acceptedApps } = await (svc as any)
+      .from("gig_applications")
+      .select("gig:gigs!inner(event_id)")
+      .eq("model_id", model.id)
+      .eq("status", "accepted") as { data: any[] | null };
 
-    // Combine badge and event data
-    const eventsMap = new Map(eventsData?.map(e => [e.id, e]) || []);
-    eventBadges = modelBadgesRaw.map(mb => ({
-      earned_at: mb.earned_at,
-      badges: {
-        ...mb.badges,
-        events: eventsMap.get(mb.badges?.event_id) || null
-      }
-    })).filter(eb => eb.badges.events !== null)
-      // Most recent shows first (by event year, then when the badge was earned)
-      .sort((a, b) => {
-        const yearDiff = (b.badges.events.year ?? 0) - (a.badges.events.year ?? 0);
-        if (yearDiff !== 0) return yearDiff;
-        return new Date(b.earned_at).getTime() - new Date(a.earned_at).getTime();
-      });
+    const approvedEventIds = Array.from(
+      new Set((acceptedApps ?? []).map((a: any) => a.gig?.event_id).filter(Boolean))
+    );
+
+    if (approvedEventIds.length > 0) {
+      // Of those, the upcoming/active shows with the ticket toggle on.
+      const { data: promoEvents } = await (svc as any)
+        .from("events")
+        .select("slug, name, short_name, year, status, start_date, end_date")
+        .in("id", approvedEventIds)
+        .eq("promote_tickets_on_profiles", true)
+        .in("status", ["upcoming", "active"]) as { data: any[] | null };
+
+      const live = (promoEvents ?? [])
+        .filter((ev: any) => {
+          // Hide once the show is over. Prefer end_date; fall back to start_date.
+          const cutoff = String(ev?.end_date || ev?.start_date || "").slice(0, 10);
+          return !cutoff || cutoff >= todayStr;
+        })
+        // Soonest-starting show first (an active show sorts ahead of a far-future one).
+        .sort((a: any, b: any) => {
+          const da = a?.start_date, db = b?.start_date;
+          if (da && db) return new Date(da).getTime() - new Date(db).getTime();
+          if (da) return -1;
+          if (db) return 1;
+          return 0;
+        });
+
+      // Keep the shape the ticker JSX expects: promoBadge.badges.events.{slug,name}.
+      if (live[0]) promoBadge = { badges: { events: live[0] } };
+    }
   }
-
-  // The promo ticker ("Catch me on the Runway — Get Tickets") only shows for an
-  // UPCOMING/ACTIVE event whose badge is still active. The trophy wall above
-  // shows every earned badge regardless of this. When a model is confirmed for
-  // more than one live show, promote the SOONEST-starting one (an active show
-  // sorts ahead of a far-future upcoming one, since its start_date is earlier).
-  const promoBadge = (eventBadges ?? [])
-    .filter((eb: any) =>
-      eb.badges?.is_active !== false &&
-      (eb.badges?.events?.status === "upcoming" || eb.badges?.events?.status === "active")
-    )
-    .sort((a: any, b: any) => {
-      const da = a.badges?.events?.start_date;
-      const db = b.badges?.events?.start_date;
-      if (da && db) return new Date(da).getTime() - new Date(db).getTime();
-      if (da) return -1; // events with a known date rank ahead of undated ones
-      if (db) return 1;
-      return 0;
-    })[0] || null;
 
   // Resolve content_items media_url (can be storage path or full URL)
   const resolveMediaUrl = (url: string) =>
@@ -979,18 +970,10 @@ export default async function ModelProfilePage({ params }: Props) {
             />
           )}
 
-          {/* Runway Badges — trophy wall of every show this model has been confirmed for */}
-          {eventBadges && eventBadges.length > 0 && (
-            <BadgeWall
-              items={eventBadges.map((eb: any) => ({
-                shortName: eb.badges?.events?.short_name || eb.badges?.name || "Show",
-                year: eb.badges?.events?.year ?? null,
-                name: eb.badges?.events?.name || eb.badges?.name || "",
-                status: eb.badges?.events?.status ?? null,
-                active: eb.badges?.is_active !== false,
-              }))}
-            />
-          )}
+          {/* Runway Badges trophy wall intentionally not rendered — took up too much
+              space on the profile. Show badges are still awarded (at event completion)
+              and drive the "Catch me on the Runway — Get Tickets" ticker above via the
+              model's accepted gig applications. Re-add a <BadgeWall> here to surface them. */}
 
           {/* Affiliate Links - Linktree Style with neon hover glow */}
           {model.affiliate_links && model.affiliate_links.length > 0 && (

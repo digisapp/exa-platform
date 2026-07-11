@@ -63,6 +63,12 @@ const baseFields = {
   has_sponsor_pages: z.boolean().optional(),
   has_venue_map: z.boolean().optional(),
   schedule: z.array(scheduleEntrySchema).max(50).optional(),
+  // 🎟️ Tickets toggle — approved models promote this show's ticket link on
+  // their profile (events.promote_tickets_on_profiles, migration 20260711000001).
+  promote_tickets_on_profiles: z.boolean().optional(),
+  // 🏅 Badges toggle — writes the event badge's is_active. When true, accepted
+  // models earn the show badge at event completion.
+  badges_enabled: z.boolean().optional(),
 };
 
 // Only write capability columns that were actually sent, so a partial update
@@ -75,6 +81,7 @@ function capabilityFieldsFor(input: Record<string, unknown>) {
   if (input.has_casting_call !== undefined) out.has_casting_call = input.has_casting_call;
   if (input.has_sponsor_pages !== undefined) out.has_sponsor_pages = input.has_sponsor_pages;
   if (input.has_venue_map !== undefined) out.has_venue_map = input.has_venue_map;
+  if (input.promote_tickets_on_profiles !== undefined) out.promote_tickets_on_profiles = input.promote_tickets_on_profiles;
   if (input.schedule !== undefined) {
     const s = input.schedule as unknown[];
     out.schedule = s.length ? s : null;
@@ -157,7 +164,8 @@ export async function POST(request: NextRequest) {
           icon: bf.icon,
           badge_type: "event",
           event_id: event.id,
-          is_active: true,
+          // 🏅 Badges toggle — defaults on for a new show.
+          is_active: input.badges_enabled ?? true,
         },
         { onConflict: "slug" }
       );
@@ -219,11 +227,12 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Keep the event's badge label in sync (name/description). Do NOT touch
-    // is_active here — that's the deliberate "retire this badge" switch. Only
-    // overwrite the icon when the admin explicitly supplied a badge_emoji; the
-    // edit form doesn't pre-populate it, so always writing the computed default
-    // would silently reset a custom badge emoji to ⭐ on any unrelated edit.
+    // Keep the event's badge label in sync (name/description). is_active is
+    // driven by the 🏅 Badges toggle: write it only when the client actually
+    // sent badges_enabled, so an API call that omits it never flips the badge.
+    // Only overwrite the icon when the admin explicitly supplied a badge_emoji;
+    // the edit form doesn't pre-populate it, so always writing the computed
+    // default would silently reset a custom badge emoji to ⭐ on any edit.
     const bf = badgeFieldsFor(input);
     const badgeUpdate: Record<string, unknown> = {
       name: bf.name,
@@ -231,6 +240,9 @@ export async function PATCH(request: NextRequest) {
     };
     if (nn(input.badge_emoji)) {
       badgeUpdate.icon = bf.icon;
+    }
+    if (input.badges_enabled !== undefined) {
+      badgeUpdate.is_active = input.badges_enabled;
     }
     await (admin as any)
       .from("badges")
