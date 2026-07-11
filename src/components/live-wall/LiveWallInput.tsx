@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Send, ImageIcon, X, Smile, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LiveWallMentionPopover } from "./LiveWallMentionPopover";
@@ -42,6 +43,66 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
   const [showStickers, setShowStickers] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const stickerBtnRef = useRef<HTMLButtonElement>(null);
+  const emojiBtnRef = useRef<HTMLButtonElement>(null);
+  const emojiPopupRef = useRef<HTMLDivElement>(null);
+
+  // The emoji/sticker pickers are rendered in a portal so they escape the Live
+  // Wall card's `overflow-hidden` — otherwise they get clipped inside the box,
+  // especially on a short wall or when opening upward past the top edge. Anchor
+  // each popup above its trigger button, clamped to the viewport.
+  type PopupPos = { left: number; bottom: number; width: number };
+  const [stickerPos, setStickerPos] = useState<PopupPos | null>(null);
+  const [emojiPos, setEmojiPos] = useState<PopupPos | null>(null);
+
+  const computePopupPos = useCallback(
+    (btn: HTMLElement | null, maxWidth: number): PopupPos | null => {
+      if (typeof window === "undefined" || !btn) return null;
+      const r = btn.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const width = Math.min(maxWidth, vw - 16);
+      let left = r.left + r.width / 2 - width / 2;
+      left = Math.max(8, Math.min(left, vw - width - 8));
+      // Anchor the popup's bottom just above the button; it grows upward.
+      const bottom = window.innerHeight - r.top + 8;
+      return { left, bottom, width };
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!showEmojis && !showStickers) return;
+    const update = () => {
+      if (showEmojis) setEmojiPos(computePopupPos(emojiBtnRef.current, 320));
+      if (showStickers) setStickerPos(computePopupPos(stickerBtnRef.current, 340));
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [showEmojis, showStickers, computePopupPos]);
+
+  // Close the (portaled) emoji picker on outside click
+  useEffect(() => {
+    if (!showEmojis) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (
+        emojiPopupRef.current && !emojiPopupRef.current.contains(t) &&
+        emojiBtnRef.current && !emojiBtnRef.current.contains(t)
+      ) {
+        setShowEmojis(false);
+      }
+    };
+    const id = setTimeout(() => document.addEventListener("mousedown", onDown), 0);
+    return () => {
+      clearTimeout(id);
+      document.removeEventListener("mousedown", onDown);
+    };
+  }, [showEmojis]);
 
   const handleSubmit = async () => {
     if (!isLoggedIn) {
@@ -215,71 +276,82 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
 
         {/* EXA Sticker picker button */}
         {isLoggedIn && (
-          <div className="relative">
-            <button
-              onClick={() => {
-                setShowStickers((prev) => !prev);
-                setShowEmojis(false);
-              }}
-              className={cn(
-                "shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-                showStickers
-                  ? "bg-pink-500/20 text-pink-400"
-                  : "bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10"
-              )}
-              title="EXA stickers"
-            >
-              <Sparkles className="h-4 w-4" />
-            </button>
-            {showStickers && (
-              <StickerPicker
-                onSelect={handleStickerSelect}
-                onClose={() => setShowStickers(false)}
-              />
+          <button
+            ref={stickerBtnRef}
+            onClick={() => {
+              setShowStickers((prev) => !prev);
+              setShowEmojis(false);
+            }}
+            className={cn(
+              "shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+              showStickers
+                ? "bg-pink-500/20 text-pink-400"
+                : "bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10"
             )}
-          </div>
+            title="EXA stickers"
+          >
+            <Sparkles className="h-4 w-4" />
+          </button>
+        )}
+        {showStickers && stickerPos && createPortal(
+          <StickerPicker
+            onSelect={handleStickerSelect}
+            onClose={() => setShowStickers(false)}
+            style={{
+              position: "fixed",
+              left: stickerPos.left,
+              bottom: stickerPos.bottom,
+              width: stickerPos.width,
+              zIndex: 60,
+            }}
+          />,
+          document.body
         )}
 
-        {/* Emoji picker button — wrapper is static on mobile so the picker
-            anchors to (and centers within) the whole input container instead
-            of the button, which pushed it past the card's overflow-hidden on
-            390px screens. */}
+        {/* Emoji picker button — the grid is portaled (see below) so it can't
+            be clipped by the wall card's overflow-hidden. */}
         {isLoggedIn && (
-          <div className="static sm:relative">
-            <button
-              onClick={() => setShowEmojis((prev) => !prev)}
-              className={cn(
-                "shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-                showEmojis
-                  ? "bg-pink-500/20 text-pink-400"
-                  : "bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10"
-              )}
-              title="Add emoji"
-            >
-              <Smile className="h-4 w-4" />
-            </button>
-
-            {showEmojis && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[min(320px,calc(100vw-4rem))] sm:w-[320px] rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl z-50 p-2.5">
-                <div className="grid grid-cols-8 gap-1">
-                  {EMOJI_GRID.map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => {
-                        const newVal = (value + emoji).slice(0, 280);
-                        setValue(newVal);
-                        setShowEmojis(false);
-                        inputRef.current?.focus();
-                      }}
-                      className="w-full aspect-square flex items-center justify-center rounded-lg hover:bg-white/10 hover:scale-110 transition-all text-lg"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          <button
+            ref={emojiBtnRef}
+            onClick={() => {
+              setShowEmojis((prev) => !prev);
+              setShowStickers(false);
+            }}
+            className={cn(
+              "shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+              showEmojis
+                ? "bg-pink-500/20 text-pink-400"
+                : "bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10"
             )}
-          </div>
+            title="Add emoji"
+          >
+            <Smile className="h-4 w-4" />
+          </button>
+        )}
+        {showEmojis && emojiPos && createPortal(
+          <div
+            ref={emojiPopupRef}
+            className="fixed z-[60] rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl p-2.5"
+            style={{ left: emojiPos.left, bottom: emojiPos.bottom, width: emojiPos.width }}
+          >
+            <div className="grid grid-cols-8 gap-1">
+              {EMOJI_GRID.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => {
+                    const newVal = (value + emoji).slice(0, 280);
+                    setValue(newVal);
+                    setShowEmojis(false);
+                    inputRef.current?.focus();
+                  }}
+                  className="w-full aspect-square flex items-center justify-center rounded-lg hover:bg-white/10 hover:scale-110 transition-all text-lg"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>,
+          document.body
         )}
 
         <input
