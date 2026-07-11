@@ -104,11 +104,11 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
   };
 
   // Translated nav links
-  // Models: Gigs + Offers are the revenue-critical surfaces — top-level, not buried in the avatar menu
+  // Models: Gigs stays top-level — it's the activation-critical demand loop.
+  // Offers is low-frequency (~unused) and lives in the avatar dropdown instead.
   const translatedModelLinks = [
     { href: "/dashboard", label: t.nav.home, icon: Home },
     { href: "/gigs", label: t.nav.gigs, icon: Briefcase },
-    { href: "/offers", label: t.nav.offers, icon: Gift },
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
     { href: "/studio", label: t.nav.studio, icon: Images },
   ];
@@ -356,7 +356,7 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                     </div>
                   </div>
 
-                  {/* Featured actions — creators. Gigs + Offers live in the top nav, not here */}
+                  {/* Featured actions — creators. Gigs lives in the top nav; Offers is below */}
                   {isCreator && (
                     <>
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
@@ -404,6 +404,12 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                         <Link href="/bookings" className="w-full">
                           <Calendar className="mr-2 h-4 w-4 text-cyan-400" />
                           {t.nav.bookings}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
+                        <Link href="/offers" className="w-full">
+                          <Gift className="mr-2 h-4 w-4 text-pink-400" />
+                          {t.nav.offers}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
