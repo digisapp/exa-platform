@@ -20,6 +20,9 @@ interface GameCompleteProps {
   streak?: number;
   isLoggedIn?: boolean;
   likedCount?: number;
+  // Deck is empty with no reset time — there's nothing to replay right now, so
+  // don't offer a Play Again button that would just reload the same empty deck.
+  exhausted?: boolean;
 }
 
 export function GameComplete({
@@ -29,6 +32,7 @@ export function GameComplete({
   streak = 0,
   isLoggedIn = false,
   likedCount = 0,
+  exhausted = false,
 }: GameCompleteProps) {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
@@ -37,7 +41,7 @@ export function GameComplete({
     const pointsText = sessionStats?.pointsGiven ? `${sessionStats.pointsGiven} points` : "some love";
     const streakText = streak > 1 ? ` 🔥 ${streak}-day streak!` : "";
     const shareText = `I just gave ${pointsText} on EXA Spotlight!${streakText} Play now and boost your favorite models!`;
-    const shareUrl = `${window.location.origin}/boost`;
+    const shareUrl = `${window.location.origin}/spotlight`;
 
     if (navigator.share) {
       try {
@@ -81,7 +85,8 @@ export function GameComplete({
     return () => clearInterval(interval);
   }, [nextResetAt]);
 
-  const canPlayAgain = timeRemaining === "Ready!" || !nextResetAt;
+  const canPlayAgain =
+    !exhausted && (timeRemaining === "Ready!" || !nextResetAt);
 
   return (
     <div className="flex flex-col items-center justify-center text-center p-6 max-w-md mx-auto relative">
@@ -223,7 +228,7 @@ export function GameComplete({
                 Buy coins
               </span>
             </div>
-            <FanSignupDialog redirectTo="/boost">
+            <FanSignupDialog redirectTo="/spotlight">
               <Button
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg shadow-purple-500/25"
               >

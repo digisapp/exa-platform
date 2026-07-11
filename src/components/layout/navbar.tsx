@@ -379,7 +379,7 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
 
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent mt-1">
                         <Link
-                          href="/boost"
+                          href="/spotlight"
                           className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-orange-500/15 to-pink-500/10 border border-orange-500/25 hover:from-orange-500/25 hover:to-pink-500/15 hover:border-orange-500/50 transition-all"
                         >
                           <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
@@ -426,7 +426,7 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                     <>
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
                         <Link
-                          href="/boost"
+                          href="/spotlight"
                           className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-orange-500/15 to-pink-500/10 border border-orange-500/25 hover:from-orange-500/25 hover:to-pink-500/15 hover:border-orange-500/50 transition-all"
                         >
                           <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">

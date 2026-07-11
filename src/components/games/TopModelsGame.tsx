@@ -76,6 +76,9 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
   const [loading, setLoading] = useState(true);
   const [boostModal, setBoostModal] = useState<Model | null>(null);
   const [gameComplete, setGameComplete] = useState(false);
+  // Deck came back empty with no reset time — nothing left to serve right now.
+  // Suppresses the "Play Again" button so it can't reload the same empty deck.
+  const [deckExhausted, setDeckExhausted] = useState(false);
   const [fingerprint, setFingerprint] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const [matches, setMatches] = useState<MatchModel[]>([]);
@@ -239,11 +242,17 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
       setSession(data.session);
 
       if (!data.session.canSwipe) {
+        // Normal finish — server gave a reset time; show the countdown.
         setGameComplete(true);
+        setDeckExhausted(false);
       } else if (deck.length === 0) {
+        // Nothing left to serve but no reset time (e.g. no eligible models at
+        // all). Complete without offering a Play Again that reloads nothing.
         setGameComplete(true);
+        setDeckExhausted(true);
       } else {
         setGameComplete(false);
+        setDeckExhausted(false);
       }
     } catch (error) {
       console.error("Failed to fetch models:", error);
@@ -582,6 +591,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
               nextResetAt={session?.nextResetAt || null}
               totalSwiped={session?.modelsSwiped || 0}
               onPlayAgain={handlePlayAgain}
+              exhausted={deckExhausted}
               sessionStats={sessionStats}
               streak={streak}
               isLoggedIn={!!initialUser}
@@ -632,7 +642,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
             <div className="mt-6 flex items-center gap-3">
               <button
                 onClick={async () => {
-                  const shareUrl = `${window.location.origin}/boost`;
+                  const shareUrl = `${window.location.origin}/spotlight`;
                   const shareText = "Play EXA Spotlight - Swipe and boost your favorite models!";
 
                   if (navigator.share) {
@@ -711,7 +721,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
 
           {!initialUser && matches.length > 0 && (
             <div className="relative">
-              <FanSignupDialog redirectTo="/boost">
+              <FanSignupDialog redirectTo="/spotlight">
                 <Button className="w-full bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 shadow-lg shadow-pink-500/25">
                   <UserPlus className="h-4 w-4 mr-2" />
                   Sign up to follow the {matches.length} model{matches.length === 1 ? "" : "s"} you liked
