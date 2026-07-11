@@ -797,7 +797,7 @@ export default async function DashboardPage() {
                           tipped <span className="text-amber-400 font-semibold">{item.amount}c</span>
                         </span>
                       )}
-                      {item.type === "follower" && <span className="text-white/60">added you to their favorites</span>}
+                      {item.type === "follower" && <span className="text-white/60">became a fan</span>}
                       {item.type === "message" && <span className="text-white/60">sent a message</span>}
                     </p>
                     {item.type === "message" && item.messagePreview && (

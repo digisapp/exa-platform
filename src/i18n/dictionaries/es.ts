@@ -54,7 +54,7 @@ export const es: Dictionary = {
     balance: "Saldo",
     thisMonth: "Este Mes",
     profileViews: "Vistas del Perfil",
-    followers: "Seguidores",
+    followers: "Fans",
     quickStats: "Estadísticas Rápidas",
     newOffers: "Nuevas Ofertas",
     viewAll: "Ver Todo",
@@ -69,7 +69,7 @@ export const es: Dictionary = {
     viewChats: "Ver Mensajes",
     coinTip: "propina de monedas",
     sentYouA: "te envió una",
-    startedFollowing: "te añadió a sus favoritos",
+    startedFollowing: "ahora es tu fan",
     sentMessage: "te envió un mensaje",
     allTime: "Todo el tiempo",
     new: "Nuevo",
@@ -87,7 +87,7 @@ export const es: Dictionary = {
     privacy: "Privacidad",
     rates: "Tarifas",
     collabs: "Colaboraciones",
-    followerSettings: "Ajustes de Seguidores",
+    followerSettings: "Fans",
     language: "Idioma",
     languageDesc: "Elige tu idioma preferido",
     firstName: "Nombre",
@@ -207,14 +207,14 @@ export const es: Dictionary = {
     meetAndGreet: "Videollamada en Vivo",
   },
 
-  // Followers
+  // Fans
   followers: {
-    title: "Seguidores",
-    noFollowers: "Sin seguidores aún",
-    followersWillAppear: "Tus fans aparecerán aquí cuando te sigan",
-    totalFollowers: "Total de Seguidores",
+    title: "Fans",
+    noFollowers: "Sin fans aún",
+    followersWillAppear: "Tus fans aparecerán aquí",
+    totalFollowers: "Total de Fans",
     newThisMonth: "Nuevos Este Mes",
-    topSupporters: "Mejores Seguidores",
+    topSupporters: "Mejores Fans",
   },
 
   // Model signup dialog

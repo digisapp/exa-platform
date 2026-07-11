@@ -301,7 +301,7 @@ export function ProfilePhotoBanner({
                       <span className="font-semibold text-white">
                         {compactNumber.format(followerCount)}
                       </span>
-                      <span className="text-white/50">followers</span>
+                      <span className="text-white/50">fans</span>
                     </span>
                     <span className="flex items-center gap-1.5 text-sm text-white/80">
                       <Eye className="h-3.5 w-3.5 text-cyan-400" />
