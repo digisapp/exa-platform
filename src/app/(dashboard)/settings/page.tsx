@@ -92,6 +92,8 @@ export default function ProfilePage() {
   const digisCheckSeq = useRef(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // JSON snapshot of the last-persisted model, for "unsaved changes" detection.
+  const [savedModelStr, setSavedModelStr] = useState<string>("");
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -242,6 +244,18 @@ export default function ProfilePage() {
       if (!response.ok) throw new Error(data.error || "Upload failed");
 
       setModel((prev) => prev ? { ...prev, profile_photo_url: data.url } : prev);
+      // The photo is already persisted, so keep the dirty-state baseline in sync —
+      // uploading one shouldn't by itself flag "unsaved changes".
+      setSavedModelStr((prev) => {
+        if (!prev) return prev;
+        try {
+          const snap = JSON.parse(prev);
+          snap.profile_photo_url = data.url;
+          return JSON.stringify(snap);
+        } catch {
+          return prev;
+        }
+      });
       toast.success("Profile picture updated!");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
@@ -344,6 +358,7 @@ export default function ProfilePage() {
 
         if (modelData) {
           setModel(modelData);
+          setSavedModelStr(JSON.stringify(modelData));
           setOriginalUsername(modelData.username || "");
           if (modelData.digis_username) {
             checkDigisUsername(modelData.digis_username);
@@ -455,6 +470,67 @@ export default function ProfilePage() {
     if (activeTab === "followers") loadFollowers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, actor]);
+
+  // Have any model fields changed since the last save/load?
+  const hasUnsavedChanges =
+    !!model && savedModelStr !== "" && JSON.stringify(model) !== savedModelStr;
+
+  // Warn before leaving with unsaved edits. `beforeunload` covers browser-level
+  // exits (refresh, tab close, URL change); the capture-phase click listener
+  // covers in-app navigation, which the App Router can't otherwise block.
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const message =
+      locale === "es"
+        ? "Tienes cambios sin guardar. ¿Salir de todos modos?"
+        : "You have unsaved changes. Leave anyway?";
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = ""; // Chrome requires a returnValue to show the native prompt
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      // Only intercept primary, unmodified clicks (let new-tab/download etc. through).
+      if (
+        e.defaultPrevented ||
+        e.button !== 0 ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey
+      ) {
+        return;
+      }
+      const anchor = (e.target as HTMLElement)?.closest?.("a");
+      if (!anchor) return;
+      const href = anchor.getAttribute("href");
+      if (
+        !href ||
+        href.startsWith("#") ||
+        anchor.target === "_blank" ||
+        anchor.hasAttribute("download")
+      ) {
+        return;
+      }
+      // Ignore external links and same-page navigations.
+      if (/^https?:\/\//i.test(href) && !href.includes(window.location.host)) return;
+      if (href === window.location.pathname) return;
+
+      if (!window.confirm(message)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("click", handleClick, true);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("click", handleClick, true);
+    };
+  }, [hasUnsavedChanges, locale]);
 
   const handleFanSave = async () => {
     if (!fan) return;
@@ -684,11 +760,14 @@ export default function ProfilePage() {
 
       if (error) throw error;
 
-      // Update original username if changed
+      // Refresh the dirty-state baseline so the "unsaved changes" bar clears.
+      const savedSnapshot: Model = { ...model };
       if (usernameChanged) {
+        savedSnapshot.username_changed_at = new Date().toISOString();
         setOriginalUsername(model.username || "");
-        setModel({ ...model, username_changed_at: new Date().toISOString() });
+        setModel(savedSnapshot);
       }
+      setSavedModelStr(JSON.stringify(savedSnapshot));
 
       toast.success("Profile updated!");
     } catch (error: unknown) {
@@ -1934,14 +2013,6 @@ export default function ProfilePage() {
 
         <TabsContent value="collabs" className="space-y-6">
           <ModelCollabsTab model={model} onChange={setModel} />
-
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full bg-gradient-to-r from-pink-500 to-violet-500"
-          >
-            {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.settings.saving}</> : t.settings.save}
-          </Button>
         </TabsContent>
 
         <TabsContent value="privacy" className="space-y-6">
@@ -1955,26 +2026,59 @@ export default function ProfilePage() {
 
       </Tabs>
 
-      {/* Save Button - sticky on mobile */}
-      <div className="sticky bottom-0 z-10 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-sm border-t sm:relative sm:mx-0 sm:px-0 sm:py-0 sm:bg-transparent sm:backdrop-blur-none sm:border-0">
-        <div className="flex justify-end gap-4">
-          <Button variant="outline" onClick={() => router.push("/dashboard")} className="hidden sm:inline-flex">
-            {t.settings.cancel}
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full sm:w-auto bg-gradient-to-r from-pink-500 to-violet-500"
-          >
-            {saving ? (
+      {/* Save Button - sticky at the bottom on every breakpoint so it's always
+          reachable without scrolling to the end of a long form. */}
+      <div className="sticky bottom-0 z-10 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-sm border-t">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs min-w-0">
+            {hasUnsavedChanges ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t.settings.saving}
+                <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                <span className="text-amber-400 truncate">
+                  {locale === "es" ? "Cambios sin guardar" : "Unsaved changes"}
+                </span>
               </>
             ) : (
-              t.settings.save
+              <span className="text-muted-foreground truncate">
+                {locale === "es" ? "Todo guardado" : "All changes saved"}
+              </span>
             )}
-          </Button>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (
+                  hasUnsavedChanges &&
+                  !window.confirm(
+                    locale === "es"
+                      ? "Tienes cambios sin guardar. ¿Salir de todos modos?"
+                      : "You have unsaved changes. Leave anyway?"
+                  )
+                ) {
+                  return;
+                }
+                router.push("/dashboard");
+              }}
+              className="hidden sm:inline-flex"
+            >
+              {t.settings.cancel}
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-gradient-to-r from-pink-500 to-violet-500"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t.settings.saving}
+                </>
+              ) : (
+                t.settings.save
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
