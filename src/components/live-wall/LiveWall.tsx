@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useId } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -92,6 +93,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
   const [coinBalance, setCoinBalance] = useState(currentUser?.coinBalance ?? 0);
   const [isMicroTipping, setIsMicroTipping] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [infoPos, setInfoPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -107,6 +109,23 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
   const messagesRef = useRef(messages);
   const infoRef = useRef<HTMLDivElement>(null);
   const infoToggleRef = useRef<HTMLButtonElement>(null);
+  const wallRef = useRef<HTMLDivElement>(null);
+
+  // Anchor the info popover to the toggle button. Rendered in a portal (see
+  // below) so it escapes the wall's `overflow-hidden` — otherwise a short wall
+  // (no posts / collapsed teaser) clips the popover and it can't be seen.
+  const computeInfoPos = useCallback(() => {
+    const wall = wallRef.current;
+    const btn = infoToggleRef.current;
+    if (!wall || !btn) return;
+    const wallRect = wall.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    setInfoPos({
+      top: btnRect.bottom + 6,
+      left: wallRect.left + 12,
+      width: wallRect.width - 24,
+    });
+  }, []);
 
   // Close info popover when clicking outside
   useEffect(() => {
@@ -122,6 +141,19 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showInfo]);
+
+  // Keep the portal popover pinned to the button as the page scrolls/resizes
+  useEffect(() => {
+    if (!showInfo) return;
+    computeInfoPos();
+    const handler = () => computeInfoPos();
+    window.addEventListener("scroll", handler, true);
+    window.addEventListener("resize", handler);
+    return () => {
+      window.removeEventListener("scroll", handler, true);
+      window.removeEventListener("resize", handler);
+    };
+  }, [showInfo, computeInfoPos]);
 
   // ─── Audio init on first interaction ───────────────────
   useEffect(() => {
@@ -577,7 +609,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
       </Dialog>
 
       {/* ── Inline Live Wall ── */}
-      <div className={`rounded-2xl border border-white/10 bg-black/40 backdrop-blur-sm overflow-hidden ${compact && !postsHidden ? "flex flex-col h-full" : ""}`}>
+      <div ref={wallRef} className={`rounded-2xl border border-white/10 bg-black/40 backdrop-blur-sm overflow-hidden ${compact && !postsHidden ? "flex flex-col h-full" : ""}`}>
         {/* Header */}
         <div className="relative">
         <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-white/10 bg-gradient-to-r from-pink-500/[0.03] to-violet-500/[0.03]">
@@ -642,9 +674,13 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
           </div>
         </div>
 
-        {/* Info popover */}
-        {showInfo && (
-          <div className="absolute top-full left-0 right-0 z-50 mx-3 mt-1.5 flex justify-center">
+        {/* Info popover — rendered in a portal so it escapes the wall's
+            overflow-hidden and stays visible even when the wall is short. */}
+        {showInfo && infoPos && createPortal(
+          <div
+            className="fixed z-[60] flex justify-center"
+            style={{ top: infoPos.top, left: infoPos.left, width: infoPos.width }}
+          >
             {/* Outer ambient glow */}
             <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-pink-500/25 via-violet-500/15 to-pink-500/25 rounded-3xl scale-110 pointer-events-none" />
 
@@ -672,6 +708,10 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
                   <span><span className="text-white font-semibold">Models post</span> — only models can share messages, photos, and GIFs on the wall.</span>
                 </li>
                 <li className="flex items-start gap-3">
+                  <span className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-fuchsia-500/15 border border-fuchsia-500/25 mt-0.5 text-base">🚀</span>
+                  <span><span className="text-white font-semibold">Get discovered</span> — every post beams out across the whole platform, putting you in front of fans everywhere. Free exposure, just for showing up.</span>
+                </li>
+                <li className="flex items-start gap-3">
                   <span className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-amber-500/15 border border-amber-500/25 mt-0.5 text-base">🔥</span>
                   <span><span className="text-white font-semibold">React</span> — tap 🔥 ❤️ 👑 on any message to show some love.</span>
                 </li>
@@ -695,7 +735,8 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
         </div>
         <BuyCoinsModal isOpen={buyCoinsOpen} onClose={() => setBuyCoinsOpen(false)} />
