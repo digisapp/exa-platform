@@ -25,6 +25,8 @@ interface Sticker {
 interface Props {
   onSelect: (sticker: PickedSticker) => void;
   onClose: () => void;
+  /** Positioning supplied by the parent (portal-anchored, fixed). */
+  style?: React.CSSProperties;
 }
 
 const CATEGORIES = [
@@ -39,7 +41,7 @@ const CATEGORIES = [
   { id: "effects", label: "FX" },
 ];
 
-export function StickerPicker({ onSelect, onClose }: Props) {
+export function StickerPicker({ onSelect, onClose, style }: Props) {
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -106,7 +108,8 @@ export function StickerPicker({ onSelect, onClose }: Props) {
   return (
     <div
       ref={containerRef}
-      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[340px] rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl z-50 overflow-hidden"
+      style={style}
+      className="max-w-[calc(100vw-16px)] rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl overflow-hidden"
     >
       {/* Header: search */}
       <div className="p-2.5 border-b border-white/10">
