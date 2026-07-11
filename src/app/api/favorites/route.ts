@@ -205,8 +205,8 @@ export async function POST(request: NextRequest) {
       await supabase.from("notifications").insert({
         user_id: model.user_id,
         type: "new_follower",
-        title: "New Favorite",
-        message: `${followerName} added you to their favorites!`,
+        title: "New Fan",
+        message: `${followerName} is now a fan!`,
         action_url: "/followers",
         related_user_id: user.id,
       });

@@ -11,8 +11,8 @@ import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 
 export const metadata: Metadata = {
-  title: "Followers | EXA",
-  description: "See who follows you on EXA",
+  title: "Fans | EXA",
+  description: "See who your fans are on EXA",
 };
 
 export default async function FollowersPage() {
@@ -151,10 +151,10 @@ export default async function FollowersPage() {
         <div className="mb-8">
           <div className="flex items-center gap-3">
             <Users className="h-8 w-8 text-pink-500" />
-            <h1 className="text-3xl font-bold">Followers</h1>
+            <h1 className="text-3xl font-bold">Fans</h1>
           </div>
           <p className="text-muted-foreground mt-2">
-            {enrichedFollowers.length} {enrichedFollowers.length === 1 ? "person" : "people"} following you
+            {enrichedFollowers.length} {enrichedFollowers.length === 1 ? "fan" : "fans"}
           </p>
         </div>
 
@@ -217,7 +217,7 @@ export default async function FollowersPage() {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Followed {formatDistanceToNow(new Date(follower.followedAt), { addSuffix: true })}
+                        Added you {formatDistanceToNow(new Date(follower.followedAt), { addSuffix: true })}
                       </p>
                     </div>
 
@@ -240,9 +240,9 @@ export default async function FollowersPage() {
         ) : (
           <div className="text-center py-16">
             <Users className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No followers yet</h2>
+            <h2 className="text-xl font-semibold mb-2">No fans yet</h2>
             <p className="text-muted-foreground mb-6">
-              Share your profile to get more followers!
+              Share your profile to get more fans!
             </p>
           </div>
         )}

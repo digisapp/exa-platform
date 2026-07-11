@@ -55,10 +55,10 @@ export function ModelFollowersTab({ followers, followersLoading, followerCount }
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5 text-pink-500" />
-          Your Followers
+          Your Fans
         </CardTitle>
         <CardDescription>
-          {followerCount} {followerCount === 1 ? "person has" : "people have"} added you to their favorites
+          {followerCount} {followerCount === 1 ? "person is a fan" : "people are fans"} of you
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -72,7 +72,7 @@ export function ModelFollowersTab({ followers, followersLoading, followerCount }
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search followers..."
+                placeholder="Search fans..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                 className="pl-9"
@@ -80,7 +80,7 @@ export function ModelFollowersTab({ followers, followersLoading, followerCount }
             </div>
 
             {filtered.length === 0 ? (
-              <p className="text-center text-muted-foreground py-6">No followers match &quot;{searchQuery}&quot;</p>
+              <p className="text-center text-muted-foreground py-6">No fans match &quot;{searchQuery}&quot;</p>
             ) : null}
 
             {paginated.map((follower: any) => (
@@ -140,7 +140,7 @@ export function ModelFollowersTab({ followers, followersLoading, followerCount }
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Followed {formatDistanceToNow(new Date(follower.followedAt), { addSuffix: true })}
+                    Added you {formatDistanceToNow(new Date(follower.followedAt), { addSuffix: true })}
                   </p>
                 </div>
 
@@ -162,7 +162,7 @@ export function ModelFollowersTab({ followers, followersLoading, followerCount }
             {totalPages > 1 && (
               <div className="flex items-center justify-between pt-3 border-t">
                 <p className="text-sm text-muted-foreground">
-                  {filtered.length} {filtered.length === 1 ? "follower" : "followers"}{searchQuery ? " found" : ""}
+                  {filtered.length} {filtered.length === 1 ? "fan" : "fans"}{searchQuery ? " found" : ""}
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
@@ -193,9 +193,9 @@ export function ModelFollowersTab({ followers, followersLoading, followerCount }
         ) : (
           <div className="text-center py-12">
             <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No followers yet</h3>
+            <h3 className="text-lg font-semibold mb-2">No fans yet</h3>
             <p className="text-muted-foreground">
-              Share your profile to get more followers!
+              Share your profile to get more fans!
             </p>
           </div>
         )}

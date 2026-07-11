@@ -286,7 +286,7 @@ export default function FanDetailSheet({ fan, open, onClose }: FanDetailSheetPro
             </div>
             <div className="rounded-lg bg-muted/50 p-2.5 text-center">
               <p className="text-base font-bold text-pink-400">{(fan.following_count || 0).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Following</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Favorites</p>
             </div>
           </div>
         </SheetHeader>

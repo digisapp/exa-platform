@@ -1084,7 +1084,7 @@ export default function AdminModelDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <StatCard label="Profile Views" value={model.profile_views || 0} icon={Eye} color="text-purple-500" />
-              <StatCard label="Favorites" value={stats.followers_count} icon={Heart} color="text-pink-500" />
+              <StatCard label="Fans" value={stats.followers_count} icon={Heart} color="text-pink-500" />
               <StatCard label="Coin Balance" value={model.coin_balance || 0} icon={Coins} color="text-yellow-500" />
               <StatCard label="Earned" value={stats.total_earned} icon={Coins} color="text-yellow-500" />
               <StatCard label="Content Items" value={stats.content_count} icon={Images} color="text-blue-500" />

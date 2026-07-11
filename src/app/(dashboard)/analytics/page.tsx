@@ -299,7 +299,7 @@ export default async function AnalyticsPage() {
           trend={uniqueTrend}
         />
         <StatCard
-          label="New Followers"
+          label="New Fans"
           value={newFollowers30d || 0}
           sub="Last 30 days"
           icon={UserPlus}
