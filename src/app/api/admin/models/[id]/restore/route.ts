@@ -32,9 +32,9 @@ export async function POST(
     // Cast to any since deleted_at/purged_at are new columns not yet in generated types
     const { data: model } = await serviceClient
       .from("models")
-      .select("id, user_id, deleted_at, purged_at")
+      .select("id, user_id, deleted_at, deleted_reason, purged_at")
       .eq("id", modelId)
-      .single() as { data: { id: string; user_id: string | null; deleted_at: string | null; purged_at: string | null } | null };
+      .single() as { data: { id: string; user_id: string | null; deleted_at: string | null; deleted_reason: string | null; purged_at: string | null } | null };
 
     if (!model) {
       return NextResponse.json({ error: "Model not found" }, { status: 404 });
@@ -46,6 +46,17 @@ export async function POST(
 
     if (model.purged_at) {
       return NextResponse.json({ error: "Model data has been purged and cannot be restored" }, { status: 400 });
+    }
+
+    // A model soft-deleted by model→fan conversion must not be restored: the
+    // account now lives as an active fan (actor type 'fan', balance moved to
+    // the fan wallet), and resurrecting the model row would leave an approved
+    // model attached to a fan actor. Convert the fan back to a model instead.
+    if (model.deleted_reason === "converted_to_fan") {
+      return NextResponse.json(
+        { error: "This model was converted to a fan account. Use fan-to-model conversion to bring them back instead of restoring." },
+        { status: 409 }
+      );
     }
 
     // Restore model

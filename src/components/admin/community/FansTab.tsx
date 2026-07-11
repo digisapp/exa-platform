@@ -72,6 +72,7 @@ interface Fan {
   total_coins_purchased: number;
   state: string | null;
   is_suspended: boolean;
+  deleted_at?: string | null;
   created_at: string;
   last_active_at?: string;
   coins_spent?: number;
@@ -128,11 +129,18 @@ export default function FansTab() {
     setFansLoading(true);
 
     let query = (supabase.from("fans") as any)
-      .select(`id, user_id, display_name, username, email, avatar_url, coin_balance, total_coins_purchased, state, is_suspended, created_at, last_active_at`, { count: "exact" });
+      .select(`id, user_id, display_name, username, email, avatar_url, coin_balance, total_coins_purchased, state, is_suspended, deleted_at, created_at, last_active_at`, { count: "exact" });
 
     if (fansSearch) query = query.or(`display_name.ilike.%${escapeIlike(fansSearch)}%,email.ilike.%${escapeIlike(fansSearch)}%`);
     if (fansStateFilter !== "all") query = query.eq("state", fansStateFilter);
-    if (fansStatusFilter !== "all") query = query.eq("is_suspended", fansStatusFilter === "suspended");
+    // Soft-deleted fans are hidden by default (they'd otherwise look identical
+    // to active ones); the "Deleted" status filter surfaces them explicitly.
+    if (fansStatusFilter === "deleted") {
+      query = query.not("deleted_at", "is", null);
+    } else {
+      query = query.is("deleted_at", null);
+      if (fansStatusFilter !== "all") query = query.eq("is_suspended", fansStatusFilter === "suspended");
+    }
 
     if (fansSortField === "coin_balance" || fansSortField === "created_at" || fansSortField === "total_coins_purchased" || fansSortField === "last_active_at") {
       query = query.order(fansSortField, { ascending: fansSortDirection === "asc", nullsFirst: false });
@@ -292,6 +300,7 @@ export default function FansTab() {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="suspended">Suspended</SelectItem>
+                <SelectItem value="deleted">Deleted</SelectItem>
               </SelectContent>
             </Select>
             <Select value={fansReportsFilter} onValueChange={(v) => { setFansReportsFilter(v); setFansPage(1); }}>
@@ -384,6 +393,11 @@ export default function FansTab() {
                               >
                                 {fan.display_name || "Fan"}
                               </button>
+                              {fan.deleted_at && (
+                                <span className="flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/25">
+                                  Deleted
+                                </span>
+                              )}
                               {fan.has_pending_model_app && (
                                 <span className="flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-pink-500/15 text-pink-400 border border-pink-500/25">
                                   Model Applicant

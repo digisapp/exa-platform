@@ -24,6 +24,15 @@ describe("assertNotSuspended", () => {
     expect(res!.status).toBe(403);
   });
 
+  it("returns a 403 response for a soft-deleted fan", async () => {
+    maybeSingle.mockResolvedValueOnce({
+      data: { is_suspended: false, deleted_at: "2026-07-11T00:00:00Z" },
+    });
+    const res = await assertNotSuspended("actor_1");
+    expect(res).not.toBeNull();
+    expect(res!.status).toBe(403);
+  });
+
   it("returns null for a fan that is not suspended", async () => {
     maybeSingle.mockResolvedValueOnce({ data: { is_suspended: false } });
     expect(await assertNotSuspended("actor_1")).toBeNull();

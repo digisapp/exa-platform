@@ -176,6 +176,19 @@ export async function DELETE(
         console.error("Error deactivating fan actor:", actorError);
         throw actorError;
       }
+
+      // Revoke the login: ban the auth user so refresh-token renewal and new
+      // sign-ins fail (existing access tokens die at expiry, and the
+      // assertNotSuspended deleted_at gate blocks spend/message routes in the
+      // meantime). Best-effort — the soft delete above is the source of
+      // truth. The restore route lifts the ban with ban_duration "none".
+      const { error: banError } = await serviceClient.auth.admin.updateUserById(
+        fan.user_id,
+        { ban_duration: "87600h" } // ~10 years
+      );
+      if (banError) {
+        console.error("Error banning deleted fan's auth user:", banError);
+      }
     }
 
     // Log the admin action
