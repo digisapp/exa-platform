@@ -115,8 +115,12 @@ export async function GET(request: NextRequest) {
     const remainingInSession = Math.max(0, SESSION_DECK_CAP - swipedIds.length);
     const deckTarget = Math.min(PAGE_SIZE, remainingInSession);
 
-    // Fetch eligible models, excluding already swiped
-    let query = supabase
+    // Fetch eligible models. Already-swiped exclusion happens in JS below —
+    // putting the swiped IDs in the query itself (`.not("id", "in", ...)`)
+    // ships the whole list in the GET query string, which grows with every
+    // swipe toward the full roster and blows request-line limits around ~200
+    // swiped models, 500ing the fetch and bricking the session mid-cycle.
+    const query = supabase
       .from("models")
       .select(`
         id,
@@ -136,12 +140,7 @@ export async function GET(request: NextRequest) {
       .is("deleted_at", null)
       .not("profile_photo_url", "is", null);
 
-    // Exclude already swiped models
-    if (swipedIds.length > 0) {
-      query = query.not("id", "in", `(${swipedIds.join(",")})`);
-    }
-
-    const { data: models, error } = deckTarget > 0
+    const { data: fetchedModels, error } = deckTarget > 0
       ? await query.limit(1000)
       : { data: [], error: null };
 
@@ -152,6 +151,11 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Exclude already swiped models server-side; downstream counts (hasMore,
+    // sessionTotal) stay based on unswiped models only, exactly as before.
+    const swipedSet = new Set(swipedIds);
+    const models = (fetchedModels || []).filter((m: any) => !swipedSet.has(m.id));
 
     // Exposure-weighted daily deck: shuffle first so ties break randomly, then
     // take the least-exposed models (lowest leaderboard points, missing row = 0)

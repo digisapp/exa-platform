@@ -62,6 +62,10 @@ interface TopModelsGameProps {
 }
 
 const REFILL_THRESHOLD = 10;
+// Swipes in a single visit that count as "played today" for the daily streak.
+// Full completion now means swiping the entire roster, so without this the
+// streak (and its daily cadence) would be unreachable in a normal visit.
+const DAILY_STREAK_SWIPES = 25;
 const FOLLOW_TOAST_KEY = "boostFollowToastSeen";
 
 export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
@@ -100,6 +104,8 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
     pointsGiven: 0,
   });
   const [streak, setStreak] = useState(0);
+  const visitSwipesRef = useRef(0);
+  const streakCreditedRef = useRef(false);
   // Check if first visit
   useEffect(() => {
     const hasSeenWelcome = localStorage.getItem("topModelsWelcomeSeen");
@@ -313,6 +319,63 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
     }
   }, [fingerprint, fetchModels]);
 
+  // Credit today's daily streak. Called from handleEmpty (full completion)
+  // and once the player has swiped DAILY_STREAK_SWIPES cards this visit —
+  // completion now requires the whole roster, so the streak also has to be
+  // earnable from a normal-length visit. Guarded to fire at most once per
+  // mount; both paths are also idempotent per day on their own
+  // (update_session_streak keeps the streak when last_play_date is already
+  // today; the localStorage path checks the date the same way).
+  const creditDailyStreak = async () => {
+    if (streakCreditedRef.current) return;
+    streakCreditedRef.current = true;
+
+    if (initialUser && session?.sessionId) {
+      // Already credited today — skip the network call
+      const todayUtc = new Date().toISOString().slice(0, 10);
+      if (session.lastPlayDate === todayUtc) return;
+
+      // Signed-in user: save to Supabase
+      try {
+        const res = await fetch("/api/games/boost/streak", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: session.sessionId }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setStreak(data.currentStreak);
+        }
+      } catch (error) {
+        console.error("Failed to update streak:", error);
+      }
+    } else {
+      // Anonymous user: save to localStorage
+      const today = new Date().toDateString();
+      const lastPlayDate = localStorage.getItem("boostLastPlayDate");
+      const savedStreak = parseInt(localStorage.getItem("boostStreak") || "0");
+
+      if (lastPlayDate !== today) {
+        // First completion today
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const newStreak = lastPlayDate === yesterday.toDateString() ? savedStreak + 1 : 1;
+
+        localStorage.setItem("boostLastPlayDate", today);
+        localStorage.setItem("boostStreak", newStreak.toString());
+        setStreak(newStreak);
+      }
+    }
+  };
+
+  // A card left the deck (swipe or boost) — count it toward today's streak
+  const trackVisitSwipe = () => {
+    visitSwipesRef.current += 1;
+    if (visitSwipesRef.current >= DAILY_STREAK_SWIPES) {
+      creditDailyStreak();
+    }
+  };
+
   // Handle swipe
   const handleSwipe = async (modelId: string, direction: "left" | "right") => {
     const voteType = direction === "right" ? "like" : "pass";
@@ -330,6 +393,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
       addMatch(likedModel);
     }
 
+    trackVisitSwipe();
     maybeRefillDeck();
 
     const votePromise = (async () => {
@@ -434,6 +498,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
 
       // Remove this model from the stack
       setModels((prev) => prev.filter((m) => m.id !== boostModal.id));
+      trackVisitSwipe();
       maybeRefillDeck();
     } catch (error) {
       console.error("Boost error:", error);
@@ -461,39 +526,9 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
       await Promise.allSettled([...pendingVotesRef.current]);
     }
 
-    // Update streak when game completes
-    if (initialUser && session?.sessionId) {
-      // Signed-in user: save to Supabase
-      try {
-        const res = await fetch("/api/games/boost/streak", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId: session.sessionId }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          setStreak(data.currentStreak);
-        }
-      } catch (error) {
-        console.error("Failed to update streak:", error);
-      }
-    } else {
-      // Anonymous user: save to localStorage
-      const today = new Date().toDateString();
-      const lastPlayDate = localStorage.getItem("boostLastPlayDate");
-      const savedStreak = parseInt(localStorage.getItem("boostStreak") || "0");
-
-      if (lastPlayDate !== today) {
-        // First completion today
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const newStreak = lastPlayDate === yesterday.toDateString() ? savedStreak + 1 : 1;
-
-        localStorage.setItem("boostLastPlayDate", today);
-        localStorage.setItem("boostStreak", newStreak.toString());
-        setStreak(newStreak);
-      }
-    }
+    // Update streak when game completes (no-op if the 25-swipe threshold
+    // already credited it this visit)
+    await creditDailyStreak();
 
     // Refetch so GameComplete renders with the real reset time instead of a
     // stale "Ready to Play Again!" flash
@@ -802,7 +837,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
               <Sparkles className="h-5 w-5 text-yellow-400 animate-pulse" />
             </DialogTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              A fresh deck of ~25 models daily — boost them up the leaderboard
+              Swipe the whole roster and boost models up the leaderboard — you resume where you left off, and a fresh cycle starts 24h after you finish
             </p>
           </DialogHeader>
 
