@@ -949,7 +949,7 @@ export default function CompCardPage() {
             <p className="text-sm text-muted-foreground text-center mt-4">
               Upload photos or{" "}
               <Link
-                href="/content"
+                href="/studio"
                 className="text-pink-500 hover:text-pink-400"
               >
                 add portfolio photos

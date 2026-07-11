@@ -110,7 +110,7 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
     { href: "/gigs", label: t.nav.gigs, icon: Briefcase },
     { href: "/offers", label: t.nav.offers, icon: Gift },
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
-    { href: "/content", label: t.nav.content, icon: Images },
+    { href: "/studio", label: t.nav.studio, icon: Images },
   ];
   // Fans: keep the top nav to the daily loop (browse → chat). Bids + Favorites
   // are secondary and live in the avatar dropdown to avoid a cluttered bar.

@@ -385,7 +385,7 @@ export function ProfilePhotoBanner({
                 here to set your portrait.
               </p>
               <Button asChild size="sm" variant="outline">
-                <Link href="/content">Go to Content</Link>
+                <Link href="/studio">Go to Studio</Link>
               </Button>
             </div>
           ) : (

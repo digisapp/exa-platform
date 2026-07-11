@@ -585,7 +585,7 @@ export default async function DashboardPage() {
       key: "portfolio",
       title: "Upload portfolio photos",
       description: "Your best shots power your public profile and gig applications.",
-      href: "/content",
+      href: "/studio",
       done: portfolioPhotos.length > 0,
     },
   ];

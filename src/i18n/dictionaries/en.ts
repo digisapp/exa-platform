@@ -4,6 +4,7 @@ export const en = {
     home: "Home",
     chats: "Chats",
     content: "Content",
+    studio: "Studio",
     explore: "Explore",
     favorites: "Favorites",
     campaigns: "Campaigns",
@@ -129,7 +130,7 @@ export const en = {
 
   // Content
   content: {
-    title: "My Content",
+    title: "My Studio",
     upload: "Upload",
     uploadContent: "Upload Content",
     portfolio: "Public",

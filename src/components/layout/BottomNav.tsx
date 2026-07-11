@@ -118,11 +118,11 @@ export function BottomNav({ user, actorType, unreadCount: unreadCountProp = 0, n
           <span className="text-[10px] font-medium">{t.nav.home}</span>
         </NavItem>
 
-        {/* Content (model) or Explore (fan/brand) */}
+        {/* Studio (model) or Explore (fan/brand) */}
         {actorType === "model" ? (
-          <NavItem href="/content" active={isActive("/content")}>
-            <Images className={cn("transition-all", isActive("/content") ? "h-[22px] w-[22px] text-pink-400" : "h-5 w-5")} />
-            <span className="text-[10px] font-medium">{t.nav.content}</span>
+          <NavItem href="/studio" active={isActive("/studio")}>
+            <Images className={cn("transition-all", isActive("/studio") ? "h-[22px] w-[22px] text-pink-400" : "h-5 w-5")} />
+            <span className="text-[10px] font-medium">{t.nav.studio}</span>
           </NavItem>
         ) : (
           <NavItem href="/models" active={isActive("/models")}>
