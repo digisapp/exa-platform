@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 
@@ -28,10 +29,13 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Get the model's user_id
-    const { data: model, error: modelError } = await supabase
-      .from("models")
-      .select("id, user_id, first_name, last_name, email")
+    // Get the model, including its stored balance so it carries over to the fan
+    // wallet. The actor row is preserved (only its type flips), so the ledger
+    // (coin_transactions.actor_id) keeps following this user; only the stored
+    // balance needs moving from models.coin_balance → fans.coin_balance.
+    const { data: model, error: modelError } = await (supabase
+      .from("models") as any)
+      .select("id, user_id, first_name, last_name, email, coin_balance, total_coins_purchased")
       .eq("id", modelId)
       .single();
 
@@ -39,24 +43,39 @@ export async function POST(
       return NextResponse.json({ error: "Model not found" }, { status: 404 });
     }
 
+    // All writes go through the service role: the model row soft-delete and the
+    // actor type flip must both succeed, and hard-deleting the model would hit
+    // the ON DELETE RESTRICT money FKs (migration 20260612000004).
+    const serviceClient = createServiceRoleClient();
+
     // Check if fan already exists for this user
-    const { data: existingFan } = await supabase
+    const { data: existingFan } = await serviceClient
       .from("fans")
       .select("id")
       .eq("user_id", model.user_id)
       .single();
 
-    if (!existingFan) {
-      // Create fan record
-      const { error: fanError } = await supabase
-        .from("fans")
+    if (existingFan) {
+      // User already had a fan wallet (same actor) — just make sure it's active.
+      // The actor's spendable balance already lives on this row, so nothing to move.
+      const { error: fanUpdateError } = await (serviceClient.from("fans") as any)
+        .update({ deleted_at: null })
+        .eq("id", existingFan.id);
+      if (fanUpdateError) {
+        console.error("Error reactivating fan:", fanUpdateError);
+        throw fanUpdateError;
+      }
+    } else {
+      // Create fan record, carrying the model's coin balance over.
+      const { error: fanError } = await (serviceClient.from("fans") as any)
         .insert({
           user_id: model.user_id,
           display_name: model.first_name
             ? `${model.first_name} ${model.last_name || ""}`.trim()
             : null,
           email: model.email,
-          coin_balance: 0,
+          coin_balance: model.coin_balance || 0,
+          total_coins_purchased: model.total_coins_purchased || 0,
         });
 
       if (fanError) {
@@ -66,8 +85,8 @@ export async function POST(
     }
 
     // Update actor type from model to fan
-    const { error: actorError } = await supabase
-      .from("actors")
+    const { error: actorError } = await (serviceClient
+      .from("actors") as any)
       .update({ type: "fan" })
       .eq("user_id", model.user_id)
       .eq("type", "model");
@@ -77,14 +96,18 @@ export async function POST(
       throw actorError;
     }
 
-    // Delete the model record
-    const { error: deleteError } = await supabase
-      .from("models")
-      .delete()
+    // Soft-delete the (now orphaned) model row so it drops out of model lists but
+    // its history and money FKs stay intact.
+    const { error: deleteError } = await (serviceClient.from("models") as any)
+      .update({
+        deleted_at: new Date().toISOString(),
+        deleted_reason: "converted_to_fan",
+        is_approved: false,
+      })
       .eq("id", modelId);
 
     if (deleteError) {
-      console.error("Error deleting model:", deleteError);
+      console.error("Error soft-deleting model:", deleteError);
       throw deleteError;
     }
 

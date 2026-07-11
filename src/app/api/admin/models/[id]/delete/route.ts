@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -44,10 +45,19 @@ export async function DELETE(
       return NextResponse.json({ error: "Model not found" }, { status: 404 });
     }
 
-    // Delete the model record
-    const { error: deleteError } = await supabase
-      .from("models")
-      .delete()
+    // Soft-delete, never hard-delete. The money FKs (coin_transactions.actor_id,
+    // withdrawal_requests/payoneer_payouts.model_id) are ON DELETE RESTRICT since
+    // migration 20260612000004, so a hard delete throws for any model who ever
+    // transacted — exactly the accounts admins act on. Soft-delete also keeps the
+    // account restorable via /api/admin/models/[id]/restore (the inverse of this).
+    const serviceClient = createServiceRoleClient();
+
+    const { error: deleteError } = await (serviceClient.from("models") as any)
+      .update({
+        deleted_at: new Date().toISOString(),
+        deleted_reason: "admin_deleted",
+        is_approved: false,
+      })
       .eq("id", modelId);
 
     if (deleteError) {
@@ -55,13 +65,16 @@ export async function DELETE(
       throw deleteError;
     }
 
-    // Also delete the actor if it exists
+    // Deactivate the actor (mirrors the restore route, which clears deactivated_at)
     if (model.user_id) {
-      await supabase
-        .from("actors")
-        .delete()
+      const { error: actorError } = await (serviceClient.from("actors") as any)
+        .update({ deactivated_at: new Date().toISOString() })
         .eq("user_id", model.user_id)
         .eq("type", "model");
+      if (actorError) {
+        console.error("Error deactivating model actor:", actorError);
+        throw actorError;
+      }
     }
 
     // Log the admin action

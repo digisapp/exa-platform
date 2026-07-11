@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -150,10 +151,14 @@ export async function DELETE(
       return NextResponse.json({ error: "Fan not found" }, { status: 404 });
     }
 
-    // Delete the fan record
-    const { error: deleteError } = await supabase
-      .from("fans")
-      .delete()
+    // Soft-delete, never hard-delete. coin_transactions.actor_id is ON DELETE
+    // RESTRICT (migration 20260612000004), so hard-deleting any fan who ever
+    // transacted throws; soft-delete also preserves the ledger and lets the
+    // account be restored. Mirrors the model delete route.
+    const serviceClient = createServiceRoleClient();
+
+    const { error: deleteError } = await (serviceClient.from("fans") as any)
+      .update({ deleted_at: new Date().toISOString() })
       .eq("id", fanId);
 
     if (deleteError) {
@@ -161,13 +166,16 @@ export async function DELETE(
       throw deleteError;
     }
 
-    // Also delete the actor if it exists
+    // Deactivate the actor
     if (fan.user_id) {
-      await supabase
-        .from("actors")
-        .delete()
+      const { error: actorError } = await (serviceClient.from("actors") as any)
+        .update({ deactivated_at: new Date().toISOString() })
         .eq("user_id", fan.user_id)
         .eq("type", "fan");
+      if (actorError) {
+        console.error("Error deactivating fan actor:", actorError);
+        throw actorError;
+      }
     }
 
     // Log the admin action

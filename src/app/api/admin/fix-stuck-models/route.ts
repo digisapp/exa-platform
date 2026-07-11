@@ -37,6 +37,7 @@ export async function POST() {
       .from("models")
       .select("id, username, email, user_id, is_approved")
       .not("user_id", "is", null)
+      .is("deleted_at", null)
       .or("is_approved.is.null,is_approved.eq.false");
 
     if (fetchError) {
@@ -57,6 +58,7 @@ export async function POST() {
       .from("models")
       .update({ is_approved: true })
       .not("user_id", "is", null)
+      .is("deleted_at", null) // never resurrect soft-deleted accounts
       .or("is_approved.is.null,is_approved.eq.false");
 
     if (updateError) {
@@ -116,6 +118,7 @@ export async function GET() {
       .from("models")
       .select("id, username, email, user_id, is_approved")
       .not("user_id", "is", null)
+      .is("deleted_at", null)
       .or("is_approved.is.null,is_approved.eq.false");
 
     if (fetchError) {

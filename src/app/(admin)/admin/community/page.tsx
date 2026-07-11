@@ -212,10 +212,14 @@ export default function AdminCommunityPage() {
       { count: pendingBrands },
       { count: pendingModelApps },
     ] = await Promise.all([
-      (supabase.from("models") as any).select("*", { count: "exact", head: true }).not("user_id", "is", null),
-      (supabase.from("models") as any).select("*", { count: "exact", head: true }).eq("is_approved", true).not("user_id", "is", null),
-      (supabase.from("fans") as any).select("*", { count: "exact", head: true }),
-      (supabase.from("fans") as any).select("*", { count: "exact", head: true }).gte("updated_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+      (supabase.from("models") as any).select("*", { count: "exact", head: true }).not("user_id", "is", null).is("deleted_at", null),
+      (supabase.from("models") as any).select("*", { count: "exact", head: true }).eq("is_approved", true).not("user_id", "is", null).is("deleted_at", null),
+      (supabase.from("fans") as any).select("*", { count: "exact", head: true }).is("deleted_at", null),
+      // Active fans = actually active in the last 30 days. Use last_active_at
+      // (written by /api/activity on real fan activity), NOT updated_at — buying
+      // coins never touches updated_at, while any admin edit/suspend does, so the
+      // old metric both missed spenders and inflated with admin actions.
+      (supabase.from("fans") as any).select("*", { count: "exact", head: true }).is("deleted_at", null).gte("last_active_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
       (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("is_verified", false),
       (supabase.from("model_applications") as any).select("*", { count: "exact", head: true }).eq("status", "pending"),
     ]);
