@@ -48,16 +48,25 @@ export async function POST(request: NextRequest) {
     // Cast: event_packages is newer than the generated DB types.
     const { data: dbPackage } = await (admin as any)
       .from("event_packages")
-      .select("name, description, full_price_cents, installment_price_cents")
+      .select("name, description, full_price_cents, installment_price_cents, installments_available")
       .eq("event_id", event.id)
       .eq("key", pkg)
       .eq("is_active", true)
       .single() as {
-        data: { name: string; description: string | null; full_price_cents: number; installment_price_cents: number } | null;
+        data: { name: string; description: string | null; full_price_cents: number; installment_price_cents: number; installments_available: boolean } | null;
       };
 
     if (!dbPackage) {
       return NextResponse.json({ error: "Unknown package" }, { status: 400 });
+    }
+
+    // Packages without a plan store installment_price_cents = full price, so a
+    // 3-month "installment" subscription on them would charge 3x. Reject early.
+    if (paymentType === "installment" && !dbPackage.installments_available) {
+      return NextResponse.json(
+        { error: "This package does not offer an installment plan — please choose the pay-in-full option." },
+        { status: 400 }
+      );
     }
 
     const packageConfig = {
