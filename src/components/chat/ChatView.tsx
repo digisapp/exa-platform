@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { messageCoinCost } from "@/lib/coin-config";
 import { modelDisplayName } from "@/lib/model-display";
 import { MessageInput } from "./MessageInput";
-import { ChatHeader } from "./ChatHeader";
+import { ChatHeader, type ChatParticipantModel } from "./ChatHeader";
 import { ChatMessages, ChatMessagesHandle } from "./ChatMessages";
 import { IncomingCallDialog } from "@/components/video";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
@@ -16,11 +16,22 @@ import { toast } from "sonner";
 import type { Message, Actor, Model, Conversation, Fan, Brand } from "@/types/database";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 
+/**
+ * The slice of a fan row the chat UI needs about the OTHER participant.
+ * Deliberately narrow — full fan rows carry email/phone/coin_balance/flag
+ * reasons that must never be serialized into the model's RSC payload. The
+ * RSC page selects exactly these columns; widen both together.
+ */
+export type ChatParticipantFan = Pick<
+  Fan,
+  "id" | "username" | "display_name" | "avatar_url" | "last_active_at"
+>;
+
 interface Participant {
   actor_id: string;
   actor: Actor;
-  model?: Model | null;
-  fan?: Fan | null;
+  model?: ChatParticipantModel | null;
+  fan?: ChatParticipantFan | null;
   brand?: Brand | null;
 }
 
@@ -41,6 +52,8 @@ export type MessageStatus = "sending" | "sent" | "failed";
 export interface OptimisticMessage extends Message {
   _status?: MessageStatus;
   _tempId?: string;
+  /** Epoch ms when a failed message was persisted to localStorage. */
+  _savedAt?: number;
 }
 
 let tempIdCounter = 0;
@@ -112,6 +125,10 @@ export function ChatView({
   // before it can overwrite storage.
   const failedStorageKey = `chatFailed:${conversation.id}`;
   const failedHydratedRef = useRef(false);
+  // Whether THIS tab has written failures to storage during this mount. A tab
+  // that never persisted anything must not clear the key on its own "zero
+  // failed" state changes — that would clobber a failure another tab saved.
+  const failedPersistedRef = useRef(false);
 
   useEffect(() => {
     if (failedHydratedRef.current) return;
@@ -121,9 +138,23 @@ export function ChatView({
       if (!raw) return;
       const stored = JSON.parse(raw) as OptimisticMessage[];
       if (!Array.isArray(stored) || stored.length === 0) return;
+      // Drop stale entries: a send whose response was lost may actually have
+      // delivered, and "retrying" it weeks later would re-charge the sender.
+      // Entries from before _savedAt existed are kept and stamped on the next
+      // persist.
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const fresh = stored.filter((m) => (m._savedAt ?? Date.now()) >= cutoff);
+      if (fresh.length !== stored.length) {
+        if (fresh.length === 0) {
+          localStorage.removeItem(failedStorageKey);
+        } else {
+          localStorage.setItem(failedStorageKey, JSON.stringify(fresh));
+        }
+      }
+      if (fresh.length === 0) return;
       setMessages((prev) => {
         const existing = new Set(prev.map((m) => m._tempId).filter(Boolean));
-        const revived = stored
+        const revived = fresh
           .filter((m) => m._tempId && !existing.has(m._tempId))
           .map((m) => ({ ...m, _status: "failed" as const }));
         return revived.length ? [...prev, ...revived] : prev;
@@ -138,9 +169,19 @@ export function ChatView({
     try {
       const failed = messages.filter((m) => m._status === "failed");
       if (failed.length === 0) {
-        localStorage.removeItem(failedStorageKey);
+        if (failedPersistedRef.current) {
+          localStorage.removeItem(failedStorageKey);
+          failedPersistedRef.current = false;
+        }
       } else {
-        localStorage.setItem(failedStorageKey, JSON.stringify(failed));
+        const now = Date.now();
+        localStorage.setItem(
+          failedStorageKey,
+          // Revived entries keep their original stamp (it rides along in the
+          // message object); newly failed ones are stamped here.
+          JSON.stringify(failed.map((m) => ({ ...m, _savedAt: m._savedAt ?? now })))
+        );
+        failedPersistedRef.current = true;
       }
     } catch {
       // Storage unavailable/full — non-fatal, retry UI still works in-session
