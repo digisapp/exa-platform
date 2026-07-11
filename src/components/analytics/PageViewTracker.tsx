@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { RESERVED_PATHS } from "@/lib/reserved-usernames";
 
 // Generate a unique visitor ID
 function getVisitorId(): string {
@@ -54,22 +55,7 @@ function getModelInfo(pathname: string): { modelUsername?: string } {
   if (match) {
     const username = match[1];
     // Exclude known routes
-    const reserved = [
-      "signin", "signup", "dashboard", "profile", "models", "gigs",
-      "chats", "wallet", "coins", "content", "admin", "apply",
-      "leaderboard", "onboarding", "favorites", "earnings", "fan",
-      "tv", "shows", "terms", "privacy", "settings", "events",
-      "academy", "analytics", "auth", "bids", "bookings", "boost",
-      "brand", "brands", "call", "campaigns", "comp-card",
-      "comp-card-creator", "contracts", "designers", "error",
-      "exadolls", "followers", "for-models", "fresh-digitals", "go",
-      "guidelines", "model-onboarding", "modelo", "my-bids",
-      "my-content", "offers", "rates", "roster", "runway-workshop",
-      "schedule-call", "shop", "sponsors", "swimcrown",
-      "swimwear-content", "travel", "unsubscribe", "verify-identity",
-      "workshops"
-    ];
-    if (!reserved.includes(username.toLowerCase())) {
+    if (!RESERVED_PATHS.includes(username.toLowerCase())) {
       return { modelUsername: username };
     }
   }

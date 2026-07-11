@@ -37,6 +37,7 @@ import {
 } from "@/components/shows/digis-links";
 import { ViewTracker } from "@/components/profile/ViewTracker";
 import { getHeroPortrait } from "@/lib/hero-portrait";
+import { RESERVED_PATHS } from "@/lib/reserved-usernames";
 import { AdminProfileToolbar } from "@/components/admin/AdminProfileToolbar";
 import { ProfileQRCode } from "@/components/profile/ProfileQRCode";
 import { FavoriteButton } from "@/components/profile/FavoriteButton";
@@ -51,17 +52,6 @@ function formatFollowers(n: number): string {
   if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
   return n.toLocaleString();
 }
-
-// Reserved paths that should NOT be treated as usernames
-const RESERVED_PATHS = [
-  'signin', 'signup', 'models', 'gigs', 'dashboard', 'profile', 'messages',
-  'leaderboard', 'admin', 'onboarding', 'brands', 'designers', 'media',
-  'api', 'auth', '_next', 'favicon.ico', 'wallet', 'content', 'coins',
-  'earnings', 'fan', 'opportunities', 'settings', 'notifications', 'search',
-  'explore', 'trending', 'popular', 'new', 'hot', 'top', 'best', 'featured',
-  'favorites', 'chats', 'claim', 'forgot-password', 'rates', 'book', 'booking',
-  'events', 'shows',
-];
 
 interface Props {
   params: Promise<{ username: string }>;

@@ -73,7 +73,7 @@ function FeedRow({ item }: { item: FeedItem }) {
             </span>
           )}
           {item.type === "follower" && (
-            <span className="text-white/60">added you to their favorites</span>
+            <span className="text-white/60">became a fan</span>
           )}
           {item.type === "message" && (
             <span className="text-white/60">sent a message</span>
