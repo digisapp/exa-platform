@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SwipeCard, ActionButtons } from "./SwipeCard";
 
@@ -35,6 +35,28 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty }: SwipeStackProp
   const currentModel = models[currentIndex];
   const nextModels = models.slice(currentIndex + 1, currentIndex + 3);
 
+  // Notify the parent when the deck runs out. This lives in an effect (rather
+  // than inside handleSwipe) so removals that bypass the swipe path — e.g.
+  // boosting the last card, which filters it out of `models` — still trigger
+  // onEmpty instead of rendering a blank stack forever. Guarded so it fires
+  // once per exhaustion, never before the deck has held cards, and re-arms
+  // when a refill appends more models.
+  const hadModelsRef = useRef(false);
+  const emptyNotifiedRef = useRef(false);
+  useEffect(() => {
+    if (models.length > 0) {
+      hadModelsRef.current = true;
+    }
+    if (hadModelsRef.current && currentIndex >= models.length) {
+      if (!emptyNotifiedRef.current) {
+        emptyNotifiedRef.current = true;
+        onEmpty?.();
+      }
+    } else {
+      emptyNotifiedRef.current = false;
+    }
+  }, [currentIndex, models.length, onEmpty]);
+
   const handleSwipe = useCallback(
     (direction: "left" | "right") => {
       if (!currentModel || exitDirection) return; // Prevent double swipes
@@ -45,17 +67,12 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty }: SwipeStackProp
       // Sync with exit animation duration (250ms)
       setTimeout(() => {
         onSwipe(currentModel.id, direction);
-        setCurrentIndex((prev) => {
-          const newIndex = prev + 1;
-          if (newIndex >= models.length) {
-            onEmpty?.();
-          }
-          return newIndex;
-        });
+        // Deck-exhaustion notification happens in the effect above
+        setCurrentIndex((prev) => prev + 1);
         setExitDirection(null);
       }, 250);
     },
-    [currentModel, exitDirection, models.length, onSwipe, onEmpty]
+    [currentModel, exitDirection, onSwipe]
   );
 
   const handleBoost = useCallback(() => {
