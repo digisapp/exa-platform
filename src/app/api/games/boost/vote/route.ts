@@ -12,7 +12,10 @@ const REVEAL_COST = 10;
 const SUPER_COST = 20;
 const BOOST_MULTIPLIER = 5;
 const SUPER_MULTIPLIER = 10;
-const DAILY_DECK_SIZE = 25;
+// Safety ceiling for a single play cycle; matches SESSION_DECK_CAP in the deck
+// route. A cycle normally completes when the full eligible roster is swiped
+// (min() below resolves to the roster size), not when this ceiling is hit.
+const SESSION_DECK_CAP = 1000;
 
 // Total swipeable models, cached in-module so we don't run a COUNT(*) on
 // every swipe. Only used for session-completion tracking, so slight staleness
@@ -354,16 +357,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Mark model as swiped in session. Completion basis is the daily deck
-    // (25, or the full eligible roster when smaller) — server-derived so a
-    // client can't shrink it into an instant completion.
+    // Mark model as swiped in session. Completion basis is the full eligible
+    // roster (min() resolves to the roster size unless it somehow exceeds the
+    // safety ceiling) — server-derived so a client can't shrink it into an
+    // instant completion. Only after every eligible model is swiped does the
+    // 24h cooldown begin.
     if (session_id) {
       const totalModels = await getTotalSwipeableModels();
 
       await supabase.rpc("mark_model_swiped", {
         p_session_id: session_id,
         p_model_id: model_id,
-        p_total_models: Math.min(DAILY_DECK_SIZE, totalModels),
+        p_total_models: Math.min(SESSION_DECK_CAP, totalModels),
       });
     }
 
