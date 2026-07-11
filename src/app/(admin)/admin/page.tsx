@@ -86,16 +86,16 @@ export default async function AdminPage() {
   }
 
   // Get stats
-  const { count: totalModels } = await (supabase.from("models") as any).select("*", { count: "exact", head: true }).not("user_id", "is", null);
-  const { count: totalFans } = await supabase.from("fans").select("*", { count: "exact", head: true });
+  const { count: totalModels } = await (supabase.from("models") as any).select("*", { count: "exact", head: true }).not("user_id", "is", null).is("deleted_at", null);
+  const { count: totalFans } = await (supabase.from("fans") as any).select("*", { count: "exact", head: true }).is("deleted_at", null);
   const { count: totalTransactions } = await supabase.from("coin_transactions").select("*", { count: "exact", head: true });
   const { count: pendingModelApps } = await (supabase.from("model_applications") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
   const { count: pendingBrands } = await (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("is_verified", false);
   const { count: pendingCalls } = await (supabase.from("call_requests") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
   const { count: pendingVerifications } = await (supabase.from("model_verifications") as any).select("*", { count: "exact", head: true }).eq("status", "pending_review");
 
-  const { data: modelBalances } = await supabase.from("models").select("coin_balance") as { data: { coin_balance: number }[] | null };
-  const { data: fanBalances } = await supabase.from("fans").select("coin_balance") as { data: { coin_balance: number }[] | null };
+  const { data: modelBalances } = await (supabase.from("models") as any).select("coin_balance").is("deleted_at", null) as { data: { coin_balance: number }[] | null };
+  const { data: fanBalances } = await (supabase.from("fans") as any).select("coin_balance").is("deleted_at", null) as { data: { coin_balance: number }[] | null };
 
   const totalCoins = (modelBalances?.reduce((sum, m) => sum + (m.coin_balance || 0), 0) || 0) +
                      (fanBalances?.reduce((sum, f) => sum + (f.coin_balance || 0), 0) || 0);

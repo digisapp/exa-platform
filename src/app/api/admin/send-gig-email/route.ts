@@ -1,11 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { sendGigApplicationAcceptedEmail, sendGigApplicationRejectedEmail } from "@/lib/email";
+import { sendGigApplicationAcceptedEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
+// Rejection emails are intentionally unsupported: EXA never sends application
+// rejections (bad brand perception). Only positive touchpoints go out here.
 const sendGigEmailSchema = z.object({
-  type: z.enum(["accepted", "rejected"]),
+  type: z.enum(["accepted"]),
   to: z.string().trim().email(),
   modelName: z.string().trim().min(1).max(200),
   gigTitle: z.string().trim().min(1).max(500),
@@ -47,24 +49,16 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { type, to, modelName, gigTitle, gigDate, gigLocation, eventName } = parsed.data;
+    const { to, modelName, gigTitle, gigDate, gigLocation, eventName } = parsed.data;
 
-    if (type === "accepted") {
-      await sendGigApplicationAcceptedEmail({
-        to,
-        modelName,
-        gigTitle,
-        gigDate: gigDate ?? undefined,
-        gigLocation: gigLocation ?? undefined,
-        eventName: eventName ?? undefined,
-      });
-    } else {
-      await sendGigApplicationRejectedEmail({
-        to,
-        modelName,
-        gigTitle,
-      });
-    }
+    await sendGigApplicationAcceptedEmail({
+      to,
+      modelName,
+      gigTitle,
+      gigDate: gigDate ?? undefined,
+      gigLocation: gigLocation ?? undefined,
+      eventName: eventName ?? undefined,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
