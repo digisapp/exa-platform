@@ -709,7 +709,7 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-fuchsia-500/15 border border-fuchsia-500/25 mt-0.5 text-base">🚀</span>
-                  <span><span className="text-white font-semibold">Get discovered</span> — every post beams out across the whole platform, putting you in front of fans everywhere. Free exposure, just for showing up.</span>
+                  <span><span className="text-white font-semibold">Get discovered</span> — every model and fan sees your post, giving you free exposure.</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-amber-500/15 border border-amber-500/25 mt-0.5 text-base">🔥</span>
