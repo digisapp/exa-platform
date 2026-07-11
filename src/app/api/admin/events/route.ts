@@ -90,7 +90,16 @@ function capabilityFieldsFor(input: Record<string, unknown>) {
 }
 
 const createSchema = z.object(baseFields);
-const updateSchema = z.object({ id: z.string().uuid(), ...baseFields });
+// PATCH must NOT inherit the create defaults for status/points_awarded: an API
+// caller that omits status would silently reset a completed event back to
+// "upcoming" (and re-completing it would re-award). Optional here; written only
+// when actually provided (the admin form always sends both, so it round-trips).
+const updateSchema = z.object({
+  id: z.string().uuid(),
+  ...baseFields,
+  status: z.enum(["upcoming", "active", "completed", "cancelled"]).optional(),
+  points_awarded: z.coerce.number().int().min(0).max(100000).optional(),
+});
 
 // Empty-string -> null so we don't write "" into nullable date/text columns.
 function nn(v: string | undefined | null): string | null {
@@ -98,7 +107,7 @@ function nn(v: string | undefined | null): string | null {
   return t.length ? t : null;
 }
 
-function badgeFieldsFor(input: z.infer<typeof createSchema>) {
+function badgeFieldsFor(input: Pick<z.infer<typeof createSchema>, "name" | "short_name" | "year" | "badge_emoji">) {
   const icon =
     nn(input.badge_emoji) ||
     EMOJI_BY_SHORT[input.short_name.toUpperCase()] ||
@@ -210,8 +219,10 @@ export async function PATCH(request: NextRequest) {
         start_date: nn(input.start_date),
         end_date: nn(input.end_date),
         year: input.year,
-        status: input.status,
-        points_awarded: input.points_awarded,
+        // Only write status/points_awarded when the caller actually sent them
+        // (see updateSchema note — omitting status must not reset the event).
+        ...(input.status !== undefined ? { status: input.status } : {}),
+        ...(input.points_awarded !== undefined ? { points_awarded: input.points_awarded } : {}),
         ...capabilityFieldsFor(input),
         updated_at: new Date().toISOString(),
       })
