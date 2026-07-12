@@ -31,7 +31,6 @@ interface TipDialogProps {
 
 export function TipDialog({
   recipientId,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   recipientName,
   conversationId,
   coinBalance,
@@ -106,28 +105,36 @@ export function TipDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-[#120a24]/95 backdrop-blur-xl border-violet-500/30 shadow-2xl shadow-violet-500/10">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <div className="w-10 h-10 rounded-full bg-pink-500/10 flex items-center justify-center">
-              <Gift className="h-5 w-5 text-pink-500" />
+          <DialogTitle className="flex items-center gap-3 text-xl text-white">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-pink-500/40 blur-lg" />
+              <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-pink-500/30 to-violet-500/30 ring-1 ring-pink-500/40 flex items-center justify-center">
+                <Gift className="h-5 w-5 text-pink-300" />
+              </div>
             </div>
-            Send a Tip
+            <span>
+              Send a Tip
+              <span className="block text-sm font-normal text-white/60">
+                Show {recipientName} some love
+              </span>
+            </span>
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 py-4">
           {/* Current balance */}
-          <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-muted/50">
-            <span className="text-sm text-muted-foreground">Your balance</span>
-            <span className="flex items-center gap-1.5 font-semibold">
-              <Coins className="h-4 w-4 text-yellow-500" />
+          <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/5 border border-white/10">
+            <span className="text-sm text-white/60">Your balance</span>
+            <span className="flex items-center gap-1.5 font-semibold text-white">
+              <Coins className="h-4 w-4 text-amber-400" />
               {liveBalance} coins
             </span>
           </div>
 
           {/* Tip amounts */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {TIP_AMOUNTS.map((amount) => {
               const canAfford = liveBalance >= amount;
               const isSelected = selectedAmount === amount;
@@ -143,16 +150,18 @@ export function TipDialog({
                   }}
                   disabled={!canAfford || loading}
                   className={cn(
-                    "py-4 px-4 rounded-2xl border-2 text-center transition-all active:scale-95",
+                    "py-4 px-4 rounded-2xl border text-center transition-all active:scale-95",
                     isSelected
-                      ? "border-pink-500 bg-pink-500/10 text-pink-500 shadow-lg shadow-pink-500/10"
+                      ? "border-pink-500 bg-gradient-to-br from-pink-500/20 to-violet-500/20 text-pink-300 shadow-[0_0_20px_rgba(236,72,153,0.3)]"
                       : canAfford
-                        ? "border-border hover:border-pink-500/50 hover:bg-pink-500/5"
-                        : "border-border/50 text-muted-foreground opacity-40 cursor-not-allowed"
+                        ? "border-white/10 bg-white/5 text-white hover:border-pink-500/50 hover:bg-pink-500/10"
+                        : "border-white/5 bg-white/[0.02] text-white/40 opacity-50 cursor-not-allowed"
                   )}
                 >
                   <div className="text-2xl font-bold">{amount}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">coins</div>
+                  <div className={cn("text-xs mt-0.5", isSelected ? "text-pink-300/80" : "text-white/50")}>
+                    coins
+                  </div>
                 </button>
               );
             })}
@@ -162,7 +171,7 @@ export function TipDialog({
           <Button
             onClick={handleTip}
             disabled={!selectedAmount || loading}
-            className="w-full h-12 text-base rounded-2xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 shadow-lg shadow-pink-500/20 active:scale-[0.98] transition-transform"
+            className="w-full h-12 text-base rounded-2xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-white border-0 shadow-[0_0_24px_rgba(236,72,153,0.45)] hover:shadow-[0_0_32px_rgba(236,72,153,0.65)] active:scale-[0.98] transition-all disabled:opacity-40 disabled:shadow-none"
           >
             {loading ? (
               <>
@@ -184,7 +193,7 @@ export function TipDialog({
             <button
               type="button"
               onClick={() => setBuyCoinsOpen(true)}
-              className="w-full flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-pink-500 transition-colors py-1"
+              className="w-full flex items-center justify-center gap-1.5 text-sm text-white/60 hover:text-pink-300 transition-colors py-1"
             >
               <Plus className="h-3.5 w-3.5" />
               Need more coins? Buy now

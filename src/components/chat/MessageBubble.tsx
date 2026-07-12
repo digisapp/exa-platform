@@ -12,11 +12,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
-import { MoreVertical, Trash2, Lock, Coins, Loader2 as Spinner, Reply, Pencil, Check, X } from "lucide-react";
+import { MoreVertical, Trash2, Lock, Coins, Loader2 as Spinner, Reply, Pencil, Check, X, Gift, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { ImageLightbox } from "./ImageLightbox";
 import { LinkPreview } from "./LinkPreview";
 import { MessageReactions } from "./MessageReactions";
+import { VoiceMessagePlayer } from "./VoiceMessagePlayer";
 import type { Message } from "@/types/database";
 
 // Match URLs in text (http/https only), strip trailing punctuation
@@ -40,6 +41,47 @@ function formatMessageTimestamp(dateStr: string): string {
   return format(date, "MMM d yyyy, h:mm a");
 }
 
+// Tip system messages are written by the tips API as
+// "💝 {name} sent a {amount} coin tip!" — parse them so the chat can render a
+// celebration card instead of the generic system pill.
+const TIP_MESSAGE_REGEX = /^💝\s*(.+?) sent a (\d+) coin tip!$/;
+
+function parseTipMessage(content: string | null): { senderName: string; amount: number } | null {
+  if (!content) return null;
+  const match = content.match(TIP_MESSAGE_REGEX);
+  if (!match) return null;
+  const amount = parseInt(match[2], 10);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  return { senderName: match[1], amount };
+}
+
+// Visual tiers follow the Super Tip amounts (100/250/500/1000): bigger tips
+// glow harder.
+function tipTierClasses(amount: number) {
+  if (amount >= 1000) {
+    return {
+      card: "border-amber-400/50 shadow-[0_0_36px_rgba(251,191,36,0.35)]",
+      sparkles: true,
+    };
+  }
+  if (amount >= 500) {
+    return {
+      card: "border-amber-400/40 shadow-[0_0_28px_rgba(251,191,36,0.25)]",
+      sparkles: true,
+    };
+  }
+  if (amount >= 250) {
+    return {
+      card: "border-pink-500/40 shadow-[0_0_20px_rgba(236,72,153,0.3)]",
+      sparkles: false,
+    };
+  }
+  return {
+    card: "border-pink-500/30 shadow-[0_0_14px_rgba(236,72,153,0.2)]",
+    sparkles: false,
+  };
+}
+
 interface Reaction {
   emoji: string;
   count: number;
@@ -61,6 +103,11 @@ interface MessageBubbleProps {
   repliedMessage?: { id: string; content: string | null; sender_id: string; media_type: string | null } | null;
   repliedMessageSenderName?: string;
   onReply?: () => void;
+  /**
+   * Full neon glow is reserved for the sender's newest message — a wall of
+   * glowing bubbles reads as noise. Older own messages get a subtle shadow.
+   */
+  emphasizeGlow?: boolean;
 }
 
 export const MessageBubble = memo(function MessageBubble({
@@ -78,6 +125,7 @@ export const MessageBubble = memo(function MessageBubble({
   repliedMessage,
   repliedMessageSenderName,
   onReply,
+  emphasizeGlow = false,
 }: MessageBubbleProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -110,6 +158,10 @@ export const MessageBubble = memo(function MessageBubble({
       : false
   );
   const isMediaLocked = hasMediaPrice && !isMediaUnlocked;
+
+  // Media with no text/reply/edit context renders without bubble chrome
+  const isMediaOnly =
+    !isEditing && !editedContent && !repliedMessage && !isMediaLocked && !!message.media_url;
 
   const handleUnlock = async () => {
     if (!onUnlock || isUnlocking || !message.media_price) return;
@@ -198,6 +250,52 @@ export const MessageBubble = memo(function MessageBubble({
 
   // Show system message (tips, notifications, etc.) centered
   if ((message as any).is_system) {
+    const tip = parseTipMessage(message.content);
+
+    // Tips get a persistent celebration card — they're the highest-value fan
+    // action in the chat and shouldn't look like a channel notice.
+    if (tip) {
+      const tier = tipTierClasses(tip.amount);
+      return (
+        <div className="flex justify-center my-5">
+          <div
+            className={cn(
+              "relative px-8 py-5 rounded-2xl border text-center",
+              "bg-gradient-to-br from-amber-500/15 via-pink-500/15 to-violet-500/15 backdrop-blur-sm",
+              tier.card
+            )}
+          >
+            {tier.sparkles && (
+              <>
+                <Sparkles className="absolute -top-2 -left-2 h-5 w-5 text-amber-300" />
+                <Sparkles className="absolute -bottom-1.5 -right-2 h-4 w-4 text-amber-300" />
+              </>
+            )}
+            <div className="flex items-center justify-center mb-2">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-full bg-amber-400/40 blur-lg" />
+                <div className="relative w-11 h-11 rounded-full bg-gradient-to-br from-amber-400/30 to-pink-500/30 ring-1 ring-amber-400/50 flex items-center justify-center">
+                  <Gift className="h-5 w-5 text-amber-200" />
+                </div>
+              </div>
+            </div>
+            <p className="text-2xl font-bold leading-none bg-gradient-to-r from-amber-200 via-amber-300 to-pink-300 bg-clip-text text-transparent">
+              {tip.amount.toLocaleString()}
+              <span className="text-sm font-semibold ml-1.5">coins</span>
+            </p>
+            <p className="text-xs text-white/70 mt-1.5">
+              {tip.senderName} sent a tip
+            </p>
+            <p className="text-[10px] text-white/40 mt-1">
+              {message.created_at && formatDistanceToNow(new Date(message.created_at), {
+                addSuffix: true,
+              })}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex justify-center my-4">
         <div className="px-4 py-2 rounded-full bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20">
@@ -313,10 +411,23 @@ export const MessageBubble = memo(function MessageBubble({
 
         <div
           className={cn(
-            "rounded-2xl px-4 py-3 transition-all",
-            isOwn
-              ? "bg-gradient-to-br from-pink-500 to-violet-500 text-white shadow-[0_0_20px_rgba(236,72,153,0.35)]"
-              : "bg-white/[0.05] border border-white/10 backdrop-blur-sm text-white"
+            "rounded-2xl transition-all",
+            // Unlocked media-only messages render edge-to-edge: a photo framed
+            // by the padded gradient bubble looks like a picture in an
+            // envelope. Text, replies, editing, and locked PPV keep the chrome.
+            isMediaOnly
+              ? "p-0 text-white"
+              : cn(
+                  "px-4 py-3",
+                  isOwn
+                    ? cn(
+                        "bg-gradient-to-br from-pink-500 to-violet-500 text-white",
+                        emphasizeGlow
+                          ? "shadow-[0_0_20px_rgba(236,72,153,0.35)]"
+                          : "shadow-[0_0_8px_rgba(236,72,153,0.12)]"
+                      )
+                    : "bg-white/[0.05] border border-white/10 backdrop-blur-sm text-white"
+                )
           )}
         >
           {/* Reply snippet */}
@@ -459,7 +570,10 @@ export const MessageBubble = memo(function MessageBubble({
                     alt="Attached image"
                     width={400}
                     height={256}
-                    className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                    className={cn(
+                      "max-w-full max-h-64 cursor-pointer hover:opacity-90 transition-opacity",
+                      isMediaOnly ? "rounded-2xl ring-1 ring-white/10" : "rounded-lg"
+                    )}
                     onClick={() => setLightboxOpen(true)}
                   />
                   <ImageLightbox
@@ -474,34 +588,17 @@ export const MessageBubble = memo(function MessageBubble({
                   src={message.media_url ?? undefined}
                   controls
                   playsInline
-                  className="max-w-full max-h-64 rounded-lg"
+                  className={cn(
+                    "max-w-full max-h-64",
+                    isMediaOnly ? "rounded-2xl ring-1 ring-white/10" : "rounded-lg"
+                  )}
                   preload="metadata"
                 />
               ) : message.media_type?.startsWith("audio/") ? (
-                <div className={cn(
-                  "flex items-center gap-3 p-2 rounded-lg min-w-[200px]",
-                  isOwn ? "bg-white/10" : "bg-background/50"
-                )}>
-                  <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                    isOwn ? "bg-white/20" : "bg-amber-500/20"
-                  )}>
-                    <svg
-                      className={cn("h-5 w-5", isOwn ? "text-white" : "text-amber-500")}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                    </svg>
-                  </div>
-                  <audio
-                    src={message.media_url ?? undefined}
-                    controls
-                    className="h-8 flex-1 min-w-0"
-                    preload="metadata"
-                  />
-                </div>
+                <VoiceMessagePlayer
+                  src={message.media_url!}
+                  isOwn={isOwn && !isMediaOnly}
+                />
               ) : (
                 <a
                   href={message.media_url ?? undefined}

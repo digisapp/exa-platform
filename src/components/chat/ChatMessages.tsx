@@ -177,6 +177,17 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
       });
     }, [hasMore, loadingMore, handleLoadMore, messages.length, onScrollStateChange]);
 
+    // Newest own message gets the full neon glow; older ones stay subtle so a
+    // long conversation isn't a wall of glowing bubbles.
+    let latestOwnMessageKey: string | null = null;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.sender_id === currentActor.id && !m.is_system) {
+        latestOwnMessageKey = m._tempId || m.id;
+        break;
+      }
+    }
+
     // Find the last own message that was read by the other participant
     const seenMessageId = otherLastReadAt
       ? messages.reduce<string | null>((last, msg) => {
@@ -361,6 +372,7 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
                             : undefined
                         }
                         onReply={onReply && !isSending && !isFailed ? () => onReply(message) : undefined}
+                        emphasizeGlow={(message._tempId || message.id) === latestOwnMessageKey}
                       />
                     </div>
 
@@ -431,7 +443,7 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
               onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
               size="icon"
               aria-label="Scroll to latest messages"
-              className="h-12 w-12 rounded-full shadow-xl bg-background border-2 hover:bg-muted active:scale-95 transition-transform relative"
+              className="h-12 w-12 rounded-full shadow-xl bg-[#120a24]/90 backdrop-blur-md border border-white/15 text-white hover:bg-white/10 active:scale-95 transition-transform relative"
             >
               <ChevronDown className="h-6 w-6" />
               {newMessageCount > 0 && (
