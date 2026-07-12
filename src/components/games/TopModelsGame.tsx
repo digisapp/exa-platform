@@ -340,7 +340,7 @@ export function TopModelsGame({ initialUser, actorType }: TopModelsGameProps) {
         const res = await fetch("/api/games/boost/streak", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId: session.sessionId }),
+          body: JSON.stringify({ sessionId: session.sessionId, fingerprint }),
         });
         const data = await res.json();
         if (data.success) {
