@@ -8192,9 +8192,12 @@ export async function sendFanWeeklyDigestEmail({
     const modelsUrl = `${BASE_URL}/models`;
 
     const dropsTotal = followedDrops.reduce((sum, d) => sum + d.newItems, 0);
-    const subject = dropsTotal > 0
-      ? `✨ ${totalNewModels} new model${totalNewModels === 1 ? "" : "s"} + new drops from models you follow`
-      : `✨ ${totalNewModels} new model${totalNewModels === 1 ? "" : "s"} just landed on EXA`;
+    const subject = totalNewModels === 0
+      // Qualified purely on followed-model drops (no new models this week)
+      ? `🔥 New drops from models you follow`
+      : dropsTotal > 0
+        ? `✨ ${totalNewModels} new model${totalNewModels === 1 ? "" : "s"} + new drops from models you follow`
+        : `✨ ${totalNewModels} new model${totalNewModels === 1 ? "" : "s"} just landed on EXA`;
 
     // 2-per-row grid of new model cards (photo + @username)
     const modelRows: string[] = [];
@@ -8267,6 +8270,7 @@ export async function sendFanWeeklyDigestEmail({
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
                 Hey ${escapeHtml(fanName)},
               </p>
+              ${newModels.length > 0 ? `
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
                 The roster grew this week — <strong style="color: #ffffff;">${totalNewModels} new model${totalNewModels === 1 ? "" : "s"}</strong> just joined EXA. Here's a taste:
               </p>
@@ -8274,7 +8278,10 @@ export async function sendFanWeeklyDigestEmail({
               <!-- New model grid -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
                 ${modelRows.join("")}
-              </table>
+              </table>` : `
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                The models you follow have been busy this week — here's what you missed:
+              </p>`}
 
               ${followedDropsHtml}
 

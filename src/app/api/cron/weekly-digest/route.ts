@@ -31,11 +31,19 @@ const adminClient: any = createServiceRoleClient();
 
 const SUPABASE_PAGE_SIZE = 1000;
 const MAX_PAGES = 100; // hard stop at 100k rows per table sweep
-const MAX_SENDS_PER_RUN = 500;
+// Per-audience caps: the model "you were seen" digest is activity-gated and
+// high-value, so it must never be starved by the fan queue. Both are far
+// above realistic weekly volume; they're runaway backstops, not rationing.
+const MAX_FAN_SENDS_PER_RUN = 2000;
+const MAX_MODEL_SENDS_PER_RUN = 2000;
 const SEND_BATCH_SIZE = 2; // Resend rate limit is 2 emails/second
 const SEND_BATCH_DELAY_MS = 1100;
 const FAN_SHOWCASE_MODELS = 4;
 const FAN_FOLLOWED_DROPS = 3;
+// Targeted fan audience: a fan is only worth a digest when THEY have a reason
+// to come back — a model they follow dropped new content this week, or enough
+// brand-new models landed to be worth a browse. Thin weeks send no fan blast.
+const FAN_MIN_NEW_MODELS = 3;
 
 // ISO-8601 week key, e.g. "2026-W28"
 function isoWeekKey(d: Date): string {
@@ -288,35 +296,42 @@ export async function GET(request: NextRequest) {
 
     const jobs: SendJob[] = [];
 
-    // Fan digests need >= 1 new approved model this week — otherwise nobody
-    // gets one (never send an empty digest)
-    if (showcaseModels.length === 0) {
-      summary.fansAlreadySent = fans.filter((f: any) => alreadySentFans.has(f.id)).length;
-      summary.fansSkippedEmpty = fans.length - summary.fansAlreadySent;
-    } else {
-      for (const fan of fans) {
-        if (alreadySentFans.has(fan.id)) {
-          summary.fansAlreadySent++;
-          continue;
-        }
-        const followedDrops = (followedModelIdsByFan.get(fan.id) || [])
-          .map((modelId) => ({ modelId, newItems: contentCountByModelId.get(modelId) || 0 }))
-          .filter((d) => d.newItems > 0)
-          .sort((a, b) => b.newItems - a.newItems)
-          .slice(0, FAN_FOLLOWED_DROPS)
-          .map((d) => ({
-            username: modelById.get(d.modelId)!.username as string,
-            newItems: d.newItems,
-          }));
-
-        jobs.push({
-          kind: "fan",
-          recipientId: fan.id,
-          email: fan.email,
-          fanName: fan.display_name || fan.username || "there",
-          followedDrops,
-        });
+    // Targeted fan audience (deliberate, not a blast): a fan qualifies only
+    // when they personally have a reason to return —
+    //   (a) a model they FOLLOW dropped new content this week, or
+    //   (b) enough brand-new models landed to be worth a browse
+    //       (>= FAN_MIN_NEW_MODELS), which carries the showcase on its own.
+    // A fan with neither is skipped (fansSkippedEmpty) — thin weeks send no
+    // near-blast to the whole list, protecting deliverability on a small list.
+    const enoughNewModels = newModelsThisWeek.length >= FAN_MIN_NEW_MODELS;
+    for (const fan of fans) {
+      if (alreadySentFans.has(fan.id)) {
+        summary.fansAlreadySent++;
+        continue;
       }
+      const followedDrops = (followedModelIdsByFan.get(fan.id) || [])
+        .map((modelId) => ({ modelId, newItems: contentCountByModelId.get(modelId) || 0 }))
+        .filter((d) => d.newItems > 0)
+        .sort((a, b) => b.newItems - a.newItems)
+        .slice(0, FAN_FOLLOWED_DROPS)
+        .map((d) => ({
+          username: modelById.get(d.modelId)!.username as string,
+          newItems: d.newItems,
+        }));
+
+      // Skip unless this fan has a personal drop or the week is showcase-worthy
+      if (followedDrops.length === 0 && !enoughNewModels) {
+        summary.fansSkippedEmpty++;
+        continue;
+      }
+
+      jobs.push({
+        kind: "fan",
+        recipientId: fan.id,
+        email: fan.email,
+        fanName: fan.display_name || fan.username || "there",
+        followedDrops,
+      });
     }
 
     for (const model of audienceModels) {
@@ -344,16 +359,24 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Cap a single run: fans queued first (the comeback problem is demand-side)
-    const cappedJobs = jobs.slice(0, MAX_SENDS_PER_RUN);
-    for (const job of jobs.slice(MAX_SENDS_PER_RUN)) {
-      if (job.kind === "fan") summary.fansSkippedCap++;
-      else summary.modelsSkippedCap++;
-    }
-    if (jobs.length > MAX_SENDS_PER_RUN) {
+    // Per-audience caps: the two digests are capped independently so a large
+    // fan queue can never starve the activity-gated model digests (the single
+    // global cap did exactly that — models fell to 0). Caps are runaway
+    // backstops well above realistic weekly volume, not rationing.
+    const fanJobs = jobs.filter((j) => j.kind === "fan");
+    const modelJobs = jobs.filter((j) => j.kind === "model");
+    summary.fansSkippedCap = Math.max(0, fanJobs.length - MAX_FAN_SENDS_PER_RUN);
+    summary.modelsSkippedCap = Math.max(0, modelJobs.length - MAX_MODEL_SENDS_PER_RUN);
+    const cappedJobs = [
+      ...fanJobs.slice(0, MAX_FAN_SENDS_PER_RUN),
+      ...modelJobs.slice(0, MAX_MODEL_SENDS_PER_RUN),
+    ];
+    if (summary.fansSkippedCap > 0 || summary.modelsSkippedCap > 0) {
       logger.warn("Weekly digest: send cap reached", {
-        queued: jobs.length,
-        cap: MAX_SENDS_PER_RUN,
+        fanQueued: fanJobs.length,
+        modelQueued: modelJobs.length,
+        fanCap: MAX_FAN_SENDS_PER_RUN,
+        modelCap: MAX_MODEL_SENDS_PER_RUN,
         fansSkippedCap: summary.fansSkippedCap,
         modelsSkippedCap: summary.modelsSkippedCap,
       });
