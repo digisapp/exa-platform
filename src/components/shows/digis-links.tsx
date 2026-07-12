@@ -54,10 +54,9 @@ function DigisDialog({
             Continue to Digis
           </DialogTitle>
           <DialogDescription className="text-white/60 text-sm leading-relaxed mt-2">
-            <span className="text-white font-semibold">Digis</span> is the
-            official EXA Models live streaming platform + connect with your
-            favorite creators through Live streams, video calls, exclusive
-            events, and content.
+            <span className="text-white font-semibold">Digis</span> is EXA
+            Models live event platform + connect with your favorite creators
+            through Streams, Video Calls, Content, Chats, Events.
           </DialogDescription>
         </DialogHeader>
 
