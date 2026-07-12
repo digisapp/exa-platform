@@ -206,7 +206,7 @@ export default async function ForModelsPage() {
               <p className="font-bold mb-4">6 income streams:</p>
               <div className="grid grid-cols-2 gap-1 text-sm">
                 <p>💝 tips</p>
-                <p>🔒 PPV</p>
+                <p>🔒 unlocks</p>
                 <p>💬 messages</p>
                 <p>📸 shoots</p>
                 <p>🏷️ brands</p>
@@ -225,7 +225,7 @@ export default async function ForModelsPage() {
               <p className="text-xs text-white/60 mb-4">HOW TO START</p>
               <p className="text-sm mb-1">📸 Upload profile</p>
               <p className="text-sm mb-1">🖼️ Add 5 photos</p>
-              <p className="text-sm mb-1">🔒 Post 1 PPV</p>
+              <p className="text-sm mb-1">🔒 Post 1 paid pic</p>
               <p className="text-sm">🔗 Link in bio</p>
             </CarouselSlide>
 
@@ -334,7 +334,7 @@ export default async function ForModelsPage() {
             &quot;Do you have a glute guide?&quot;
           </p>
           <p className="mb-2">Instead of typing for free →</p>
-          <p className="font-medium">Upload it ONCE as PPV</p>
+          <p className="font-medium">Upload it ONCE as paid content</p>
           <p className="font-medium">Send the link forever 💅</p>
         </ScenarioCard>
 
@@ -621,7 +621,7 @@ export default async function ForModelsPage() {
               <p className="text-white/70 mb-4 font-medium">In ONE month you can earn from:</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
                 <IncomeItem label="Tips" />
-                <IncomeItem label="PPV unlocks" />
+                <IncomeItem label="Content unlocks" />
                 <IncomeItem label="Paid messages" />
                 <IncomeItem label="Photoshoots" />
                 <IncomeItem label="Brand gigs" />
@@ -709,7 +709,7 @@ export default async function ForModelsPage() {
               <QuickStartItem emoji="📸" text="Upload profile pic" />
               <QuickStartItem emoji="🖼️" text="Add 5 portfolio photos" />
               <QuickStartItem emoji="💰" text="Set your rates" />
-              <QuickStartItem emoji="🔒" text="Post 1 PPV" />
+              <QuickStartItem emoji="🔒" text="Post 1 paid pic" />
               <QuickStartItem emoji="🏦" text="Add bank" />
               <QuickStartItem emoji="🔗" text="Put EXA in bio" />
             </div>

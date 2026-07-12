@@ -223,7 +223,7 @@ export function LibraryPicker({
                 </TabsTrigger>
                 <TabsTrigger value="ppv" className="gap-2">
                   <Lock className="h-4 w-4" />
-                  PPV
+                  Paid
                   {ppvContent.length > 0 && (
                     <span className="text-xs opacity-60">({ppvContent.length})</span>
                   )}

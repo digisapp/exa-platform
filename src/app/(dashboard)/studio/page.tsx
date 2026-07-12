@@ -62,6 +62,8 @@ import {
   BarChart3,
   Image as ImageIcon,
   X,
+  Check,
+  Eye,
   ChevronDown,
   TrendingUp,
 } from 'lucide-react';
@@ -69,13 +71,6 @@ import {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 
 function getMediaUrl(url: string): string {
   if (url.startsWith('http')) return url;
@@ -94,6 +89,15 @@ function resolveFileType(file: File): string {
   return extMap[ext] || '';
 }
 
+// Model-facing labels for content_items.status. "exclusive" is always shown as
+// "Pay to Unlock" ("Paid" where space is tight) — never "PPV"; most EXA models
+// aren't from creator platforms and don't know the acronym.
+const STATUS_OPTIONS = [
+  { value: 'private', label: 'Private', description: 'Only you can see it' },
+  { value: 'portfolio', label: 'Public', description: 'Free for everyone on your profile' },
+  { value: 'exclusive', label: 'Pay to Unlock', description: 'Fans pay coins to unlock it' },
+] as const;
+
 // ---------------------------------------------------------------------------
 // Main Page Component
 // ---------------------------------------------------------------------------
@@ -105,8 +109,8 @@ export default function ContentPage() {
     loading,
     filters,
     selectedIds,
-    refreshAll,
-    createItem,
+    fetchItems,
+    fetchStats,
     updateItem,
     deleteItem,
     bulkAction,
@@ -116,6 +120,11 @@ export default function ContentPage() {
     isSelected,
     setFilter,
   } = useContentData();
+
+  // Refresh the grid without flipping the hook's page-level loading spinner
+  const refreshData = useCallback(async () => {
+    await Promise.all([fetchItems(), fetchStats()]);
+  }, [fetchItems, fetchStats]);
 
   // Local UI state
   const [activeTab, setActiveTab] = useState('all');
@@ -172,7 +181,6 @@ export default function ContentPage() {
           <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-cyan-500/25 blur-3xl" />
           <div className="relative flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Studio</p>
               <h1 className="text-2xl md:text-4xl font-bold tracking-tight">
                 <span className="exa-gradient-text">My Studio</span>
               </h1>
@@ -209,27 +217,41 @@ export default function ContentPage() {
         ) : (
           /* Tabs */
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            {/* Unified toolbar: tabs + filters in one row */}
-            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="stats">Stats</TabsTrigger>
-              </TabsList>
+            {/* Unified toolbar: tabs + search on one row (mobile), everything inline on desktop */}
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <div className="flex items-center gap-2">
+                <TabsList>
+                  <TabsTrigger value="all">All</TabsTrigger>
+                  <TabsTrigger value="stats">Stats</TabsTrigger>
+                </TabsList>
+
+                {activeTab === 'all' && (
+                  <div className="relative min-w-0 flex-1 sm:hidden">
+                    <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Search..."
+                      value={searchInput}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      className="h-9 w-full pl-8 text-xs"
+                    />
+                  </div>
+                )}
+              </div>
 
               {activeTab === 'all' && (
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-2">
                   <Select
                     value={filters.status || 'all'}
                     onValueChange={(v) => setFilter('status', v === 'all' ? null : v)}
                   >
-                    <SelectTrigger className="h-9 w-[120px] text-xs">
+                    <SelectTrigger className="h-9 min-w-0 flex-1 text-xs sm:w-[120px] sm:flex-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
                       <SelectItem value="private">Private</SelectItem>
                       <SelectItem value="portfolio">Public</SelectItem>
-                      <SelectItem value="exclusive">PPV</SelectItem>
+                      <SelectItem value="exclusive">Paid</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -237,7 +259,7 @@ export default function ContentPage() {
                     value={filters.media_type || 'all'}
                     onValueChange={(v) => setFilter('media_type', v === 'all' ? null : v)}
                   >
-                    <SelectTrigger className="h-9 w-[110px] text-xs">
+                    <SelectTrigger className="h-9 min-w-0 flex-1 text-xs sm:w-[110px] sm:flex-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -247,7 +269,7 @@ export default function ContentPage() {
                     </SelectContent>
                   </Select>
 
-                  <div className="relative">
+                  <div className="relative hidden sm:block">
                     <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       placeholder="Search..."
@@ -271,7 +293,7 @@ export default function ContentPage() {
                       setFilter('order', order as 'asc' | 'desc');
                     }}
                   >
-                    <SelectTrigger className="h-9 w-[120px] text-xs">
+                    <SelectTrigger className="h-9 min-w-0 flex-1 text-xs sm:w-[120px] sm:flex-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -312,12 +334,7 @@ export default function ContentPage() {
       </div>
 
       {/* Upload Dialog */}
-      <UploadDialog
-        open={uploadOpen}
-        onOpenChange={setUploadOpen}
-        createItem={createItem}
-        refreshAll={refreshAll}
-      />
+      <UploadDialog open={uploadOpen} onOpenChange={setUploadOpen} refreshData={refreshData} />
 
       {/* Edit Item Dialog */}
       {editItem && (
@@ -378,13 +395,13 @@ export default function ContentPage() {
         }}
       />
 
-      {/* Bulk PPV Dialog — setting items to PPV requires a price, otherwise they're invisible to fans */}
+      {/* Bulk Pay-to-Unlock Dialog — making items paid requires a price, otherwise they're invisible to fans */}
       <BulkPriceDialog
         open={bulkPpvOpen}
         onOpenChange={setBulkPpvOpen}
         selectedCount={selectedIds.size}
-        title="Make PPV"
-        description={`Set the unlock price for ${selectedIds.size} selected item${selectedIds.size > 1 ? 's' : ''}. They'll appear as locked PPV content on your profile.`}
+        title="Set Unlock Price"
+        description={`Set the unlock price for ${selectedIds.size} selected item${selectedIds.size > 1 ? 's' : ''}. Fans will see a blurred preview on your profile until they pay to unlock.`}
         onConfirm={(price) => {
           bulkAction('update_status', { status: 'exclusive', coin_price: price });
           setBulkPpvOpen(false);
@@ -479,7 +496,7 @@ function AllTab({
                 Public
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onBulkPPV}>
-                PPV
+                Pay to Unlock…
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -728,7 +745,7 @@ function ItemEditDialog({
 
   const handleSave = async () => {
     if (status === 'exclusive' && coinPrice < 1) {
-      toast.error('PPV content needs a price of at least 1 coin — fans never see 0-coin PPV items.');
+      toast.error('Paid content needs a price of at least 1 coin — fans never see 0-coin items.');
       return;
     }
     setSaving(true);
@@ -809,11 +826,16 @@ function ItemEditDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="private">Private</SelectItem>
-                <SelectItem value="portfolio">Public</SelectItem>
-                <SelectItem value="exclusive">PPV</SelectItem>
+                {STATUS_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">
+              {STATUS_OPTIONS.find((o) => o.value === status)?.description}
+            </p>
           </div>
 
           {/* Coin Price */}
@@ -899,7 +921,7 @@ function StatsTab({
           <p className="text-[11px] text-cyan-300/80">in your studio</p>
         </div>
         <div className="relative overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-4 hover:border-violet-500/50 transition-all">
-          <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">PPV items</p>
+          <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">Paid items</p>
           <p className="mt-1 text-2xl md:text-3xl font-bold text-white">{stats.exclusive_count.toLocaleString()}</p>
           <p className="text-[11px] text-violet-300/80">premium</p>
         </div>
@@ -919,7 +941,7 @@ function StatsTab({
         <div className="p-4">
           {stats.top_items.length === 0 ? (
             <p className="text-sm text-white/50 text-center py-6">
-              No unlock data yet. PPV items will appear here.
+              No unlock data yet. Paid items will appear here.
             </p>
           ) : (
             <div className="space-y-2">
@@ -1012,7 +1034,7 @@ function StatsTab({
             <div className="flex items-center justify-between text-sm mb-1.5">
               <span className="flex items-center gap-2 text-white/80">
                 <span className="h-2.5 w-2.5 rounded-full bg-pink-400 shadow-[0_0_8px_rgba(236,72,153,0.7)]" />
-                PPV
+                Paid
               </span>
               <span className="text-white/60">
                 {stats.exclusive_count} <span className="text-white/40">({exclusivePct}%)</span>
@@ -1047,36 +1069,41 @@ function StatsTab({
 }
 
 // ===========================================================================
-// Upload Dialog
+// Upload Dialog — files upload immediately on selection (saved as Private),
+// then the model picks who can see them (and a price) in the same dialog.
 // ===========================================================================
 
 interface UploadFile {
+  id: string;
   file: File;
   preview: string;
   progress: number;
   status: 'pending' | 'uploading' | 'done' | 'error';
   error?: string;
+  itemId?: string; // content_items.id once the row is created
 }
+
+const UPLOAD_CONCURRENCY = 3;
 
 function UploadDialog({
   open,
   onOpenChange,
-  createItem,
-  refreshAll,
+  refreshData,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  createItem: (data: Partial<ContentItem>) => Promise<ContentItem | null>;
-  refreshAll: () => Promise<void>;
+  refreshData: () => Promise<void>;
 }) {
   const [files, setFiles] = useState<UploadFile[]>([]);
-  const [title, setTitle] = useState('');
-  const [status, setStatus] = useState<'private' | 'portfolio' | 'exclusive'>('private');
-  const [coinPrice, setCoinPrice] = useState(0);
-  const [uploading, setUploading] = useState(false);
+  const [visibility, setVisibility] = useState<'private' | 'portfolio' | 'exclusive'>('private');
+  const [coinPrice, setCoinPrice] = useState(100);
+  const [finishing, setFinishing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraImageRef = useRef<HTMLInputElement>(null);
   const cameraVideoRef = useRef<HTMLInputElement>(null);
+  const idCounterRef = useRef(0);
+  const startedRef = useRef<Set<string>>(new Set());
+  const activeRef = useRef(0);
 
   // Cleanup previews on unmount only. Keying this on [files] revoked blob URLs
   // that were still displayed every time progress/status updates replaced the array.
@@ -1090,16 +1117,21 @@ function UploadDialog({
     };
   }, []);
 
-  // Reset form on close
+  // Reset on close. Items were created row-by-row via direct fetches (not the
+  // hook), so the grid only learns about them from this single refresh.
   useEffect(() => {
     if (!open) {
-      files.forEach((f) => {
+      const uploadedAny = filesRef.current.some((f) => f.itemId);
+      filesRef.current.forEach((f) => {
         if (f.preview) URL.revokeObjectURL(f.preview);
       });
       setFiles([]);
-      setTitle('');
-      setStatus('private');
-      setCoinPrice(0);
+      setVisibility('private');
+      setCoinPrice(100);
+      setFinishing(false);
+      startedRef.current = new Set();
+      activeRef.current = 0;
+      if (uploadedAny) void refreshData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -1108,7 +1140,7 @@ function UploadDialog({
   const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
   const MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50MB
   const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
-  const MAX_FILES = 20;
+  const MAX_FILES = 50; // matches the bulk endpoint's 50-id cap
 
   const handleFiles = (fileList: FileList | null) => {
     if (!fileList) return;
@@ -1161,6 +1193,7 @@ function UploadDialog({
       }
 
       accepted.push({
+        id: `f${idCounterRef.current++}`,
         file,
         preview: URL.createObjectURL(file),
         progress: 0,
@@ -1173,25 +1206,30 @@ function UploadDialog({
     }
   };
 
-  const removeFile = (idx: number) => {
+  // Files are removable only before their upload starts (or after it fails) —
+  // a 'done' tile is already saved to the Studio.
+  const removeFile = (id: string) => {
     setFiles((prev) => {
-      const removed = prev[idx];
+      const removed = prev.find((f) => f.id === id);
       if (removed?.preview) URL.revokeObjectURL(removed.preview);
-      return prev.filter((_, i) => i !== idx);
+      return prev.filter((f) => f.id !== id);
     });
   };
 
-  const uploadSingleFile = async (uploadFile: UploadFile, idx: number): Promise<boolean> => {
-    const { file } = uploadFile;
-    const fileType = resolveFileType(file);
+  const updateFile = (id: string, patch: Partial<UploadFile>) => {
+    setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+  };
 
-    // Update status
-    setFiles((prev) =>
-      prev.map((f, i) => (i === idx ? { ...f, status: 'uploading' as const, progress: 10 } : f)),
-    );
+  const uploadSingleFile = async (uploadFile: UploadFile): Promise<void> => {
+    const { file, id } = uploadFile;
+    const fileType = resolveFileType(file);
+    updateFile(id, { status: 'uploading', progress: 10 });
 
     try {
-      // Step 1: Get signed URL
+      // Step 1: Get signed URL. Everything starts in the public portfolio
+      // bucket as a Private item; if the model picks Pay to Unlock in the next
+      // step, the bulk status route moves the object into the private
+      // content-media bucket (syncContentItemStorageForStatus).
       const signedRes = await fetch('/api/upload/signed-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1199,10 +1237,8 @@ function UploadDialog({
           fileName: file.name,
           fileType,
           fileSize: file.size,
-          title: title || file.name.split('.')[0],
-          // Paid content uploads to the private content-media bucket so the
-          // full-res file is never a shareable public URL (src/lib/content-media.ts)
-          exclusive: status === 'exclusive',
+          title: file.name.split('.')[0],
+          exclusive: false,
         }),
       });
 
@@ -1212,10 +1248,7 @@ function UploadDialog({
       }
 
       const { signedUrl, storagePath } = await signedRes.json();
-
-      setFiles((prev) =>
-        prev.map((f, i) => (i === idx ? { ...f, progress: 30 } : f)),
-      );
+      updateFile(id, { progress: 30 });
 
       // Step 2: Upload to storage directly from browser (bypasses Vercel size limit)
       const uploadRes = await fetch(signedUrl, {
@@ -1233,82 +1266,126 @@ function UploadDialog({
         throw new Error(detail);
       }
 
-      setFiles((prev) =>
-        prev.map((f, i) => (i === idx ? { ...f, progress: 70 } : f)),
-      );
+      updateFile(id, { progress: 70 });
 
-      // Step 3: Create content item
+      // Step 3: Create the content item (Private until the model chooses)
       const isVideo = fileType.startsWith('video/');
+      const createRes = await fetch('/api/content-hub/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          media_url: storagePath,
+          media_type: isVideo ? 'video' : 'image',
+          title: null,
+          status: 'private',
+          coin_price: 0,
+        }),
+      });
 
-      const itemData: Partial<ContentItem> = {
-        media_url: storagePath,
-        media_type: isVideo ? 'video' : 'image',
-        title: title || null,
-        status,
-        coin_price: status === 'exclusive' ? coinPrice : 0,
-      } as Partial<ContentItem>;
+      if (!createRes.ok) {
+        const errData = await createRes.json().catch(() => ({}));
+        throw new Error(errData.details || errData.error || 'Failed to save item');
+      }
 
-      const result = await createItem(itemData);
-
-      if (!result) throw new Error('Failed to create content item');
-
-      setFiles((prev) =>
-        prev.map((f, i) =>
-          i === idx ? { ...f, status: 'done' as const, progress: 100 } : f,
-        ),
-      );
-
-      return true;
+      const { item } = await createRes.json();
+      updateFile(id, { status: 'done', progress: 100, itemId: item.id });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Upload failed';
-      setFiles((prev) =>
-        prev.map((f, i) =>
-          i === idx ? { ...f, status: 'error' as const, error: message, progress: 0 } : f,
-        ),
-      );
-      return false;
+      updateFile(id, { status: 'error', error: message, progress: 0 });
     }
   };
 
-  const handleUpload = async () => {
-    if (files.length === 0) {
-      toast.error('Select at least one file');
-      return;
-    }
-    if (status === 'exclusive' && coinPrice < 1) {
-      toast.error('PPV content needs a price of at least 1 coin — fans never see 0-coin PPV items.');
-      return;
-    }
-
-    setUploading(true);
-    let successCount = 0;
-
-    for (let i = 0; i < files.length; i++) {
-      if (files[i].status === 'done') continue;
-      const ok = await uploadSingleFile(files[i], i);
-      if (ok) successCount++;
-    }
-
-    setUploading(false);
-
-    if (successCount > 0) {
-      toast.success(`${successCount} file${successCount > 1 ? 's' : ''} uploaded`);
-      await refreshAll();
-      if (successCount === files.length) {
-        onOpenChange(false);
+  // Uploads start on their own as files are picked; the pool keeps big camera
+  // roll batches moving without saturating the connection. startedRef makes the
+  // pump idempotent across re-renders.
+  useEffect(() => {
+    if (!open) return;
+    const pump = () => {
+      while (activeRef.current < UPLOAD_CONCURRENCY) {
+        const next = filesRef.current.find(
+          (f) => f.status === 'pending' && !startedRef.current.has(f.id),
+        );
+        if (!next) break;
+        startedRef.current.add(next.id);
+        activeRef.current += 1;
+        void uploadSingleFile(next).finally(() => {
+          activeRef.current -= 1;
+          pump();
+        });
       }
-    }
+    };
+    pump();
+  });
+
+  const retryFailed = () => {
+    filesRef.current.forEach((f) => {
+      if (f.status === 'error') startedRef.current.delete(f.id);
+    });
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.status === 'error' ? { ...f, status: 'pending' as const, error: undefined } : f,
+      ),
+    );
   };
 
-  const allDone = files.length > 0 && files.every((f) => f.status === 'done');
-  const hasErrors = files.some((f) => f.status === 'error');
+  const doneCount = files.filter((f) => f.status === 'done').length;
+  const errorCount = files.filter((f) => f.status === 'error').length;
+  const inFlightCount = files.length - doneCount - errorCount;
+  const allSettled = files.length > 0 && inFlightCount === 0;
+
+  const finish = async () => {
+    const ids = filesRef.current.filter((f) => f.itemId).map((f) => f.itemId!);
+    if (ids.length === 0) {
+      onOpenChange(false);
+      return;
+    }
+    if (visibility === 'exclusive' && coinPrice < 1) {
+      toast.error('Paid content needs a price of at least 1 coin — fans never see 0-coin items.');
+      return;
+    }
+    // Uploads are already Private rows — only Public / Pay to Unlock need a flip
+    if (visibility === 'private') {
+      toast.success(`${ids.length} item${ids.length > 1 ? 's' : ''} saved as Private`);
+      onOpenChange(false);
+      return;
+    }
+    setFinishing(true);
+    try {
+      const res = await fetch('/api/content-hub/items/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids,
+          action: 'update_status',
+          status: visibility,
+          ...(visibility === 'exclusive' ? { coin_price: coinPrice } : {}),
+        }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to update items');
+      }
+      toast.success(
+        visibility === 'portfolio'
+          ? `${ids.length} item${ids.length > 1 ? 's' : ''} published to your profile`
+          : `${ids.length} item${ids.length > 1 ? 's' : ''} set to unlock for ${coinPrice} coins`,
+      );
+      onOpenChange(false);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update items');
+    } finally {
+      setFinishing(false);
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={uploading ? undefined : onOpenChange}>
+    <Dialog open={open} onOpenChange={inFlightCount > 0 || finishing ? undefined : onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Upload Content</DialogTitle>
-          <DialogDescription>Add photos or videos to your content.</DialogDescription>
+          <DialogDescription>
+            Photos and videos upload right away — then choose who can see them.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -1319,16 +1396,22 @@ function UploadDialog({
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
-              <p className="text-sm font-medium">Click to select files</p>
+              <p className="text-sm font-medium">Tap to select photos &amp; videos</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Images up to 50MB · Videos up to 500MB
+                Up to {MAX_FILES} at a time · Images up to 50MB · Videos up to 500MB
               </p>
             </div>
           ) : (
             <div className="space-y-2">
-              {files.map((f, idx) => (
-                <div key={idx} className="flex items-center gap-3 rounded-lg border p-2">
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-muted">
+              <div className="grid grid-cols-4 gap-2">
+                {files.map((f) => (
+                  <div
+                    key={f.id}
+                    className={cn(
+                      'relative aspect-square overflow-hidden rounded-lg bg-muted',
+                      f.status === 'error' && 'ring-2 ring-destructive',
+                    )}
+                  >
                     {f.file.type.startsWith('video/') ? (
                       <video
                         src={f.preview}
@@ -1337,51 +1420,71 @@ function UploadDialog({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <Image
-                        src={f.preview}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="48px"
-                      />
+                      <Image src={f.preview} alt="" fill className="object-cover" sizes="120px" />
                     )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate">{f.file.name}</p>
-                    <p className="text-xs text-muted-foreground">{formatFileSize(f.file.size)}</p>
+                    {f.file.type.startsWith('video/') && (
+                      <Video className="absolute bottom-1 left-1 h-3.5 w-3.5 text-white drop-shadow" />
+                    )}
                     {f.status === 'uploading' && (
-                      <Progress value={f.progress} className="mt-1 h-1.5" />
+                      <div className="absolute inset-0 flex items-end bg-black/40 p-1.5">
+                        <Progress value={f.progress} className="h-1 w-full" />
+                      </div>
                     )}
                     {f.status === 'done' && (
-                      <p className="text-xs text-green-600">Uploaded</p>
+                      <span className="absolute right-1 top-1 rounded-full bg-green-500 p-0.5">
+                        <Check className="h-3 w-3 text-white" />
+                      </span>
                     )}
-                    {f.status === 'error' && (
-                      <p className="text-xs text-destructive">{f.error}</p>
+                    {(f.status === 'pending' || f.status === 'error') && (
+                      <button
+                        type="button"
+                        className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
+                        onClick={() => removeFile(f.id)}
+                        aria-label="Remove file"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     )}
                   </div>
-                  {f.status !== 'uploading' && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 shrink-0"
-                      onClick={() => removeFile(idx)}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+                ))}
+                {files.length < MAX_FILES && (
+                  <button
+                    type="button"
+                    className="flex aspect-square flex-col items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/50"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={finishing}
+                  >
+                    <Plus className="h-5 w-5" />
+                    <span className="text-[10px]">Add</span>
+                  </button>
+                )}
+              </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-              >
-                <Plus className="mr-1 h-3.5 w-3.5" />
-                Add More
-              </Button>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                {inFlightCount > 0 ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Uploading… {doneCount}/{files.length}
+                  </>
+                ) : (
+                  <>
+                    {doneCount > 0 && <span className="text-green-500">{doneCount} uploaded</span>}
+                    {errorCount > 0 && (
+                      <>
+                        <span className="text-destructive">{errorCount} failed</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs"
+                          onClick={retryFailed}
+                        >
+                          Retry
+                        </Button>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           )}
 
@@ -1420,7 +1523,7 @@ function UploadDialog({
               variant="outline"
               size="sm"
               onClick={() => cameraImageRef.current?.click()}
-              disabled={uploading}
+              disabled={finishing}
             >
               <Camera className="mr-1.5 h-4 w-4" />
               Take Photo
@@ -1429,93 +1532,92 @@ function UploadDialog({
               variant="outline"
               size="sm"
               onClick={() => cameraVideoRef.current?.click()}
-              disabled={uploading}
+              disabled={finishing}
             >
               <Video className="mr-1.5 h-4 w-4" />
               Record Video
             </Button>
           </div>
 
-          {/* Title */}
-          <div className="space-y-1.5">
-            <Label htmlFor="upload-title">Title (optional)</Label>
-            <Input
-              id="upload-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Give your content a title"
-              disabled={uploading}
-            />
-          </div>
+          {/* Visibility — pick while uploads run; applied when Finish is tapped */}
+          {files.length > 0 && (
+            <div className="space-y-2">
+              <Label>Who can see {files.length > 1 ? 'these' : 'it'}?</Label>
+              {STATUS_OPTIONS.map((o) => {
+                const selected = visibility === o.value;
+                const OptionIcon =
+                  o.value === 'private' ? Lock : o.value === 'portfolio' ? Eye : Coins;
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    disabled={finishing}
+                    onClick={() => setVisibility(o.value)}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors',
+                      selected ? 'border-pink-500 bg-pink-500/10' : 'border-border hover:bg-muted/50',
+                    )}
+                  >
+                    <OptionIcon
+                      className={cn(
+                        'h-4 w-4 shrink-0',
+                        selected ? 'text-pink-500' : 'text-muted-foreground',
+                      )}
+                    />
+                    <span className="flex-1">
+                      <span className="block text-sm font-medium">{o.label}</span>
+                      <span className="block text-xs text-muted-foreground">{o.description}</span>
+                    </span>
+                    {selected && <Check className="h-4 w-4 shrink-0 text-pink-500" />}
+                  </button>
+                );
+              })}
 
-          {/* Status */}
-          <div className="space-y-1.5">
-            <Label>Status</Label>
-            <Select
-              value={status}
-              onValueChange={(v) => {
-                const next = v as typeof status;
-                setStatus(next);
-                if (next === 'exclusive' && coinPrice < 1) setCoinPrice(100);
-              }}
-              disabled={uploading}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="private">Private</SelectItem>
-                <SelectItem value="portfolio">Public</SelectItem>
-                <SelectItem value="exclusive">PPV</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Coin price */}
-          {status === 'exclusive' && (
-            <div className="space-y-1.5">
-              <Label htmlFor="upload-price">Coin Price</Label>
-              <div className="relative">
-                <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="upload-price"
-                  type="number"
-                  min={1}
-                  max={10000}
-                  value={coinPrice}
-                  onChange={(e) => setCoinPrice(Number(e.target.value))}
-                  className="pl-9"
-                  disabled={uploading}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                ${(coinPrice * 0.1).toFixed(2)} USD equivalent
-              </p>
+              {visibility === 'exclusive' && (
+                <div className="space-y-1.5 pt-1">
+                  <Label htmlFor="upload-price">Unlock Price</Label>
+                  <div className="relative">
+                    <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="upload-price"
+                      type="number"
+                      min={1}
+                      max={10000}
+                      value={coinPrice}
+                      onChange={(e) => setCoinPrice(Number(e.target.value))}
+                      className="pl-9"
+                      disabled={finishing}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    ${(coinPrice * 0.1).toFixed(2)} USD equivalent per item
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Upload button */}
-          <Button
-            onClick={allDone ? () => onOpenChange(false) : handleUpload}
-            disabled={uploading || files.length === 0}
-            className="w-full bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:from-pink-600 hover:to-violet-600"
-          >
-            {uploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading...
-              </>
-            ) : allDone ? (
-              'Done'
-            ) : hasErrors ? (
-              'Retry Failed'
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Upload {files.length} {files.length === 1 ? 'File' : 'Files'}
-              </>
-            )}
-          </Button>
+          {/* Finish button */}
+          {files.length > 0 && (
+            <Button
+              onClick={finish}
+              disabled={!allSettled || doneCount === 0 || finishing}
+              className="w-full bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:from-pink-600 hover:to-violet-600"
+            >
+              {inFlightCount > 0 || finishing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {finishing ? 'Saving…' : `Uploading… ${doneCount}/${files.length}`}
+                </>
+              ) : visibility === 'private' ? (
+                `Save ${doneCount} as Private`
+              ) : visibility === 'portfolio' ? (
+                `Publish ${doneCount} to Profile`
+              ) : (
+                'Set Price & Finish'
+              )}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
