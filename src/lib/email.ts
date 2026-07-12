@@ -8159,3 +8159,322 @@ export async function sendMswPendingPhotoRequiredEmail({
   }
 }
 
+// ============================================================
+// WEEKLY DIGESTS (re-engagement, sent by /api/cron/weekly-digest)
+// ============================================================
+
+/**
+ * Fan weekly digest — "New on EXA this week".
+ * Only called when there is something to show (>= 1 new model this week).
+ */
+export async function sendFanWeeklyDigestEmail({
+  to,
+  fanName,
+  newModels,
+  totalNewModels,
+  followedDrops,
+}: {
+  to: string;
+  fanName: string;
+  newModels: { username: string; profilePhotoUrl: string }[];
+  totalNewModels: number;
+  followedDrops: { username: string; newItems: number }[];
+}) {
+  try {
+    // Digests are marketing email — respect the marketing suppression list
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+    const spotlightUrl = `${BASE_URL}/spotlight`;
+    const modelsUrl = `${BASE_URL}/models`;
+
+    const dropsTotal = followedDrops.reduce((sum, d) => sum + d.newItems, 0);
+    const subject = dropsTotal > 0
+      ? `✨ ${totalNewModels} new model${totalNewModels === 1 ? "" : "s"} + new drops from models you follow`
+      : `✨ ${totalNewModels} new model${totalNewModels === 1 ? "" : "s"} just landed on EXA`;
+
+    // 2-per-row grid of new model cards (photo + @username)
+    const modelRows: string[] = [];
+    for (let i = 0; i < newModels.length; i += 2) {
+      const pair = newModels.slice(i, i + 2);
+      modelRows.push(`
+                <tr>
+                  ${pair.map((m) => `
+                  <td width="50%" style="padding: 10px;" align="center">
+                    <a href="${BASE_URL}/${encodeURIComponent(m.username)}" style="text-decoration: none;">
+                      <img src="${m.profilePhotoUrl}" width="120" height="120" alt="@${escapeHtml(m.username)}" style="display: block; margin: 0 auto 10px; border-radius: 60px; object-fit: cover; border: 3px solid #ec4899;" />
+                      <span style="color: #ec4899; font-size: 15px; font-weight: 600;">@${escapeHtml(m.username)}</span>
+                    </a>
+                  </td>`).join("")}
+                  ${pair.length === 1 ? '<td width="50%" style="padding: 10px;"></td>' : ""}
+                </tr>`);
+    }
+
+    const followedDropsHtml = followedDrops.length > 0 ? `
+              <!-- New drops from followed models -->
+              <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 20px; font-weight: 600;">
+                Models you follow dropped new content 🔥
+              </h2>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                ${followedDrops.map((d) => `
+                <tr>
+                  <td style="padding: 14px 16px; background-color: #262626; border-radius: 8px;">
+                    <a href="${BASE_URL}/${encodeURIComponent(d.username)}" style="text-decoration: none;">
+                      <span style="color: #ec4899; font-size: 15px; font-weight: 600;">@${escapeHtml(d.username)}</span>
+                      <span style="color: #a1a1aa; font-size: 14px;"> — ${d.newItems} new drop${d.newItems === 1 ? "" : "s"} this week</span>
+                    </a>
+                  </td>
+                </tr>
+                <tr><td style="height: 8px;"></td></tr>`).join("")}
+              </table>` : "";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                New on EXA This Week
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Fresh faces. New drops. Don't miss out.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${escapeHtml(fanName)},
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                The roster grew this week — <strong style="color: #ffffff;">${totalNewModels} new model${totalNewModels === 1 ? "" : "s"}</strong> just joined EXA. Here's a taste:
+              </p>
+
+              <!-- New model grid -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                ${modelRows.join("")}
+              </table>
+
+              ${followedDropsHtml}
+
+              <!-- Spotlight CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 10px; background-color: #111111; border: 1px solid #262626; border-radius: 12px;">
+                <tr>
+                  <td style="padding: 24px; text-align: center;">
+                    <p style="margin: 0 0 6px; color: #ffffff; font-size: 16px; font-weight: 600;">
+                      Swipe the whole roster in Spotlight ⚡
+                    </p>
+                    <p style="margin: 0 0 16px; color: #a1a1aa; font-size: 14px;">
+                      Like your favorites and they'll know you noticed.
+                    </p>
+                    <a href="${spotlightUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                      Play Spotlight
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 20px 0 0; text-align: center;">
+                <a href="${modelsUrl}" style="color: #8b5cf6; font-size: 14px; text-decoration: underline;">
+                  Browse all models
+                </a>
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Fan weekly digest email error", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Model weekly digest — "You were seen this week".
+ * Only called when at least one stat is > 0. Uses @username only (real names
+ * are admin-only per platform convention).
+ */
+export async function sendModelWeeklyDigestEmail({
+  to,
+  username,
+  profileViews,
+  newFans,
+  spotlightLikes,
+}: {
+  to: string;
+  username: string;
+  profileViews: number;
+  newFans: number;
+  spotlightLikes: number;
+}) {
+  try {
+    // Digests are marketing email — respect the marketing suppression list
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+    const wallUrl = `${BASE_URL}/dashboard`;
+    const studioUrl = `${BASE_URL}/studio`;
+
+    // Lead the subject with the strongest stat
+    let subject: string;
+    if (profileViews > 0) {
+      subject = `👀 ${profileViews} profile view${profileViews === 1 ? "" : "s"} this week — you were seen on EXA`;
+    } else if (newFans > 0) {
+      subject = `💖 ${newFans} new fan${newFans === 1 ? "" : "s"} followed you this week on EXA`;
+    } else {
+      subject = `⚡ ${spotlightLikes} Spotlight like${spotlightLikes === 1 ? "" : "s"} this week on EXA`;
+    }
+
+    // Only show tiles with something to celebrate — no zeros, no negativity
+    const stats = [
+      { value: profileViews, label: "Profile views" },
+      { value: newFans, label: "New fans" },
+      { value: spotlightLikes, label: "Spotlight likes" },
+    ].filter((s) => s.value > 0);
+
+    const statTilesHtml = `
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  ${stats.map((s) => `
+                  <td width="${Math.floor(100 / stats.length)}%" style="padding: 0 5px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #262626; border-radius: 12px;">
+                      <tr>
+                        <td style="padding: 20px 10px; text-align: center;">
+                          <p style="margin: 0 0 4px; color: #ec4899; font-size: 28px; font-weight: bold;">${s.value}</p>
+                          <p style="margin: 0; color: #a1a1aa; font-size: 13px;">${s.label}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>`).join("")}
+                </tr>
+              </table>`;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                You Were Seen This Week
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Your week on EXA, in numbers
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey @${escapeHtml(username)},
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                People were checking you out this week. Here's the proof:
+              </p>
+
+              ${statTilesHtml}
+
+              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.6; text-align: center;">
+                Fans are looking — give them something new to find. 🚀
+              </p>
+
+              <!-- CTAs -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom: 12px;">
+                    <a href="${wallUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Post to Your Live Wall
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <a href="${studioUrl}" style="display: inline-block; background-color: #262626; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 500; font-size: 14px; border: 1px solid #404040;">
+                      Add Content in Studio
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Model weekly digest email error", error);
+    return { success: false, error };
+  }
+}
+
