@@ -54,10 +54,13 @@ export async function POST(request: NextRequest) {
     const suspended = await assertNotSuspended(sender.id);
     if (suspended) return suspended;
 
-    // Fetch message — verify ownership, edit window, and that it has text content
+    // Fetch message — verify ownership, edit window, and that it has text
+    // content. media_type (not media_url) detects media-only messages:
+    // clients can't SELECT messages.media_url anymore (column grants,
+    // migration 20260711100005), and this check only needs "has media".
     const { data: message } = await (supabase
       .from("messages")
-      .select("id, sender_id, conversation_id, content, media_url, deleted_at, created_at, is_system")
+      .select("id, sender_id, conversation_id, content, media_type, deleted_at, created_at, is_system, edit_count")
       .eq("id", messageId)
       .single() as any);
 
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Don't allow editing media-only messages — they have no text to change
-    if (!message.content && message.media_url) {
+    if (!message.content && message.media_type) {
       return NextResponse.json(
         { error: "Media messages cannot be edited" },
         { status: 400 }

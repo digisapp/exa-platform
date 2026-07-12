@@ -340,16 +340,24 @@ export function ChatView({
     currentActorId: currentActor.id,
     onNewMessage: useCallback((newMessage: Message) => {
       setMessages((prev) => {
-        // Replace optimistic message if this is our own message coming back
+        // Replace optimistic message if this is our own message coming back.
+        // Realtime payloads no longer include media_url (column grants,
+        // 20260711100005) — keep the optimistic copy's URL rather than
+        // blanking the sender's own image while hydration catches up.
         const optimisticIdx = prev.findIndex(
           (m) => m._tempId && m.sender_id === newMessage.sender_id && m._status === "sending"
         );
         if (optimisticIdx !== -1) {
           const updated = [...prev];
-          updated[optimisticIdx] = { ...newMessage, _status: "sent" as const };
+          updated[optimisticIdx] = {
+            ...newMessage,
+            media_url: newMessage.media_url ?? prev[optimisticIdx].media_url,
+            _status: "sent" as const,
+          };
           return updated;
         }
-        // Deduplicate
+        // Deduplicate (hydrated media re-deliveries arrive separately via
+        // onMessageHydrated, so a duplicate here is a true duplicate)
         if (prev.some((m) => m.id === newMessage.id)) {
           return prev;
         }
@@ -366,6 +374,18 @@ export function ChatView({
         }
       }
     }, [currentActor.id]),
+    // Media messages arrive without media_url (column grants, 20260711100005);
+    // the hook fetches the sanitized copy and delivers it here. Upsert by id
+    // only — no chime/unread side effects, onNewMessage already handled those.
+    onMessageHydrated: useCallback((hydrated: Message) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === hydrated.id
+            ? { ...m, ...hydrated, media_url: hydrated.media_url ?? m.media_url }
+            : m
+        )
+      );
+    }, []),
     onSystemTip: useCallback(() => {
       toast.success(`${otherName} sent you a tip!`, {
         icon: "🎁",
