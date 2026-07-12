@@ -150,13 +150,13 @@ export function PremiumContentCard({
         {/* Preview or Full Image/Video */}
         {((isUnlocked && mediaUrl) || content.preview_url) && !imageError ? (
           <>
-            {isVideo ? (
+            {isVideo && isUnlocked && mediaUrl ? (
               <>
                 <video
                   ref={videoRef}
                   // #t=0.1 forces the browser to seek/render a frame so the card
                   // shows a thumbnail before autoplay (Safari/iOS otherwise stay black).
-                  src={`${isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}#t=0.1`}
+                  src={`${mediaUrl}#t=0.1`}
                   muted
                   playsInline
                   loop
@@ -178,9 +178,11 @@ export function PremiumContentCard({
                 </button>
               </>
             ) : (
+              // Locked videos land here too: their preview_url is a blurred
+              // JPEG teaser frame captured at upload, not a playable video
               <Image
                 src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
-                alt={content.title || "PPV content"}
+                alt={content.title || "Premium content"}
                 fill
                 className={cn(
                   "object-cover transition-all duration-300",

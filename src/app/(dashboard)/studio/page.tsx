@@ -1130,6 +1130,58 @@ function putWithProgress(
   });
 }
 
+// Capture a heavily blurred teaser frame from a local video file. The frame is
+// decoded in the uploader's browser (no server-side video processing): seek
+// ~10% in, draw through a tiny canvas so the upscale acts as a strong blur on
+// every browser (no ctx.filter dependency), return a 512px JPEG. Resolves null
+// on any failure — the preview is best-effort and locked cards fall back to a
+// placeholder without it.
+function captureBlurredVideoPreview(file: File): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    let settled = false;
+    const finish = (blob: Blob | null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      URL.revokeObjectURL(url);
+      resolve(blob);
+    };
+    const timer = setTimeout(() => finish(null), 8000);
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.onerror = () => finish(null);
+    video.onloadedmetadata = () => {
+      video.currentTime = Math.min(1, (video.duration || 0) * 0.1);
+    };
+    video.onseeked = () => {
+      try {
+        const w = video.videoWidth;
+        const h = video.videoHeight;
+        if (!w || !h) return finish(null);
+        const tiny = document.createElement('canvas');
+        tiny.width = 24;
+        tiny.height = Math.max(1, Math.round((h / w) * 24));
+        tiny.getContext('2d')!.drawImage(video, 0, 0, tiny.width, tiny.height);
+        const out = document.createElement('canvas');
+        out.width = 512;
+        out.height = Math.max(1, Math.round((h / w) * 512));
+        const ctx = out.getContext('2d')!;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(tiny, 0, 0, out.width, out.height);
+        out.toBlob((blob) => finish(blob), 'image/jpeg', 0.6);
+      } catch {
+        finish(null);
+      }
+    };
+    video.src = url;
+    video.load();
+  });
+}
+
 function UploadDialog({
   open,
   onOpenChange,
@@ -1265,6 +1317,37 @@ function UploadDialog({
     setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
   };
 
+  // Videos get their blurred teaser frame captured client-side and uploaded to
+  // the public portfolio bucket (previews are the public teaser even for paid
+  // items — same as server-generated image previews). Best-effort: null on
+  // failure and the item simply has no preview.
+  const uploadVideoPreviewFrame = async (file: File): Promise<string | null> => {
+    try {
+      const blob = await captureBlurredVideoPreview(file);
+      if (!blob) return null;
+      const signedRes = await fetch('/api/upload/signed-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: 'video-preview.jpg',
+          fileType: 'image/jpeg',
+          fileSize: blob.size,
+          exclusive: false,
+        }),
+      });
+      if (!signedRes.ok) return null;
+      const { signedUrl, storagePath } = await signedRes.json();
+      const put = await fetch(signedUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'image/jpeg' },
+        body: blob,
+      });
+      return put.ok ? storagePath : null;
+    } catch {
+      return null;
+    }
+  };
+
   const uploadSingleFile = async (uploadFile: UploadFile): Promise<void> => {
     const { file, id } = uploadFile;
     const fileType = resolveFileType(file);
@@ -1306,8 +1389,12 @@ function UploadDialog({
 
       updateFile(id, { progress: 90 });
 
-      // Step 3: Create the content item (Private until the model chooses)
+      // Step 3: videos get a blurred teaser frame (images get theirs generated
+      // server-side when the item is created)
       const isVideo = fileType.startsWith('video/');
+      const previewPath = isVideo ? await uploadVideoPreviewFrame(file) : null;
+
+      // Step 4: Create the content item (Private until the model chooses)
       const createRes = await fetch('/api/content-hub/items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1317,6 +1404,7 @@ function UploadDialog({
           title: null,
           status: 'private',
           coin_price: 0,
+          ...(previewPath ? { preview_url: previewPath } : {}),
         }),
       });
 
