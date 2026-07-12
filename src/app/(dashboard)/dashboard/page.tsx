@@ -33,6 +33,8 @@ import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { ProfilePhotoBanner } from "@/components/dashboard/ProfilePhotoBanner";
 import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
+import { CastingReadiness } from "@/components/dashboard/CastingReadiness";
+import { computeCastingReadiness } from "@/lib/casting-readiness";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 
 // Helper function to format relative time
@@ -112,6 +114,7 @@ export default async function DashboardPage() {
     { data: rawPortfolioPhotos },
     { count: followerCount },
     { count: views30d },
+    castingReadiness,
   ] = await Promise.all([
     // Get pending bookings for this model - use adminClient to bypass RLS
     (adminClient.from("bookings") as any)
@@ -136,6 +139,8 @@ export default async function DashboardPage() {
       .select("*", { count: "exact", head: true })
       .eq("model_id", model.id)
       .gte("view_date", thirtyDaysAgo.toISOString().split("T")[0]),
+    // Runway Ready meter — model row already loaded above, pass it through
+    computeCastingReadiness(adminClient, model.id, model),
   ]);
 
   // Filter for pending/counter bookings in JS
@@ -617,6 +622,15 @@ export default async function DashboardPage() {
           GETTING STARTED — renders only while steps remain
          ────────────────────────────────────────────────────── */}
       <GettingStartedChecklist steps={checklistSteps} />
+
+      {/* ──────────────────────────────────────────────────────
+          RUNWAY READY — casting readiness meter
+         ────────────────────────────────────────────────────── */}
+      <CastingReadiness
+        score={castingReadiness.score}
+        items={castingReadiness.items}
+        username={model.username || ""}
+      />
 
       {/* ──────────────────────────────────────────────────────
           GIGS FOR YOU — full-width, prominent placement
