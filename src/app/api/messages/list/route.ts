@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { stripLockedMediaUrl } from "@/lib/ppv";
+import { signChatMediaUrls } from "@/lib/chat-media";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -122,9 +123,12 @@ export async function GET(request: NextRequest) {
     // Reverse to get chronological order (oldest first)
     const sortedMessages = (resultMessages || []).reverse();
 
-    // Strip media_url from locked PPV messages (prevent client-side URL inspection)
-    const sanitizedMessages = sortedMessages.map((msg: any) =>
-      stripLockedMediaUrl(msg, sender.id)
+    // Strip media_url from locked PPV messages (prevent client-side URL
+    // inspection), THEN sign surviving chat-media storage paths into
+    // short-lived URLs (src/lib/chat-media.ts) — never sign what was stripped.
+    const sanitizedMessages = await signChatMediaUrls(
+      adminClient,
+      sortedMessages.map((msg: any) => stripLockedMediaUrl(msg, sender.id))
     );
 
     // Batch-fetch reactions for all messages

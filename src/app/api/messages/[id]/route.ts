@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { stripLockedMediaUrl } from "@/lib/ppv";
+import { signChatMediaUrls } from "@/lib/chat-media";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -82,8 +83,14 @@ export async function GET(
       return NextResponse.json({ error: "Message not found" }, { status: 404 });
     }
 
+    // Strip locked PPV media per-viewer, THEN sign a surviving chat-media
+    // storage path into a short-lived URL (src/lib/chat-media.ts).
+    const [sanitized] = await signChatMediaUrls(adminClient, [
+      stripLockedMediaUrl(message, viewer.id),
+    ]);
+
     return NextResponse.json(
-      { message: stripLockedMediaUrl(message, viewer.id) },
+      { message: sanitized },
       { headers: { "Cache-Control": "private, no-cache" } }
     );
   } catch (error) {
