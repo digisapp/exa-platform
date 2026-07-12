@@ -3,7 +3,7 @@
 /**
  * Digis redirect components — every link to Digis.cc goes through a confirmation
  * popup that explains to the user they are leaving EXA and going to our partner
- * platform Digis.cc for ticketing and live streaming.
+ * platform Digis.cc — the official EXA Models live streaming platform.
  */
 
 import { useState } from "react";
@@ -55,8 +55,9 @@ function DigisDialog({
           </DialogTitle>
           <DialogDescription className="text-white/60 text-sm leading-relaxed mt-2">
             <span className="text-white font-semibold">Digis</span> is the
-            official ticket provider and live streaming platform for all EXA
-            shows.
+            official EXA Models live streaming platform + connect with your
+            favorite creators through Live streams, video calls, exclusive
+            events, and content.
           </DialogDescription>
         </DialogHeader>
 
