@@ -4,6 +4,11 @@ import { getActorId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import {
+  CONTENT_MEDIA_BUCKET,
+  CONTENT_MEDIA_SIGNED_URL_TTL,
+  isContentMediaPath,
+} from "@/lib/content-media";
 
 // Extract storage path from either a raw path or an expired signed URL
 // Handles: "premium/modelId/timestamp.jpg" and "https://.../sign/portfolio/premium/...?token=..."
@@ -19,7 +24,12 @@ async function toSignedUrl(rawUrl: string | null | undefined): Promise<string | 
   const path = extractStoragePath(rawUrl);
   if (!path) return null;
   const service = createServiceRoleClient();
-  const { data } = await service.storage.from("portfolio").createSignedUrl(path, 3600);
+  // New exclusive uploads live in the private content-media bucket; legacy
+  // paths live in the public portfolio bucket (src/lib/content-media.ts)
+  const bucket = isContentMediaPath(path) ? CONTENT_MEDIA_BUCKET : "portfolio";
+  const { data } = await service.storage
+    .from(bucket)
+    .createSignedUrl(path, CONTENT_MEDIA_SIGNED_URL_TTL);
   return data?.signedUrl ?? null;
 }
 
@@ -147,7 +157,10 @@ export async function GET(request: NextRequest) {
 
       return {
         ...safeItem,
-        preview_url: freshPreviewUrl ?? previewSource,
+        // Never fall back to a raw private-bucket path — a path is useless to
+        // the client and must not leak; legacy values pass through as before
+        preview_url:
+          freshPreviewUrl ?? (isContentMediaPath(previewSource) ? null : previewSource),
         isUnlocked,
         mediaUrl: freshMediaUrl,
       };

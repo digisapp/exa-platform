@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { ImageCropper } from "@/components/upload/ImageCropper";
 import { getHeroPortrait } from "@/lib/hero-portrait";
+import { isContentMediaPath } from "@/lib/content-media";
 import { toast } from "sonner";
 
 interface ModelDetails {
@@ -263,8 +264,14 @@ export default function AdminModelDetailPage() {
         .limit(100);
 
       if (images && isMounted) {
-        setContentImages(images);
-        const primary = images.find((img: any) => img.is_primary);
+        // Exclude private-bucket paid media ("exclusive/…" paths in the
+        // content-media bucket, src/lib/content-media.ts): the browser can't
+        // sign them, and PPV content isn't avatar/portrait material anyway.
+        const publicImages = images.filter(
+          (img: any) => !isContentMediaPath(img.media_url)
+        );
+        setContentImages(publicImages);
+        const primary = publicImages.find((img: any) => img.is_primary);
         if (primary) setPortraitItem({ id: primary.id, media_url: primary.media_url });
       }
 

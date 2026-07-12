@@ -4,6 +4,12 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import {
+  CONTENT_MEDIA_BUCKET,
+  isContentMediaPath,
+  signContentMediaUrls,
+  syncContentItemStorageForStatus,
+} from "@/lib/content-media";
 
 const updateItemSchema = z.object({
   title: z.string().max(200).optional().nullable(),
@@ -41,7 +47,7 @@ export async function PATCH(
     // Verify ownership
     const { data: existing, error: fetchError } = await service
       .from("content_items")
-      .select("id, model_id, status, coin_price")
+      .select("id, model_id, status, coin_price, media_url")
       .eq("id", id)
       .single();
 
@@ -74,9 +80,34 @@ export async function PATCH(
       );
     }
 
+    // Status flips move the object between the public portfolio bucket and the
+    // private content-media bucket so paid originals stay unfetchable and free
+    // items keep resolving as plain public paths (src/lib/content-media.ts).
+    let movedMediaUrl: string | null = null;
+    if (parsed.data.status && parsed.data.status !== existing.status) {
+      try {
+        movedMediaUrl = await syncContentItemStorageForStatus(
+          service,
+          existing.media_url,
+          parsed.data.status
+        );
+      } catch (moveError) {
+        logger.error("Content item media move failed", moveError, {
+          item_id: id,
+          model_id: modelId,
+          next_status: parsed.data.status,
+        });
+        return NextResponse.json({ error: "Failed to update item" }, { status: 500 });
+      }
+    }
+
     const { data: item, error } = await service
       .from("content_items")
-      .update({ ...parsed.data, updated_at: new Date().toISOString() })
+      .update({
+        ...parsed.data,
+        ...(movedMediaUrl ? { media_url: movedMediaUrl } : {}),
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", id)
       .select()
       .single();
@@ -86,7 +117,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Failed to update item" }, { status: 500 });
     }
 
-    return NextResponse.json({ item });
+    // Sign private-bucket paths so the studio can render the updated item
+    const [signedItem] = await signContentMediaUrls(service, [item]);
+
+    return NextResponse.json({ item: signedItem });
   } catch (error) {
     logger.error("Content item PATCH error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -150,15 +184,21 @@ export async function DELETE(
         .or(`url.eq.${existing.media_url},photo_url.eq.${existing.media_url},storage_path.eq.${existing.media_url}`);
     }
 
-    // Clean up storage files (media + generated preview)
-    const pathsToRemove = [existing.media_url, existing.preview_url]
+    // Clean up storage files (media + generated preview), routed to the bucket
+    // each path lives in (private content-media vs public portfolio)
+    const allPaths = [existing.media_url, existing.preview_url]
       .filter(Boolean)
       .map((url: string) =>
         url.startsWith("http") ? url.split("/portfolio/").pop() : url,
       )
       .filter(Boolean) as string[];
-    if (pathsToRemove.length > 0) {
-      await service.storage.from("portfolio").remove(pathsToRemove);
+    const privatePaths = allPaths.filter((p) => isContentMediaPath(p));
+    const publicPaths = allPaths.filter((p) => !isContentMediaPath(p));
+    if (privatePaths.length > 0) {
+      await service.storage.from(CONTENT_MEDIA_BUCKET).remove(privatePaths);
+    }
+    if (publicPaths.length > 0) {
+      await service.storage.from("portfolio").remove(publicPaths);
     }
 
     return NextResponse.json({ success: true });

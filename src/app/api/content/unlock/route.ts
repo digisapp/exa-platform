@@ -6,6 +6,11 @@ import { sendContentPurchaseEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import {
+  CONTENT_MEDIA_BUCKET,
+  CONTENT_MEDIA_SIGNED_URL_TTL,
+  isContentMediaPath,
+} from "@/lib/content-media";
 
 const unlockSchema = z.object({
   contentId: z.string().uuid(),
@@ -142,8 +147,14 @@ export async function POST(request: NextRequest) {
         ? mediaUrl.match(/\/object\/(?:sign|public)\/[^/]+\/(.+?)(?:\?|$)/)?.[1] ?? null
         : mediaUrl;
       if (rawPath) {
-        const { data } = await service.storage.from("portfolio").createSignedUrl(rawPath, 3600);
-        if (data?.signedUrl) mediaUrl = data.signedUrl;
+        // New exclusive uploads live in the private content-media bucket;
+        // legacy paths live in the public portfolio bucket (src/lib/content-media.ts)
+        const bucket = isContentMediaPath(rawPath) ? CONTENT_MEDIA_BUCKET : "portfolio";
+        const { data } = await service.storage
+          .from(bucket)
+          .createSignedUrl(rawPath, CONTENT_MEDIA_SIGNED_URL_TTL);
+        // A private path must never reach the client raw — it's useless anyway
+        mediaUrl = data?.signedUrl ?? (isContentMediaPath(rawPath) ? null : mediaUrl);
       }
     }
 

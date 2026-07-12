@@ -3,6 +3,11 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import {
+  CONTENT_MEDIA_BUCKET,
+  CONTENT_MEDIA_SIGNED_URL_TTL,
+  isContentMediaPath,
+} from "@/lib/content-media";
 
 // Extract storage path from either a raw path or an expired signed URL.
 // Handles: "premium/modelId/timestamp.jpg" and
@@ -42,10 +47,14 @@ async function resignUrl(
   if (rawUrl.startsWith("http") && isSignedUrlFresh(rawUrl)) return rawUrl;
   const path = extractStoragePath(rawUrl);
   if (!path) return rawUrl; // not a storage path we can re-sign; pass through
+  // New exclusive uploads live in the private content-media bucket; legacy
+  // paths live in the public portfolio bucket (src/lib/content-media.ts)
+  const bucket = isContentMediaPath(path) ? CONTENT_MEDIA_BUCKET : "portfolio";
   const { data } = await service.storage
-    .from("portfolio")
-    .createSignedUrl(path, 3600);
-  return data?.signedUrl ?? rawUrl;
+    .from(bucket)
+    .createSignedUrl(path, CONTENT_MEDIA_SIGNED_URL_TTL);
+  // Never hand a raw private path back to the client — it's useless anyway
+  return data?.signedUrl ?? (isContentMediaPath(path) ? null : rawUrl);
 }
 
 export async function GET(request: NextRequest) {

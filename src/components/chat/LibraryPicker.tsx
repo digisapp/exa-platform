@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Camera, Video, Lock, Loader2, Check, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { isContentMediaPath } from "@/lib/content-media";
 
 interface ContentItem {
   id: string;
@@ -84,13 +85,22 @@ export function LibraryPicker({
           preview_url: string | null;
         }>;
 
-        const ppvItems = content.map((p) => ({
-          id: p.id,
-          url: p.media_url,
-          type: (p.media_type === "video" ? "video" : "photo") as "photo" | "video",
-          coinPrice: p.coin_price,
-          thumbnail: p.preview_url,
-        }));
+        const ppvItems = content
+          // New paid uploads live in the private content-media bucket
+          // ("exclusive/…" paths, src/lib/content-media.ts): the browser can't
+          // sign them and chat messages only carry http URLs or chat-media
+          // paths, so they can't be attached — exclude them (fail closed).
+          // Legacy items resolve to their (already public) portfolio URL so
+          // the recipient can actually render what they paid for.
+          .filter((p) => !isContentMediaPath(p.media_url))
+          .map((p) => ({
+            id: p.id,
+            url: resolveMediaUrl(p.media_url),
+            type: (p.media_type === "video" ? "video" : "photo") as "photo" | "video",
+            coinPrice: p.coin_price,
+            // Previews always live in the public portfolio bucket
+            thumbnail: p.preview_url ? resolveMediaUrl(p.preview_url) : p.preview_url,
+          }));
         setPpvContent(ppvItems);
       }
     } catch (error) {

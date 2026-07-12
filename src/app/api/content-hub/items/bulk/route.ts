@@ -4,6 +4,11 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import {
+  CONTENT_MEDIA_BUCKET,
+  isContentMediaPath,
+  syncContentItemStorageForStatus,
+} from "@/lib/content-media";
 
 const bulkSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(50),
@@ -47,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Verify all items belong to this model
     const { data: items, error: fetchError } = await service
       .from("content_items")
-      .select("id, model_id, tags")
+      .select("id, model_id, tags, status, media_url")
       .in("id", ids);
 
     if (fetchError) {
@@ -72,15 +77,43 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "status is required for update_status" }, { status: 400 });
         }
         // Setting items to PPV without a price leaves them invisible to fans
-        // (fan queries filter coin_price > 0), so the UI sends both together
-        ({ error } = await service
-          .from("content_items")
-          .update({
-            status,
-            ...(status === "exclusive" && coin_price !== undefined ? { coin_price } : {}),
-            updated_at: new Date().toISOString(),
-          })
-          .in("id", ids));
+        // (fan queries filter coin_price > 0), so the UI sends both together.
+        // Per item: status flips move the object between the public portfolio
+        // bucket and the private content-media bucket (src/lib/content-media.ts),
+        // so update row-by-row and never flip a row whose move failed.
+        const updatedAt = new Date().toISOString();
+        const results = await Promise.all(
+          items.map(async (item: any) => {
+            let movedMediaUrl: string | null = null;
+            if (status !== item.status) {
+              try {
+                movedMediaUrl = await syncContentItemStorageForStatus(
+                  service,
+                  item.media_url,
+                  status
+                );
+              } catch (moveError) {
+                logger.error("Bulk media move failed", moveError, {
+                  item_id: item.id,
+                  model_id: modelId,
+                  next_status: status,
+                });
+                return { error: moveError };
+              }
+            }
+            return service
+              .from("content_items")
+              .update({
+                status,
+                ...(status === "exclusive" && coin_price !== undefined ? { coin_price } : {}),
+                ...(movedMediaUrl ? { media_url: movedMediaUrl } : {}),
+                updated_at: updatedAt,
+              })
+              .eq("id", item.id);
+          }),
+        );
+        const failed = results.find((r: any) => r.error);
+        if (failed?.error) error = failed.error;
         break;
       }
       case "update_price": {
@@ -124,7 +157,16 @@ export async function POST(request: NextRequest) {
             .filter(Boolean) as string[];
 
           if (storagePaths.length > 0) {
-            await service.storage.from("portfolio").remove(storagePaths);
+            // Route each path to the bucket it lives in (private content-media
+            // for new exclusive uploads, public portfolio for everything else)
+            const privatePaths = storagePaths.filter((p) => isContentMediaPath(p));
+            const publicPaths = storagePaths.filter((p) => !isContentMediaPath(p));
+            if (privatePaths.length > 0) {
+              await service.storage.from(CONTENT_MEDIA_BUCKET).remove(privatePaths);
+            }
+            if (publicPaths.length > 0) {
+              await service.storage.from("portfolio").remove(publicPaths);
+            }
           }
 
           // Clean up matching media_assets. Run the per-URL deletes in parallel
