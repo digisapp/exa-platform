@@ -31,6 +31,11 @@ import { MIN_WITHDRAWAL_COINS, coinsToUsd, counterpartyIdOf, formatUsd } from "@
 import { toast } from "sonner";
 import Link from "next/link";
 
+import {
+  useFirstPurchaseEligibility,
+  FirstPurchaseBonusBanner,
+  FirstPurchaseBonusChip,
+} from "@/components/coins/FirstPurchaseBonus";
 import EarningsTab from "@/components/wallet/EarningsTab";
 import PayoutsTab from "@/components/wallet/PayoutsTab";
 import { IdentityVerificationBanner } from "@/components/wallet/IdentityVerificationBanner";
@@ -96,6 +101,9 @@ export interface BrandSubscription {
 
 export default function WalletPage() {
   const [loading, setLoading] = useState(true);
+  // First-purchase promo: never-purchased fans get +25% bonus (granted by the
+  // Stripe webhook; this only drives the promo UI)
+  const firstPurchaseEligible = useFirstPurchaseEligibility();
   const [purchasing, setPurchasing] = useState<number | null>(null);
   const [coinBalance, setCoinBalance] = useState(0);
   const [withheldBalance, setWithheldBalance] = useState(0);
@@ -688,6 +696,7 @@ export default function WalletPage() {
                       Choose a package to add coins to your wallet
                     </DialogDescription>
                   </DialogHeader>
+                  {firstPurchaseEligible && <FirstPurchaseBonusBanner className="mt-2" />}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                     {COIN_PACKAGES.map((pack) => {
                       return (
@@ -698,6 +707,7 @@ export default function WalletPage() {
                           <div className="flex items-center gap-2 mb-2">
                             <Coins className="h-5 w-5 text-pink-500" />
                             <span className="text-xl font-bold">{pack.coins.toLocaleString()}</span>
+                            {firstPurchaseEligible && <FirstPurchaseBonusChip coins={pack.coins} />}
                           </div>
                           <p className="text-xl font-bold mb-3">{pack.priceDisplay}</p>
                           <Button

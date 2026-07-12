@@ -8,9 +8,17 @@ import { Coins, Sparkles, Loader2, Check, Zap, Crown, Star } from "lucide-react"
 import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  useFirstPurchaseEligibility,
+  FirstPurchaseBonusBanner,
+  FirstPurchaseBonusChip,
+} from "@/components/coins/FirstPurchaseBonus";
 
 export default function BuyCoinsPage() {
   const [loading, setLoading] = useState<number | null>(null);
+  // First-purchase promo: never-purchased fans get +25% bonus (granted by the
+  // Stripe webhook; this only drives the promo UI)
+  const firstPurchaseEligible = useFirstPurchaseEligibility();
 
   const handlePurchase = async (coins: number) => {
     setLoading(coins);
@@ -78,6 +86,9 @@ export default function BuyCoinsPage() {
         <p className="text-muted-foreground max-w-lg mx-auto">
           Use coins to message models, unlock exclusive content, and connect with talent on EXA.
         </p>
+        {firstPurchaseEligible && (
+          <FirstPurchaseBonusBanner className="mt-4 max-w-md mx-auto" />
+        )}
       </div>
 
       {/* Coin Packages Grid */}
@@ -113,6 +124,12 @@ export default function BuyCoinsPage() {
                 </CardTitle>
                 <CardDescription>
                   ${calculatePerCoin(pack.price, pack.coins)} per coin
+                  {firstPurchaseEligible && (
+                    <>
+                      {" · "}
+                      <FirstPurchaseBonusChip coins={pack.coins} />
+                    </>
+                  )}
                 </CardDescription>
               </CardHeader>
 
