@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -119,6 +119,7 @@ export default function ContentPage() {
     clearSelection,
     isSelected,
     setFilter,
+    resetFilters,
   } = useContentData();
 
   // Refresh the grid without flipping the hook's page-level loading spinner
@@ -311,6 +312,10 @@ export default function ContentPage() {
               <AllTab
                 items={items}
                 filters={filters}
+                onClearFilters={() => {
+                  resetFilters();
+                  setSearchInput('');
+                }}
                 selectedIds={selectedIds}
                 toggleSelect={toggleSelect}
                 selectAll={selectAll}
@@ -444,6 +449,7 @@ export default function ContentPage() {
 function AllTab({
   items,
   filters,
+  onClearFilters,
   selectedIds,
   toggleSelect,
   selectAll,
@@ -458,7 +464,8 @@ function AllTab({
   onBulkDelete,
 }: {
   items: ContentItem[];
-  filters: { status: string | null; media_type: string | null; sort: string; order: string };
+  filters: { status: string | null; media_type: string | null; search: string; sort: string; order: string };
+  onClearFilters: () => void;
   selectedIds: Set<string>;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
@@ -473,6 +480,7 @@ function AllTab({
   onBulkDelete: () => void;
 }) {
   const hasSelection = selectedIds.size > 0;
+  const filtersActive = !!(filters.status || filters.media_type || filters.search);
 
   return (
     <div className="space-y-4">
@@ -541,17 +549,32 @@ function AllTab({
             <div className="mb-4 rounded-full bg-muted p-4">
               <ImageIcon className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="mb-2 text-lg font-semibold">Upload your first photo or video</h3>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Your content library is empty. Start building your portfolio.
-            </p>
-            <Button
-              onClick={onUpload}
-              className="bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:from-pink-600 hover:to-violet-600"
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Upload
-            </Button>
+            {filtersActive ? (
+              <>
+                <h3 className="mb-2 text-lg font-semibold">No items match your filters</h3>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Try a different search or clear the filters to see everything.
+                </p>
+                <Button variant="outline" onClick={onClearFilters}>
+                  <X className="mr-2 h-4 w-4" />
+                  Clear Filters
+                </Button>
+              </>
+            ) : (
+              <>
+                <h3 className="mb-2 text-lg font-semibold">Upload your first photo or video</h3>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Your content library is empty. Start building your portfolio.
+                </p>
+                <Button
+                  onClick={onUpload}
+                  className="bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:from-pink-600 hover:to-violet-600"
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -841,7 +864,7 @@ function ItemEditDialog({
           {/* Coin Price */}
           {status === 'exclusive' && (
             <div className="space-y-1.5">
-              <Label htmlFor="edit-price">Coin Price</Label>
+              <Label htmlFor="edit-price">Unlock Price</Label>
               <div className="relative">
                 <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -1085,6 +1108,28 @@ interface UploadFile {
 
 const UPLOAD_CONCURRENCY = 3;
 
+// PUT with real upload progress — fetch() can't report request-body progress,
+// which left the bar frozen for the whole transfer on large videos.
+function putWithProgress(
+  url: string,
+  file: File,
+  contentType: string,
+  onProgress: (fraction: number) => void,
+): Promise<{ ok: boolean; status: number }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', url);
+    xhr.setRequestHeader('Content-Type', contentType);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(e.loaded / e.total);
+    };
+    xhr.onload = () =>
+      resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status });
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.send(file);
+  });
+}
+
 function UploadDialog({
   open,
   onOpenChange,
@@ -1248,25 +1293,18 @@ function UploadDialog({
       }
 
       const { signedUrl, storagePath } = await signedRes.json();
-      updateFile(id, { progress: 30 });
 
-      // Step 2: Upload to storage directly from browser (bypasses Vercel size limit)
-      const uploadRes = await fetch(signedUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': fileType },
-        body: file,
+      // Step 2: Upload to storage directly from browser (bypasses Vercel size
+      // limit), streaming real transfer progress into the tile's bar
+      const uploadRes = await putWithProgress(signedUrl, file, fileType, (fraction) => {
+        updateFile(id, { progress: 10 + Math.round(fraction * 75) });
       });
 
       if (!uploadRes.ok) {
-        let detail = `Storage upload failed (${uploadRes.status})`;
-        try {
-          const errBody = await uploadRes.json();
-          detail = errBody.message || errBody.error || detail;
-        } catch { /* ignore JSON parse errors */ }
-        throw new Error(detail);
+        throw new Error(`Storage upload failed (${uploadRes.status})`);
       }
 
-      updateFile(id, { progress: 70 });
+      updateFile(id, { progress: 90 });
 
       // Step 3: Create the content item (Private until the model chooses)
       const isVideo = fileType.startsWith('video/');
@@ -1416,6 +1454,7 @@ function UploadDialog({
                       <video
                         src={f.preview}
                         muted
+                        playsInline
                         preload="metadata"
                         className="h-full w-full object-cover"
                       />
@@ -1576,6 +1615,24 @@ function UploadDialog({
               {visibility === 'exclusive' && (
                 <div className="space-y-1.5 pt-1">
                   <Label htmlFor="upload-price">Unlock Price</Label>
+                  <div className="flex gap-1.5">
+                    {[25, 50, 100, 250].map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        disabled={finishing}
+                        onClick={() => setCoinPrice(p)}
+                        className={cn(
+                          'flex-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors',
+                          coinPrice === p
+                            ? 'border-pink-500 bg-pink-500/10 text-pink-500'
+                            : 'border-border text-muted-foreground hover:bg-muted/50',
+                        )}
+                      >
+                        {p} coins
+                      </button>
+                    ))}
+                  </div>
                   <div className="relative">
                     <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
