@@ -606,6 +606,102 @@ export default async function DashboardPage() {
     },
   ];
 
+  // Priority inbox placement: an item in the inbox (offer, booking, bid) is
+  // money waiting and outranks browsing gigs, so a non-empty inbox renders
+  // above Gigs for You; the empty state stays tucked below.
+  const priorityInboxSection = (
+    <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+      <header className="flex items-center justify-between p-5 border-b border-white/5">
+        <div className="flex items-center gap-2">
+          <Flame className="h-5 w-5 text-rose-400" />
+          <h2 className="text-base font-semibold">Priority inbox</h2>
+          {inboxItems.length > 0 && (
+            <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+              {inboxItems.length}
+            </span>
+          )}
+        </div>
+        {/* Auction actions live here only once the model has auctions —
+            for everyone else the empty state below carries the CTA */}
+        {(modelAuctions?.length || 0) > 0 && (
+          <div className="flex items-center gap-3">
+            <Link href="/bids/manage" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+              Manage bids <ArrowUpRight className="h-3 w-3" />
+            </Link>
+            <Link href="/bids/new" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+              <Plus className="h-3 w-3" /> Create EXA Bid
+            </Link>
+          </div>
+        )}
+      </header>
+      <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+        {inboxItems.length === 0 ? (
+          <div className="col-span-full flex flex-wrap items-center justify-center gap-x-2 gap-y-1 py-4 px-3 text-center">
+            <Sparkles className="h-4 w-4 text-white/30 shrink-0" />
+            <p className="text-sm text-white/60">
+              All caught up — new offers, bookings, and auction bids will appear here.
+            </p>
+            <Link
+              href="/bids/new"
+              className="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1 shrink-0"
+            >
+              <Plus className="h-3.5 w-3.5" /> Create an EXA Bid for fans to bid on
+            </Link>
+          </div>
+        ) : (
+          inboxItems.map((item) => {
+            const tagMap = { offer: "Offer", booking: "Booking", auction: "Auction" } as const;
+            const iconMap = {
+              offer: <DollarSign className="h-5 w-5 text-emerald-400" />,
+              booking: <Calendar className="h-5 w-5 text-cyan-400" />,
+              auction: <Gavel className="h-5 w-5 text-violet-400" />,
+            } as const;
+            const dotMap = {
+              hot: "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.8)]",
+              warm: "bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.6)]",
+              normal: "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]",
+            } as const;
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 transition-all group"
+              >
+                <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${dotMap[item.urgency]}`} />
+                {item.avatarUrl ? (
+                  <Image
+                    src={item.avatarUrl}
+                    alt=""
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-full object-cover ring-1 ring-white/10 shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center shrink-0">
+                    {iconMap[item.kind]}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-white/50">
+                    {tagMap[item.kind]}
+                  </p>
+                  <p className="text-sm font-medium text-white truncate">{item.title}</p>
+                  <p className="text-xs text-white/50 truncate">{item.sub}</p>
+                </div>
+                {item.amount && (
+                  <span className="text-sm font-bold text-emerald-400 shrink-0">
+                    {item.amount}
+                  </span>
+                )}
+                <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-white/80 group-hover:translate-x-0.5 transition-all shrink-0" />
+              </Link>
+            );
+          })
+        )}
+      </div>
+    </section>
+  );
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* ══════════════════════════════════════════════════════
@@ -652,6 +748,11 @@ export default async function DashboardPage() {
       />
 
       {/* ──────────────────────────────────────────────────────
+          PRIORITY INBOX — promoted above gigs when it has items
+         ────────────────────────────────────────────────────── */}
+      {inboxItems.length > 0 && priorityInboxSection}
+
+      {/* ──────────────────────────────────────────────────────
           GIGS FOR YOU — full-width, prominent placement
          ────────────────────────────────────────────────────── */}
       <section className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
@@ -663,98 +764,9 @@ export default async function DashboardPage() {
       </section>
 
       {/* ──────────────────────────────────────────────────────
-          PRIORITY INBOX — full-width
+          PRIORITY INBOX — empty state sits here, below gigs
          ────────────────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
-        <header className="flex items-center justify-between p-5 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <Flame className="h-5 w-5 text-rose-400" />
-            <h2 className="text-base font-semibold">Priority inbox</h2>
-            {inboxItems.length > 0 && (
-              <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                {inboxItems.length}
-              </span>
-            )}
-          </div>
-          {/* Auction actions live here only once the model has auctions —
-              for everyone else the empty state below carries the CTA */}
-          {(modelAuctions?.length || 0) > 0 && (
-            <div className="flex items-center gap-3">
-              <Link href="/bids/manage" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
-                Manage bids <ArrowUpRight className="h-3 w-3" />
-              </Link>
-              <Link href="/bids/new" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
-                <Plus className="h-3 w-3" /> Create EXA Bid
-              </Link>
-            </div>
-          )}
-        </header>
-        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-          {inboxItems.length === 0 ? (
-            <div className="col-span-full flex flex-wrap items-center justify-center gap-x-2 gap-y-1 py-4 px-3 text-center">
-              <Sparkles className="h-4 w-4 text-white/30 shrink-0" />
-              <p className="text-sm text-white/60">
-                All caught up — new offers, bookings, and auction bids will appear here.
-              </p>
-              <Link
-                href="/bids/new"
-                className="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1 shrink-0"
-              >
-                <Plus className="h-3.5 w-3.5" /> Create an EXA Bid for fans to bid on
-              </Link>
-            </div>
-          ) : (
-            inboxItems.map((item) => {
-              const tagMap = { offer: "Offer", booking: "Booking", auction: "Auction" } as const;
-              const iconMap = {
-                offer: <DollarSign className="h-5 w-5 text-emerald-400" />,
-                booking: <Calendar className="h-5 w-5 text-cyan-400" />,
-                auction: <Gavel className="h-5 w-5 text-violet-400" />,
-              } as const;
-              const dotMap = {
-                hot: "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.8)]",
-                warm: "bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.6)]",
-                normal: "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]",
-              } as const;
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 transition-all group"
-                >
-                  <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${dotMap[item.urgency]}`} />
-                  {item.avatarUrl ? (
-                    <Image
-                      src={item.avatarUrl}
-                      alt=""
-                      width={40}
-                      height={40}
-                      className="w-10 h-10 rounded-full object-cover ring-1 ring-white/10 shrink-0"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center shrink-0">
-                      {iconMap[item.kind]}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase tracking-wider font-semibold text-white/50">
-                      {tagMap[item.kind]}
-                    </p>
-                    <p className="text-sm font-medium text-white truncate">{item.title}</p>
-                    <p className="text-xs text-white/50 truncate">{item.sub}</p>
-                  </div>
-                  {item.amount && (
-                    <span className="text-sm font-bold text-emerald-400 shrink-0">
-                      {item.amount}
-                    </span>
-                  )}
-                  <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-white/80 group-hover:translate-x-0.5 transition-all shrink-0" />
-                </Link>
-              );
-            })
-          )}
-        </div>
-      </section>
+      {inboxItems.length === 0 && priorityInboxSection}
 
       {/* Mobile-only: EXA Live Wall appears here after gigs */}
       <div className="lg:hidden" data-live-wall>
