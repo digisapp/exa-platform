@@ -137,15 +137,15 @@ export function MessageReactions({
           className={cn(
             "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all",
             reaction.hasReacted
-              ? "bg-pink-500/20 border border-pink-500/30"
-              : "bg-muted hover:bg-muted/80 border border-transparent",
+              ? "bg-pink-500/20 border border-pink-500/40"
+              : "bg-white/10 hover:bg-white/15 border border-white/15",
             isLoading && "opacity-50 cursor-not-allowed"
           )}
         >
           <span>{reaction.emoji}</span>
           <span className={cn(
-            "text-muted-foreground",
-            reaction.hasReacted && "text-pink-500"
+            "text-white/70",
+            reaction.hasReacted && "text-pink-300"
           )}>
             {reaction.count}
           </span>

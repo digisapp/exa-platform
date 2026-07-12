@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Search, MessageSquare, Sparkles, Building2, Pin, Archive, ArchiveRestore, MoreVertical, Coins, Camera, Video, Mic } from "lucide-react";
+import { MessageCircle, Search, MessageSquare, Sparkles, Building2, Pin, Archive, ArchiveRestore, MoreVertical, Gift, Camera, Video, Mic } from "lucide-react";
 import { format, isToday, isYesterday, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { modelDisplayName } from "@/lib/model-display";
@@ -530,7 +530,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
                       )}
                     >
                       {isTipMessage(conv.lastMessage) && (
-                        <Coins className="h-3 w-3 text-amber-500 flex-shrink-0" />
+                        <Gift className="h-3 w-3 text-amber-400 flex-shrink-0" />
                       )}
                       {!conv.lastMessage?.is_system && conv.lastMessage?.media_type && !conv.lastMessage?.content && (
                         conv.lastMessage.media_type?.startsWith("image/") ? (
