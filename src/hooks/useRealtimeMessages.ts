@@ -4,11 +4,19 @@ import { useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { Message } from "@/types/database";
+import { isLockedForViewer } from "@/lib/ppv";
 
 interface UseRealtimeMessagesOptions {
   conversationId: string;
   currentActorId: string;
   onNewMessage: (message: Message) => void;
+  /**
+   * Called when a media message has been hydrated with its sanitized
+   * media_url via /api/messages/[id] (realtime payloads no longer carry the
+   * column). Handlers should upsert by id WITHOUT new-message side effects
+   * (chime, unread count) — onNewMessage already fired for this message.
+   */
+  onMessageHydrated?: (message: Message) => void;
   onSystemTip?: (senderName: string) => void;
   /**
    * Called when realtime delivery may have dropped messages (subscription
@@ -28,16 +36,21 @@ export function useRealtimeMessages({
   conversationId,
   currentActorId,
   onNewMessage,
+  onMessageHydrated,
   onSystemTip,
   onResync,
 }: UseRealtimeMessagesOptions) {
   // Use refs so the subscription callback always sees the latest callbacks
   const onNewMessageRef = useRef(onNewMessage);
+  const onMessageHydratedRef = useRef(onMessageHydrated);
   const onSystemTipRef = useRef(onSystemTip);
   const onResyncRef = useRef(onResync);
   useEffect(() => {
     onNewMessageRef.current = onNewMessage;
   }, [onNewMessage]);
+  useEffect(() => {
+    onMessageHydratedRef.current = onMessageHydrated;
+  }, [onMessageHydrated]);
   useEffect(() => {
     onSystemTipRef.current = onSystemTip;
   }, [onSystemTip]);
@@ -57,16 +70,36 @@ export function useRealtimeMessages({
     const handleInsert = (payload: { new: unknown }) => {
       let newMessage = payload.new as Message & { is_system?: boolean };
 
-      // Strip media_url from locked PPV messages
-      if (
-        (newMessage.media_price ?? 0) > 0 &&
-        newMessage.sender_id !== currentActorId &&
-        !(newMessage.media_viewed_by ?? []).includes(currentActorId)
-      ) {
+      // Strip media_url from locked PPV messages. Since 20260711100005 the
+      // realtime payload shouldn't carry media_url at all (clients have no
+      // SELECT privilege on that column) — kept as defense-in-depth.
+      if (isLockedForViewer(newMessage, currentActorId)) {
         newMessage = { ...newMessage, media_url: null };
       }
 
       onNewMessageRef.current(newMessage);
+
+      // Doorbell → hydrate: media messages arrive without media_url (column
+      // grants). When this viewer is allowed to see the media (free media,
+      // own message, already unlocked), fetch the sanitized copy — the server
+      // decides per-viewer — and re-deliver so the caller merges the URL in.
+      // Locked PPV stays a blurred bubble until the unlock flow provides it.
+      if (
+        newMessage.media_type &&
+        !newMessage.media_url &&
+        !isLockedForViewer(newMessage, currentActorId)
+      ) {
+        fetch(`/api/messages/${newMessage.id}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (disposed || !data?.message?.media_url) return;
+            onMessageHydratedRef.current?.({ ...newMessage, ...data.message });
+          })
+          .catch(() => {
+            // Best-effort: the bubble renders without media; resync paths
+            // (visibility/subscription recovery) will fill it in later.
+          });
+      }
 
       // Notify on tips from others
       if (

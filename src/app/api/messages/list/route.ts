@@ -1,8 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { stripLockedMediaUrl } from "@/lib/ppv";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+
+// Service client: clients can no longer SELECT messages.media_url (column
+// grants, migration 20260711100005). This route may read it because it
+// verifies conversation membership first and strips locked media per-viewer.
+const adminClient = createServiceRoleClient();
 
 const PAGE_SIZE = 50;
 
@@ -74,8 +81,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build query - filter out soft-deleted messages
-    let query = supabase
+    // Build query - filter out soft-deleted messages.
+    // Membership was verified above, so the service client may read media_url;
+    // locked media is stripped per-viewer before the response.
+    let query = adminClient
       .from("messages")
       .select("id, conversation_id, sender_id, content, media_url, media_type, media_price, media_viewed_by, is_system, deleted_at, created_at, reply_to_id")
       .eq("conversation_id", conversationId)
@@ -84,11 +93,13 @@ export async function GET(request: NextRequest) {
       .limit(PAGE_SIZE + 1); // Fetch one extra to check if there are more
 
     // If "before" is provided, get messages created before that message
+    // (scoped to this conversation so a foreign message ID can't be probed)
     if (before) {
-      const { data: beforeMessage } = await supabase
+      const { data: beforeMessage } = await adminClient
         .from("messages")
         .select("created_at")
         .eq("id", before)
+        .eq("conversation_id", conversationId)
         .single();
 
       if (beforeMessage) {
@@ -112,16 +123,9 @@ export async function GET(request: NextRequest) {
     const sortedMessages = (resultMessages || []).reverse();
 
     // Strip media_url from locked PPV messages (prevent client-side URL inspection)
-    const sanitizedMessages = sortedMessages.map((msg: any) => {
-      if (
-        msg.media_price > 0 &&
-        msg.sender_id !== sender.id &&
-        !(msg.media_viewed_by ?? []).includes(sender.id)
-      ) {
-        return { ...msg, media_url: null };
-      }
-      return msg;
-    });
+    const sanitizedMessages = sortedMessages.map((msg: any) =>
+      stripLockedMediaUrl(msg, sender.id)
+    );
 
     // Batch-fetch reactions for all messages
     const messageIds = sanitizedMessages.map((m: any) => m.id);

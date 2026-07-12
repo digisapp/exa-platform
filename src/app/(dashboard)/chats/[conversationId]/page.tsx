@@ -4,6 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import { ChatView, type ChatParticipantFan } from "@/components/chat/ChatView";
 import type { ChatParticipantModel } from "@/components/chat/ChatHeader";
 import type { Message, Actor, Model, Fan, Brand } from "@/types/database";
+import { stripLockedMediaUrl } from "@/lib/ppv";
 
 // Admin client for fetching participant data (bypasses RLS)
 const adminClient = createServiceRoleClient();
@@ -86,10 +87,17 @@ export default async function ChatPage({ params }: PageProps) {
     redirect("/chats");
   }
 
-  // Get messages (fetch 101 to check if there are more)
-  const { data: allMessages } = (await supabase
+  // Get messages (fetch 101 to check if there are more).
+  // Uses the service client with an explicit column list: clients can no
+  // longer SELECT messages.media_url at all (column grants, migration
+  // 20260711100005), so the user-scoped client can't serve this read. Safe
+  // because the participant check above already ran, and locked media is
+  // stripped per-viewer below before anything reaches the RSC payload.
+  const { data: allMessages } = (await adminClient
     .from("messages")
-    .select("*")
+    .select(
+      "id, conversation_id, sender_id, sender_type, recipient_id, recipient_instagram, content, media_url, media_type, media_price, media_viewed_by, media_thumbnail_url, media_duration, media_expires_at, media_file_size, media_view_mode, is_system, is_flagged, flagged_reason, flagged_at, flagged_by, read_at, reply_to_id, transaction_id, edited_at, edit_count, deleted_at, created_at"
+    )
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: false })
     .limit(101)) as { data: Message[] | null };
@@ -99,19 +107,12 @@ export default async function ChatPage({ params }: PageProps) {
   const messages = (allMessages
     ? (hasMoreMessages ? allMessages.slice(0, 100) : allMessages).reverse()
     : []
-  ).map((msg: any) => {
+  ).map((msg: Message) =>
     // Strip media_url from locked PPV messages so it never reaches the client
     // RSC payload — the media_price/media_viewed_by fields stay so the bubble
     // can still render the unlock overlay. Mirrors /api/messages/list.
-    if (
-      (msg.media_price ?? 0) > 0 &&
-      msg.sender_id !== actor.id &&
-      !(msg.media_viewed_by ?? []).includes(actor.id)
-    ) {
-      return { ...msg, media_url: null };
-    }
-    return msg;
-  });
+    stripLockedMediaUrl(msg, actor.id)
+  );
 
   // Get other participant(s)
   const { data: participants, error: partError } = await supabase
