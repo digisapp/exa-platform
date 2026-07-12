@@ -6,6 +6,12 @@ import { getModelId } from "@/lib/ids";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { processImage } from "@/lib/image-processing";
+import {
+  CONTENT_MEDIA_BUCKET,
+  isContentMediaPath,
+  isValidContentMediaStoragePath,
+  signContentMediaUrls,
+} from "@/lib/content-media";
 
 export const runtime = "nodejs";
 
@@ -84,8 +90,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch items" }, { status: 500 });
     }
 
+    // Private-bucket paths (new exclusive uploads) are useless to the client —
+    // sign them so the model's own studio grid can render. Legacy http URLs
+    // and public portfolio paths pass through untouched.
+    const signedItems = await signContentMediaUrls(service, items || []);
+
     return NextResponse.json({
-      items: items || [],
+      items: signedItems,
       total: count ?? 0,
       limit,
       offset,
@@ -127,20 +138,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const mediaUrl = parsed.data.media_url;
+
+    // Private-bucket paths (from /api/upload/signed-url with exclusive=true)
+    // are only valid for PPV items owned by this model — fail closed so a
+    // public item can never point into the private bucket (it would 404 on
+    // every public surface) and a model can never claim another's object.
+    const isPrivateMedia = isContentMediaPath(mediaUrl);
+    if (isPrivateMedia) {
+      if (
+        !isValidContentMediaStoragePath(mediaUrl) ||
+        !mediaUrl.startsWith(`exclusive/${modelId}/`)
+      ) {
+        return NextResponse.json(
+          { error: "Storage path does not belong to this user" },
+          { status: 403 }
+        );
+      }
+      if (parsed.data.status !== "exclusive") {
+        return NextResponse.json(
+          { error: "Private content media requires exclusive status" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Normalize freshly-uploaded images: download from storage, bake EXIF
     // rotation into pixels (Satori/next-og ignores EXIF orientation, which made
     // photos taken in portrait on iPhones render sideways in flyers), strip
     // metadata, and capture dimensions. Only runs for images stored as
-    // relative paths in the portfolio bucket — full URLs and external sources
-    // are left alone.
+    // relative paths (portfolio bucket, or content-media for exclusive) —
+    // full URLs and external sources are left alone.
     let width: number | null = null;
     let height: number | null = null;
     let generatedPreviewUrl: string | null = null;
-    const mediaUrl = parsed.data.media_url;
+    const mediaBucket = isPrivateMedia ? CONTENT_MEDIA_BUCKET : "portfolio";
     if (parsed.data.media_type === "image" && !/^https?:\/\//i.test(mediaUrl)) {
       try {
         const { data: blob, error: dlErr } = await service.storage
-          .from("portfolio")
+          .from(mediaBucket)
           .download(mediaUrl);
         if (dlErr) throw dlErr;
         const inputBuf = Buffer.from(await blob.arrayBuffer());
@@ -150,7 +186,7 @@ export async function POST(request: NextRequest) {
           quality: 90,
         });
         const { error: upErr } = await service.storage
-          .from("portfolio")
+          .from(mediaBucket)
           .upload(mediaUrl, processed.buffer, {
             contentType: processed.contentType,
             cacheControl: "31536000",
@@ -162,7 +198,9 @@ export async function POST(request: NextRequest) {
 
         // Generate a heavily blurred low-res preview so locked PPV items never
         // have to expose the full media as their teaser (the fan UI's CSS blur
-        // is trivially bypassed via the network tab).
+        // is trivially bypassed via the network tab). The preview always goes
+        // to the PUBLIC portfolio bucket — it is the public teaser, even when
+        // the original lives in the private content-media bucket.
         if (!parsed.data.preview_url) {
           try {
             const preview = await processImage(inputBuf, {
@@ -172,7 +210,9 @@ export async function POST(request: NextRequest) {
               format: "jpeg",
               blur: 24,
             });
-            const previewPath = `${mediaUrl.replace(/\.[^.]+$/, "")}_preview.jpg`;
+            const previewPath = `${mediaUrl
+              .replace(/^exclusive\//, "")
+              .replace(/\.[^.]+$/, "")}_preview.jpg`;
             const { error: pvErr } = await service.storage
               .from("portfolio")
               .upload(previewPath, preview.buffer, {
@@ -216,7 +256,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to create item", details: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ item }, { status: 201 });
+    // Sign private-bucket paths for the owner's immediate render (raw paths
+    // are useless to the client)
+    const [signedItem] = await signContentMediaUrls(service, [item]);
+
+    return NextResponse.json({ item: signedItem }, { status: 201 });
   } catch (error) {
     logger.error("Content items POST error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

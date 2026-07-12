@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { logger } from "@/lib/logger";
+import { isContentMediaPath } from "@/lib/content-media";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -127,6 +128,15 @@ export async function POST(
     if (item.media_type !== "image") {
       return NextResponse.json(
         { error: "Content item must be an image" },
+        { status: 400 }
+      );
+    }
+
+    // Paid media lives in the private content-media bucket — it has no public
+    // URL and must not be copied onto a public profile field (fail closed)
+    if (isContentMediaPath(item.media_url)) {
+      return NextResponse.json(
+        { error: "Exclusive (paid) content can't be used as a profile image" },
         { status: 400 }
       );
     }

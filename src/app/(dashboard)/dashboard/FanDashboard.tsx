@@ -18,6 +18,11 @@ import { ModelCard } from "@/components/models/model-card";
 import { ForYouFeed, type FeedItem } from "./ForYouFeed";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { LiveBidsPanel } from "./LiveBidsPanel";
+import {
+  CONTENT_MEDIA_BUCKET,
+  CONTENT_MEDIA_SIGNED_URL_TTL,
+  isContentMediaPath,
+} from "@/lib/content-media";
 
 // Re-sign a storage path or expired signed URL to get a fresh 1-hour signed URL
 function extractStoragePath(url: string): string | null {
@@ -31,8 +36,14 @@ async function toSignedUrl(rawUrl: string | null | undefined, service: ReturnTyp
   if (!rawUrl) return null;
   const path = extractStoragePath(rawUrl);
   if (!path) return rawUrl; // not a storage path, return as-is (e.g. public URL)
-  const { data } = await service.storage.from("portfolio").createSignedUrl(path, 3600);
-  return data?.signedUrl ?? rawUrl;
+  // New exclusive uploads live in the private content-media bucket; legacy
+  // paths live in the public portfolio bucket (src/lib/content-media.ts)
+  const bucket = isContentMediaPath(path) ? CONTENT_MEDIA_BUCKET : "portfolio";
+  const { data } = await service.storage
+    .from(bucket)
+    .createSignedUrl(path, CONTENT_MEDIA_SIGNED_URL_TTL);
+  // Never emit a raw private path — it's useless to the client
+  return data?.signedUrl ?? (isContentMediaPath(path) ? null : rawUrl);
 }
 
 function seededShuffle<T>(array: T[], seed: number): T[] {

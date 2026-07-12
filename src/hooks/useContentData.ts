@@ -174,8 +174,17 @@ export function useContentData() {
           body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to update item');
+        const result = await res.json();
+        // Status flips can move media between buckets server-side (paid content
+        // lives in a private bucket) — adopt the server's item, whose media_url
+        // is freshly signed/resolved, over the optimistic merge.
+        if (result?.item) {
+          setItems((prev) =>
+            prev.map((item) => (item.id === id ? { ...item, ...result.item } : item)),
+          );
+        }
         toast.success('Content item updated');
-        return await res.json();
+        return result;
       } catch {
         toast.error('Failed to update content item');
         // Revert on failure

@@ -6,6 +6,11 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { getActorId } from "@/lib/ids";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import {
+  CONTENT_MEDIA_BUCKET,
+  CONTENT_MEDIA_SIGNED_URL_TTL,
+  isContentMediaPath,
+} from "@/lib/content-media";
 
 const purchaseSchema = z
   .object({
@@ -95,9 +100,14 @@ export async function POST(request: NextRequest) {
       if (item?.media_url) {
         const storagePath = extractStoragePath(item.media_url);
         if (storagePath) {
+          // New exclusive uploads live in the private content-media bucket;
+          // legacy paths live in the public portfolio bucket (src/lib/content-media.ts)
+          const bucket = isContentMediaPath(storagePath)
+            ? CONTENT_MEDIA_BUCKET
+            : "portfolio";
           const { data: signed } = await service.storage
-            .from("portfolio")
-            .createSignedUrl(storagePath, 3600);
+            .from(bucket)
+            .createSignedUrl(storagePath, CONTENT_MEDIA_SIGNED_URL_TTL);
           signedUrl = signed?.signedUrl || null;
         }
       }

@@ -4,6 +4,7 @@ import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import { CONTENT_MEDIA_BUCKET, CONTENT_MEDIA_PATH_PREFIX } from "@/lib/content-media";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Model not found" }, { status: 400 });
     }
 
-    const { fileName, fileType, fileSize, title } = await request.json();
+    const { fileName, fileType, fileSize, title, exclusive } = await request.json();
 
     if (!fileName || !fileType || !fileSize) {
       return NextResponse.json(
@@ -80,8 +81,14 @@ export async function POST(request: NextRequest) {
     const defaultExt = isVideo ? "mp4" : isAudio ? "webm" : "jpg";
     const ext = MIME_TO_EXT[fileType] || defaultExt;
     const timestamp = Date.now();
-    const storagePath = `${modelId}/${timestamp}.${ext}`;
-    const bucket = "portfolio";
+    // Paid/exclusive content goes to the PRIVATE content-media bucket so the
+    // full-res object is never publicly fetchable; everything else keeps the
+    // public portfolio bucket (see src/lib/content-media.ts).
+    const isExclusive = exclusive === true && !isAudio;
+    const storagePath = isExclusive
+      ? `${CONTENT_MEDIA_PATH_PREFIX}${modelId}/${timestamp}.${ext}`
+      : `${modelId}/${timestamp}.${ext}`;
+    const bucket = isExclusive ? CONTENT_MEDIA_BUCKET : "portfolio";
 
     // Create signed upload URL (valid for 1 hour)
     const { data: signedData, error: signedError } = await adminClient.storage

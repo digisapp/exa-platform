@@ -1200,6 +1200,9 @@ function UploadDialog({
           fileType,
           fileSize: file.size,
           title: title || file.name.split('.')[0],
+          // Paid content uploads to the private content-media bucket so the
+          // full-res file is never a shareable public URL (src/lib/content-media.ts)
+          exclusive: status === 'exclusive',
         }),
       });
 
