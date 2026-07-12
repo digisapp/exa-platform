@@ -19,6 +19,13 @@ interface TeaserModel {
 
 interface BoostTeaserProps {
   isLoggedIn: boolean;
+  /**
+   * "standalone" (default): self-contained centered section, horizontal
+   * text-left/deck-right layout on desktop.
+   * "column": bare card that fills a parent grid cell (e.g. paired with the
+   * EXA Bids card on the homepage) — stacked layout at every breakpoint.
+   */
+  variant?: "standalone" | "column";
 }
 
 const cardVariants = {
@@ -141,7 +148,8 @@ function SwipeActionButton({
   );
 }
 
-export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
+export function BoostTeaser({ isLoggedIn, variant = "standalone" }: BoostTeaserProps) {
+  const isColumn = variant === "column";
   const sectionRef = useRef<HTMLDivElement>(null);
   const startedRef = useRef(false);
   const fingerprintRef = useRef<string | null>(null);
@@ -233,16 +241,21 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
   const current = deck?.[index];
   const next = deck?.[index + 1];
 
-  return (
-    <section className="container px-4 md:px-16 py-6">
+  const card = (
       <div
         ref={sectionRef}
-        className="relative max-w-2xl mx-auto overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500/10 via-pink-500/5 to-transparent border border-orange-500/20 p-5 md:p-8"
+        className={`relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500/10 via-pink-500/5 to-transparent border border-orange-500/20 p-5 md:p-8 ${
+          isColumn ? "h-full" : "max-w-2xl mx-auto"
+        }`}
       >
         <div className="absolute -top-20 -right-20 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl opacity-50 pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6 md:gap-8">
-          <div className="md:flex-1">
+        <div
+          className={`relative z-10 flex flex-col gap-6 ${
+            isColumn ? "h-full" : "md:flex-row md:items-center md:gap-8"
+          }`}
+        >
+          <div className={isColumn ? "" : "md:flex-1"}>
             <div className="flex items-center gap-2 mb-2">
               <div className="w-7 h-7 rounded-lg bg-orange-500/20 flex items-center justify-center">
                 <Flame className="h-4 w-4 text-orange-300" />
@@ -256,7 +269,11 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
             </p>
           </div>
 
-          <div className="flex justify-center md:justify-end">
+          <div
+            className={`flex justify-center ${
+              isColumn ? "flex-1 items-center" : "md:justify-end"
+            }`}
+          >
             {done ? (
               <div className="flex flex-col items-center gap-3 py-4">
                 {likedCount > 0 && (
@@ -357,6 +374,9 @@ export function BoostTeaser({ isLoggedIn }: BoostTeaserProps) {
           </div>
         </div>
       </div>
-    </section>
   );
+
+  if (isColumn) return card;
+
+  return <section className="container px-4 md:px-16 py-6">{card}</section>;
 }

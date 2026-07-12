@@ -178,6 +178,105 @@ export default async function HomePage() {
   const showEventsWallSection = hasUpcomingEvents || liveWallIsFresh;
   const eventsWallTwoColumn = hasUpcomingEvents && liveWallIsFresh;
 
+  // EXA Bids earns the premium slot beside the Spotlight teaser only when at
+  // least one auction is live — an empty "no active bids" card shouldn't be
+  // among the first things visitors see. With nothing live it stays in the
+  // lower workshop section where the empty state is low-stakes.
+  const bidsBesideSpotlight = (activeAuctions?.length ?? 0) > 0;
+  const hasWorkshopFlyer = !!upcomingWorkshop?.cover_image_url;
+  const showWorkshopBidsSection = hasWorkshopFlyer || !bidsBesideSpotlight;
+  const workshopBidsTwoColumn = hasWorkshopFlyer && !bidsBesideSpotlight;
+
+  const bidsCard = (
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 via-violet-500 to-indigo-600 p-[2px] h-full">
+      <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full flex flex-col">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-5">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-violet-500 rounded-2xl blur-xl opacity-50" />
+            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center">
+              <Gavel className="h-7 w-7 text-white" />
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-0.5">
+              <h3 className="text-xl md:text-2xl font-bold text-white">EXA Bids</h3>
+              {(activeAuctions?.length ?? 0) > 0 && (
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/30">
+                  <div className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
+                  <span className="text-[10px] text-red-400 font-bold tracking-wide">
+                    {activeAuctions!.length} LIVE
+                  </span>
+                </div>
+              )}
+            </div>
+            <p className="text-white/60 text-xs md:text-sm">
+              Bid on services & content from top models
+            </p>
+          </div>
+        </div>
+
+        {/* Active Auctions Preview */}
+        <div className="flex-1 mb-5">
+          {(activeAuctions?.length ?? 0) > 0 ? (
+            <div className="space-y-2">
+              {(activeAuctions || []).map((auction: any) => (
+                <Link
+                  key={auction.id}
+                  href={`/bids/${auction.id}`}
+                  className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group/row"
+                >
+                  <Avatar className="h-9 w-9 border border-violet-500/30 shrink-0">
+                    <AvatarImage src={auction.model?.profile_photo_url} />
+                    <AvatarFallback className="bg-violet-500/20 text-violet-300 text-xs">
+                      {auction.model?.username?.[0]?.toUpperCase() || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white font-medium truncate group-hover/row:text-pink-300 transition-colors">
+                      {auction.title}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-white/40">
+                      <span>@{auction.model?.username}</span>
+                      {auction.bid_count > 0 && (
+                        <span>· {auction.bid_count} bid{auction.bid_count !== 1 ? "s" : ""}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="flex items-center gap-1.5 text-amber-400 justify-end">
+                      <Coins className="h-4 w-4" />
+                      <span className="text-base font-bold">
+                        {formatCoins(auction.current_bid || auction.starting_price)}
+                      </span>
+                      <span className="text-sm text-white/50 font-medium">
+                        ({formatUsd(coinsToFanUsd(auction.current_bid || auction.starting_price))})
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-8 rounded-xl bg-white/5">
+              <p className="text-sm text-white/40">No active bids right now</p>
+            </div>
+          )}
+        </div>
+
+        {/* CTA */}
+        <Link href="/bids" className="block">
+          <div className="flex justify-end">
+            <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold hover:scale-105 transition-transform flex items-center gap-2">
+              Place Bids
+              <ArrowRight className="h-4 w-4" />
+            </div>
+          </div>
+        </Link>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen relative">
       {/* Floating Orbs Background */}
@@ -303,8 +402,20 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* EXA Spotlight Teaser — playable mini-deck, fetches client-side on scroll */}
-        <BoostTeaser isLoggedIn={!!user} />
+        {/* EXA Spotlight Teaser — playable mini-deck, fetches client-side on
+            scroll. When auctions are live, EXA Bids joins it on the same row
+            (desktop); otherwise the teaser keeps its centered standalone look
+            and Bids stays in the lower workshop section. */}
+        {bidsBesideSpotlight ? (
+          <section className="container px-4 md:px-16 py-6">
+            <div className="grid gap-6 lg:grid-cols-2 lg:items-stretch">
+              <BoostTeaser isLoggedIn={!!user} variant="column" />
+              {bidsCard}
+            </div>
+          </section>
+        ) : (
+          <BoostTeaser isLoggedIn={!!user} />
+        )}
 
         {/* Upcoming Shows + EXA Live Wall (side-by-side on desktop, stacked on
             mobile). Each block renders only when it has something to show:
@@ -351,12 +462,18 @@ export default async function HomePage() {
           <TopModelsCarousel models={topModels || []} showRank={false} showCategories={true} />
         </section>
 
-        {/* Runway Workshop Flyer & EXA Bids */}
+        {/* Runway Workshop Flyer & EXA Bids. Bids renders here only when it
+            isn't already up beside the Spotlight teaser; a workshop flyer left
+            without a partner centers itself at the teaser's width. */}
+        {showWorkshopBidsSection && (
         <section className="container px-8 md:px-16 py-8">
-          <div className={`grid gap-6 ${upcomingWorkshop?.cover_image_url ? "md:grid-cols-2" : "md:grid-cols-1"}`}>
+          <div className={`grid gap-6 ${workshopBidsTwoColumn ? "md:grid-cols-2" : ""}`}>
             {/* Runway Workshop Flyer (left) */}
-            {upcomingWorkshop?.cover_image_url && (
-              <Link href={`/workshops/${upcomingWorkshop.slug}`} className="block group h-full">
+            {hasWorkshopFlyer && (
+              <Link
+                href={`/workshops/${upcomingWorkshop.slug}`}
+                className={`block group h-full ${workshopBidsTwoColumn ? "" : "w-full max-w-2xl mx-auto"}`}
+              >
                 <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 p-[2px] h-full">
                   <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full flex flex-col">
                     {/* Header */}
@@ -429,97 +546,12 @@ export default async function HomePage() {
               </Link>
             )}
 
-            {/* EXA Bids (right) */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 via-violet-500 to-indigo-600 p-[2px] h-full">
-              <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full flex flex-col">
-                {/* Header */}
-                <div className="flex items-center gap-4 mb-5">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-violet-500 rounded-2xl blur-xl opacity-50" />
-                    <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center">
-                      <Gavel className="h-7 w-7 text-white" />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <h3 className="text-xl md:text-2xl font-bold text-white">EXA Bids</h3>
-                      {(activeAuctions?.length ?? 0) > 0 && (
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/30">
-                          <div className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
-                          <span className="text-[10px] text-red-400 font-bold tracking-wide">
-                            {activeAuctions!.length} LIVE
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-white/60 text-xs md:text-sm">
-                      Bid on services & content from top models
-                    </p>
-                  </div>
-                </div>
-
-                {/* Active Auctions Preview */}
-                <div className="flex-1 mb-5">
-                  {(activeAuctions?.length ?? 0) > 0 ? (
-                    <div className="space-y-2">
-                      {(activeAuctions || []).map((auction: any) => (
-                        <Link
-                          key={auction.id}
-                          href={`/bids/${auction.id}`}
-                          className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group/row"
-                        >
-                          <Avatar className="h-9 w-9 border border-violet-500/30 shrink-0">
-                            <AvatarImage src={auction.model?.profile_photo_url} />
-                            <AvatarFallback className="bg-violet-500/20 text-violet-300 text-xs">
-                              {auction.model?.username?.[0]?.toUpperCase() || "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white font-medium truncate group-hover/row:text-pink-300 transition-colors">
-                              {auction.title}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-white/40">
-                              <span>@{auction.model?.username}</span>
-                              {auction.bid_count > 0 && (
-                                <span>· {auction.bid_count} bid{auction.bid_count !== 1 ? "s" : ""}</span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <div className="flex items-center gap-1.5 text-amber-400 justify-end">
-                              <Coins className="h-4 w-4" />
-                              <span className="text-base font-bold">
-                                {formatCoins(auction.current_bid || auction.starting_price)}
-                              </span>
-                              <span className="text-sm text-white/50 font-medium">
-                                ({formatUsd(coinsToFanUsd(auction.current_bid || auction.starting_price))})
-                              </span>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center py-8 rounded-xl bg-white/5">
-                      <p className="text-sm text-white/40">No active bids right now</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* CTA */}
-                <Link href="/bids" className="block">
-                  <div className="flex justify-end">
-                    <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold hover:scale-105 transition-transform flex items-center gap-2">
-                      Place Bids
-                      <ArrowRight className="h-4 w-4" />
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            </div>
+            {/* EXA Bids (right) — only when not already beside Spotlight */}
+            {!bidsBesideSpotlight && bidsCard}
 
           </div>
         </section>
+        )}
 
         {/* Footer */}
         <footer className="relative mt-16 border-t border-violet-500/15 bg-gradient-to-b from-transparent to-[#0a0014]/60 backdrop-blur-sm">
