@@ -3,9 +3,10 @@ import { sendModelApprovalEmail } from "@/lib/email";
 import { sendModelApprovalSMS } from "@/lib/sms";
 import { escapeIlike } from "@/lib/utils";
 
-// Carries the fan's coin balance onto the model row and removes the fan
-// record in one transaction — replaces the old bare DELETE FROM fans, which
-// dropped the balance (and let clawback debt escape) on conversion.
+// Carries the fan's coin balance onto the model row and soft-deletes the fan
+// record (deleted_reason 'converted_to_model') in one transaction — replaces
+// the old bare DELETE FROM fans, which dropped the balance (and let clawback
+// debt escape) on conversion.
 async function migrateFanWallet(
   adminClient: ReturnType<typeof createServiceRoleClient>,
   userId: string

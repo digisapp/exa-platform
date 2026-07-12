@@ -48,10 +48,11 @@ export async function POST(
       return NextResponse.json({ error: "Fan data has been purged and cannot be restored" }, { status: 400 });
     }
 
-    // Defensive mirror of the model-restore guard: a fan row soft-deleted as
-    // part of fan→model conversion must not be resurrected next to the active
-    // model account. (Today's conversion hard-deletes the fan row, so this
-    // reason should not occur — guard anyway in case that ever changes.)
+    // Mirror of the model-restore guard: fan→model conversion (RPC
+    // convert_fan_wallet_to_model, 20260712100003) soft-deletes the fan row
+    // with this reason after moving its balance to the model wallet.
+    // Restoring it would resurrect a zeroed fan wallet next to the active
+    // model account.
     if (fan.deleted_reason === "converted_to_model") {
       return NextResponse.json(
         { error: "This fan was converted to a model account. Use model-to-fan conversion to bring them back instead of restoring." },

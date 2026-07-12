@@ -30,109 +30,54 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Use service role client for all mutations to bypass RLS
     const adminClient = createServiceRoleClient();
 
-    // Get the fan record
-    const { data: fan, error: fanError } = await adminClient
-      .from("fans")
-      .select("id, user_id, email, display_name, coin_balance")
+    // Fetch just enough for the 404 check and the audit log — the actual
+    // conversion is a single atomic RPC below. (Service client: fan rows
+    // aren't readable through RLS.)
+    const { data: fan, error: fanError } = await (adminClient
+      .from("fans") as any)
+      .select("id, user_id, email")
       .eq("id", fanId)
-      .single();
+      .single() as { data: { id: string; user_id: string | null; email: string | null } | null; error: unknown };
 
     if (fanError || !fan || !fan.user_id) {
       return NextResponse.json({ error: "Fan not found" }, { status: 404 });
     }
 
-    const fanUserId = fan.user_id;
+    // All wallet/role mutations happen atomically in the service-role-only
+    // RPC (migration 20260712100003): reactivate-or-create the model wallet,
+    // ADD the fan's stored balance to it (never overwrite — a re-converted
+    // model keeps her earnings), zero the fan wallet, flip the actor to
+    // model (clearing deactivated_at), and SOFT-delete the fan row with
+    // deleted_reason 'converted_to_model' (the fan restore route 409s on
+    // that reason). The actor row is preserved (only its type flips), so the
+    // ledger (coin_transactions.actor_id) keeps following this user — only
+    // the stored balance moves.
+    const { data, error: rpcError } = await (adminClient.rpc as any)(
+      "convert_fan_wallet_to_model",
+      { p_user_id: fan.user_id }
+    );
 
-    // Fetch the actor record to get the canonical actor ID (fans.id may differ from actors.id)
-    const { data: actor, error: actorFetchError } = await adminClient
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", fanUserId)
-      .single();
-
-    if (actorFetchError || !actor) {
-      return NextResponse.json({ error: "Actor record not found for this fan" }, { status: 404 });
+    if (rpcError) {
+      console.error("Convert to model RPC error:", rpcError);
+      throw rpcError;
     }
 
-    const actorId = actor.id;
+    const result = data as {
+      success?: boolean;
+      error?: string;
+      model_id?: string;
+      username?: string | null;
+      migrated_coins?: number;
+    } | null;
 
-    // Update the actor type to 'model' (regardless of current type, to handle re-attempts)
-    const { error: actorError } = await adminClient
-      .from("actors")
-      .update({ type: "model" })
-      .eq("user_id", fanUserId);
-
-    if (actorError) {
-      console.error("Error updating actor:", actorError);
-      throw actorError;
+    if (!result?.success) {
+      const message = result?.error || "Failed to convert fan to model";
+      return NextResponse.json({ error: message }, { status: 500 });
     }
 
-    // Create a basic model profile
-    const username = (fan.display_name || fan.email?.split("@")[0] || "user")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "")
-      .slice(0, 20) + Math.random().toString(36).slice(2, 6);
-
-    // Check if a model record already exists (e.g. from a previous failed conversion attempt)
-    const { data: existingModel } = await adminClient
-      .from("models")
-      .select("id")
-      .eq("user_id", fanUserId)
-      .maybeSingle();
-
-    // If another model row holds this email (e.g. an orphaned import), remap it
-    if (fan.email) {
-      const { data: emailConflict } = await adminClient
-        .from("models")
-        .select("id, user_id")
-        .eq("email", fan.email)
-        .maybeSingle();
-      if (emailConflict && emailConflict.user_id !== fanUserId) {
-        await adminClient
-          .from("models")
-          .update({ email: `orphan+${emailConflict.id}@placeholder.invalid` })
-          .eq("id", emailConflict.id);
-      }
-    }
-
-    const { error: modelError } = existingModel
-      ? await adminClient.from("models")
-          .update({
-            email: fan.email ?? "",
-            is_approved: true,
-            coin_balance: fan.coin_balance || 0,
-          })
-          .eq("user_id", fanUserId)
-      : await adminClient.from("models")
-          .insert({
-            id: actorId, // Must use actors.id — models.id is a FK to actors(id)
-            user_id: fanUserId as string,
-            email: fan.email ?? "",
-            username: username,
-            first_name: fan.display_name || "New",
-            last_name: "Model",
-            is_approved: true,
-            coin_balance: fan.coin_balance || 0,
-          });
-
-    if (modelError) {
-      console.error("Error creating model:", modelError);
-      // Try to rollback actor change
-      await adminClient
-        .from("actors")
-        .update({ type: "fan" })
-        .eq("user_id", fanUserId);
-      throw modelError;
-    }
-
-    // Delete the fan record
-    await adminClient
-      .from("fans")
-      .delete()
-      .eq("id", fanId);
+    const username = result.username ?? "";
 
     // Log the admin action
     await logAdminAction({
@@ -141,7 +86,7 @@ export async function POST(
       action: AdminActions.FAN_CONVERTED_TO_MODEL,
       targetType: "fan",
       targetId: fanId,
-      oldValues: { type: "fan", user_id: fanUserId, email: fan.email },
+      oldValues: { type: "fan", user_id: fan.user_id, email: fan.email },
       newValues: { type: "model", username },
     });
 
