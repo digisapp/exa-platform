@@ -109,6 +109,7 @@ interface ModelStats {
   total_earned: number;
   content_count: number;
   message_count: number;
+  referred_fans: number;
   last_post: string | null;
 }
 
@@ -230,6 +231,7 @@ export default function AdminModelDetailPage() {
     total_earned: 0,
     content_count: 0,
     message_count: 0,
+    referred_fans: 0,
     last_post: null,
   });
 
@@ -328,6 +330,14 @@ export default function AdminModelDetailPage() {
             .select("*", { count: "exact", head: true })
             .eq("actor_id", actor.id);
 
+          // Fans she brought via her bio link (admin-only signal — deliberately
+          // NOT shown on the model's own Runway Ready card)
+          const { count: referredFans } = await (supabase
+            .from("fans") as any)
+            .select("*", { count: "exact", head: true })
+            .eq("referred_by_model_id", modelId)
+            .is("deleted_at", null);
+
           // Last post
           const { data: lastPremium } = await (supabase as any)
             .from("content_items")
@@ -343,6 +353,7 @@ export default function AdminModelDetailPage() {
               total_earned: totalEarned,
               content_count: contentItemsCount || 0,
               message_count: messageCount || 0,
+              referred_fans: referredFans || 0,
               last_post: lastPremium?.created_at || null,
             });
           }
@@ -1092,6 +1103,7 @@ export default function AdminModelDetailPage() {
             <CardContent className="space-y-3">
               <StatCard label="Profile Views" value={model.profile_views || 0} icon={Eye} color="text-purple-500" />
               <StatCard label="Fans" value={stats.followers_count} icon={Heart} color="text-pink-500" />
+              <StatCard label="Fans via Her Link" value={stats.referred_fans} icon={Heart} color="text-teal-500" />
               <StatCard label="Coin Balance" value={model.coin_balance || 0} icon={Coins} color="text-yellow-500" />
               <StatCard label="Earned" value={stats.total_earned} icon={Coins} color="text-yellow-500" />
               <StatCard label="Content Items" value={stats.content_count} icon={Images} color="text-blue-500" />
