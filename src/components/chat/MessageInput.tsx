@@ -543,7 +543,7 @@ export function MessageInput({
             )}
           >
             <Lock className="h-3 w-3" />
-            {showPriceInput ? "PPV On" : "Set Price"}
+            {showPriceInput ? "Price Set" : "Set Price"}
           </button>
           {showPriceInput && (
             <div className="flex items-center gap-1.5">

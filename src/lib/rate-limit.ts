@@ -219,8 +219,9 @@ export const EndpointLimits = {
   // Messaging - 60 messages per minute
   messages: { limit: 60, windowSeconds: 60 },
 
-  // Uploads - 30 uploads per minute
-  uploads: { limit: 30, windowSeconds: 60 },
+  // Uploads - 60 per minute: the Studio upload dialog batches up to 50 files
+  // (one signed-url request each), so this must stay above that batch size
+  uploads: { limit: 60, windowSeconds: 60 },
 
   // Auth attempts - 10 per minute (stricter for security)
   auth: { limit: 10, windowSeconds: 60 },
