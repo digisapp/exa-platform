@@ -43,6 +43,7 @@ import {
   MousePointerClick,
   DollarSign,
   CheckCircle2,
+  Handshake,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -106,6 +107,45 @@ const EMPTY_EVENT_FORM = {
   promote_tickets_on_profiles: false,
   // Award the show badge to accepted models when the show completes.
   badges_enabled: true,
+};
+
+// B2B designer/sponsor package (event_packages, migration 20260704000003).
+// Sold via the brands package-checkout route and shown on /events/[slug].
+interface EventPackage {
+  id: string;
+  event_id: string;
+  key: string;
+  category: string;
+  name: string;
+  description: string | null;
+  full_price_cents: number;
+  installment_price_cents: number;
+  installments_available: boolean;
+  sort_order: number;
+  is_active: boolean;
+}
+
+const PACKAGE_CATEGORIES = [
+  { value: "runway", label: "Runway" },
+  { value: "showroom", label: "Showroom" },
+  { value: "retail", label: "Retail" },
+  { value: "shoot", label: "Shoot" },
+  { value: "party", label: "Party" },
+  { value: "other", label: "Other" },
+];
+
+const EMPTY_PACKAGE_FORM = {
+  name: "",
+  key: "",
+  category: "runway",
+  description: "",
+  // Dollars in the UI — converted to cents at the API boundary. Never send
+  // dollar values to *_cents fields (see the 100x display bug history).
+  full_price: "",
+  installment_price: "",
+  installments_available: false,
+  sort_order: "0",
+  is_active: true,
 };
 
 interface TicketTier {
@@ -205,6 +245,13 @@ export default function AdminEventsPage() {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [savingEvent, setSavingEvent] = useState(false);
   const [eventForm, setEventForm] = useState({ ...EMPTY_EVENT_FORM });
+
+  // B2B package management state
+  const [packages, setPackages] = useState<EventPackage[]>([]);
+  const [packageDialogOpen, setPackageDialogOpen] = useState(false);
+  const [editingPackage, setEditingPackage] = useState<EventPackage | null>(null);
+  const [savingPackage, setSavingPackage] = useState(false);
+  const [packageForm, setPackageForm] = useState({ ...EMPTY_PACKAGE_FORM });
 
   const supabase = createClient();
 
@@ -361,14 +408,29 @@ export default function AdminEventsPage() {
     fetchEvents();
   }, [fetchEvents]);
 
+  // event_packages RLS only exposes ACTIVE rows to the browser client, so the
+  // admin list (which must include deactivated packages) goes through the
+  // service-role-backed admin API.
+  const fetchPackages = useCallback(async (eventId: string) => {
+    const res = await fetch(`/api/admin/events/${eventId}/packages`);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      console.error("Error fetching packages:", json.error);
+      setPackages([]);
+      return;
+    }
+    setPackages(json.packages || []);
+  }, []);
+
   useEffect(() => {
     if (selectedEvent) {
       fetchTiers(selectedEvent.id);
       fetchStats(selectedEvent.id);
       fetchReferrals(selectedEvent.id);
       fetchTicketPurchases(selectedEvent.id);
+      fetchPackages(selectedEvent.id);
     }
-  }, [selectedEvent, fetchTiers, fetchStats, fetchReferrals, fetchTicketPurchases]);
+  }, [selectedEvent, fetchTiers, fetchStats, fetchReferrals, fetchTicketPurchases, fetchPackages]);
 
   async function toggleTicketsEnabled(event: Event) {
     const { error } = await (supabase as any)
@@ -548,6 +610,98 @@ export default function AdminEventsPage() {
     await fetchEvents();
     // Reflect edits in the currently-selected event panel
     if (json.event) setSelectedEvent((prev) => (prev && prev.id === json.event.id ? json.event : prev));
+  }
+
+  // --- B2B package helpers ---
+  function openPackageDialog(pkg?: EventPackage) {
+    if (pkg) {
+      setEditingPackage(pkg);
+      setPackageForm({
+        name: pkg.name,
+        key: pkg.key,
+        category: pkg.category || "other",
+        description: pkg.description || "",
+        // cents → dollars for the form
+        full_price: (pkg.full_price_cents / 100).toString(),
+        installment_price: pkg.installments_available
+          ? (pkg.installment_price_cents / 100).toString()
+          : "",
+        installments_available: pkg.installments_available,
+        sort_order: String(pkg.sort_order ?? 0),
+        is_active: pkg.is_active,
+      });
+    } else {
+      setEditingPackage(null);
+      setPackageForm({ ...EMPTY_PACKAGE_FORM, sort_order: String(packages.length) });
+    }
+    setPackageDialogOpen(true);
+  }
+
+  async function savePackage() {
+    if (!selectedEvent) return;
+    if (!packageForm.name || !packageForm.full_price) {
+      toast.error("Name and price are required");
+      return;
+    }
+    const fullPriceCents = Math.round(parseFloat(packageForm.full_price) * 100);
+    if (!Number.isFinite(fullPriceCents) || fullPriceCents <= 0) {
+      toast.error("Enter a valid price in dollars");
+      return;
+    }
+    let installmentPriceCents: number | undefined;
+    if (packageForm.installments_available) {
+      installmentPriceCents = Math.round(parseFloat(packageForm.installment_price) * 100);
+      if (!Number.isFinite(installmentPriceCents) || installmentPriceCents <= 0) {
+        toast.error("Enter a valid monthly installment price, or turn the plan off");
+        return;
+      }
+    }
+
+    setSavingPackage(true);
+    const body: Record<string, unknown> = {
+      name: packageForm.name,
+      key: packageForm.key,
+      category: packageForm.category,
+      description: packageForm.description,
+      full_price_cents: fullPriceCents,
+      installments_available: packageForm.installments_available,
+      sort_order: parseInt(packageForm.sort_order) || 0,
+      is_active: packageForm.is_active,
+    };
+    if (installmentPriceCents !== undefined) body.installment_price_cents = installmentPriceCents;
+    if (editingPackage) body.id = editingPackage.id;
+
+    const res = await fetch(`/api/admin/events/${selectedEvent.id}/packages`, {
+      method: editingPackage ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const json = await res.json().catch(() => ({}));
+    setSavingPackage(false);
+
+    if (!res.ok) {
+      toast.error(json.error || "Failed to save package");
+      return;
+    }
+    toast.success(editingPackage ? "Package updated" : "Package created");
+    setPackageDialogOpen(false);
+    fetchPackages(selectedEvent.id);
+  }
+
+  async function togglePackageActive(pkg: EventPackage) {
+    if (!selectedEvent) return;
+    const res = await fetch(`/api/admin/events/${selectedEvent.id}/packages`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: pkg.id, is_active: !pkg.is_active }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error(json.error || "Failed to update package");
+      return;
+    }
+    toast.success(pkg.is_active ? "Package deactivated" : "Package activated");
+    setPackages(packages.map((p) => (p.id === pkg.id ? { ...p, is_active: !p.is_active } : p)));
   }
 
   async function updateCommissionStatus(commissionId: string, newStatus: "confirmed" | "paid" | "cancelled") {
@@ -1006,6 +1160,228 @@ export default function AdminEventsPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* B2B Packages (designers & sponsors) */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Handshake className="h-5 w-5" />
+                        B2B Packages
+                      </CardTitle>
+                      <CardDescription>
+                        Designer &amp; sponsor packages sold on the public event page (/events/{selectedEvent.slug})
+                      </CardDescription>
+                    </div>
+                    <Button size="sm" onClick={() => openPackageDialog()}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Package
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {packages.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      No packages yet. Add runway, showroom, retail, shoot or party packages to sell on the event page.
+                    </p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Package</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead className="text-right">Price</TableHead>
+                          <TableHead className="text-right">Installments</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {packages.map((pkg) => (
+                          <TableRow key={pkg.id} className={pkg.is_active ? "" : "opacity-50"}>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium text-sm">{pkg.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  <code className="bg-muted px-1 py-0.5 rounded">{pkg.key}</code>
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm capitalize">{pkg.category}</TableCell>
+                            <TableCell className="text-right">
+                              ${(pkg.full_price_cents / 100).toLocaleString()}
+                            </TableCell>
+                            <TableCell className="text-right text-sm">
+                              {pkg.installments_available
+                                ? `3 × $${(pkg.installment_price_cents / 100).toLocaleString()}/mo`
+                                : "—"}
+                            </TableCell>
+                            <TableCell>
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs ${
+                                  pkg.is_active
+                                    ? "bg-green-500/10 text-green-500"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                {pkg.is_active ? "Active" : "Inactive"}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => openPackageDialog(pkg)}
+                                  title="Edit package"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 text-xs"
+                                  onClick={() => togglePackageActive(pkg)}
+                                >
+                                  {pkg.is_active ? "Deactivate" : "Activate"}
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Package create/edit dialog */}
+              <Dialog open={packageDialogOpen} onOpenChange={setPackageDialogOpen}>
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{editingPackage ? "Edit Package" : "New Package"}</DialogTitle>
+                    <DialogDescription>
+                      Prices are entered in dollars and stored in cents. The key is the stable
+                      identifier used by checkout — changing it on a live event breaks shared links.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-2">
+                    <div className="space-y-2">
+                      <Label>Name *</Label>
+                      <Input
+                        placeholder="Opening Show — Tuesday May 26"
+                        value={packageForm.name}
+                        onChange={(e) => setPackageForm({ ...packageForm, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Key</Label>
+                        <Input
+                          placeholder="auto from name"
+                          value={packageForm.key}
+                          onChange={(e) => setPackageForm({ ...packageForm, key: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Category</Label>
+                        <select
+                          className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                          value={packageForm.category}
+                          onChange={(e) => setPackageForm({ ...packageForm, category: e.target.value })}
+                        >
+                          {PACKAGE_CATEGORIES.map((c) => (
+                            <option key={c.value} value={c.value}>{c.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Input
+                        placeholder="Premier opening night runway show…"
+                        value={packageForm.description}
+                        onChange={(e) => setPackageForm({ ...packageForm, description: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Full price ($) *</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="3500"
+                          value={packageForm.full_price}
+                          onChange={(e) => setPackageForm({ ...packageForm, full_price: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Sort order</Label>
+                        <Input
+                          type="number"
+                          value={packageForm.sort_order}
+                          onChange={(e) => setPackageForm({ ...packageForm, sort_order: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2">
+                      <div>
+                        <Label className="text-sm">3-month installment plan</Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          {packageForm.installments_available
+                            ? "ON — buyers can pay in 3 equal monthly charges."
+                            : "OFF — pay-in-full only."}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={packageForm.installments_available}
+                        onCheckedChange={(v) =>
+                          setPackageForm({ ...packageForm, installments_available: v })
+                        }
+                      />
+                    </div>
+                    {packageForm.installments_available && (
+                      <div className="space-y-2">
+                        <Label>Monthly installment price ($/mo) *</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="1167"
+                          value={packageForm.installment_price}
+                          onChange={(e) =>
+                            setPackageForm({ ...packageForm, installment_price: e.target.value })
+                          }
+                        />
+                        <p className="text-[11px] text-muted-foreground">
+                          Charged monthly for 3 months — roughly the full price ÷ 3.
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <Label>Active (visible &amp; purchasable on the event page)</Label>
+                      <Switch
+                        checked={packageForm.is_active}
+                        onCheckedChange={(v) => setPackageForm({ ...packageForm, is_active: v })}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setPackageDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={savePackage} disabled={savingPackage}>
+                      {savingPackage ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : editingPackage ? (
+                        "Save changes"
+                      ) : (
+                        "Create package"
+                      )}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               {/* Ticket Sales */}
               {selectedEvent.tickets_enabled && (

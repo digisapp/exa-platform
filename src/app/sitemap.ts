@@ -140,19 +140,41 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  // Fetch published events
+  // Fetch visible events. There is no is_published column on events — status
+  // is the visibility gate (the previous is_published filter matched nothing).
   const { data: events } = await supabase
     .from("events")
-    .select("slug, updated_at")
-    .eq("is_published", true)
+    .select("slug, status, updated_at")
+    .in("status", ["upcoming", "active", "completed"])
     .not("slug", "is", null);
 
+  // Fan-facing show pages exist for every visible event.
   const eventPages: MetadataRoute.Sitemap = (events || []).map((event) => ({
     url: `${baseUrl}/shows/${event.slug}`,
     lastModified: event.updated_at ? new Date(event.updated_at) : new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.7,
   }));
+
+  // Event landing pages (/events/[slug]): index the live funnel — upcoming and
+  // active events — plus the index page itself.
+  const upcomingEvents = (events || []).filter(
+    (event) => event.status === "upcoming" || event.status === "active"
+  );
+  const eventLandingPages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/events`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    },
+    ...upcomingEvents.map((event) => ({
+      url: `${baseUrl}/events/${event.slug}`,
+      lastModified: event.updated_at ? new Date(event.updated_at) : new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    })),
+  ];
 
   // Fetch workshops
   const { data: workshops } = await supabase
@@ -167,5 +189,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...modelPages, ...modelRatesPages, ...eventPages, ...workshopPages];
+  return [...staticPages, ...modelPages, ...modelRatesPages, ...eventPages, ...eventLandingPages, ...workshopPages];
 }

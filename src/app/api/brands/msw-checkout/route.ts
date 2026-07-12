@@ -9,15 +9,19 @@ import { logger } from "@/lib/logger";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
 
 // Package prices now live in the event_packages table (seeded cent-for-cent
-// from the previous hardcoded PACKAGES dict). This route serves the MSW event;
-// generalizing the success/cancel URLs to arbitrary events is a later step.
-const MSW_EVENT_SLUG = "miami-swim-week-2026";
+// from the previous hardcoded PACKAGES dict). Legacy callers (the MSW designer
+// page) omit eventSlug and get the historical MSW behavior unchanged; the
+// generic /events/[slug] landing pages send eventSlug and get event-scoped
+// success/cancel URLs. Package pricing always comes from event_packages.
+const LEGACY_DEFAULT_EVENT_SLUG = "miami-swim-week-2026";
 
 const mswCheckoutSchema = z.object({
   package: z.string().min(1),
   paymentType: z.enum(["full", "installment"]),
   addPhotoVideo: z.boolean().optional(),
   addExtraModels: z.boolean().optional(),
+  // Optional event scope (slug). Omitted by the legacy MSW designer page.
+  eventSlug: z.string().trim().regex(/^[a-z0-9-]+$/).max(120).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -30,19 +34,29 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
     }
-    const { package: pkg, paymentType, addPhotoVideo, addExtraModels } = parsed.data;
+    const { package: pkg, paymentType, addPhotoVideo, addExtraModels, eventSlug } = parsed.data;
 
     // Look up the package price from the database.
     const admin = createServiceRoleClient();
+    const slug = eventSlug || LEGACY_DEFAULT_EVENT_SLUG;
     const { data: event } = await admin
       .from("events")
-      .select("id")
-      .eq("slug", MSW_EVENT_SLUG)
-      .single() as { data: { id: string } | null };
+      .select("id, slug, status")
+      .eq("slug", slug)
+      .single() as { data: { id: string; slug: string; status: string | null } | null };
 
     if (!event) {
-      logger.error("MSW checkout: event not found", undefined, { slug: MSW_EVENT_SLUG });
-      return NextResponse.json({ error: "Event not configured" }, { status: 500 });
+      logger.error("Event package checkout: event not found", undefined, { slug });
+      return NextResponse.json(
+        { error: "Event not configured" },
+        { status: eventSlug ? 404 : 500 }
+      );
+    }
+
+    // Never sell packages for a cancelled event. (Legacy MSW calls are
+    // unaffected — this only rejects events explicitly marked cancelled.)
+    if (event.status === "cancelled") {
+      return NextResponse.json({ error: "This event is no longer accepting partners" }, { status: 400 });
     }
 
     // Cast: event_packages is newer than the generated DB types.
@@ -76,8 +90,26 @@ export async function POST(request: NextRequest) {
       installmentPrice: dbPackage.installment_price_cents,
     };
 
-    const successUrl = `${BASE_URL}/designers/miami-swim-week/success?session_id={CHECKOUT_SESSION_ID}&pkg=${pkg}&type=${paymentType}&media=${addPhotoVideo ? "1" : "0"}&models=${addExtraModels ? "20" : "15"}`;
-    const cancelUrl = `${BASE_URL}/designers/miami-swim-week`;
+    // Shared Stripe metadata. `source` keeps its historical value for legacy
+    // MSW designer-page calls so downstream reporting is unchanged.
+    const checkoutMetadata = {
+      package: pkg,
+      payment_type: paymentType,
+      add_extra_models: addExtraModels ? "true" : "false",
+      add_photo_video: addPhotoVideo ? "true" : "false",
+      source: eventSlug ? "event_landing_page" : "msw_brand_page",
+      event_id: event.id,
+      event_slug: event.slug,
+    };
+
+    // Legacy callers (no eventSlug) keep the historical MSW designer-page URLs.
+    // Event-page callers return to their event landing page.
+    const successUrl = eventSlug
+      ? `${BASE_URL}/events/${event.slug}?checkout=success&session_id={CHECKOUT_SESSION_ID}&pkg=${encodeURIComponent(pkg)}&type=${paymentType}`
+      : `${BASE_URL}/designers/miami-swim-week/success?session_id={CHECKOUT_SESSION_ID}&pkg=${pkg}&type=${paymentType}&media=${addPhotoVideo ? "1" : "0"}&models=${addExtraModels ? "20" : "15"}`;
+    const cancelUrl = eventSlug
+      ? `${BASE_URL}/events/${event.slug}`
+      : `${BASE_URL}/designers/miami-swim-week`;
 
     if (paymentType === "full") {
       const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
@@ -128,13 +160,7 @@ export async function POST(request: NextRequest) {
         mode: "payment",
         success_url: successUrl,
         cancel_url: cancelUrl,
-        metadata: {
-          package: pkg,
-          payment_type: "full",
-          add_extra_models: addExtraModels ? "true" : "false",
-          add_photo_video: addPhotoVideo ? "true" : "false",
-          source: "msw_brand_page",
-        },
+        metadata: checkoutMetadata,
       });
 
       return NextResponse.json({ url: session.url });
@@ -197,20 +223,10 @@ export async function POST(request: NextRequest) {
         mode: "subscription",
         success_url: successUrl,
         cancel_url: cancelUrl,
-        metadata: {
-          package: pkg,
-          payment_type: "installment",
-          add_extra_models: addExtraModels ? "true" : "false",
-          add_photo_video: addPhotoVideo ? "true" : "false",
-          source: "msw_brand_page",
-        },
+        metadata: checkoutMetadata,
         subscription_data: {
           metadata: {
-            package: pkg,
-            payment_type: "installment",
-            add_extra_models: addExtraModels ? "true" : "false",
-            add_photo_video: addPhotoVideo ? "true" : "false",
-            source: "msw_brand_page",
+            ...checkoutMetadata,
             cancel_after_months: "3",
           },
         },
