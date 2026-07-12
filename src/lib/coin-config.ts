@@ -21,6 +21,23 @@ export const COIN_USD_RATE = 0.10;
 // Coin purchase rate shown to fans (what they pay per coin)
 export const FAN_COIN_USD_RATE = 0.15;
 
+// ─── First-purchase bonus (fan activation promo) ────────────────────────
+// A fan's FIRST coin purchase earns +25% bonus coins on top, granted
+// server-side by the Stripe webhook (action 'first_purchase_bonus') and
+// clawed back alongside the purchase if it is refunded/charged back.
+// Fans only — brands/models never get it. Once per actor, ever (enforced
+// by the `first_purchase_bonus:{actor_id}` idempotency key in the ledger).
+export const FIRST_PURCHASE_BONUS_PCT = 0.25;
+export const FIRST_PURCHASE_BONUS_MIN_COINS = 5;
+
+/** Bonus coins for a first purchase: +25% rounded down, minimum 5. */
+export function firstPurchaseBonusCoins(purchasedCoins: number): number {
+  return Math.max(
+    FIRST_PURCHASE_BONUS_MIN_COINS,
+    Math.floor(purchasedCoins * FIRST_PURCHASE_BONUS_PCT)
+  );
+}
+
 // Paid messaging (fan/brand → model)
 export const DEFAULT_MESSAGE_COST = 5;
 
