@@ -29,7 +29,13 @@ import { detectInPersonRequest, IN_PERSON_WARNING_COPY } from "@/lib/in-person-r
 const DRAFT_PREFIX = "chat_draft_";
 
 interface MessageInputProps {
-  onSend: (content: string, mediaUrl?: string, mediaType?: string, mediaPrice?: number) => Promise<void>;
+  onSend: (
+    content: string,
+    mediaUrl?: string,
+    mediaType?: string,
+    mediaPrice?: number,
+    mediaPreviewUrl?: string,
+  ) => Promise<void>;
   disabled?: boolean;
   coinCost?: number;
   coinBalance?: number;
@@ -64,10 +70,15 @@ export function MessageInput({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  // `url` is what the message carries as media_url: a chat-media storage path
+  // for fresh uploads, an http URL for library attachments (see
+  // src/lib/chat-media.ts). `previewUrl` is a signed display URL for paths;
+  // `preview` is a local blob URL while one exists.
   const [attachedMedia, setAttachedMedia] = useState<{
     url: string;
     type: string;
     preview?: string;
+    previewUrl?: string;
   } | null>(null);
   const [mediaPrice, setMediaPrice] = useState<number | null>(null);
   const [showPriceInput, setShowPriceInput] = useState(false);
@@ -137,6 +148,7 @@ export function MessageInput({
     const mediaUrl = attachedMedia?.url;
     const mediaType = attachedMedia?.type;
     const mediaPreview = attachedMedia?.preview;
+    const mediaPreviewUrl = attachedMedia?.previewUrl;
     const currentMediaPrice = mediaPrice ?? undefined;
 
     // Revoke blob URL to prevent memory leak
@@ -154,13 +166,14 @@ export function MessageInput({
     onStopTyping?.();
 
     try {
-      await onSend(messageContent, mediaUrl, mediaType, currentMediaPrice);
+      await onSend(messageContent, mediaUrl, mediaType, currentMediaPrice, mediaPreviewUrl);
       clearDraft(); // Clear draft on successful send
     } catch {
       hapticFeedback("error");
       setContent(messageContent);
       if (mediaUrl && mediaType) {
-        setAttachedMedia({ url: mediaUrl, type: mediaType });
+        // Blob preview was already revoked; previewUrl still displays paths.
+        setAttachedMedia({ url: mediaUrl, type: mediaType, previewUrl: mediaPreviewUrl });
       }
       if (currentMediaPrice) {
         setMediaPrice(currentMediaPrice);
@@ -213,10 +226,14 @@ export function MessageInput({
     }
   };
 
-  // Upload via signed URL for large files (bypasses Vercel's 4.5MB limit)
-  const uploadViaSigned = async (file: File): Promise<string> => {
+  // Upload chat media via signed URL to the PRIVATE chat-media bucket
+  // (also bypasses Vercel's 4.5MB limit). Returns the storage path (sent as
+  // the message's media_url) and a signed previewUrl for local display.
+  const uploadViaSigned = async (
+    file: File
+  ): Promise<{ path: string; previewUrl: string }> => {
     // Step 1: Get signed URL
-    const signedResponse = await fetch("/api/upload/signed-url", {
+    const signedResponse = await fetch("/api/upload/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -252,12 +269,11 @@ export function MessageInput({
     });
 
     // Step 3: Complete the upload
-    const completeResponse = await fetch("/api/upload/complete", {
+    const completeResponse = await fetch("/api/upload/chat/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         storagePath: signedData.storagePath,
-        bucket: signedData.bucket,
         uploadMeta: signedData.uploadMeta,
       }),
     });
@@ -265,7 +281,7 @@ export function MessageInput({
     const completeData = await safeJsonParse(completeResponse);
     if (!completeResponse.ok) throw new Error(completeData.error || "Failed to complete upload");
 
-    return completeData.url;
+    return { path: completeData.path, previewUrl: completeData.previewUrl };
   };
 
   // Format file size for display
@@ -295,40 +311,17 @@ export function MessageInput({
     const preview = type !== "audio" ? URL.createObjectURL(file) : undefined;
 
     try {
-      let uploadedUrl: string;
-      const VERCEL_LIMIT = 4 * 1024 * 1024; // 4MB (conservative)
-      const isVideo = type === "video";
-      const isAudio = type === "audio";
-      const isLargeFile = file.size > VERCEL_LIMIT;
-
-      // Videos, audio, and large files use signed URL approach
-      // (signed URL bypasses Vercel's body size limit by uploading direct to Supabase)
-      if (isVideo || isAudio || isLargeFile) {
-        uploadedUrl = await uploadViaSigned(file);
-      } else {
-        // Small images/audio can use direct upload
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", "message");
-
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        const data = await safeJsonParse(response);
-
-        if (!response.ok) {
-          throw new Error(data.error || "Upload failed");
-        }
-
-        uploadedUrl = data.url;
-      }
+      // Everything goes through the chat-media signed-URL pipeline: the old
+      // small-file path (/api/upload) landed chat photos in the public
+      // portfolio bucket. The message carries the storage path; previewUrl is
+      // a signed display URL.
+      const { path, previewUrl } = await uploadViaSigned(file);
 
       setAttachedMedia({
-        url: uploadedUrl,
+        url: path,
         type: file.type,
         preview,
+        previewUrl,
       });
 
       const typeLabel = type === "video" ? "Video" : type === "audio" ? "Voice message" : "Photo";
@@ -469,7 +462,7 @@ export function MessageInput({
             {attachedMedia.type.startsWith("video") ? (
               <div className="relative">
                 <video
-                  src={attachedMedia.preview || attachedMedia.url}
+                  src={attachedMedia.preview || attachedMedia.previewUrl || attachedMedia.url}
                   className="h-24 max-w-[200px] object-cover"
                 />
                 <div className="absolute top-1 left-1 p-1 rounded bg-black/60">
@@ -486,7 +479,7 @@ export function MessageInput({
             ) : (
               <div className="relative">
                 <Image
-                  src={attachedMedia.preview || attachedMedia.url}
+                  src={attachedMedia.preview || attachedMedia.previewUrl || attachedMedia.url}
                   alt="Attachment"
                   width={200}
                   height={96}

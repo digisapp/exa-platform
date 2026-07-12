@@ -54,6 +54,13 @@ export interface OptimisticMessage extends Message {
   _tempId?: string;
   /** Epoch ms when a failed message was persisted to localStorage. */
   _savedAt?: number;
+  /**
+   * Canonical media_url for /api/messages/send: a chat-media storage path
+   * for fresh uploads (src/lib/chat-media.ts). The message's own media_url
+   * holds the signed preview URL for display, which must NOT be re-sent on
+   * retry — it expires and would be stored as a legacy http URL.
+   */
+  _sendMediaUrl?: string;
 }
 
 let tempIdCounter = 0;
@@ -565,12 +572,15 @@ export function ChatView({
     }
   }, [currentActor.id, supabase, coinBalanceContext]);
 
-  // Optimistic message sending
+  // Optimistic message sending. mediaUrl is the canonical value the server
+  // stores (chat-media storage path for fresh uploads, http URL for library/
+  // legacy); mediaPreviewUrl is a signed display URL for paths.
   const handleSendMessage = async (
     content: string,
     mediaUrl?: string,
     mediaType?: string,
     mediaPrice?: number,
+    mediaPreviewUrl?: string,
   ) => {
     const currentReplyToId = replyingTo?.id || undefined;
     setReplyingTo(null);
@@ -582,7 +592,7 @@ export function ChatView({
       conversation_id: conversation.id,
       sender_id: currentActor.id,
       content: content || null,
-      media_url: mediaUrl || null,
+      media_url: mediaPreviewUrl || mediaUrl || null,
       media_type: mediaType || null,
       media_price: mediaPrice || null,
       media_viewed_by: null,
@@ -607,6 +617,7 @@ export function ChatView({
       reply_to_id: currentReplyToId ?? null,
       _status: "sending",
       _tempId: tempId,
+      _sendMediaUrl: mediaUrl,
     };
 
     setMessages((prev) => [...prev, optimisticMessage]);
@@ -700,13 +711,16 @@ export function ChatView({
     const failedMsg = messages.find((m) => m._tempId === tempId && m._status === "failed");
     if (!failedMsg) return;
 
-    // Remove the failed message and re-send
+    // Remove the failed message and re-send. Re-send the canonical media_url
+    // (_sendMediaUrl — a storage path for fresh uploads), not the signed
+    // preview URL the bubble displayed.
     setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
     await handleSendMessage(
       failedMsg.content || "",
-      failedMsg.media_url || undefined,
+      (failedMsg._sendMediaUrl ?? failedMsg.media_url) || undefined,
       failedMsg.media_type || undefined,
       failedMsg.media_price || undefined,
+      failedMsg.media_url || undefined,
     );
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);

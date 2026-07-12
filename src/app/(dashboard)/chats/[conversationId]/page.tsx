@@ -5,6 +5,7 @@ import { ChatView, type ChatParticipantFan } from "@/components/chat/ChatView";
 import type { ChatParticipantModel } from "@/components/chat/ChatHeader";
 import type { Message, Actor, Model, Fan, Brand } from "@/types/database";
 import { stripLockedMediaUrl } from "@/lib/ppv";
+import { signChatMediaUrls } from "@/lib/chat-media";
 
 // Admin client for fetching participant data (bypasses RLS)
 const adminClient = createServiceRoleClient();
@@ -104,14 +105,19 @@ export default async function ChatPage({ params }: PageProps) {
 
   // Check if there are more messages and prepare the list
   const hasMoreMessages = (allMessages?.length || 0) > 100;
-  const messages = (allMessages
-    ? (hasMoreMessages ? allMessages.slice(0, 100) : allMessages).reverse()
-    : []
-  ).map((msg: Message) =>
-    // Strip media_url from locked PPV messages so it never reaches the client
-    // RSC payload — the media_price/media_viewed_by fields stay so the bubble
-    // can still render the unlock overlay. Mirrors /api/messages/list.
-    stripLockedMediaUrl(msg, actor.id)
+  const messages = await signChatMediaUrls(
+    adminClient,
+    (allMessages
+      ? (hasMoreMessages ? allMessages.slice(0, 100) : allMessages).reverse()
+      : []
+    ).map((msg: Message) =>
+      // Strip media_url from locked PPV messages so it never reaches the client
+      // RSC payload — the media_price/media_viewed_by fields stay so the bubble
+      // can still render the unlock overlay. Mirrors /api/messages/list. Then
+      // (strip FIRST, sign second) chat-media storage paths become short-lived
+      // signed URLs (src/lib/chat-media.ts).
+      stripLockedMediaUrl(msg, actor.id)
+    )
   );
 
   // Get other participant(s)

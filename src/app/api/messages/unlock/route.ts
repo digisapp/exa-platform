@@ -6,6 +6,7 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { sendPPVUnlockedEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
+import { isChatMediaPath, signChatMediaUrl } from "@/lib/chat-media";
 
 const unlockSchema = z.object({
   messageId: z.string().uuid("Invalid message ID"),
@@ -74,7 +75,11 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        mediaUrl: msg.media_url,
+        // Chat-media storage paths are signed into short-lived URLs
+        // (src/lib/chat-media.ts); http URLs pass through untouched
+        mediaUrl: isChatMediaPath(msg.media_url)
+          ? await signChatMediaUrl(adminDb, msg.media_url)
+          : msg.media_url,
         amountPaid: 0,
         newBalance: 0,
         alreadyUnlocked: false,
@@ -180,7 +185,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      mediaUrl: result.media_url,
+      // The buyer just paid — return a usable URL: sign chat-media storage
+      // paths (src/lib/chat-media.ts); legacy http URLs pass through
+      mediaUrl: isChatMediaPath(result.media_url)
+        ? await signChatMediaUrl(adminDb, result.media_url)
+        : result.media_url,
       amountPaid: result.amount_paid,
       newBalance: result.new_balance,
       alreadyUnlocked: result.already_unlocked || false,

@@ -9,6 +9,12 @@ import { sendNewMessageNotificationEmail } from "@/lib/email";
 import { detectInPersonRequest } from "@/lib/in-person-request";
 import { logger } from "@/lib/logger";
 import { messageCoinCost } from "@/lib/coin-config";
+import { getModelId } from "@/lib/ids";
+import {
+  isChatMediaPath,
+  isValidChatMediaStoragePath,
+  signChatMediaUrls,
+} from "@/lib/chat-media";
 
 // Virtual-first policy: a fan with this many flagged messages in the last 7 days
 // gets their account flagged for trust & safety review. Soft warning + auto-flag
@@ -24,7 +30,15 @@ const sendMessageSchema = z.object({
   conversationId: z.string().uuid("Invalid conversation ID").optional().nullable(),
   targetModelUsername: z.string().min(1).max(100).optional().nullable(),
   content: z.string().max(5000, "Message is too long").optional().nullable(),
-  mediaUrl: z.string().url("Invalid media URL").max(2048, "URL is too long").optional().nullable(),
+  // Either an http(s) URL (legacy chat media, library-attached content) or a
+  // chat-media storage path from /api/upload/chat (src/lib/chat-media.ts)
+  mediaUrl: z.string().max(2048, "URL is too long").refine(
+    (val) =>
+      isChatMediaPath(val)
+        ? isValidChatMediaStoragePath(val)
+        : z.string().url().safeParse(val).success,
+    { message: "Invalid media URL" }
+  ).optional().nullable(),
   mediaType: z.string().refine(
     (val) => /^(image|video|audio)(\/[\w.+-]+)?$/.test(val),
     { message: "Invalid media type" }
@@ -95,6 +109,20 @@ export async function POST(request: NextRequest) {
         { error: "Only models can set a price on media messages" },
         { status: 400 }
       );
+    }
+
+    // Chat-media storage paths are model uploads scoped to the uploader's
+    // folder — a sender must not be able to link (and have us sign) another
+    // model's private media. Mirrors the ownership check in /api/upload/chat.
+    if (mediaUrl && isChatMediaPath(mediaUrl)) {
+      const senderModelId =
+        sender.type === "model" ? await getModelId(supabase, user.id) : null;
+      if (!senderModelId || !mediaUrl.startsWith(`${senderModelId}/`)) {
+        return NextResponse.json(
+          { error: "Media does not belong to this user" },
+          { status: 403 }
+        );
+      }
     }
 
     // Check if brand has active subscription
@@ -321,11 +349,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch the created message for response (use admin client to avoid replication lag)
-    const { data: message } = await adminClient
+    const { data: rawMessage } = await adminClient
       .from("messages")
       .select("id, conversation_id, sender_id, content, media_url, media_type, media_price, media_viewed_by, is_system, created_at")
       .eq("id", result.message_id)
       .single();
+
+    // Chat-media paths must go back to the sender as signed URLs so the
+    // optimistic bubble's replacement renders (no strip needed: the sender
+    // always sees their own media).
+    const message = rawMessage
+      ? (await signChatMediaUrls(adminClient, [rawMessage]))[0]
+      : rawMessage;
 
     // ─── Virtual-first auto-flag ────────────────────────────────────────
     // Only check fan/brand → model direction. Models are exempt (they may

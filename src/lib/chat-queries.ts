@@ -2,6 +2,7 @@ import { cache } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { isChatMediaPath } from "@/lib/chat-media";
 
 /**
  * Per-request memoized entry point. The chats layout and page both need this
@@ -54,8 +55,14 @@ export async function fetchConversationList(
       { p_conversation_ids: conversationIds }
     );
 
-    for (const m of (lastMessages || []) as Array<{ conversation_id: string }>) {
-      lastMessageMap.set(m.conversation_id, m);
+    for (const m of (lastMessages || []) as Array<{ conversation_id: string; media_url?: string | null }>) {
+      // The inbox preview renders off media_type, never media_url — so map
+      // chat-media storage paths (src/lib/chat-media.ts) to null instead of
+      // signing 50 previews nobody displays.
+      lastMessageMap.set(m.conversation_id, {
+        ...m,
+        media_url: isChatMediaPath(m.media_url) ? null : m.media_url ?? null,
+      });
     }
   }
 
