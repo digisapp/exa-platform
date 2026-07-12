@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
@@ -45,11 +44,17 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "uploads", user.id);
     if (rateLimitResponse) return rateLimitResponse;
 
-    // Model-only, resolved server-side - NEVER trust client-submitted IDs
-    const modelId = await getModelId(supabase, user.id);
-    if (!modelId) {
-      return NextResponse.json({ error: "Model not found" }, { status: 400 });
+    // Actor-scoped (fans may attach chat photos too), resolved server-side —
+    // NEVER trust client-submitted IDs
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string } | null };
+    if (!actor) {
+      return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
+    const actorId = actor.id;
 
     const body = await request.json();
     const parsed = chatUploadCompleteSchema.safeParse(body);
@@ -62,7 +67,7 @@ export async function POST(request: NextRequest) {
     const { storagePath, uploadMeta } = parsed.data;
 
     // Security: Verify the storage path belongs to this user
-    if (!storagePath.startsWith(`${modelId}/`)) {
+    if (!storagePath.startsWith(`${actorId}/`)) {
       return NextResponse.json(
         { error: "Storage path does not belong to this user" },
         { status: 403 }
@@ -70,10 +75,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the file actually exists in storage by checking file metadata
-    const fileName = storagePath.replace(`${modelId}/`, "");
+    const fileName = storagePath.replace(`${actorId}/`, "");
     const { data: files, error: listError } = await adminClient.storage
       .from(CHAT_MEDIA_BUCKET)
-      .list(modelId, { limit: 100 });
+      .list(actorId, { limit: 100 });
 
     const fileExists = files?.some((f) => f.name === fileName);
 
@@ -117,7 +122,7 @@ export async function POST(request: NextRequest) {
       } catch (normalizeError) {
         logger.error("[upload/chat/complete] Image normalize failed", normalizeError, {
           storage_path: storagePath,
-          model_id: modelId,
+          actor_id: actorId,
         });
         // Fall through — better to deliver the raw upload than to fail it
       }

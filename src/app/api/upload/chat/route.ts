@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
@@ -35,10 +34,17 @@ export async function POST(request: NextRequest) {
     const rateLimitResult = await checkEndpointRateLimit(request, "uploads", user.id);
     if (rateLimitResult) return rateLimitResult;
 
-    // Model-only: chat media senders are models today
-    const modelId = await getModelId(supabase, user.id);
-    if (!modelId) {
-      return NextResponse.json({ error: "Model not found" }, { status: 400 });
+    // Actor-scoped, not model-only: fans could attach small photos through
+    // the old /api/upload branch, so chat media stays open to any actor type.
+    // Paths are namespaced by actor id, which the send route's ownership
+    // check verifies against the sender.
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string } | null };
+    if (!actor) {
+      return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
 
     const { fileName, fileType, fileSize } = await request.json();
@@ -81,7 +87,7 @@ export async function POST(request: NextRequest) {
     const defaultExt = isVideo ? "mp4" : isAudio ? "webm" : "jpg";
     const ext = MIME_TO_EXT[fileType] || defaultExt;
     const timestamp = Date.now();
-    const storagePath = `${modelId}/${timestamp}.${ext}`;
+    const storagePath = `${actor.id}/${timestamp}.${ext}`;
 
     // Create signed upload URL (valid for 1 hour). The bucket has no client
     // policies — this service-generated URL is the only way in.

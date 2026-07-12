@@ -9,7 +9,6 @@ import { sendNewMessageNotificationEmail } from "@/lib/email";
 import { detectInPersonRequest } from "@/lib/in-person-request";
 import { logger } from "@/lib/logger";
 import { messageCoinCost } from "@/lib/coin-config";
-import { getModelId } from "@/lib/ids";
 import {
   isChatMediaPath,
   isValidChatMediaStoragePath,
@@ -111,18 +110,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Chat-media storage paths are model uploads scoped to the uploader's
-    // folder — a sender must not be able to link (and have us sign) another
-    // model's private media. Mirrors the ownership check in /api/upload/chat.
-    if (mediaUrl && isChatMediaPath(mediaUrl)) {
-      const senderModelId =
-        sender.type === "model" ? await getModelId(supabase, user.id) : null;
-      if (!senderModelId || !mediaUrl.startsWith(`${senderModelId}/`)) {
-        return NextResponse.json(
-          { error: "Media does not belong to this user" },
-          { status: 403 }
-        );
-      }
+    // Chat-media storage paths are uploads scoped to the uploader's ACTOR
+    // folder (/api/upload/chat) — a sender must not be able to link (and have
+    // us sign) someone else's private media.
+    if (mediaUrl && isChatMediaPath(mediaUrl) && !mediaUrl.startsWith(`${sender.id}/`)) {
+      return NextResponse.json(
+        { error: "Media does not belong to this user" },
+        { status: 403 }
+      );
     }
 
     // Check if brand has active subscription
