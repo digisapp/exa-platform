@@ -35,6 +35,8 @@ import { ProfilePhotoBanner } from "@/components/dashboard/ProfilePhotoBanner";
 import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
 import { CastingReadiness } from "@/components/dashboard/CastingReadiness";
 import { computeCastingReadiness } from "@/lib/casting-readiness";
+import { WelcomeBackPulse } from "@/components/dashboard/WelcomeBackPulse";
+import { computeWelcomeBackPulse } from "@/lib/welcome-back";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 
 // Helper function to format relative time
@@ -115,6 +117,7 @@ export default async function DashboardPage() {
     { count: followerCount },
     { count: views30d },
     castingReadiness,
+    welcomeBack,
   ] = await Promise.all([
     // Get pending bookings for this model - use adminClient to bypass RLS
     (adminClient.from("bookings") as any)
@@ -141,6 +144,14 @@ export default async function DashboardPage() {
       .gte("view_date", thirtyDaysAgo.toISOString().split("T")[0]),
     // Runway Ready meter — model row already loaded above, pass it through
     computeCastingReadiness(adminClient, model.id, model),
+    // Welcome-back pulse — model.last_active_at is still the PREVIOUS visit
+    // here (only the client-side ActivityTracker bumps it, after hydration).
+    // Short-circuits to null with zero queries when the gap is < 14 days.
+    computeWelcomeBackPulse(adminClient, {
+      modelId: model.id,
+      actorId: actor.id,
+      lastActiveAt: model.last_active_at ?? null,
+    }),
   ]);
 
   // Filter for pending/counter bookings in JS
@@ -619,6 +630,14 @@ export default async function DashboardPage() {
       />
 
       {/* ──────────────────────────────────────────────────────
+          WELCOME BACK — only for genuinely returning models
+          (away >= 14 days AND something happened meanwhile)
+         ────────────────────────────────────────────────────── */}
+      {welcomeBack && (
+        <WelcomeBackPulse username={model.username || ""} data={welcomeBack} />
+      )}
+
+      {/* ──────────────────────────────────────────────────────
           GETTING STARTED — renders only while steps remain
          ────────────────────────────────────────────────────── */}
       <GettingStartedChecklist steps={checklistSteps} />
@@ -738,7 +757,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* Mobile-only: EXA Live Wall appears here after gigs */}
-      <div className="lg:hidden">
+      <div className="lg:hidden" data-live-wall>
         <LiveWallServer actorId={actor.id} actorType={actor.type} />
       </div>
 
@@ -868,7 +887,10 @@ export default async function DashboardPage() {
       </div>{/* end left column */}
 
       {/* ── RIGHT COLUMN: EXA Live Wall (desktop only) ── */}
-      <aside className="hidden lg:block lg:sticky lg:top-20 lg:self-start lg:h-[calc(100vh-6rem)]">
+      <aside
+        className="hidden lg:block lg:sticky lg:top-20 lg:self-start lg:h-[calc(100vh-6rem)]"
+        data-live-wall
+      >
         <LiveWallServer actorId={actor.id} actorType={actor.type} compact />
       </aside>
 
