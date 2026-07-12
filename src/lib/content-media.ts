@@ -36,11 +36,12 @@ export function isContentMediaPath(v: string | null | undefined): v is string {
 
 /**
  * Strict shape check for paths accepted from clients (/api/content-hub/items):
- * `exclusive/${modelId uuid}/${timestamp}.${ext}` as produced by
- * /api/upload/signed-url with exclusive=true.
+ * `exclusive/${modelId uuid}/${timestamp}[-rand].${ext}` as produced by
+ * /api/upload/signed-url with exclusive=true (the random suffix was added to
+ * prevent same-millisecond collisions; timestamp-only paths are legacy).
  */
 const CONTENT_MEDIA_PATH_RE =
-  /^exclusive\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/\d+\.[a-z0-9]+$/i;
+  /^exclusive\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/\d+(?:-[0-9a-f]{8})?\.[a-z0-9]+$/i;
 
 export function isValidContentMediaStoragePath(v: string): boolean {
   return CONTENT_MEDIA_PATH_RE.test(v);

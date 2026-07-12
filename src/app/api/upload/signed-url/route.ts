@@ -80,14 +80,17 @@ export async function POST(request: NextRequest) {
     };
     const defaultExt = isVideo ? "mp4" : isAudio ? "webm" : "jpg";
     const ext = MIME_TO_EXT[fileType] || defaultExt;
-    const timestamp = Date.now();
+    // Date.now() alone collides when the Studio dialog requests several signed
+    // URLs in parallel (same ms → same path → objects overwrite each other, and
+    // deleting one item removes the other's file) — append a random suffix
+    const unique = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
     // Paid/exclusive content goes to the PRIVATE content-media bucket so the
     // full-res object is never publicly fetchable; everything else keeps the
     // public portfolio bucket (see src/lib/content-media.ts).
     const isExclusive = exclusive === true && !isAudio;
     const storagePath = isExclusive
-      ? `${CONTENT_MEDIA_PATH_PREFIX}${modelId}/${timestamp}.${ext}`
-      : `${modelId}/${timestamp}.${ext}`;
+      ? `${CONTENT_MEDIA_PATH_PREFIX}${modelId}/${unique}.${ext}`
+      : `${modelId}/${unique}.${ext}`;
     const bucket = isExclusive ? CONTENT_MEDIA_BUCKET : "portfolio";
 
     // Create signed upload URL (valid for 1 hour)
