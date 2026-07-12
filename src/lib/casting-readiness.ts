@@ -66,7 +66,7 @@ export interface CastingReadiness {
 
 /** The model columns this computation reads. */
 export const READINESS_MODEL_COLUMNS =
-  "id, profile_photo_url, bio, height, bust, waist, hips, shoe_size, dress_size, is_verified, message_rate, video_call_rate, voice_call_rate";
+  "id, profile_photo_url, bio, height, bust, waist, hips, shoe_size, dress_size, message_rate, video_call_rate, voice_call_rate";
 
 interface ReadinessModelRow {
   id: string;
@@ -78,7 +78,6 @@ interface ReadinessModelRow {
   hips: string | null;
   shoe_size: string | null;
   dress_size: string | null;
-  is_verified: boolean | null;
   message_rate: number | null;
   video_call_rate: number | null;
   voice_call_rate: number | null;
@@ -113,7 +112,6 @@ export async function computeCastingReadiness(
     { data: modelData },
     { count: freshContentCount },
     { data: recentViews },
-    { count: fansBroughtCount },
   ] = await Promise.all([
     modelPromise,
     // Any upload in the last 30 days counts as fresh content
@@ -129,16 +127,11 @@ export async function computeCastingReadiness(
       .not("referrer", "is", null)
       .gte("created_at", since)
       .limit(2000),
-    // Fans attributed at signup (fans.referred_by_model_id, PR #52 flow)
-    (service.from("fans") as any)
-      .select("id", { count: "exact", head: true })
-      .eq("referred_by_model_id", modelId)
-      .is("deleted_at", null),
   ]);
 
   const model = (modelData || {}) as Partial<ReadinessModelRow>;
 
-  // ── profile_basics (15): photo + at least 3 comp-card fields ──
+  // ── profile_basics (25): photo + at least 3 comp-card fields ──
   const hasPhoto = Boolean(model.profile_photo_url);
   const compCardFields = [
     model.bio,
@@ -154,33 +147,29 @@ export async function computeCastingReadiness(
   ).length;
   const profileBasicsDone = hasPhoto && filledCompFields >= 3;
 
-  // ── verified (10) ──
-  const verifiedDone = Boolean(model.is_verified);
-
-  // ── rates_set (10) ──
+  // ── rates_set (15) ──
   const ratesDone =
     (model.message_rate ?? 0) > 0 ||
     (model.video_call_rate ?? 0) > 0 ||
     (model.voice_call_rate ?? 0) > 0;
 
-  // ── fresh_content (20) ──
+  // ── fresh_content (25) ──
   const freshContentDone = (freshContentCount ?? 0) > 0;
 
-  // ── link_live (25, the star): auto-verified by real inbound traffic ──
+  // ── link_live (35, the star): auto-verified by real inbound traffic ──
   const socialVisits = ((recentViews as { referrer: string | null }[] | null) || []).filter(
     (v) => isSocialReferrer(v.referrer)
   ).length;
   const linkLiveDone = socialVisits > 0;
 
-  // ── fans_brought (20) ──
-  const fansBrought = fansBroughtCount ?? 0;
-  const fansBroughtDone = fansBrought >= 1;
-
+  // Four model-facing items only (owner decision 2026-07-12): verification is
+  // an EXA-team call, not a model todo, and referred-fan counts are admin-only
+  // signals (countReferredFans below) — neither belongs on the model's list.
   const items: ReadinessItem[] = [
     {
       key: "profile_basics",
       label: "Comp-card basics",
-      weight: 15,
+      weight: 25,
       done: profileBasicsDone,
       detail: profileBasicsDone
         ? "Photo, bio, and measurements are on file"
@@ -190,18 +179,9 @@ export async function computeCastingReadiness(
       cta: profileBasicsDone ? undefined : { label: "Complete profile", href: "/settings" },
     },
     {
-      key: "verified",
-      label: "Verified on EXA",
-      weight: 10,
-      done: verifiedDone,
-      detail: verifiedDone
-        ? "Your profile carries the verified badge"
-        : "The EXA team verifies active profiles — keep yours complete and fresh",
-    },
-    {
       key: "rates_set",
       label: "Rates set",
-      weight: 10,
+      weight: 15,
       done: ratesDone,
       detail: ratesDone
         ? "Fans can message and call you"
@@ -211,7 +191,7 @@ export async function computeCastingReadiness(
     {
       key: "fresh_content",
       label: "Fresh content this month",
-      weight: 20,
+      weight: 25,
       done: freshContentDone,
       detail: freshContentDone
         ? "You've posted in the last 30 days"
@@ -221,24 +201,32 @@ export async function computeCastingReadiness(
     {
       key: "link_live",
       label: "Your link is live",
-      weight: 25,
+      weight: 35,
       done: linkLiveDone,
       detail: linkLiveDone
         ? `Your audience is finding you — ${socialVisits} visit${socialVisits === 1 ? "" : "s"} from your socials this month`
         : "Add examodels.com/USERNAME to your Instagram or TikTok bio — models who bring their audience get seen first",
-    },
-    {
-      key: "fans_brought",
-      label: "Fans you brought",
-      weight: 20,
-      done: fansBroughtDone,
-      detail: fansBroughtDone
-        ? `${fansBrought} fan${fansBrought === 1 ? "" : "s"} joined through your link`
-        : "Share your link to start counting",
     },
   ];
 
   const score = items.reduce((sum, item) => sum + (item.done ? item.weight : 0), 0);
 
   return { score, items };
+}
+
+/**
+ * ADMIN-ONLY signal: fans attributed to this model at signup
+ * (fans.referred_by_model_id, PR #52 flow). Deliberately NOT part of the
+ * model-facing readiness items — surfaced on the admin model page and in
+ * casting review, never shown to the model herself (owner decision).
+ */
+export async function countReferredFans(
+  service: SupabaseClient,
+  modelId: string
+): Promise<number> {
+  const { count } = await (service.from("fans") as any)
+    .select("id", { count: "exact", head: true })
+    .eq("referred_by_model_id", modelId)
+    .is("deleted_at", null);
+  return count ?? 0;
 }
