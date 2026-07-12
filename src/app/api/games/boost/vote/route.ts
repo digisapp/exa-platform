@@ -72,6 +72,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Every vote must ride on a session — it's the unit of dedupe and the
+    // cooldown/cycle tracker. Session-less scripted voting used to bypass
+    // both entirely.
+    if (!session_id) {
+      return NextResponse.json(
+        { error: "session_id is required" },
+        { status: 400 }
+      );
+    }
+
+    // Load the session and verify it belongs to the caller. Sessions are
+    // keyed the same way get_or_create_top_model_session keys them: by
+    // auth user id once claimed, by browser fingerprint while anonymous
+    // (anonymous play stays fully supported — no auth required).
+    const { data: sessionRow } = await adminClient
+      .from("top_model_sessions")
+      .select("id, user_id, fingerprint, models_swiped, completed_at")
+      .eq("id", session_id)
+      .maybeSingle();
+
+    if (!sessionRow) {
+      return NextResponse.json(
+        { error: "Session not found" },
+        { status: 404 }
+      );
+    }
+
+    // user_id takes precedence (a claimed session never falls back to
+    // fingerprint — same device, different account must not match); anon
+    // sessions match on fingerprint only.
+    const ownsSession = sessionRow.user_id
+      ? user?.id === sessionRow.user_id
+      : Boolean(fingerprint && sessionRow.fingerprint === fingerprint);
+
+    if (!ownsSession) {
+      return NextResponse.json(
+        { error: "This session doesn't belong to you" },
+        { status: 403 }
+      );
+    }
+
+    // Completed sessions are in (or past) their 24h cooldown. Past-cooldown
+    // sessions get reset by get_or_create_top_model_session on the next deck
+    // fetch, so votes only ever land on an open cycle.
+    if (sessionRow.completed_at) {
+      return NextResponse.json(
+        { error: "This play cycle is complete. Come back after the reset!" },
+        { status: 409 }
+      );
+    }
+
+    // Duplicate guard (advisory fast-path; mark_model_swiped enforces this
+    // atomically below): a session can only swipe each model once per cycle
+    if (sessionRow.models_swiped?.includes(model_id)) {
+      return NextResponse.json(
+        { error: "You've already swiped on this model" },
+        { status: 409 }
+      );
+    }
+
     // Validate the target model exists and is visible before anything is charged
     const { data: targetModel } = await adminClient
       .from("models")
@@ -208,21 +268,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Duplicate guard: a session can only swipe each model once per cycle
-    if (session_id) {
-      const { data: sessionRow } = await adminClient
-        .from("top_model_sessions")
-        .select("models_swiped")
-        .eq("id", session_id)
-        .maybeSingle();
-
-      if (sessionRow?.models_swiped?.includes(model_id)) {
-        return NextResponse.json(
-          { error: "You've already swiped on this model" },
-          { status: 409 }
+    // Refund helper for failure paths after the deduct has happened.
+    // Returns false only when the refund itself failed (already logged).
+    const refundCoins = async (reason: string): Promise<boolean> => {
+      if (coinsToSpend <= 0 || !actorId) return true;
+      const { data: refundResult, error: refundError } = await (adminClient as any).rpc(
+        "add_coins",
+        {
+          p_actor_id: actorId,
+          p_amount: coinsToSpend,
+          p_action: "exa_boost_refund",
+          p_metadata: {
+            model_id,
+            game: "exa_boost",
+            reason,
+            is_super: isSuperBoosted,
+          },
+        }
+      );
+      if (refundError || !refundResult) {
+        logger.error(
+          "CRITICAL: exa_boost refund failed — coins deducted with no vote recorded",
+          { actorId, model_id, coinsToSpend, reason, refundError }
         );
+        return false;
       }
-    }
+      return true;
+    };
 
     // Duplicate guard: one paid boost per model per actor per day
     if (coinsToSpend > 0 && actorId) {
@@ -269,6 +341,52 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Mark the model as swiped BEFORE recording the vote: mark_model_swiped
+    // (20260712100004) atomically refuses duplicate appends and any append
+    // to a completed session, so it is the per-(session, model) dedupe gate —
+    // leaderboard points are only recorded when this call actually recorded
+    // a new swipe. Completion basis is the full eligible roster (min()
+    // resolves to the roster size unless it somehow exceeds the safety
+    // ceiling) — server-derived so a client can't shrink it into an instant
+    // completion. Only after every eligible model is swiped does the 24h
+    // cooldown begin. Service-role client: the RPC is REVOKEd from
+    // authenticated/anon (ownership was verified above).
+    const totalModels = await getTotalSwipeableModels();
+    const { data: swipeRpcData, error: swipeError } = await adminClient.rpc(
+      "mark_model_swiped",
+      {
+        p_session_id: session_id,
+        p_model_id: model_id,
+        p_total_models: Math.min(SESSION_DECK_CAP, totalModels),
+      }
+    );
+    const swipeResult = swipeRpcData as Record<string, any> | null;
+
+    if (swipeError) {
+      logger.error("Swipe record error", swipeError);
+      const refunded = await refundCoins("swipe_record_failed");
+      return NextResponse.json(
+        {
+          error: refunded && coinsToSpend > 0
+            ? "Failed to record vote. Your coins have been refunded."
+            : refunded
+              ? "Failed to record vote"
+              : "Failed to record vote and the automatic refund failed. Please contact support.",
+        },
+        { status: 500 }
+      );
+    }
+
+    if (!swipeResult?.newly_swiped) {
+      // Lost a race with a concurrent duplicate (or the session just
+      // completed): nothing was recorded, so no points are awarded.
+      await refundCoins("duplicate_swipe");
+      return NextResponse.json(
+        { error: "You've already swiped on this model" },
+        { status: 409 }
+      );
+    }
+
     // Record the vote via service-role client: record_top_model_vote is REVOKEd
     // from authenticated/anon so the leaderboard points/coins_spent can't be
     // forged by calling the RPC directly. Points are computed server-side above.
@@ -290,28 +408,36 @@ export async function POST(request: NextRequest) {
     if (voteError) {
       logger.error("Vote error", voteError);
 
+      // Best-effort: un-mark the swipe so a retry isn't blocked by the
+      // dedupe gate for a vote that never earned points. If this failed
+      // swipe was the one that completed the cycle, reopen it too.
+      try {
+        const { data: staleSession } = await adminClient
+          .from("top_model_sessions")
+          .select("models_swiped, completed_at")
+          .eq("id", session_id)
+          .single();
+        if (staleSession?.models_swiped?.includes(model_id)) {
+          await (adminClient.from("top_model_sessions") as any)
+            .update({
+              models_swiped: staleSession.models_swiped.filter(
+                (id: string) => id !== model_id
+              ),
+              ...(swipeResult?.completed && staleSession.completed_at
+                ? { completed_at: null }
+                : {}),
+            })
+            .eq("id", session_id);
+        }
+      } catch (unmarkError) {
+        logger.error("Failed to un-mark swipe after vote record failure", unmarkError);
+      }
+
       // The user already paid — refund before surfacing the failure
       if (coinsToSpend > 0 && actorId) {
-        const { data: refundResult, error: refundError } = await (adminClient as any).rpc(
-          "add_coins",
-          {
-            p_actor_id: actorId,
-            p_amount: coinsToSpend,
-            p_action: "exa_boost_refund",
-            p_metadata: {
-              model_id,
-              game: "exa_boost",
-              reason: "vote_record_failed",
-              is_super: isSuperBoosted,
-            },
-          }
-        );
+        const refunded = await refundCoins("vote_record_failed");
 
-        if (refundError || !refundResult) {
-          logger.error(
-            "CRITICAL: exa_boost refund failed after vote record failure — coins deducted with no vote recorded",
-            { actorId, model_id, coinsToSpend, refundError }
-          );
+        if (!refunded) {
           return NextResponse.json(
             { error: "Failed to record vote and the automatic refund failed. Please contact support." },
             { status: 500 }
@@ -355,21 +481,6 @@ export async function POST(request: NextRequest) {
       } catch (followError) {
         logger.error("Boost follow error", followError);
       }
-    }
-
-    // Mark model as swiped in session. Completion basis is the full eligible
-    // roster (min() resolves to the roster size unless it somehow exceeds the
-    // safety ceiling) — server-derived so a client can't shrink it into an
-    // instant completion. Only after every eligible model is swiped does the
-    // 24h cooldown begin.
-    if (session_id) {
-      const totalModels = await getTotalSwipeableModels();
-
-      await supabase.rpc("mark_model_swiped", {
-        p_session_id: session_id,
-        p_model_id: model_id,
-        p_total_models: Math.min(SESSION_DECK_CAP, totalModels),
-      });
     }
 
     // Send notification to model if revealed
