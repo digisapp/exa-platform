@@ -5,6 +5,7 @@ import { TikTokIcon } from "@/components/ui/tiktok-icon";
 import { SnapchatIcon } from "@/components/ui/snapchat-icon";
 import { XIcon } from "@/components/ui/x-icon";
 import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
+import { trackEvent } from "@/lib/analytics-client";
 
 // Anonymous-visitor version of the profile social chips. The real handles and
 // URLs are never sent to logged-out viewers (this page renders per-request, so
@@ -71,6 +72,14 @@ export function GatedSocialChips({
           hero ? "gap-1.5" : "justify-center gap-3"
         }`}
         title="Sign up free to view socials"
+        onClick={() =>
+          // Funnel: gate taps vs. gate signups (signup_source="social_gate")
+          // tells us whether to fix the gate's visibility or the signup form.
+          trackEvent("social_gate_click", {
+            modelId,
+            metadata: { platforms: platforms.map((p) => p.platform) },
+          })
+        }
       >
         {platforms.map(({ platform, followers }) => {
           const Icon = ICONS[platform];

@@ -33,11 +33,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    logger.info("Cleaned up old page views", { deleted: count || 0 });
+    // Same 90-day retention for product events
+    // (analytics_events is newer than the generated DB types)
+    const { error: eventsError, count: eventsCount } = await (adminClient as any)
+      .from("analytics_events")
+      .delete({ count: "exact" })
+      .lt("created_at", cutoffDate.toISOString());
+
+    if (eventsError) {
+      logger.error("Cleanup error (analytics_events)", eventsError);
+    }
+
+    logger.info("Cleaned up old page views", {
+      deleted: count || 0,
+      eventsDeleted: eventsCount || 0,
+    });
 
     return NextResponse.json({
       success: true,
       deleted: count || 0,
+      eventsDeleted: eventsCount || 0,
       cutoffDate: cutoffDate.toISOString(),
     });
   } catch (error) {
