@@ -712,6 +712,7 @@ export default async function ModelProfilePage({ params }: Props) {
                         hasEmail={!!model.email}
                         modelUsername={model.username}
                         modelId={model.id}
+                        modelPhotoUrl={profilePhotoUrl || null}
                         variant="hero"
                       />
                       {model.digis_username && (
@@ -905,6 +906,7 @@ export default async function ModelProfilePage({ params }: Props) {
                 hasEmail={!!model.email}
                 modelUsername={model.username}
                 modelId={model.id}
+                modelPhotoUrl={profilePhotoUrl || null}
                 variant="circle"
               />
               {model.digis_username && (

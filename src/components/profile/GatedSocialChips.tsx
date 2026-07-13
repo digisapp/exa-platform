@@ -19,6 +19,7 @@ interface GatedSocialChipsProps {
   hasEmail: boolean;
   modelUsername: string;
   modelId: string;
+  modelPhotoUrl: string | null;
   /** "hero" = compact glass dock chips, "circle" = default centered layout */
   variant: "hero" | "circle";
 }
@@ -43,6 +44,7 @@ export function GatedSocialChips({
   hasEmail,
   modelUsername,
   modelId,
+  modelPhotoUrl,
   variant,
 }: GatedSocialChipsProps) {
   const hero = variant === "hero";
@@ -55,7 +57,14 @@ export function GatedSocialChips({
     : "text-[10px] text-white/50 leading-none font-medium";
 
   return (
-    <FanSignupDialog redirectTo={`/${modelUsername}`} referrerModelId={modelId}>
+    <FanSignupDialog
+      redirectTo={`/${modelUsername}`}
+      referrerModelId={modelId}
+      modelName={modelUsername}
+      modelPhotoUrl={modelPhotoUrl}
+      prompt={`Free account — see @${modelUsername}'s socials and unlock exclusive content.`}
+      source="social_gate"
+    >
       <button
         type="button"
         className={`group flex items-start flex-wrap ${
