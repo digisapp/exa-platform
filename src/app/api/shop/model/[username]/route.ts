@@ -14,6 +14,11 @@ export async function GET(
     const supabase = await createClient();
     const { username } = await params;
 
+    // Social handles are signup-gated platform-wide; only the shop UI (logged
+    // in) gets the Instagram handle — anonymous callers must not be able to
+    // harvest it from this endpoint.
+    const { data: { user } } = await supabase.auth.getUser();
+
     // Get model by username
     const { data: model, error: modelError } = await (supabase
       .from("models")
@@ -185,7 +190,7 @@ export async function GET(
         fullName: model.username,
         photo: model.profile_photo_url,
         bio: model.bio,
-        instagram: model.instagram_name,
+        instagram: user ? model.instagram_name : null,
       },
       affiliateCode: affiliateCode?.code || null,
       discount: affiliateCode?.discount_type
