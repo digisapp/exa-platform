@@ -629,7 +629,7 @@ export function ProfileActionButtons({
               {/* Inline signup that lands the fan back on THIS profile (with
                   referrer attribution) instead of dumping them on /dashboard —
                   same pattern as the homepage carousel gate (PR #43). */}
-              <FanSignupDialog redirectTo={`/${modelUsername}`} referrerModelId={modelId}>
+              <FanSignupDialog redirectTo={`/${modelUsername}`} referrerModelId={modelId} source="profile_actions">
                 <Button className="w-full h-12 text-base exa-gradient-button">Create Free Account</Button>
               </FanSignupDialog>
               <Link href={`/signin?redirect=${encodeURIComponent(`/${modelUsername}`)}`} className="w-full">

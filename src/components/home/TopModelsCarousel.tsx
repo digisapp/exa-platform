@@ -3,18 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
-import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
-import { createClient } from "@/lib/supabase/client";
 
 interface Model {
   id: string;
@@ -71,7 +60,6 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
-  const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   // Touch pause: on iPhone the rAF loop fights finger swipes (kills momentum
   // scrolling), so any touch/pointer-down pauses auto-scroll and it only
@@ -80,25 +68,6 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
   // Battery: don't run the rAF loop at all while the carousel is offscreen.
   const [isInView, setIsInView] = useState(true);
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [isAuthed, setIsAuthed] = useState(false);
-  const router = useRouter();
-
-  // Logged-in visitors go straight to the profile — the signup gate is only
-  // for anonymous traffic
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthed(!!session);
-    });
-  }, []);
-
-  const handleCardClick = (model: Model) => {
-    if (isAuthed) {
-      router.push(`/${model.username}`);
-    } else {
-      setSelectedModel(model);
-    }
-  };
 
   // Stop auto-scroll while the carousel is out of the viewport
   useEffect(() => {
@@ -183,7 +152,6 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
   }
 
   return (
-    <>
       <div
         className="relative group"
         onMouseEnter={() => setIsAutoScrolling(false)}
@@ -223,10 +191,11 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {models.map((model, index) => (
-            <div
+            <Link
               key={model.id}
-              onClick={() => handleCardClick(model)}
+              href={`/${model.username}`}
               className="flex-shrink-0 w-[280px] cursor-pointer group/card"
+              draggable={false}
             >
               <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/10 to-violet-500/10 border border-white/10 hover:border-pink-500/50 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-pink-500/20">
                 {/* Rank Badge */}
@@ -286,62 +255,9 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
-
-      {/* Signup Modal */}
-      <Dialog open={!!selectedModel} onOpenChange={() => setSelectedModel(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center">
-              View {selectedModel?.username}&apos;s Profile
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              Create a free account to view full profiles, follow models, and get exclusive content.
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedModel && (
-            <div className="flex flex-col items-center py-4">
-              <div className="w-24 h-24 rounded-full overflow-hidden mb-4 ring-2 ring-pink-500/50">
-                {selectedModel.profile_photo_url ? (
-                  <Image
-                    src={selectedModel.profile_photo_url}
-                    alt={selectedModel.username}
-                    width={96}
-                    height={96}
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center text-2xl font-bold">
-                    {selectedModel.username.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <FanSignupDialog
-                redirectTo={`/${selectedModel.username}`}
-                referrerModelId={selectedModel.id}
-              >
-                <Button className="exa-gradient-button w-full">
-                  Sign Up to View Profile
-                </Button>
-              </FanSignupDialog>
-
-              <p className="text-xs text-muted-foreground mt-4 text-center">
-                Already have an account?{" "}
-                <Link
-                  href={`/signin?redirect=${encodeURIComponent(`/${selectedModel.username}`)}`}
-                  className="text-pink-500 hover:underline"
-                >
-                  Sign in
-                </Link>
-              </p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }

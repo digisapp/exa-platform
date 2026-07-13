@@ -22,9 +22,26 @@ interface FanSignupDialogProps {
   redirectTo?: string;
   /** Model that drove this signup — takes precedence over the localStorage referrer set by profile visits. */
   referrerModelId?: string | null;
+  /** Personalize the dialog around the model who prompted it — the visitor
+      clicked because of HER, so keep her on screen at the commitment moment. */
+  modelName?: string | null;
+  modelPhotoUrl?: string | null;
+  /** One-line promise under the title (what signing up unlocks). Only shown with modelName. */
+  prompt?: string;
+  /** Which gate triggered this signup (e.g. "social_gate") — stored in auth
+      user_metadata as signup_source for conversion measurement. */
+  source?: string;
 }
 
-export function FanSignupDialog({ children, redirectTo, referrerModelId: referrerModelIdProp }: FanSignupDialogProps) {
+export function FanSignupDialog({
+  children,
+  redirectTo,
+  referrerModelId: referrerModelIdProp,
+  modelName,
+  modelPhotoUrl,
+  prompt,
+  source,
+}: FanSignupDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -92,6 +109,7 @@ export function FanSignupDialog({ children, redirectTo, referrerModelId: referre
             signup_type: "fan",
             display_name: cleanUsername,
             referrer_model_id: referrerModelId,
+            signup_source: source ?? null,
           },
         },
       });
@@ -174,16 +192,44 @@ export function FanSignupDialog({ children, redirectTo, referrerModelId: referre
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center">
-          <div className="mx-auto mb-2">
-            <Image
-              src="/exa-logo-white.png"
-              alt="EXA"
-              width={80}
-              height={32}
-              className="h-8 w-auto"
-            />
-          </div>
-          <DialogTitle className="text-xl">Fan Sign Up</DialogTitle>
+          {modelName ? (
+            <>
+              {/* The model who prompted this signup stays on screen at the
+                  commitment moment — a generic logo converts worse than her face */}
+              <div className="mx-auto mb-2 w-16 h-16 rounded-full overflow-hidden ring-2 ring-pink-500/60 shadow-[0_0_18px_rgba(236,72,153,0.4)]">
+                {modelPhotoUrl ? (
+                  <Image
+                    src={modelPhotoUrl}
+                    alt={modelName}
+                    width={64}
+                    height={64}
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-pink-500/30 to-violet-500/30 flex items-center justify-center text-xl font-bold text-white">
+                    {modelName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <DialogTitle className="text-xl">Join @{modelName} on EXA</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                {prompt || `Free account — follow @${modelName} and unlock her socials and exclusive content.`}
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="mx-auto mb-2">
+                <Image
+                  src="/exa-logo-white.png"
+                  alt="EXA"
+                  width={80}
+                  height={32}
+                  className="h-8 w-auto"
+                />
+              </div>
+              <DialogTitle className="text-xl">Fan Sign Up</DialogTitle>
+            </>
+          )}
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">

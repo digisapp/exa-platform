@@ -41,6 +41,7 @@ import { RESERVED_PATHS } from "@/lib/reserved-usernames";
 import { AdminProfileToolbar } from "@/components/admin/AdminProfileToolbar";
 import { ProfileQRCode } from "@/components/profile/ProfileQRCode";
 import { FavoriteButton } from "@/components/profile/FavoriteButton";
+import { GatedSocialChips } from "@/components/profile/GatedSocialChips";
 import QRCode from "qrcode";
 
 // Use ISR - revalidate every 60 seconds for fresh content without regenerating on every request
@@ -442,11 +443,9 @@ export default async function ModelProfilePage({ params }: Props) {
         addressRegion: model.state,
       },
     }),
-    // Gated like the visible social icons — a model who hides her socials
-    // must not have them leak through page-source structured data.
-    ...(model.show_social_media && socialLinks.length > 0 && {
-      sameAs: socialLinks.map(link => link.url),
-    }),
+    // No sameAs social URLs: structured data is read by anonymous crawlers,
+    // and social handles are now signup-gated (only logged-in viewers get the
+    // links) — putting them in page-source JSON-LD would defeat the gate.
   };
 
   // Generate QR code for desktop scan-to-open
@@ -703,8 +702,25 @@ export default async function ModelProfilePage({ params }: Props) {
                     </div>
                   )}
 
-                  {/* Compact socials — icon-only glass chips with per-platform glow on hover */}
-                  {model.show_social_media && (socialLinks.length > 0 || model.email) && (
+                  {/* Compact socials — icon-only glass chips with per-platform glow on hover.
+                      Anonymous viewers get locked chips (no handles/URLs in their HTML) that
+                      open the fan signup dialog — off-platform contact info is the signup gate. */}
+                  {model.show_social_media && (socialLinks.length > 0 || model.email) && !user && (
+                    <div className="flex items-start gap-1.5 mt-3 mb-3 flex-wrap">
+                      <GatedSocialChips
+                        platforms={socialLinks.map(({ platform, followers }) => ({ platform, followers }))}
+                        hasEmail={!!model.email}
+                        modelUsername={model.username}
+                        modelId={model.id}
+                        modelPhotoUrl={profilePhotoUrl || null}
+                        variant="hero"
+                      />
+                      {model.digis_username && (
+                        <DigisHeroProfileButton modelUsername={model.username} />
+                      )}
+                    </div>
+                  )}
+                  {model.show_social_media && (socialLinks.length > 0 || model.email) && user && (
                     <div className="flex items-start gap-1.5 mt-3 mb-3 flex-wrap">
                       {socialLinks.map((link) => {
                         const PLATFORM_GLOW: Record<string, string> = {
@@ -880,8 +896,25 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Social Media Icons + Follower Counts — per-platform neon hover. Hero layout has these in the dock. */}
-          {!useHeroLayout && model.show_social_media && (socialLinks.length > 0 || model.email) && (
+          {/* Social Media Icons + Follower Counts — per-platform neon hover. Hero layout has these
+              in the dock. Anonymous viewers get locked chips (no handles/URLs in their HTML) that
+              open the fan signup dialog — off-platform contact info is the signup gate. */}
+          {!useHeroLayout && model.show_social_media && (socialLinks.length > 0 || model.email) && !user && (
+            <div className="flex items-center justify-center gap-3 mb-5 flex-wrap">
+              <GatedSocialChips
+                platforms={socialLinks.map(({ platform, followers }) => ({ platform, followers }))}
+                hasEmail={!!model.email}
+                modelUsername={model.username}
+                modelId={model.id}
+                modelPhotoUrl={profilePhotoUrl || null}
+                variant="circle"
+              />
+              {model.digis_username && (
+                <DigisIconProfileButton modelUsername={model.username} />
+              )}
+            </div>
+          )}
+          {!useHeroLayout && model.show_social_media && (socialLinks.length > 0 || model.email) && user && (
             <div className="flex items-center justify-center gap-3 mb-5 flex-wrap">
               {socialLinks.map((link) => {
                 // Per-platform color theming
