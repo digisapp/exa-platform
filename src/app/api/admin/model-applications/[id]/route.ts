@@ -33,7 +33,7 @@ export async function PATCH(
     const body = await request.json();
     const { status } = body;
 
-    if (!status || !["approved", "rejected", "request_photo"].includes(status)) {
+    if (!status || !["approved", "rejected", "request_photo", "pending"].includes(status)) {
       return NextResponse.json(
         { error: "Invalid status" },
         { status: 400 }
@@ -52,6 +52,27 @@ export async function PATCH(
         { error: "Application not found" },
         { status: 404 }
       );
+    }
+
+    // Restore a rejected application to pending — the undo path for the
+    // triage queue's fast reject. Approved applications can't be reverted
+    // this way: approval already created/linked the model account.
+    if (status === "pending") {
+      if (application.status !== "rejected") {
+        return NextResponse.json(
+          { error: "Only rejected applications can be restored to pending." },
+          { status: 400 }
+        );
+      }
+      const adminClient = createServiceRoleClient();
+      const { error: restoreError } = await adminClient
+        .from("model_applications")
+        .update({ status: "pending", reviewed_at: null, reviewed_by: null })
+        .eq("id", id);
+      if (restoreError) {
+        throw restoreError;
+      }
+      return NextResponse.json({ success: true, status: "pending" });
     }
 
     // Approval requires proven email ownership — the confirm link in the
