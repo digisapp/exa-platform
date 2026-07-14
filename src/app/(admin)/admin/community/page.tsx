@@ -470,6 +470,7 @@ export default function AdminCommunityPage() {
                             type="model_application"
                             hasPhoto={Boolean(app.profile_photo_url)}
                             photoRequestedAt={app.photo_requested_at}
+                            emailConfirmed={Boolean(app.email_confirmed_at)}
                             onSuccess={() => { loadModelApps(); loadStats(); }}
                           />
                         </div>

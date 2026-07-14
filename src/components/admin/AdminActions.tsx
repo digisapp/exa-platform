@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, XCircle, UserMinus, UserPlus, ChevronDown, Trash2, Eye, EyeOff, FileText, Pencil, Camera } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, UserMinus, UserPlus, ChevronDown, Trash2, Eye, EyeOff, FileText, Pencil, Camera, Mail } from "lucide-react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -43,10 +43,12 @@ interface AdminActionProps {
   hasPhoto?: boolean;
   /** model_application only: when a photo request was already sent */
   photoRequestedAt?: string | null;
+  /** model_application only: applicant confirmed email ownership (gates Approve/Request photo vs Resend confirm) */
+  emailConfirmed?: boolean;
 }
 
-export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoRequestedAt }: AdminActionProps) {
-  const [loading, setLoading] = useState<"approve" | "reject" | "delete" | "request_photo" | null>(null);
+export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoRequestedAt, emailConfirmed }: AdminActionProps) {
+  const [loading, setLoading] = useState<"approve" | "reject" | "delete" | "request_photo" | "resend_confirm" | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const router = useRouter();
 
@@ -113,6 +115,29 @@ export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoReque
       router.refresh();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Action failed";
+      toast.error(message);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    setLoading("resend_confirm");
+
+    try {
+      const res = await fetch(`/api/admin/model-applications/${id}/resend-confirmation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to resend");
+      }
+
+      toast.success("Confirmation email resent — you can approve once she clicks the link");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Resend failed";
       toast.error(message);
     } finally {
       setLoading(null);
@@ -211,7 +236,27 @@ export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoReque
             </>
           )}
         </Button>
-        {type === "model_application" && hasPhoto === false ? (
+        {type === "model_application" && emailConfirmed === false ? (
+          // Unconfirmed email → both Approve and Request photo would 400 (the
+          // confirm link proves email ownership before an account is created
+          // under it). The real action is re-sending that link.
+          <Button
+            size="sm"
+            className="bg-amber-500 hover:bg-amber-600 text-black"
+            onClick={handleResendConfirmation}
+            disabled={loading !== null}
+            title="Re-sends the application-received email with its confirm link; approval unlocks once she clicks it"
+          >
+            {loading === "resend_confirm" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Mail className="h-4 w-4 mr-1" />
+                Resend confirm email
+              </>
+            )}
+          </Button>
+        ) : type === "model_application" && hasPhoto === false ? (
           // No photo → approval would 400; the real action is requesting one.
           // Upload auto-approves, so this replaces the Approve button entirely.
           <Button
