@@ -402,6 +402,12 @@ export default function AdminCommunityPage() {
                     <UserPlus className="h-5 w-5 text-pink-500" />
                     <CardTitle className="text-lg">Model Applications ({stats.pendingModelApps})</CardTitle>
                   </div>
+                  <Button asChild size="sm" className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+                    <Link href="/admin/model-applications">
+                      Triage queue
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Link>
+                  </Button>
                 </div>
                 <CardDescription>Signups from the Models Sign Up form</CardDescription>
               </CardHeader>
