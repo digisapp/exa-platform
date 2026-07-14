@@ -57,6 +57,17 @@ function ImageWithFallback({
   );
 }
 
+// Lightbox full-size loads go through the Next.js image optimizer so we serve
+// a capped-width CDN rendition instead of the raw Supabase original (which can
+// be a multi-MB download and paid egress on every open). w must be one of the
+// default deviceSizes and q the default quality, or the optimizer rejects it.
+const optimizedFullSize = (src: string) =>
+  `/_next/image?url=${encodeURIComponent(src)}&w=1920&q=75`;
+
+// Media fragment forces browsers to seek and paint a real first frame in
+// preview tiles; without it many videos (esp. iOS/Safari) stay black until play.
+const withFirstFrame = (src: string) => `${src}#t=0.1`;
+
 // Format seconds into MM:SS or H:MM:SS
 function formatDuration(seconds: number): string {
   if (!seconds || isNaN(seconds) || !isFinite(seconds)) return "";
@@ -72,12 +83,12 @@ function VideoWithFallback({
   src,
   className,
   onClick,
-  onDurationLoaded,
+  onMetaLoaded,
 }: {
   src?: string;
   className?: string;
   onClick?: () => void;
-  onDurationLoaded?: (duration: number) => void;
+  onMetaLoaded?: (meta: { duration: number; width: number; height: number }) => void;
 }) {
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -101,7 +112,7 @@ function VideoWithFallback({
         </div>
       )}
       <video
-        src={src}
+        src={withFirstFrame(src)}
         className={cn(className, !loaded && "opacity-0")}
         muted
         playsInline
@@ -110,9 +121,11 @@ function VideoWithFallback({
         onLoadedMetadata={(e) => {
           setLoaded(true);
           const vid = e.currentTarget;
-          if (vid.duration && onDurationLoaded) {
-            onDurationLoaded(vid.duration);
-          }
+          onMetaLoaded?.({
+            duration: vid.duration,
+            width: vid.videoWidth,
+            height: vid.videoHeight,
+          });
         }}
         onLoadedData={() => setLoaded(true)}
         onClick={onClick}
@@ -150,7 +163,7 @@ export function ProfileContentTabs({
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [photosShown, setPhotosShown] = useState(INITIAL_PHOTOS);
   const [videosShown, setVideosShown] = useState(INITIAL_VIDEOS);
-  const [videoDurations, setVideoDurations] = useState<Record<string, number>>({});
+  const [videoMeta, setVideoMeta] = useState<Record<string, { duration: number; portrait: boolean }>>({});
   const [settingPrimary, setSettingPrimary] = useState<string | null>(null);
   const [localPhotos, setLocalPhotos] = useState(photos);
 
@@ -163,8 +176,11 @@ export function ProfileContentTabs({
   const [isClosing, setIsClosing] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const handleDurationLoaded = useCallback((videoId: string, duration: number) => {
-    setVideoDurations(prev => ({ ...prev, [videoId]: duration }));
+  const handleVideoMeta = useCallback((videoId: string, meta: { duration: number; width: number; height: number }) => {
+    setVideoMeta(prev => ({
+      ...prev,
+      [videoId]: { duration: meta.duration, portrait: meta.height > meta.width },
+    }));
   }, []);
 
   // Get the current list based on selected type
@@ -178,7 +194,8 @@ export function ProfileContentTabs({
       const src = list[i].photo_url || list[i].url;
       if (src) {
         const img = new window.Image();
-        img.src = src;
+        // Same URL the lightbox renders, so the cache hit is exact
+        img.src = optimizedFullSize(src);
       }
     });
   }, []);
@@ -433,7 +450,7 @@ export function ProfileContentTabs({
                         <button
                           onClick={(e) => { e.stopPropagation(); handleSetPrimary(photo.id); }}
                           disabled={settingPrimary === photo.id}
-                          className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                          className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/50 backdrop-blur-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-black/70"
                           title="Set as profile hero image"
                         >
                           {settingPrimary === photo.id ? (
@@ -477,22 +494,35 @@ export function ProfileContentTabs({
         <div>
           {hasVideos ? (
             <>
-              <div className="grid grid-cols-2 gap-3">
-                {videos.slice(0, videosShown).map((video) => (
+              <div
+                className={cn(
+                  videos.length === 1
+                    ? "flex justify-center"
+                    : "grid grid-cols-2 md:grid-cols-3 gap-3 items-start"
+                )}
+              >
+                {videos.slice(0, videosShown).map((video) => {
+                  // Model videos are overwhelmingly phone-shot verticals, so
+                  // assume portrait until metadata proves otherwise — a 16:9
+                  // tile would crop ~70% of a vertical frame.
+                  const isPortrait = videoMeta[video.id]?.portrait ?? true;
+                  return (
                   <div
                     key={video.id}
                     className={cn(
-                      "aspect-video relative group rounded-xl overflow-hidden cursor-pointer",
+                      "relative group rounded-xl overflow-hidden cursor-pointer",
                       "ring-1 ring-white/5 hover:ring-white/20",
                       "transition-all duration-300 ease-out",
-                      "hover:scale-[1.02] hover:shadow-xl hover:shadow-violet-500/10"
+                      "hover:scale-[1.02] hover:shadow-xl hover:shadow-violet-500/10",
+                      isPortrait ? "aspect-[9/16]" : "aspect-video",
+                      videos.length === 1 && (isPortrait ? "w-full max-w-[300px]" : "w-full max-w-xl")
                     )}
                     onClick={() => openLightbox(video, "video")}
                   >
                     <VideoWithFallback
                       src={video.url}
                       className="w-full h-full object-cover"
-                      onDurationLoaded={(dur) => handleDurationLoaded(video.id, dur)}
+                      onMetaLoaded={(meta) => handleVideoMeta(video.id, meta)}
                     />
                     {/* Gradient overlay - always show on bottom for duration badge */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
@@ -510,11 +540,11 @@ export function ProfileContentTabs({
                       </div>
                     </div>
                     {/* Duration badge */}
-                    {videoDurations[video.id] && (
+                    {videoMeta[video.id]?.duration ? (
                       <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/70 text-white text-xs font-medium tabular-nums">
-                        {formatDuration(videoDurations[video.id])}
+                        {formatDuration(videoMeta[video.id].duration)}
                       </div>
-                    )}
+                    ) : null}
                     {/* Title overlay on hover */}
                     {video.title && (
                       <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
@@ -522,7 +552,8 @@ export function ProfileContentTabs({
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
               {videos.length > videosShown && (
                 <button
@@ -645,7 +676,7 @@ export function ProfileContentTabs({
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   key={selectedItem.id}
-                  src={selectedItem.photo_url || selectedItem.url || ""}
+                  src={optimizedFullSize(selectedItem.photo_url || selectedItem.url || "")}
                   alt={selectedItem.title || "Full size photo"}
                   className={cn(
                     "max-w-[92vw] max-h-[80vh] md:max-w-[85vw] md:max-h-[85vh]",
@@ -659,9 +690,10 @@ export function ProfileContentTabs({
                   <video
                     ref={videoRef}
                     key={selectedItem.id}
-                    src={selectedItem.url}
+                    src={selectedItem.url ? withFirstFrame(selectedItem.url) : undefined}
                     controls={videoPlaying}
                     playsInline
+                    preload="metadata"
                     className={cn(
                       "max-w-[92vw] max-h-[80vh] md:max-w-[85vw] md:max-h-[85vh]",
                       "object-contain rounded-xl shadow-2xl"
