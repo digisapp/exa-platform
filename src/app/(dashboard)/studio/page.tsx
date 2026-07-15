@@ -61,6 +61,7 @@ import {
   ExternalLink,
   BarChart3,
   Image as ImageIcon,
+  Heart as HeartIcon,
   X,
   Check,
   Eye,
@@ -287,6 +288,7 @@ export default function ContentPage() {
                         created_at_desc: ['created_at', 'desc'],
                         created_at_asc: ['created_at', 'asc'],
                         unlock_count_desc: ['unlock_count', 'desc'],
+                        like_count_desc: ['like_count', 'desc'],
                         coin_price_desc: ['coin_price', 'desc'],
                       };
                       const [sort, order] = map[v] || ['created_at', 'desc'];
@@ -301,6 +303,7 @@ export default function ContentPage() {
                       <SelectItem value="created_at_desc">Newest</SelectItem>
                       <SelectItem value="created_at_asc">Oldest</SelectItem>
                       <SelectItem value="unlock_count_desc">Most Unlocks</SelectItem>
+                      <SelectItem value="like_count_desc">Most Liked</SelectItem>
                       <SelectItem value="coin_price_desc">Highest Price</SelectItem>
                     </SelectContent>
                   </Select>
@@ -700,11 +703,21 @@ function ContentItemCard({
         )}
       </div>
 
-      {/* Unlock count — bottom left, PPV items only */}
-      {item.status === 'exclusive' && item.unlock_count > 0 && (
-        <span className="absolute bottom-2 left-2 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">
-          {item.unlock_count} unlock{item.unlock_count === 1 ? '' : 's'}
-        </span>
+      {/* Unlock count + hearts — bottom left */}
+      {((item.status === 'exclusive' && item.unlock_count > 0) || item.like_count > 0) && (
+        <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1">
+          {item.status === 'exclusive' && item.unlock_count > 0 && (
+            <span className="rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">
+              {item.unlock_count} unlock{item.unlock_count === 1 ? '' : 's'}
+            </span>
+          )}
+          {item.like_count > 0 && (
+            <span className="flex items-center gap-0.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">
+              <HeartIcon className="h-2.5 w-2.5 fill-pink-500 text-pink-500" />
+              {item.like_count}
+            </span>
+          )}
+        </div>
       )}
 
 

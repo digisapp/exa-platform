@@ -124,7 +124,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
     (supabase as any).from("content_items")
       .select(`
         id, title, description, media_type, preview_url, media_url,
-        coin_price, unlock_count, created_at,
+        coin_price, unlock_count, like_count, created_at,
         model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified, is_approved, deleted_at, deactivated)
       `)
       .eq("status", "exclusive")
@@ -135,7 +135,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
     (supabase as any).from("content_items")
       .select(`
         id, title, description, media_type, preview_url, media_url,
-        coin_price, unlock_count, created_at,
+        coin_price, unlock_count, like_count, created_at,
         model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified, is_approved, deleted_at, deactivated)
       `)
       .eq("status", "exclusive")
@@ -150,7 +150,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
     (supabase as any).from("content_items")
       .select(`
         id, title, description, media_type, preview_url, media_url,
-        coin_price, unlock_count, created_at,
+        coin_price, unlock_count, like_count, created_at,
         model:models!content_items_model_id_fkey!inner(id, username, profile_photo_url, is_verified, is_approved, deleted_at, deactivated)
       `)
       .in("status", ["portfolio", "exclusive"])
@@ -263,10 +263,12 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       preview_url: isPaid ? content.preview_url : content.media_url,
       coin_price: content.coin_price ?? 0,
       unlock_count: content.unlock_count ?? 0,
+      like_count: content.like_count ?? 0,
       created_at: content.created_at,
       isUnlocked,
       mediaUrl: isUnlocked ? content.media_url : null,
       isFollowed,
+      isLiked: false, // hydrated below from content_likes
     };
   };
 
@@ -331,6 +333,17 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
 
   const sortedFeed: FeedItem[] = [...followedItems, ...discoverItems].slice(0, FEED_CAP);
 
+  // Hydrate the fan's hearts (RLS: actors read their own likes)
+  if (sortedFeed.length > 0) {
+    const { data: myLikes } = await (supabase as any)
+      .from("content_likes")
+      .select("content_id")
+      .eq("actor_id", actorId)
+      .in("content_id", sortedFeed.map((i) => i.id));
+    const likedIds = new Set((myLikes || []).map((l: any) => l.content_id));
+    for (const item of sortedFeed) item.isLiked = likedIds.has(item.id);
+  }
+
   // Re-sign any storage paths / expired signed URLs for feed content. Free items
   // reuse the same media_url for preview + full view, so sign it once.
   const service = createServiceRoleClient();
@@ -388,28 +401,6 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
           </Link>
         </div>
       )}
-
-      {/* ──────────────────────────────────────────────
-          EXA Spotlight — compact entry card
-         ────────────────────────────────────────────── */}
-      <Link
-        href="/spotlight"
-        className="flex items-center justify-between gap-3 p-3.5 rounded-2xl border border-orange-500/30 bg-gradient-to-r from-orange-500/15 via-pink-500/10 to-transparent hover:from-orange-500/25 hover:via-pink-500/15 hover:border-orange-500/60 shadow-[0_0_16px_rgba(249,115,22,0.15)] hover:shadow-[0_0_24px_rgba(249,115,22,0.3)] transition-all group"
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/25 to-pink-500/20 ring-1 ring-orange-500/40 shrink-0">
-            <Flame className="h-5 w-5 text-orange-300" />
-          </div>
-          <div className="min-w-0">
-            <p className="font-semibold text-white text-sm">EXA Spotlight</p>
-            <p className="text-xs text-white/60 truncate">Swipe to discover models — likes build your feed</p>
-          </div>
-        </div>
-        <span className="shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 group-hover:from-orange-400 group-hover:to-pink-400 text-xs font-bold text-white shadow-[0_0_14px_rgba(249,115,22,0.4)] transition-all">
-          Play
-          <ArrowRight className="h-3 w-3" />
-        </span>
-      </Link>
 
       {/* ──────────────────────────────────────────────
           Favorites strip — full width
@@ -607,6 +598,26 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
 
           {/* EXA Live Wall */}
           <LiveWallServer actorId={actorId} actorType="fan" />
+
+          {/* EXA Spotlight — compact entry card */}
+          <Link
+            href="/spotlight"
+            className="flex items-center justify-between gap-3 p-3.5 rounded-2xl border border-orange-500/30 bg-gradient-to-r from-orange-500/15 via-pink-500/10 to-transparent hover:from-orange-500/25 hover:via-pink-500/15 hover:border-orange-500/60 shadow-[0_0_16px_rgba(249,115,22,0.15)] hover:shadow-[0_0_24px_rgba(249,115,22,0.3)] transition-all group"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/25 to-pink-500/20 ring-1 ring-orange-500/40 shrink-0">
+                <Flame className="h-5 w-5 text-orange-300" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-white text-sm">EXA Spotlight</p>
+                <p className="text-xs text-white/60 truncate">Swipe to discover models — likes build your feed</p>
+              </div>
+            </div>
+            <span className="shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 group-hover:from-orange-400 group-hover:to-pink-400 text-xs font-bold text-white shadow-[0_0_14px_rgba(249,115,22,0.4)] transition-all">
+              Play
+              <ArrowRight className="h-3 w-3" />
+            </span>
+          </Link>
 
           {/* Live Bids */}
           <LiveBidsPanel auctions={sidebarAuctions} />

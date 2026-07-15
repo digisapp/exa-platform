@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Coins, Sparkles, ChevronDown, Heart } from "lucide-react";
+import { Coins, Sparkles, ChevronDown, Heart, Plus } from "lucide-react";
 import { PremiumContentCard } from "@/components/content/PremiumContentCard";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 export type FeedItem = {
   type: "content";
   id: string;
   model: {
+    id: string;
     username: string;
     profile_photo_url: string | null;
     is_verified: boolean;
@@ -21,10 +23,12 @@ export type FeedItem = {
   preview_url: string | null;
   coin_price: number;
   unlock_count: number;
+  like_count: number;
   created_at: string;
   isUnlocked: boolean;
   mediaUrl: string | null;
   isFollowed: boolean;
+  isLiked: boolean;
 };
 
 interface ForYouFeedProps {
@@ -34,6 +38,106 @@ interface ForYouFeedProps {
 
 const PAGE_SIZE = 8;
 
+/* Heart + follow-nudge row under each feed card. Hearting a model you don't
+   follow yet is the highest-intent moment to convert into a follow, so the
+   nudge only appears right after a like. */
+function FeedCardActions({
+  item,
+  isFollowed,
+  onFollowed,
+}: {
+  item: FeedItem;
+  isFollowed: boolean;
+  onFollowed: (modelId: string) => void;
+}) {
+  const [liked, setLiked] = useState(item.isLiked);
+  const [count, setCount] = useState(item.like_count);
+  const [busy, setBusy] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+
+  const toggleLike = async () => {
+    if (busy) return;
+    setBusy(true);
+    const next = !liked;
+    // Optimistic flip; reconciled with the server response below
+    setLiked(next);
+    setCount((c) => Math.max(0, c + (next ? 1 : -1)));
+    try {
+      const res = await fetch("/api/content/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentId: item.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setLiked(data.liked);
+      setCount(data.likeCount);
+    } catch {
+      setLiked(!next);
+      setCount((c) => Math.max(0, c + (next ? -1 : 1)));
+      toast.error("Couldn't save your like — try again");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const follow = async () => {
+    if (followBusy) return;
+    setFollowBusy(true);
+    try {
+      const res = await fetch("/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ modelId: item.model.id }),
+      });
+      if (!res.ok) throw new Error();
+      onFollowed(item.model.id);
+      toast.success(`Following @${item.model.username}`);
+    } catch {
+      toast.error("Couldn't follow — try again");
+    } finally {
+      setFollowBusy(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-2 px-3 pb-3 pt-1">
+      <button
+        type="button"
+        onClick={toggleLike}
+        aria-label={liked ? "Unlike" : "Like"}
+        aria-pressed={liked}
+        className="flex items-center gap-1.5 group/heart -ml-1 px-1.5 py-1 rounded-lg hover:bg-pink-500/10 transition-colors"
+      >
+        <Heart
+          className={`h-5 w-5 transition-all group-active/heart:scale-75 ${
+            liked
+              ? "fill-pink-500 text-pink-500 drop-shadow-[0_0_6px_rgba(236,72,153,0.5)]"
+              : "text-muted-foreground group-hover/heart:text-pink-400"
+          }`}
+        />
+        {count > 0 && (
+          <span className={`text-xs font-semibold tabular-nums ${liked ? "text-pink-400" : "text-muted-foreground"}`}>
+            {count}
+          </span>
+        )}
+      </button>
+
+      {liked && !isFollowed && (
+        <button
+          type="button"
+          onClick={follow}
+          disabled={followBusy}
+          className="flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20 border border-pink-500/40 hover:border-pink-400 text-xs font-semibold text-pink-300 hover:text-pink-200 transition-all disabled:opacity-60"
+        >
+          <Plus className="h-3 w-3" />
+          Follow @{item.model.username}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
   // Sync balance when prop changes (e.g. navigation back to page)
   const [balance, setBalance] = useState(coinBalance);
@@ -42,6 +146,21 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
   }, [coinBalance]);
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Followed models lifted to feed level so hearting → following updates every
+  // card from that model, not just the one that was hearted.
+  const [followedModelIds, setFollowedModelIds] = useState<Set<string>>(
+    () => new Set(items.filter((i) => i.isFollowed).map((i) => i.model.id))
+  );
+  useEffect(() => {
+    setFollowedModelIds((prev) => {
+      const next = new Set(prev);
+      items.forEach((i) => i.isFollowed && next.add(i.model.id));
+      return next;
+    });
+  }, [items]);
+  const markFollowed = (modelId: string) =>
+    setFollowedModelIds((prev) => new Set(prev).add(modelId));
 
   const handleUnlock = (_contentId: string, newBalance: number) => {
     setBalance(newBalance);
@@ -76,6 +195,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
       <div className="space-y-4">
         {visibleItems.map((item) => {
             const modelName = item.model.username;
+            const isFollowed = followedModelIds.has(item.model.id);
             return (
               <div key={`content-${item.id}`} className="rounded-xl border border-border/50 bg-card overflow-hidden">
                 {/* Model header */}
@@ -98,7 +218,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
                         </svg>
                       )}
                     </div>
-                    {item.isFollowed && (
+                    {isFollowed && (
                       <p className="text-xs text-muted-foreground">Following</p>
                     )}
                   </div>
@@ -110,7 +230,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
                   )}
                 </Link>
                 {/* Content */}
-                <div className="px-3 pb-3">
+                <div className="px-3 pb-1">
                   {item.title && (
                     <p className="text-sm font-medium mb-2 px-0.5">{item.title}</p>
                   )}
@@ -129,6 +249,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
                     onUnlock={handleUnlock}
                   />
                 </div>
+                <FeedCardActions item={item} isFollowed={isFollowed} onFollowed={markFollowed} />
               </div>
             );
         })}
