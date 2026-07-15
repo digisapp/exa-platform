@@ -8,9 +8,35 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
+
+// Retention policy: the ID photo + selfie exist only to be reviewed. Once a
+// decision is made, the extracted facts (legal name, DOB, country, reviewer,
+// timestamp) are the durable record and the images are pure breach liability —
+// so they are deleted from storage immediately after approve/reject. The admin
+// UI already tolerates missing objects (signed URLs degrade to null).
+async function purgeVerificationDocuments(verificationId: string) {
+  try {
+    const admin = createServiceRoleClient();
+    const { data: row } = await admin
+      .from("model_verifications")
+      .select("id_document_path, selfie_path")
+      .eq("id", verificationId)
+      .single();
+    if (!row) return;
+    const paths = [row.id_document_path, row.selfie_path].filter(Boolean) as string[];
+    if (paths.length === 0) return;
+    const { error } = await admin.storage.from("identity-documents").remove(paths);
+    if (error) {
+      logger.error("Failed to purge verification documents", { verificationId, error });
+    }
+  } catch (e) {
+    logger.error("Failed to purge verification documents", { verificationId, error: e });
+  }
+}
 
 // Reject DOBs that imply the model is under 18, or in the future.
 function isAdultDob(dob: string): boolean {
@@ -81,6 +107,7 @@ export async function PATCH(
       if (!result?.success) {
         return NextResponse.json({ error: result?.error || "Failed to approve" }, { status: 400 });
       }
+      await purgeVerificationDocuments(id);
       return NextResponse.json({ success: true });
     }
 
@@ -98,6 +125,7 @@ export async function PATCH(
     if (!result?.success) {
       return NextResponse.json({ error: result?.error || "Failed to reject" }, { status: 400 });
     }
+    await purgeVerificationDocuments(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     logger.error("Admin verification PATCH error", error);
