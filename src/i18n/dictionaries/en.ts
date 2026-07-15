@@ -37,7 +37,6 @@ export const en = {
     shareProfile: "Share profile",
     topUpCoins: "Top up {amount} coins",
     // Hero quick actions
-    goLive: "Go Live",
     newBid: "New Bid",
     browse: "Browse",
     offer: "Offer",

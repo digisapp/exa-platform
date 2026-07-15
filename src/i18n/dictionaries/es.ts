@@ -39,7 +39,6 @@ export const es: Dictionary = {
     shareProfile: "Compartir perfil",
     topUpCoins: "Recargar {amount} monedas",
     // Hero quick actions
-    goLive: "En vivo",
     newBid: "Nueva Subasta",
     browse: "Explorar",
     offer: "Oferta",
