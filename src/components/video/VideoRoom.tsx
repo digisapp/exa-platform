@@ -20,8 +20,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { showTipSuccessToast } from "@/lib/tip-toast";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-
-const TIP_AMOUNTS = [100, 250, 500, 1000];
+import { TIP_GIFTS, SUPER_TIP_AMOUNTS, type TipGift } from "@/lib/tip-config";
 
 interface VideoRoomProps {
   token: string;
@@ -412,7 +411,7 @@ function VideoCallContent({
     ? Math.ceil(callDuration / 60) * CALL_COST_PER_MINUTE
     : 0;
 
-  const handleTip = async (amount: number) => {
+  const handleTip = async (amount: number, gift?: TipGift) => {
     if (!recipientActorId) return;
     if (coinBalance < amount) {
       toast.error(`Not enough coins. Need ${amount}, have ${coinBalance}`);
@@ -427,6 +426,7 @@ function VideoCallContent({
         body: JSON.stringify({
           recipientId: recipientActorId,
           amount,
+          gift: gift?.key,
         }),
       });
 
@@ -437,7 +437,7 @@ function VideoCallContent({
         return;
       }
 
-      showTipSuccessToast({ amount, recipientName: recipientName || "Model" });
+      showTipSuccessToast({ amount, recipientName: recipientName || "Model", gift });
       setShowTipMenu(false);
       if (onTipSuccess) {
         onTipSuccess(amount, data.newBalance);
@@ -508,7 +508,7 @@ function VideoCallContent({
             <div className="flex items-center justify-between mb-3">
               <span className="text-white text-sm font-medium flex items-center gap-2">
                 <Heart className="h-4 w-4 text-pink-500" />
-                Super Tip {recipientName}
+                Tip {recipientName}
               </span>
               <button
                 onClick={() => setShowTipMenu(false)}
@@ -521,8 +521,38 @@ function VideoCallContent({
               <Coins className="h-3 w-3" />
               {coinBalance} coins available
             </div>
+            {/* Gifts — small named tips; taps send immediately like the coin tiles */}
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              {TIP_GIFTS.map((gift) => {
+                const canAfford = coinBalance >= gift.amount;
+                const isLoading = tippingAmount === gift.amount;
+
+                return (
+                  <button
+                    key={gift.key}
+                    onClick={() => canAfford && !tippingAmount && handleTip(gift.amount, gift)}
+                    disabled={!canAfford || !!tippingAmount}
+                    className={cn(
+                      "py-2 px-2 rounded-lg text-center transition-all",
+                      canAfford
+                        ? "bg-pink-500/20 hover:bg-pink-500/30 text-pink-400 border border-pink-500/30"
+                        : "bg-white/5 text-white/30 cursor-not-allowed"
+                    )}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                    ) : (
+                      <span className="flex items-center justify-center gap-1">
+                        <span className={cn("text-base leading-none", !canAfford && "opacity-50")}>{gift.emoji}</span>
+                        <span className="text-xs font-semibold">{gift.amount}</span>
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
             <div className="grid grid-cols-4 gap-2">
-              {TIP_AMOUNTS.map((amount) => {
+              {SUPER_TIP_AMOUNTS.map((amount) => {
                 const canAfford = coinBalance >= amount;
                 const isLoading = tippingAmount === amount;
 

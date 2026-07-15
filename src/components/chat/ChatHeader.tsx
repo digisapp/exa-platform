@@ -272,7 +272,7 @@ export function ChatHeader({
             variant="ghost"
             size="icon"
             onClick={onTipClick}
-            title="Send a Super Tip"
+            title="Send a tip or gift"
             className="h-11 w-11 rounded-xl text-pink-300 hover:text-pink-200 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 shadow-[0_0_12px_rgba(236,72,153,0.25)] hover:shadow-[0_0_18px_rgba(236,72,153,0.45)] transition-all"
           >
             <Gift className="h-6 w-6" />
