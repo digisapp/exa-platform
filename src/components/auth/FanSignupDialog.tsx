@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +50,7 @@ export function FanSignupDialog({
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   const supabase = createClient();
 
@@ -83,6 +85,11 @@ export function FanSignupDialog({
 
     if (password.length < 8) {
       toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    if (!ageConfirmed) {
+      toast.error("Please confirm you are at least 18 years old");
       return;
     }
 
@@ -161,6 +168,7 @@ export function FanSignupDialog({
         body: JSON.stringify({
           displayName: cleanUsername,
           referrerModelId,
+          ageAttested: ageConfirmed,
         }),
       });
 
@@ -182,6 +190,7 @@ export function FanSignupDialog({
       setUsername("");
       setEmail("");
       setPassword("");
+      setAgeConfirmed(false);
     }, 300);
   };
 
@@ -292,6 +301,31 @@ export function FanSignupDialog({
               Must be at least 8 characters
             </p>
           </div>
+
+          <label
+            htmlFor="fanAgeConfirm"
+            className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer select-none"
+          >
+            <input
+              id="fanAgeConfirm"
+              type="checkbox"
+              checked={ageConfirmed}
+              onChange={(e) => setAgeConfirmed(e.target.checked)}
+              disabled={loading}
+              required
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 accent-pink-500"
+            />
+            <span>
+              I confirm I am at least 18 years old and agree to the{" "}
+              <Link href="/terms" target="_blank" className="text-pink-500 hover:underline">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" target="_blank" className="text-pink-500 hover:underline">
+                Privacy Policy
+              </Link>
+            </span>
+          </label>
 
           <Button
             type="submit"

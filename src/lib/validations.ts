@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isAdultDob } from "@/lib/age";
 
 /**
  * Shared Zod validation schemas for API endpoints
@@ -59,7 +60,10 @@ export const modelSignupSchema = z.object({
   instagram_username: z.string().max(30, "Instagram username is too long").optional().nullable(),
   tiktok_username: z.string().max(24, "TikTok username is too long").optional().nullable(),
   phone: phoneSchema,
-  date_of_birth: z.string().optional().nullable(),
+  date_of_birth: z
+    .string()
+    .min(1, "Date of birth is required")
+    .refine(isAdultDob, "You must be at least 18 years old to apply"),
   height: z.string().max(10, "Height is too long").optional().nullable(),
 }).refine(
   (data) => data.instagram_username?.trim() || data.tiktok_username?.trim(),

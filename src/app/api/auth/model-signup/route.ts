@@ -8,6 +8,7 @@ import {
 } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { escapeIlike } from "@/lib/utils";
+import { isAdultDob } from "@/lib/age";
 import { z } from "zod";
 
 // Zod schema for model signup validation
@@ -18,7 +19,7 @@ const modelSignupSchema = z.object({
   instagram_username: z.string().max(30, "Instagram username is too long").optional().nullable(),
   tiktok_username: z.string().max(24, "TikTok username is too long").optional().nullable(),
   phone: z.string().max(20, "Phone number is too long").optional().nullable(),
-  date_of_birth: z.string().optional().nullable(),
+  date_of_birth: z.string().min(1, "Date of birth is required"),
   height: z.string().max(10, "Height is too long").optional().nullable(),
   preferred_language: z.string().max(5).optional().nullable(),
 }).refine(
@@ -139,21 +140,15 @@ export async function POST(request: NextRequest) {
       preferred_language,
     } = validationResult.data;
 
-    // Age validation (if date_of_birth provided)
-    if (date_of_birth) {
-      const dob = new Date(date_of_birth);
-      const today = new Date();
-      let age = today.getFullYear() - dob.getFullYear();
-      const monthDiff = today.getMonth() - dob.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-        age--;
-      }
-      if (age < 18) {
-        return NextResponse.json(
-          { error: "You must be at least 18 years old to apply", code: "underage" },
-          { status: 400 }
-        );
-      }
+    // Age validation — DOB is now required by the schema; the age check runs
+    // unconditionally (a direct POST omitting DOB used to skip it entirely).
+    // Kept outside the Zod schema so the client keeps receiving code:"underage"
+    // (the dialog maps it to a localized serverErrors.underage message).
+    if (!isAdultDob(date_of_birth)) {
+      return NextResponse.json(
+        { error: "You must be at least 18 years old to apply", code: "underage" },
+        { status: 400 }
+      );
     }
 
     const normalizedEmail = email; // Already normalized by Zod schema

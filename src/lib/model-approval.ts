@@ -2,6 +2,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { sendModelApprovalEmail } from "@/lib/email";
 import { sendModelApprovalSMS } from "@/lib/sms";
 import { escapeIlike } from "@/lib/utils";
+import { isAdultDob } from "@/lib/age";
 
 // Carries the fan's coin balance onto the model row and soft-deletes the fan
 // record (deleted_reason 'converted_to_model') in one transaction — replaces
@@ -39,6 +40,19 @@ export async function approveModelApplication({
   /** Admin actors.id — recorded as reviewed_by and used as welcome-chat sender */
   reviewerActorId: string;
 }): Promise<{ success: boolean; error?: string }> {
+  // 18+ backstop: every path that publishes a model (admin approve button,
+  // photo-upload auto-approve) funnels through here. Applications predating
+  // required-DOB signup can have a null date_of_birth — those need the DOB
+  // collected before they can be approved.
+  if (!application.date_of_birth || !isAdultDob(application.date_of_birth)) {
+    return {
+      success: false,
+      error: application.date_of_birth
+        ? "Cannot approve: applicant's date of birth is under 18"
+        : "Cannot approve: application has no date of birth on file",
+    };
+  }
+
   const adminClient = createServiceRoleClient();
 
   const { error: updateError } = await adminClient

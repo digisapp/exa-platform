@@ -10,11 +10,20 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse;
     }
 
-    const { displayName, referrerModelId: requestReferrerId } = await request.json();
+    const { displayName, referrerModelId: requestReferrerId, ageAttested } = await request.json();
 
     if (!displayName?.trim()) {
       return NextResponse.json(
         { error: "Display name is required" },
+        { status: 400 }
+      );
+    }
+
+    // Self-attestation, not verification — but it must be an explicit claim
+    // the user made, so the server refuses to create a fan without it.
+    if (ageAttested !== true) {
+      return NextResponse.json(
+        { error: "You must confirm you are at least 18 years old" },
         { status: 400 }
       );
     }
@@ -81,6 +90,7 @@ export async function POST(request: NextRequest) {
           display_name: displayName.trim(),
           coin_balance: 0,
           referred_by_model_id: validReferrerId,
+          age_attested_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
 
       if (fanError) {
@@ -141,6 +151,7 @@ export async function POST(request: NextRequest) {
         display_name: displayName.trim(),
         coin_balance: 0,
         referred_by_model_id: validReferrerId,
+        age_attested_at: new Date().toISOString(),
       }, { onConflict: "user_id" });
 
     if (fanError) {

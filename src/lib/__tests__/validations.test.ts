@@ -180,6 +180,7 @@ describe("modelSignupSchema", () => {
     name: "Jane Doe",
     email: "jane@example.com",
     instagram_username: "janedoe",
+    date_of_birth: "1995-01-01",
   };
 
   it("accepts valid data with instagram", () => {
@@ -191,6 +192,7 @@ describe("modelSignupSchema", () => {
       name: "Jane Doe",
       email: "jane@example.com",
       tiktok_username: "janedoe",
+      date_of_birth: "1995-01-01",
     }).success).toBe(true);
   });
 
@@ -198,6 +200,7 @@ describe("modelSignupSchema", () => {
     expect(safeParse(modelSignupSchema, {
       name: "Jane Doe",
       email: "jane@example.com",
+      date_of_birth: "1995-01-01",
     }).success).toBe(false);
   });
 
@@ -207,6 +210,24 @@ describe("modelSignupSchema", () => {
       email: "jane@example.com",
       instagram_username: "   ",
       tiktok_username: "   ",
+      date_of_birth: "1995-01-01",
+    }).success).toBe(false);
+  });
+
+  it("rejects when date_of_birth is missing", () => {
+    expect(safeParse(modelSignupSchema, {
+      name: "Jane Doe",
+      email: "jane@example.com",
+      instagram_username: "janedoe",
+    }).success).toBe(false);
+  });
+
+  it("rejects an under-18 date_of_birth", () => {
+    const underage = new Date();
+    underage.setFullYear(underage.getFullYear() - 16);
+    expect(safeParse(modelSignupSchema, {
+      ...validData,
+      date_of_birth: underage.toISOString().slice(0, 10),
     }).success).toBe(false);
   });
 });

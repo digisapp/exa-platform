@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { isAdultDob } from "@/lib/age";
 import { z } from "zod";
 
 const adminClient = createServiceRoleClient();
@@ -66,6 +67,12 @@ const claimSchema = z.object({
   token: z.string().regex(UUID_REGEX, "Invalid token"),
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/),
   password: z.string().min(8).max(128),
+  // Imported profiles have no trustworthy DOB — claiming is the moment a
+  // real person takes over the account, so the 18+ audit happens here.
+  date_of_birth: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date of birth")
+    .refine(isAdultDob, "You must be at least 18 years old to claim your profile"),
 });
 
 export async function POST(request: NextRequest) {
@@ -82,7 +89,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { token, username, password } = parsed.data;
+    const { token, username, password, date_of_birth } = parsed.data;
     const normalizedUsername = username.toLowerCase();
 
     // Fetch model by token (service role bypasses RLS)
@@ -179,6 +186,10 @@ export async function POST(request: NextRequest) {
         user_id: userId,
         username: normalizedUsername,
         claimed_at: new Date().toISOString(),
+        // Both DOB columns exist in prod (dob predates date_of_birth); the
+        // approval path writes both, so the claim path stays consistent.
+        dob: date_of_birth,
+        date_of_birth,
       })
       .eq("id", model.id);
 
@@ -197,6 +208,7 @@ export async function POST(request: NextRequest) {
         email: model.email,
         display_name: model.first_name || normalizedUsername,
         coin_balance: 0,
+        age_attested_at: new Date().toISOString(),
       }, { onConflict: "user_id" });
     } catch {
       // Non-blocking
