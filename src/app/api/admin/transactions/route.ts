@@ -37,20 +37,67 @@ export async function GET(request: NextRequest) {
   const pageSize = Math.min(Math.max(1, parseInt(searchParams.get("pageSize") || "20")), 100);
   const action = searchParams.get("action") || null;
   const cursor = searchParams.get("cursor") || null; // created_at cursor for Load More
+  const cursorId = searchParams.get("cursorId") || null; // tie-breaker for equal timestamps
+  const q = (searchParams.get("q") || "").trim();
 
-  // Build query
+  // User search: resolve email/name/username matches to actor ids first
+  let searchActorIds: string[] | null = null;
+  if (q) {
+    // strip chars that break PostgREST or() syntax, escape ilike wildcards
+    const pattern = `%${q.replace(/[,()]/g, " ").replace(/[%_]/g, "\\$&").trim()}%`;
+    const [{ data: qFans }, { data: qModels }] = await Promise.all([
+      supabase
+        .from("fans")
+        .select("user_id")
+        .or(`email.ilike.${pattern},display_name.ilike.${pattern}`)
+        .limit(100) as unknown as Promise<{ data: { user_id: string }[] | null }>,
+      supabase
+        .from("models")
+        .select("user_id")
+        .or(`email.ilike.${pattern},username.ilike.${pattern},first_name.ilike.${pattern},last_name.ilike.${pattern}`)
+        .limit(100) as unknown as Promise<{ data: { user_id: string }[] | null }>,
+    ]);
+
+    const userIds = [...new Set([...(qFans || []), ...(qModels || [])].map((r) => r.user_id))];
+    if (userIds.length === 0) {
+      return NextResponse.json({ transactions: [], total: 0, page, pageSize });
+    }
+
+    const { data: qActors } = (await supabase
+      .from("actors")
+      .select("id")
+      .in("user_id", userIds)) as { data: { id: string }[] | null };
+
+    searchActorIds = (qActors || []).map((a) => a.id);
+    if (searchActorIds.length === 0) {
+      return NextResponse.json({ transactions: [], total: 0, page, pageSize });
+    }
+  }
+
+  // Build query — secondary id ordering makes the cursor stable when several
+  // rows share a created_at (the double-entry ledger writes pairs at the same
+  // instant, so lt(created_at) alone skips rows)
   let query = supabase
     .from("coin_transactions")
     .select("*", { count: "exact" })
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
 
   if (action) {
     query = query.eq("action", action);
   }
 
+  if (searchActorIds) {
+    query = query.in("actor_id", searchActorIds);
+  }
+
   if (cursor) {
-    // Cursor-based: load items older than cursor
-    query = query.lt("created_at", cursor);
+    // Cursor-based: load items strictly after the (created_at, id) cursor
+    if (cursorId) {
+      query = query.or(`created_at.lt.${cursor},and(created_at.eq.${cursor},id.lt.${cursorId})`);
+    } else {
+      query = query.lt("created_at", cursor);
+    }
     query = query.limit(pageSize);
   } else {
     // Offset-based fallback

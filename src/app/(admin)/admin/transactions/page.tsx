@@ -15,23 +15,21 @@ import {
   Crown,
   DollarSign,
 } from "lucide-react";
-import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { AdminTransactionList } from "./AdminTransactionList";
-
-// Get the USD price for a coin amount (returns cents)
-function getCoinPackagePrice(coins: number): number {
-  const pkg = COIN_PACKAGES.find(p => p.coins === coins);
-  return pkg?.price || 0;
-}
 
 interface TopPurchaser {
   actor_id: string;
   email: string;
   name: string;
   type: string;
+  model_id: string | null;
   total_purchased: number;
   purchase_count: number;
   total_usd_cents: number;
+}
+
+function formatUsd(cents: number): string {
+  return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default async function TransactionsPage() {
@@ -55,7 +53,7 @@ export default async function TransactionsPage() {
   const [
     { data: statsData },
     { data: topPurchaserData },
-    { data: purchaseVolumeData },
+    { data: revenueData },
     { data: modelBalances },
     { data: fanBalances },
     { data: initialTransactionsRaw, count: txCount },
@@ -64,9 +62,9 @@ export default async function TransactionsPage() {
     // Platform-wide stats via RPC (replaces 200-row fetch + JS filter/reduce)
     (supabase.rpc as any)("get_admin_transaction_stats") as Promise<{ data: { stat_name: string; stat_value: number }[] | null }>,
     // Top purchasers via RPC (replaces unlimited purchase fetch + JS aggregation)
-    (supabase.rpc as any)("get_top_purchasers", { p_limit: 20 }) as Promise<{ data: { actor_id: string; total_purchased: number; purchase_count: number }[] | null }>,
-    // Purchase volume by coin amount for revenue calc (replaces unlimited fetch)
-    (supabase.rpc as any)("get_purchase_volume") as Promise<{ data: { coin_amount: number; purchase_count: number }[] | null }>,
+    (supabase.rpc as any)("get_top_purchasers", { p_limit: 20 }) as Promise<{ data: { actor_id: string; total_purchased: number; purchase_count: number; total_usd_cents: number }[] | null }>,
+    // Exact revenue from Stripe amount_paid stored in purchase metadata
+    (supabase.rpc as any)("get_purchase_revenue") as Promise<{ data: { revenue_cents: number; missing_amount_count: number }[] | null }>,
     // Coin balances (these are already lightweight - just sums)
     supabase.from("models").select("coin_balance") as unknown as Promise<{ data: { coin_balance: number }[] | null }>,
     supabase.from("fans").select("coin_balance") as unknown as Promise<{ data: { coin_balance: number }[] | null }>,
@@ -89,10 +87,9 @@ export default async function TransactionsPage() {
   const totalTipped = statsMap.get("total_tipped") || 0;
   const totalContentSales = statsMap.get("total_content_sales") || 0;
 
-  // Calculate total revenue from purchase volume RPC
-  const totalRevenueCents = (purchaseVolumeData || []).reduce(
-    (sum: number, v: any) => sum + getCoinPackagePrice(Number(v.coin_amount)) * Number(v.purchase_count), 0
-  );
+  // Exact revenue: sum of Stripe amount_paid across all purchases
+  const totalRevenueCents = Number(revenueData?.[0]?.revenue_cents || 0);
+  const purchasesMissingAmount = Number(revenueData?.[0]?.missing_amount_count || 0);
   const totalRevenue = totalRevenueCents / 100;
 
   // Coin balances
@@ -120,7 +117,7 @@ export default async function TransactionsPage() {
         ? supabase.from("fans").select("user_id, email, display_name").in("user_id", fanUserIds) as unknown as Promise<{ data: { user_id: string; email: string; display_name: string | null }[] | null }>
         : Promise.resolve({ data: [] as any[] }),
       modelUserIds.length > 0
-        ? supabase.from("models").select("user_id, email, first_name, last_name").in("user_id", modelUserIds) as unknown as Promise<{ data: { user_id: string; email: string; first_name: string | null; last_name: string | null }[] | null }>
+        ? supabase.from("models").select("id, user_id, email, first_name, last_name").in("user_id", modelUserIds) as unknown as Promise<{ data: { id: string; user_id: string; email: string; first_name: string | null; last_name: string | null }[] | null }>
         : Promise.resolve({ data: [] as any[] }),
     ]);
 
@@ -131,6 +128,7 @@ export default async function TransactionsPage() {
       const a = actorMap.get(p.actor_id);
       let email = "";
       let name = "";
+      let modelId: string | null = null;
 
       if (a?.type === "fan") {
         const fan = fanMap.get(a.user_id);
@@ -140,6 +138,7 @@ export default async function TransactionsPage() {
         const model = modelMap.get(a.user_id);
         email = model?.email || "";
         name = [model?.first_name, model?.last_name].filter(Boolean).join(" ");
+        modelId = model?.id || null;
       }
 
       return {
@@ -147,18 +146,12 @@ export default async function TransactionsPage() {
         email,
         name: name || email.split("@")[0],
         type: a?.type || "unknown",
+        model_id: modelId,
         total_purchased: Number(p.total_purchased),
         purchase_count: Number(p.purchase_count),
-        total_usd_cents: 0, // Will calculate below
+        total_usd_cents: Number(p.total_usd_cents || 0),
       };
     });
-
-    // Calculate USD for each top purchaser (approximation from their total coins)
-    // For more accuracy we'd need per-transaction data, but this gives a reasonable estimate
-    topPurchasers = topPurchasers.map(p => ({
-      ...p,
-      total_usd_cents: p.total_purchased * 10, // 1 coin ≈ $0.10
-    }));
   }
 
   // Enrich recent purchases with user info
@@ -294,7 +287,12 @@ export default async function TransactionsPage() {
               <DollarSign className="h-8 w-8 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                <p className="text-xs text-muted-foreground">Total Revenue</p>
+                <p className="text-xs text-muted-foreground">
+                  Total Revenue
+                  {purchasesMissingAmount > 0 && (
+                    <span className="text-yellow-500"> · {purchasesMissingAmount} purchase{purchasesMissingAmount !== 1 ? "s" : ""} missing $ data</span>
+                  )}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -422,7 +420,13 @@ export default async function TransactionsPage() {
                           {index + 1}
                         </div>
                         <div>
-                          <p className="font-semibold">{purchaser.name}</p>
+                          {purchaser.type === "model" && purchaser.model_id ? (
+                            <Link href={`/admin/models/${purchaser.model_id}`} className="font-semibold hover:underline">
+                              {purchaser.name}
+                            </Link>
+                          ) : (
+                            <p className="font-semibold">{purchaser.name}</p>
+                          )}
                           <p className="text-sm text-muted-foreground">{purchaser.email}</p>
                         </div>
                         <Badge variant="outline" className="ml-2">
@@ -431,10 +435,10 @@ export default async function TransactionsPage() {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-green-500 text-lg">
-                          {purchaser.total_purchased.toLocaleString()} coins
+                          {formatUsd(purchaser.total_usd_cents)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {purchaser.purchase_count} purchase{purchaser.purchase_count !== 1 ? "s" : ""}
+                          {purchaser.total_purchased.toLocaleString()} coins · {purchaser.purchase_count} purchase{purchaser.purchase_count !== 1 ? "s" : ""}
                         </p>
                       </div>
                     </div>
@@ -477,8 +481,14 @@ export default async function TransactionsPage() {
                         </Badge>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-green-500">+{purchase.amount.toLocaleString()} coins</p>
-                        <p className="text-xs text-muted-foreground">{formatDate(purchase.created_at)}</p>
+                        <p className="font-semibold text-green-500">
+                          {typeof purchase.metadata?.amount_paid === "number"
+                            ? formatUsd(purchase.metadata.amount_paid)
+                            : `+${purchase.amount.toLocaleString()} coins`}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          +{purchase.amount.toLocaleString()} coins · {formatDate(purchase.created_at)}
+                        </p>
                       </div>
                     </div>
                   ))}

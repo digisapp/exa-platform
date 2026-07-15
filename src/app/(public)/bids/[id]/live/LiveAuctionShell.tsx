@@ -221,7 +221,7 @@ export function LiveAuctionShell({
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                         <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
                       </span>
-                      Live
+                      Live Bids
                     </span>
                   ) : (
                     <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white/15 text-[9px] font-bold uppercase tracking-wider">
