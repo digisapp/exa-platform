@@ -22,6 +22,7 @@ export interface ContentItem {
   position: number;
   view_count: number;
   unlock_count: number;
+  like_count: number;
   tags: string[];
   created_at: string;
   updated_at: string;

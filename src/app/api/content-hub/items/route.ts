@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     if (tag) query = query.contains("tags", [tag]);
     if (search) query = query.ilike("title", `%${search}%`);
 
-    const validSorts = ["created_at", "unlock_count", "coin_price"];
+    const validSorts = ["created_at", "unlock_count", "coin_price", "like_count"];
     const sortField = validSorts.includes(sort) ? sort : "created_at";
     query = query
       .order(sortField, { ascending: order === "asc" })
