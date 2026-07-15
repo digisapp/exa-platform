@@ -15,6 +15,7 @@ export default function FanSignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -60,6 +61,12 @@ export default function FanSignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!ageConfirmed) {
+      toast.error("Please confirm you are at least 18 years old");
+      return;
+    }
+
     setLoading(true);
 
     // Get referrer model ID from localStorage (set when viewing a model profile)
@@ -79,6 +86,7 @@ export default function FanSignupPage() {
           body: JSON.stringify({
             displayName: displayName.trim(),
             referrerModelId,
+            ageAttested: ageConfirmed,
           }),
         });
 
@@ -144,6 +152,7 @@ export default function FanSignupPage() {
             body: JSON.stringify({
               displayName: displayName.trim() || email.split("@")[0],
               referrerModelId,
+              ageAttested: ageConfirmed,
             }),
           });
 
@@ -273,6 +282,31 @@ export default function FanSignupPage() {
                 Signed in as <span className="font-medium text-foreground">{userEmail}</span>
               </div>
             )}
+
+            <label
+              htmlFor="ageConfirm"
+              className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer select-none"
+            >
+              <input
+                id="ageConfirm"
+                type="checkbox"
+                checked={ageConfirmed}
+                onChange={(e) => setAgeConfirmed(e.target.checked)}
+                disabled={loading}
+                required
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 accent-pink-500"
+              />
+              <span>
+                I confirm I am at least 18 years old and agree to the{" "}
+                <Link href="/terms" target="_blank" className="text-pink-500 hover:underline">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" target="_blank" className="text-pink-500 hover:underline">
+                  Privacy Policy
+                </Link>
+              </span>
+            </label>
           </CardContent>
 
           <CardFooter className="flex flex-col gap-4 pt-2">

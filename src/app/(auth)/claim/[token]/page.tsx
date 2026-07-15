@@ -34,9 +34,17 @@ export default function ClaimPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [username, setUsername] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // Latest DOB that is 18+ today — used as the date input's max
+  const maxDob = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 18);
+    return d.toISOString().slice(0, 10);
+  })();
 
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -130,6 +138,16 @@ export default function ClaimPage() {
 
     if (!model) return;
 
+    if (!dateOfBirth) {
+      toast.error("Please enter your date of birth");
+      return;
+    }
+
+    if (dateOfBirth > maxDob) {
+      toast.error("You must be at least 18 years old to claim your profile");
+      return;
+    }
+
     if (password.length < 8) {
       toast.error("Password must be at least 8 characters");
       return;
@@ -156,6 +174,7 @@ export default function ClaimPage() {
           token,
           username,
           password,
+          date_of_birth: dateOfBirth,
         }),
       });
 
@@ -307,6 +326,24 @@ export default function ClaimPage() {
                 </p>
               </div>
 
+              {/* Date of birth — imported profiles carry no trusted DOB, so
+                  it's collected (and 18+ checked server-side) at claim time */}
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  max={maxDob}
+                  disabled={submitting}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  You must be at least 18 years old to join EXA
+                </p>
+              </div>
+
               {/* Password */}
               <div className="space-y-2">
                 <Label htmlFor="password">Create Password</Label>
@@ -352,7 +389,7 @@ export default function ClaimPage() {
               <Button
                 type="submit"
                 className="w-full exa-gradient-button h-12 text-lg"
-                disabled={submitting || !usernameAvailable || !password || password !== confirmPassword}
+                disabled={submitting || !usernameAvailable || !dateOfBirth || !password || password !== confirmPassword}
               >
                 {submitting ? (
                   <>
@@ -365,7 +402,8 @@ export default function ClaimPage() {
               </Button>
 
               <p className="text-xs text-center text-muted-foreground">
-                By claiming your profile, you agree to our{" "}
+                By claiming your profile, you confirm you are at least 18 years
+                old and agree to our{" "}
                 <Link href="/terms" className="text-pink-500 hover:underline">
                   Terms of Service
                 </Link>{" "}
