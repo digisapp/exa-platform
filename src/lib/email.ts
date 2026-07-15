@@ -7694,6 +7694,119 @@ export async function sendNewMessageNotificationEmail({
 }
 
 /**
+ * Send a fast "model replied" email to a fan whose message got a reply
+ * they haven't read yet (~12 min). Sent by the reply-notifications cron,
+ * deduped to one per conversation per 24h via chat_nudges_sent.
+ */
+export async function sendModelReplyNotificationEmail({
+  to,
+  recipientName,
+  modelName,
+  messagePreview,
+  conversationUrl,
+}: {
+  to: string;
+  recipientName: string;
+  modelName: string;
+  messagePreview: string;
+  conversationUrl: string;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      logger.info("Skipping model reply email - recipient is unsubscribed", { to });
+      return;
+    }
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const truncatedPreview = messagePreview.length > 150 ? messagePreview.slice(0, 150) + "..." : messagePreview;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: `${modelName} replied to you on EXA Models`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <p style="margin: 0; font-size: 40px;">💬</p>
+              <h1 style="margin: 10px 0 0; color: white; font-size: 22px; font-weight: bold;">
+                You Got a Reply
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${escapeHtml(recipientName)}!
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #ffffff;">${escapeHtml(modelName)}</strong> just replied to your conversation.
+              </p>
+
+              <!-- Message Preview -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #262626; border-radius: 8px; border-left: 3px solid #ec4899;">
+                    <p style="margin: 0 0 5px; color: #71717a; font-size: 12px;">Their reply:</p>
+                    <p style="margin: 0; color: #ffffff; font-size: 14px; font-style: italic;">"${escapeHtml(truncatedPreview)}"</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td align="center">
+                    <a href="${conversationUrl}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                      Read &amp; Reply
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 13px; text-align: center;">
+                Keep the conversation going while they're thinking of you!
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Model reply notification email error", error);
+    return { success: false, error };
+  }
+}
+
+/**
  * Send a nudge email for unread messages (24h+ old).
  * Reminds the recipient they have an unanswered message.
  */
