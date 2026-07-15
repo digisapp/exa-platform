@@ -6,6 +6,7 @@ import { messageCoinCost } from "@/lib/coin-config";
 import { modelDisplayName } from "@/lib/model-display";
 import { MessageInput } from "./MessageInput";
 import { ChatHeader, type ChatParticipantModel } from "./ChatHeader";
+import { TipDialog } from "./TipDialog";
 import { ChatMessages, ChatMessagesHandle } from "./ChatMessages";
 import { IncomingCallDialog } from "@/components/video";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
@@ -307,6 +308,9 @@ export function ChatView({
 
   // Can tip if the other participant is a model and we're not a model
   const canTip = otherParticipant.actor.type === "model" && currentActor.type !== "model";
+  // Owned here (not in ChatHeader) so both the header Gift button and the
+  // composer Gift button open the same dialog
+  const [showTipDialog, setShowTipDialog] = useState(false);
 
   // --- Extracted hooks ---
 
@@ -756,11 +760,24 @@ export function ChatView({
         otherInfo={otherInfo}
         otherInitials={otherInitials}
         canTip={canTip}
+        onTipClick={() => setShowTipDialog(true)}
         localCoinBalance={localCoinBalance}
         onBalanceChange={handleBalanceChange}
         soundEnabled={soundEnabled}
         onToggleSound={toggleSound}
       />
+
+      {canTip && (
+        <TipDialog
+          recipientId={otherParticipant.actor_id}
+          recipientName={otherName}
+          conversationId={conversation.id}
+          coinBalance={localCoinBalance}
+          open={showTipDialog}
+          onOpenChange={setShowTipDialog}
+          onTipSuccess={(amount, newBalance) => handleBalanceChange(newBalance)}
+        />
+      )}
 
       {/* Incoming Call Dialog */}
       {incomingCall && (
@@ -810,6 +827,7 @@ export function ChatView({
         onStopTyping={stopTyping}
         replyingTo={replyingTo}
         onCancelReply={() => setReplyingTo(null)}
+        onTipClick={canTip ? () => setShowTipDialog(true) : undefined}
       />
     </div>
   );

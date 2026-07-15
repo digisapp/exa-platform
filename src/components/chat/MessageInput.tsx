@@ -5,7 +5,7 @@ import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Coins, X, Video, Mic, Camera, Lock, Reply } from "lucide-react";
+import { Send, Loader2, Coins, X, Video, Mic, Camera, Lock, Reply, Gift } from "lucide-react";
 import type { Message } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -47,6 +47,8 @@ interface MessageInputProps {
   onStopTyping?: () => void;
   replyingTo?: Message | null;
   onCancelReply?: () => void;
+  /** When set, shows a Gift button in the composer that opens the tip dialog (fan → model chats) */
+  onTipClick?: () => void;
 }
 
 export function MessageInput({
@@ -62,6 +64,7 @@ export function MessageInput({
   onStopTyping,
   replyingTo,
   onCancelReply,
+  onTipClick,
 }: MessageInputProps) {
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
@@ -577,6 +580,20 @@ export function MessageInput({
           disabled={disabled || sending}
           isModel={isModel}
         />
+
+        {/* Super Tip (fan → model only) */}
+        {onTipClick && (
+          <button
+            type="button"
+            onClick={onTipClick}
+            disabled={disabled}
+            title="Send a Super Tip"
+            aria-label="Send a Super Tip"
+            className="shrink-0 h-12 w-10 flex items-center justify-center rounded-2xl text-pink-300 hover:text-pink-200 hover:bg-pink-500/10 active:scale-95 transition-all disabled:opacity-40"
+          >
+            <Gift className="h-5 w-5" />
+          </button>
+        )}
 
         {/* Emoji picker (desktop only) */}
         <EmojiPicker

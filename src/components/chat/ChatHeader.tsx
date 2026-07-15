@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { VideoCallButton } from "@/components/video";
-import { TipDialog } from "./TipDialog";
 import { ArrowLeft, MoreVertical, Ban, Circle, Gift, Users, Building2, Search, Volume2, VolumeX } from "lucide-react";
 import { ChatSearch } from "./ChatSearch";
 import { cn } from "@/lib/utils";
@@ -65,6 +64,7 @@ interface ChatHeaderProps {
   otherInfo: OtherParticipantInfo;
   otherInitials: string;
   canTip: boolean;
+  onTipClick: () => void;
   localCoinBalance: number;
   onBalanceChange: (newBalance: number) => void;
   soundEnabled?: boolean;
@@ -80,13 +80,13 @@ export function ChatHeader({
   otherInfo,
   otherInitials,
   canTip,
+  onTipClick,
   localCoinBalance,
   onBalanceChange,
   soundEnabled = true,
   onToggleSound,
 }: ChatHeaderProps) {
   const router = useRouter();
-  const [showTipDialog, setShowTipDialog] = useState(false);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [isBlocking, setIsBlocking] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -271,8 +271,8 @@ export function ChatHeader({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setShowTipDialog(true)}
-            title="Send a tip"
+            onClick={onTipClick}
+            title="Send a Super Tip"
             className="h-11 w-11 rounded-xl text-pink-300 hover:text-pink-200 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 shadow-[0_0_12px_rgba(236,72,153,0.25)] hover:shadow-[0_0_18px_rgba(236,72,153,0.45)] transition-all"
           >
             <Gift className="h-6 w-6" />
@@ -323,21 +323,6 @@ export function ChatHeader({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      {/* Tip Dialog */}
-      {canTip && (
-        <TipDialog
-          recipientId={otherParticipantActorId}
-          recipientName={otherName}
-          conversationId={conversation.id}
-          coinBalance={localCoinBalance}
-          open={showTipDialog}
-          onOpenChange={setShowTipDialog}
-          onTipSuccess={(amount, newBalance) => {
-            onBalanceChange(newBalance);
-          }}
-        />
-      )}
 
       {/* Block Confirmation Dialog */}
       <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>

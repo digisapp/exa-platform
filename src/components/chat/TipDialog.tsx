@@ -115,7 +115,7 @@ export function TipDialog({
               </div>
             </div>
             <span>
-              Send a Tip
+              Send a Super Tip
               <span className="block text-sm font-normal text-white/60">
                 Show {recipientName} some love
               </span>
@@ -143,24 +143,28 @@ export function TipDialog({
                 <button
                   key={amount}
                   onClick={() => {
+                    hapticFeedback("light");
                     if (canAfford) {
-                      hapticFeedback("light");
                       setSelectedAmount(amount);
+                    } else {
+                      // Not enough coins for this tier — open the top-up flow
+                      // instead of dead-ending on a disabled tile.
+                      setBuyCoinsOpen(true);
                     }
                   }}
-                  disabled={!canAfford || loading}
+                  disabled={loading}
                   className={cn(
                     "py-4 px-4 rounded-2xl border text-center transition-all active:scale-95",
                     isSelected
                       ? "border-pink-500 bg-gradient-to-br from-pink-500/20 to-violet-500/20 text-pink-300 shadow-[0_0_20px_rgba(236,72,153,0.3)]"
                       : canAfford
                         ? "border-white/10 bg-white/5 text-white hover:border-pink-500/50 hover:bg-pink-500/10"
-                        : "border-white/5 bg-white/[0.02] text-white/40 opacity-50 cursor-not-allowed"
+                        : "border-white/5 bg-white/[0.02] text-white/50 hover:border-amber-500/40 hover:bg-amber-500/5"
                   )}
                 >
-                  <div className="text-2xl font-bold">{amount}</div>
-                  <div className={cn("text-xs mt-0.5", isSelected ? "text-pink-300/80" : "text-white/50")}>
-                    coins
+                  <div className={cn("text-2xl font-bold", !isSelected && !canAfford && "opacity-60")}>{amount}</div>
+                  <div className={cn("text-xs mt-0.5", isSelected ? "text-pink-300/80" : canAfford ? "text-white/50" : "text-amber-400/80")}>
+                    {canAfford ? "coins" : "top up"}
                   </div>
                 </button>
               );
@@ -188,17 +192,15 @@ export function TipDialog({
             )}
           </Button>
 
-          {/* Need more coins? */}
-          {liveBalance < 100 && (
-            <button
-              type="button"
-              onClick={() => setBuyCoinsOpen(true)}
-              className="w-full flex items-center justify-center gap-1.5 text-sm text-white/60 hover:text-pink-300 transition-colors py-1"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Need more coins? Buy now
-            </button>
-          )}
+          {/* Need more coins? Always available — bigger tiers stay one tap away */}
+          <button
+            type="button"
+            onClick={() => setBuyCoinsOpen(true)}
+            className="w-full flex items-center justify-center gap-1.5 text-sm text-white/60 hover:text-pink-300 transition-colors py-1"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Need more coins? Buy now
+          </button>
 
           <BuyCoinsModal
             isOpen={buyCoinsOpen}
