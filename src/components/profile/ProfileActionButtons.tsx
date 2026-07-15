@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { hapticFeedback } from "@/hooks/useHapticFeedback";
 import { showTipSuccessToast } from "@/lib/tip-toast";
 import { createClient } from "@/lib/supabase/client";
+import { messageCoinCost } from "@/lib/coin-config";
 
 const VideoRoom = dynamic(() => import("@/components/video").then(mod => mod.VideoRoom), {
   ssr: false,
@@ -90,6 +91,7 @@ export function ProfileActionButtons({
   const [chatMessage, setChatMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [sentConversationId, setSentConversationId] = useState<string | null>(null);
+  const [existingConversationId, setExistingConversationId] = useState<string | null>(null);
   const [inputFocused, setInputFocused] = useState(false);
   const chatInputRef = useRef<HTMLInputElement>(null);
 
@@ -118,6 +120,28 @@ export function ProfileActionButtons({
 
   const router = useRouter();
   const firstName = modelName?.split(" ")[0] || modelUsername;
+
+  // ── Existing conversation lookup ───────────────────────────────────────────
+  // The profile page is ISR-cached, so per-viewer data has to come client-side.
+  // find-or-create is read-only when a conversation exists (creation is
+  // deferred to the first send), so it doubles as a safe existence check.
+  useEffect(() => {
+    if (!isLoggedIn || isOwner || !allowChat) return;
+    let cancelled = false;
+    fetch("/api/conversations/find-or-create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modelUsername }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.conversationId) {
+          setExistingConversationId(data.conversationId);
+        }
+      })
+      .catch(() => { /* hint only — the send box works without it */ });
+    return () => { cancelled = true; };
+  }, [isLoggedIn, isOwner, allowChat, modelUsername]);
 
   // ── Cancel outgoing call ───────────────────────────────────────────────────
   const cancelCall = useCallback(async (reason: "missed" | "declined" = "declined") => {
@@ -274,6 +298,13 @@ export function ProfileActionButtons({
       hapticFeedback("success");
       setSentConversationId(data.conversationId);
       setChatMessage("");
+      // Land the fan in the thread — that's where the model's reply (and the
+      // rest of the relationship) lives. The inline confirmation stays visible
+      // while the chat page loads, and doubles as a manual link if navigation
+      // is slow.
+      if (data.conversationId) {
+        router.push(`/chats/${data.conversationId}`);
+      }
     } catch {
       toast.error("Failed to send message");
     } finally {
@@ -399,8 +430,8 @@ export function ProfileActionButtons({
               <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-green-500/15 border border-green-500/25 animate-in fade-in duration-300">
                 <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
                 <span className="text-sm text-green-400 font-medium">Message sent!</span>
-                <Link href="/chats" className="text-sm text-white/70 hover:text-white underline underline-offset-2 transition-colors">
-                  View chat →
+                <Link href={`/chats/${sentConversationId}`} className="text-sm text-white/70 hover:text-white underline underline-offset-2 transition-colors">
+                  Opening chat →
                 </Link>
               </div>
             ) : (
@@ -419,7 +450,7 @@ export function ProfileActionButtons({
                   onFocus={handleChatInputFocus}
                   onBlur={() => setInputFocused(false)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendChatMessage(); } }}
-                  placeholder={`Say hi to ${firstName}…`}
+                  placeholder={existingConversationId ? `Message ${firstName}…` : `Say hi to ${firstName}…`}
                   className="flex-1 bg-transparent text-white placeholder:text-white/35 text-sm outline-none min-w-0"
                   maxLength={500}
                 />
@@ -441,12 +472,26 @@ export function ProfileActionButtons({
               </div>
             )}
             {/* Price transparency — without this, a fan's first hint that
-                messages cost coins is a 402 error after they hit send. */}
-            {!sentConversationId && messageRate > 0 && (
-              <p className="flex items-center justify-end gap-1 text-[10px] text-white/35 mt-1 pr-1">
-                <Coins className="h-2.5 w-2.5" />
-                {messageRate} {messageRate === 1 ? "coin" : "coins"} per message
-              </p>
+                messages cost coins is a 402 error after they hit send. Uses
+                messageCoinCost (not the raw rate) so the 5-coin default shows
+                even when a model never set a rate. */}
+            {!sentConversationId && (
+              <div className="flex items-center justify-between gap-2 mt-1 px-1">
+                {existingConversationId ? (
+                  <Link
+                    href={`/chats/${existingConversationId}`}
+                    className="text-[10px] text-white/50 hover:text-white/80 underline-offset-2 hover:underline transition-colors"
+                  >
+                    View your chat with {firstName} →
+                  </Link>
+                ) : (
+                  <span />
+                )}
+                <p className="flex items-center gap-1 text-[10px] text-white/35">
+                  <Coins className="h-2.5 w-2.5" />
+                  {messageCoinCost(messageRate)} coins per message
+                </p>
+              </div>
             )}
           </div>
         )}

@@ -69,7 +69,9 @@ export default function NewChatPage() {
 
       if (!res.ok) {
         if (res.status === 402) {
-          toast.error(`Insufficient coins. Need ${data.required}, have ${data.balance}`);
+          toast.error(`Need ${data.required} coins — you have ${data.balance}.`, {
+            action: { label: "Buy coins", onClick: () => router.push("/coins") },
+          });
         } else {
           toast.error(data.error || "Failed to send message");
         }
