@@ -555,17 +555,24 @@ export function ProfileActionButtons({
                 return (
                   <button
                     key={amount}
-                    onClick={() => { if (canAfford) { hapticFeedback("light"); setSelectedTipAmount(amount); } }}
-                    disabled={!canAfford || sending}
+                    onClick={() => {
+                      hapticFeedback("light");
+                      // Unaffordable tiers open the top-up flow instead of dead-ending
+                      if (canAfford) setSelectedTipAmount(amount);
+                      else setBuyCoinsOpen(true);
+                    }}
+                    disabled={sending}
                     className={cn(
                       "py-3 px-4 rounded-lg border text-center transition-all active:scale-95",
                       isSelected ? "border-pink-500 bg-pink-500/10 text-pink-500"
                         : canAfford ? "border-border hover:border-pink-500/50 hover:bg-pink-500/5"
-                        : "border-border/50 text-muted-foreground opacity-50 cursor-not-allowed"
+                        : "border-border/50 text-muted-foreground hover:border-amber-500/40 hover:bg-amber-500/5"
                     )}
                   >
-                    <div className="text-lg font-semibold">{amount}</div>
-                    <div className="text-xs text-muted-foreground">coins</div>
+                    <div className={cn("text-lg font-semibold", !canAfford && "opacity-60")}>{amount}</div>
+                    <div className={cn("text-xs", canAfford ? "text-muted-foreground" : "text-amber-500/80")}>
+                      {canAfford ? "coins" : "top up"}
+                    </div>
                   </button>
                 );
               })}
@@ -579,18 +586,16 @@ export function ProfileActionButtons({
                 : selectedTipAmount ? <><Gift className="mr-2 h-4 w-4" />Send {selectedTipAmount} Coins</>
                 : "Select an amount"}
             </Button>
-            {coinBalance < 100 && (
-              <p className="text-center text-sm text-muted-foreground">
-                Need more coins?{" "}
-                <button
-                  type="button"
-                  onClick={() => setBuyCoinsOpen(true)}
-                  className="text-pink-500 hover:underline font-medium"
-                >
-                  Buy coins
-                </button>
-              </p>
-            )}
+            <p className="text-center text-sm text-muted-foreground">
+              Need more coins?{" "}
+              <button
+                type="button"
+                onClick={() => setBuyCoinsOpen(true)}
+                className="text-pink-500 hover:underline font-medium"
+              >
+                Buy coins
+              </button>
+            </p>
             <BuyCoinsModal isOpen={buyCoinsOpen} onClose={() => setBuyCoinsOpen(false)} />
           </div>
         </DialogContent>
