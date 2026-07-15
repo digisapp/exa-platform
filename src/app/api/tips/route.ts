@@ -6,12 +6,16 @@ import { sendTipReceivedEmail } from "@/lib/email";
 import { z } from "zod";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import { TIP_GIFT_KEYS, giftByKey, formatTipMessage } from "@/lib/tip-config";
 
 // Zod schema for tip validation
 const tipSchema = z.object({
   recipientId: z.string().uuid("Invalid recipient ID"),
   amount: z.number().int("Amount must be a whole number").min(1, "Minimum tip is 1 coin").max(100000, "Maximum tip is 100,000 coins"),
   conversationId: z.string().uuid("Invalid conversation ID").optional().nullable(),
+  // A gift is just a named presentation of a fixed-amount tip — same coins,
+  // same RPC. Key must match a known gift and the amount must match its price.
+  gift: z.enum(TIP_GIFT_KEYS).optional().nullable(),
 });
 
 // Admin client for inserting tip messages (bypasses RLS)
@@ -45,7 +49,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { recipientId, amount, conversationId } = validationResult.data;
+    const { recipientId, amount, conversationId, gift: giftKey } = validationResult.data;
+
+    const gift = giftByKey(giftKey);
+    if (giftKey && (!gift || gift.amount !== amount)) {
+      return NextResponse.json(
+        { error: "Gift amount mismatch" },
+        { status: 400 }
+      );
+    }
 
     // Get sender's actor info
     const { data: sender } = await supabase
@@ -96,6 +108,7 @@ export async function POST(request: NextRequest) {
         p_metadata: {
           conversation_id: conversationId || null,
           tip_type: "direct",
+          gift: gift?.key || null,
         },
       }
     );
@@ -194,7 +207,7 @@ export async function POST(request: NextRequest) {
 
     // Create tip message in conversation
     if (finalConversationId) {
-      const tipMessage = `💝 ${senderName.replace(/[<>]/g, "")} sent a ${amount} coin tip!`;
+      const tipMessage = formatTipMessage(senderName.replace(/[<>]/g, ""), amount, gift);
       const { error: msgError } = await adminClient
         .from("messages")
         .insert({

@@ -587,8 +587,8 @@ export function MessageInput({
             type="button"
             onClick={onTipClick}
             disabled={disabled}
-            title="Send a Super Tip"
-            aria-label="Send a Super Tip"
+            title="Send a tip or gift"
+            aria-label="Send a tip or gift"
             className="shrink-0 h-12 w-10 flex items-center justify-center rounded-2xl text-pink-300 hover:text-pink-200 hover:bg-pink-500/10 active:scale-95 transition-all disabled:opacity-40"
           >
             <Gift className="h-5 w-5" />

@@ -33,6 +33,13 @@ import { hapticFeedback } from "@/hooks/useHapticFeedback";
 import { showTipSuccessToast } from "@/lib/tip-toast";
 import { createClient } from "@/lib/supabase/client";
 import { messageCoinCost } from "@/lib/coin-config";
+import {
+  TIP_GIFTS,
+  SUPER_TIP_AMOUNTS,
+  MIN_CUSTOM_TIP,
+  MAX_TIP,
+  type TipGift,
+} from "@/lib/tip-config";
 
 const VideoRoom = dynamic(() => import("@/components/video").then(mod => mod.VideoRoom), {
   ssr: false,
@@ -43,7 +50,6 @@ const VideoRoom = dynamic(() => import("@/components/video").then(mod => mod.Vid
   ),
 });
 
-const TIP_AMOUNTS = [100, 250, 500, 1000];
 const RING_TIMEOUT = 120;
 
 interface ProfileActionButtonsProps {
@@ -85,6 +91,8 @@ export function ProfileActionButtons({
   const [showVideoConfirm, setShowVideoConfirm] = useState(false);
   const [showVoiceConfirm, setShowVoiceConfirm] = useState(false);
   const [selectedTipAmount, setSelectedTipAmount] = useState<number | null>(null);
+  const [selectedTipGift, setSelectedTipGift] = useState<TipGift | null>(null);
+  const [customTipAmount, setCustomTipAmount] = useState("");
   const [sending, setSending] = useState(false);
 
   // Chat input state
@@ -312,14 +320,25 @@ export function ProfileActionButtons({
     }
   };
 
+  const customTipValue = parseInt(customTipAmount, 10);
+  const customTipValid =
+    Number.isInteger(customTipValue) && customTipValue >= MIN_CUSTOM_TIP && customTipValue <= MAX_TIP;
+  // One effective amount regardless of how it was picked: gift tile, Super
+  // Tip tile, or custom input (each selection clears the other two).
+  const tipAmount = selectedTipGift?.amount ?? selectedTipAmount ?? (customTipValid ? customTipValue : null);
+
   const sendTip = async () => {
-    if (!selectedTipAmount || !modelActorId) return;
+    if (!tipAmount || !modelActorId) return;
+    if (tipAmount > coinBalance) {
+      setBuyCoinsOpen(true);
+      return;
+    }
     setSending(true);
     try {
       const res = await fetch("/api/tips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipientId: modelActorId, amount: selectedTipAmount }),
+        body: JSON.stringify({ recipientId: modelActorId, amount: tipAmount, gift: selectedTipGift?.key }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -328,9 +347,11 @@ export function ProfileActionButtons({
         return;
       }
       hapticFeedback("success");
-      showTipSuccessToast({ amount: selectedTipAmount, recipientName: data.recipientName });
+      showTipSuccessToast({ amount: tipAmount, recipientName: data.recipientName, gift: selectedTipGift });
       setShowTipDialog(false);
       setSelectedTipAmount(null);
+      setSelectedTipGift(null);
+      setCustomTipAmount("");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to send tip");
     } finally {
@@ -579,11 +600,11 @@ export function ProfileActionButtons({
       </Dialog>
 
       {/* Tip Dialog */}
-      <Dialog open={showTipDialog} onOpenChange={(open) => { setShowTipDialog(open); if (!open) setSelectedTipAmount(null); }}>
+      <Dialog open={showTipDialog} onOpenChange={(open) => { setShowTipDialog(open); if (!open) { setSelectedTipAmount(null); setSelectedTipGift(null); setCustomTipAmount(""); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-pink-500" /> Send a Super Tip
+              <Gift className="h-5 w-5 text-pink-500" /> Send a Tip
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -593,43 +614,111 @@ export function ProfileActionButtons({
                 <Coins className="h-4 w-4 text-pink-500" />{coinBalance} coins
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {TIP_AMOUNTS.map((amount) => {
-                const canAfford = coinBalance >= amount;
-                const isSelected = selectedTipAmount === amount;
-                return (
-                  <button
-                    key={amount}
-                    onClick={() => {
-                      hapticFeedback("light");
-                      // Unaffordable tiers open the top-up flow instead of dead-ending
-                      if (canAfford) setSelectedTipAmount(amount);
-                      else setBuyCoinsOpen(true);
-                    }}
-                    disabled={sending}
-                    className={cn(
-                      "py-3 px-4 rounded-lg border text-center transition-all active:scale-95",
-                      isSelected ? "border-pink-500 bg-pink-500/10 text-pink-500"
-                        : canAfford ? "border-border hover:border-pink-500/50 hover:bg-pink-500/5"
-                        : "border-border/50 text-muted-foreground hover:border-amber-500/40 hover:bg-amber-500/5"
-                    )}
-                  >
-                    <div className={cn("text-lg font-semibold", !canAfford && "opacity-60")}>{amount}</div>
-                    <div className={cn("text-xs", canAfford ? "text-muted-foreground" : "text-amber-500/80")}>
-                      {canAfford ? "coins" : "top up"}
-                    </div>
-                  </button>
-                );
-              })}
+            {/* Gifts — small named tips so light spenders have something to send */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Gifts</p>
+              <div className="grid grid-cols-3 gap-2">
+                {TIP_GIFTS.map((gift) => {
+                  const canAfford = coinBalance >= gift.amount;
+                  const isSelected = selectedTipGift?.key === gift.key;
+                  return (
+                    <button
+                      key={gift.key}
+                      onClick={() => {
+                        hapticFeedback("light");
+                        if (canAfford) {
+                          setSelectedTipGift(gift);
+                          setSelectedTipAmount(null);
+                          setCustomTipAmount("");
+                        } else setBuyCoinsOpen(true);
+                      }}
+                      disabled={sending}
+                      className={cn(
+                        "py-2.5 px-2 rounded-lg border text-center transition-all active:scale-95",
+                        isSelected ? "border-pink-500 bg-pink-500/10"
+                          : canAfford ? "border-border hover:border-pink-500/50 hover:bg-pink-500/5"
+                          : "border-border/50 hover:border-amber-500/40 hover:bg-amber-500/5"
+                      )}
+                    >
+                      <div className={cn("text-xl leading-none", !canAfford && "opacity-50")}>{gift.emoji}</div>
+                      <div className={cn("text-xs font-semibold mt-1", isSelected ? "text-pink-500" : !canAfford ? "text-muted-foreground" : undefined)}>
+                        {gift.label}
+                      </div>
+                      <div className={cn("text-[10px]", canAfford ? "text-muted-foreground" : "text-amber-500/80")}>
+                        {canAfford ? `${gift.amount} coins` : "top up"}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {/* Super Tips */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Super Tips</p>
+              <div className="grid grid-cols-2 gap-2">
+                {SUPER_TIP_AMOUNTS.map((amount) => {
+                  const canAfford = coinBalance >= amount;
+                  const isSelected = selectedTipAmount === amount;
+                  return (
+                    <button
+                      key={amount}
+                      onClick={() => {
+                        hapticFeedback("light");
+                        // Unaffordable tiers open the top-up flow instead of dead-ending
+                        if (canAfford) {
+                          setSelectedTipAmount(amount);
+                          setSelectedTipGift(null);
+                          setCustomTipAmount("");
+                        } else setBuyCoinsOpen(true);
+                      }}
+                      disabled={sending}
+                      className={cn(
+                        "py-3 px-4 rounded-lg border text-center transition-all active:scale-95",
+                        isSelected ? "border-pink-500 bg-pink-500/10 text-pink-500"
+                          : canAfford ? "border-border hover:border-pink-500/50 hover:bg-pink-500/5"
+                          : "border-border/50 text-muted-foreground hover:border-amber-500/40 hover:bg-amber-500/5"
+                      )}
+                    >
+                      <div className={cn("text-lg font-semibold", !canAfford && "opacity-60")}>{amount}</div>
+                      <div className={cn("text-xs", canAfford ? "text-muted-foreground" : "text-amber-500/80")}>
+                        {canAfford ? "coins" : "top up"}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {/* Custom amount */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border focus-within:border-pink-500/50 transition-colors">
+              <Coins className="h-4 w-4 text-amber-500 flex-shrink-0" />
+              <input
+                type="number"
+                inputMode="numeric"
+                min={MIN_CUSTOM_TIP}
+                max={MAX_TIP}
+                value={customTipAmount}
+                onChange={(e) => {
+                  setCustomTipAmount(e.target.value);
+                  setSelectedTipGift(null);
+                  setSelectedTipAmount(null);
+                }}
+                placeholder={`Custom amount (min ${MIN_CUSTOM_TIP})`}
+                disabled={sending}
+                className="flex-1 bg-transparent text-sm outline-none min-w-0 placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+              {customTipAmount && !customTipValid && (
+                <span className="text-[10px] text-amber-500/90 flex-shrink-0">min {MIN_CUSTOM_TIP}</span>
+              )}
             </div>
             <Button
               onClick={sendTip}
-              disabled={!selectedTipAmount || sending}
+              disabled={!tipAmount || sending}
               className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
             >
               {sending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</>
-                : selectedTipAmount ? <><Gift className="mr-2 h-4 w-4" />Send {selectedTipAmount} Coins</>
-                : "Select an amount"}
+                : selectedTipGift ? <><span className="mr-2 text-base leading-none">{selectedTipGift.emoji}</span>Send a {selectedTipGift.label} · {selectedTipGift.amount} Coins</>
+                : tipAmount ? <><Gift className="mr-2 h-4 w-4" />Send {tipAmount} Coins</>
+                : "Pick a gift or amount"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Need more coins?{" "}

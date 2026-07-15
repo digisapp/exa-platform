@@ -2,13 +2,15 @@
 
 import { toast } from "sonner";
 import { Gift, Sparkles } from "lucide-react";
+import type { TipGift } from "@/lib/tip-config";
 
 interface TipToastProps {
   amount: number;
   recipientName: string;
+  gift?: TipGift | null;
 }
 
-export function showTipSuccessToast({ amount, recipientName }: TipToastProps) {
+export function showTipSuccessToast({ amount, recipientName, gift }: TipToastProps) {
   toast.custom(
     (t) => (
       <div
@@ -34,9 +36,13 @@ export function showTipSuccessToast({ amount, recipientName }: TipToastProps) {
           {/* Row 1: Icon + Tip Sent */}
           <div className="flex items-center justify-center gap-2.5">
             <div className="p-2 rounded-full bg-white/20 ring-2 ring-white/10">
-              <Gift className="h-6 w-6 text-white" />
+              {gift ? (
+                <span className="flex h-6 w-6 items-center justify-center text-xl leading-none">{gift.emoji}</span>
+              ) : (
+                <Gift className="h-6 w-6 text-white" />
+              )}
             </div>
-            <p className="text-2xl font-bold">Tip Sent!</p>
+            <p className="text-2xl font-bold">{gift ? `${gift.label} Sent!` : "Tip Sent!"}</p>
           </div>
 
           {/* Row 2: Amount + recipient */}

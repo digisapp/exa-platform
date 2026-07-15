@@ -19,6 +19,7 @@ import { LinkPreview } from "./LinkPreview";
 import { MessageReactions } from "./MessageReactions";
 import { VoiceMessagePlayer } from "./VoiceMessagePlayer";
 import type { Message } from "@/types/database";
+import { parseTipMessage } from "@/lib/tip-config";
 
 // Match URLs in text (http/https only), strip trailing punctuation
 const URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
@@ -41,19 +42,9 @@ function formatMessageTimestamp(dateStr: string): string {
   return format(date, "MMM d yyyy, h:mm a");
 }
 
-// Tip system messages are written by the tips API as
-// "💝 {name} sent a {amount} coin tip!" — parse them so the chat can render a
-// celebration card instead of the generic system pill.
-const TIP_MESSAGE_REGEX = /^💝\s*(.+?) sent a (\d+) coin tip!$/;
-
-function parseTipMessage(content: string | null): { senderName: string; amount: number } | null {
-  if (!content) return null;
-  const match = content.match(TIP_MESSAGE_REGEX);
-  if (!match) return null;
-  const amount = parseInt(match[2], 10);
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-  return { senderName: match[1], amount };
-}
+// Tip/gift system messages are written by the tips API via formatTipMessage —
+// parseTipMessage (same module) turns them back into structured data so the
+// chat can render a celebration card instead of the generic system pill.
 
 // Visual tiers follow the Super Tip amounts (100/250/500/1000): bigger tips
 // glow harder.
@@ -275,16 +266,27 @@ export const MessageBubble = memo(function MessageBubble({
               <div className="relative">
                 <div className="absolute inset-0 rounded-full bg-amber-400/40 blur-lg" />
                 <div className="relative w-11 h-11 rounded-full bg-gradient-to-br from-amber-400/30 to-pink-500/30 ring-1 ring-amber-400/50 flex items-center justify-center">
-                  <Gift className="h-5 w-5 text-amber-200" />
+                  {tip.gift ? (
+                    <span className="text-xl leading-none">{tip.gift.emoji}</span>
+                  ) : (
+                    <Gift className="h-5 w-5 text-amber-200" />
+                  )}
                 </div>
               </div>
             </div>
-            <p className="text-2xl font-bold leading-none bg-gradient-to-r from-amber-200 via-amber-300 to-pink-300 bg-clip-text text-transparent">
-              {tip.amount.toLocaleString()}
-              <span className="text-sm font-semibold ml-1.5">coins</span>
-            </p>
+            {tip.gift ? (
+              <p className="text-xl font-bold leading-none bg-gradient-to-r from-amber-200 via-amber-300 to-pink-300 bg-clip-text text-transparent">
+                {tip.gift.label}
+                <span className="text-sm font-semibold ml-1.5">· {tip.amount} coins</span>
+              </p>
+            ) : (
+              <p className="text-2xl font-bold leading-none bg-gradient-to-r from-amber-200 via-amber-300 to-pink-300 bg-clip-text text-transparent">
+                {tip.amount.toLocaleString()}
+                <span className="text-sm font-semibold ml-1.5">coins</span>
+              </p>
+            )}
             <p className="text-xs text-white/70 mt-1.5">
-              {tip.senderName} sent a tip
+              {tip.senderName} sent a {tip.gift ? tip.gift.label : "tip"}
             </p>
             <p className="text-[10px] text-white/40 mt-1">
               {message.created_at && formatDistanceToNow(new Date(message.created_at), {
