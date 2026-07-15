@@ -508,7 +508,7 @@ function VideoCallContent({
             <div className="flex items-center justify-between mb-3">
               <span className="text-white text-sm font-medium flex items-center gap-2">
                 <Heart className="h-4 w-4 text-pink-500" />
-                Tip {recipientName}
+                Super Tip {recipientName}
               </span>
               <button
                 onClick={() => setShowTipMenu(false)}

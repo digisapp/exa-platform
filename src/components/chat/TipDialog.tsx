@@ -115,7 +115,7 @@ export function TipDialog({
               </div>
             </div>
             <span>
-              Send a Tip
+              Send a Super Tip
               <span className="block text-sm font-normal text-white/60">
                 Show {recipientName} some love
               </span>

@@ -538,7 +538,7 @@ export function ProfileActionButtons({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-pink-500" /> Send a Tip
+              <Gift className="h-5 w-5 text-pink-500" /> Send a Super Tip
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
