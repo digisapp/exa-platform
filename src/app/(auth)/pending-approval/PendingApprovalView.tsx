@@ -33,7 +33,7 @@ const t = {
     resend: "Resend email",
     resent: "Sent! Check your inbox",
     selectedTitle: "You've been selected! 🎉",
-    selectedDesc: "Add your profile photo below and your profile goes live instantly — no more waiting.",
+    selectedDesc: "Add your profile photo below — it's the last thing we need to finish your review.",
   },
   es: {
     title: "Solicitud Pendiente",
@@ -57,7 +57,7 @@ const t = {
     resend: "Reenviar correo",
     resent: "¡Enviado! Revisa tu bandeja",
     selectedTitle: "¡Fuiste seleccionada! 🎉",
-    selectedDesc: "Agrega tu foto de perfil abajo y tu perfil se activa al instante — sin más esperas.",
+    selectedDesc: "Agrega tu foto de perfil abajo — es lo último que necesitamos para terminar tu revisión.",
   },
 };
 
