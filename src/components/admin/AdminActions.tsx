@@ -108,7 +108,7 @@ export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoReque
         action === "approve"
           ? "Approved!"
           : action === "request_photo"
-            ? "Photo request sent — she'll be auto-approved when it's uploaded"
+            ? "Photo request sent — she'll return to the review queue when it's uploaded"
             : "Rejected"
       );
       onSuccess?.();
@@ -258,13 +258,13 @@ export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoReque
           </Button>
         ) : type === "model_application" && hasPhoto === false ? (
           // No photo → approval would 400; the real action is requesting one.
-          // Upload auto-approves, so this replaces the Approve button entirely.
+          // The upload returns her to the queue, where Approve becomes available.
           <Button
             size="sm"
             className="bg-amber-500 hover:bg-amber-600 text-black"
             onClick={() => handleAction("request_photo")}
             disabled={loading !== null}
-            title="Sends a you're-selected email; she's auto-approved the moment she uploads a photo"
+            title="Sends a you're-selected email; she returns to the review queue when she uploads a photo"
           >
             {loading === "request_photo" ? (
               <Loader2 className="h-4 w-4 animate-spin" />

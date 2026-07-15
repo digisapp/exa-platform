@@ -27,9 +27,10 @@ async function migrateFanWallet(
  * to a model (linking an unclaimed imported profile when one matches), then
  * fires the approval email/SMS and admin welcome chat in the background.
  *
- * Called from the admin approve route and from the photo-request auto-approve
- * path (application-profile upload). Callers gate on email_confirmed_at and
- * profile_photo_url BEFORE calling — this function does not re-check.
+ * Called from the admin approve route (and one-off triage scripts) — every
+ * approval is an explicit admin decision; photo uploads no longer auto-approve.
+ * Callers gate on email_confirmed_at and profile_photo_url BEFORE calling —
+ * this function does not re-check.
  */
 export async function approveModelApplication({
   application,
@@ -40,10 +41,9 @@ export async function approveModelApplication({
   /** Admin actors.id — recorded as reviewed_by and used as welcome-chat sender */
   reviewerActorId: string;
 }): Promise<{ success: boolean; error?: string }> {
-  // 18+ backstop: every path that publishes a model (admin approve button,
-  // photo-upload auto-approve) funnels through here. Applications predating
-  // required-DOB signup can have a null date_of_birth — those need the DOB
-  // collected before they can be approved.
+  // 18+ backstop: every path that publishes a model funnels through here.
+  // Applications predating required-DOB signup can have a null date_of_birth —
+  // those need the DOB collected before they can be approved.
   if (!application.date_of_birth || !isAdultDob(application.date_of_birth)) {
     return {
       success: false,

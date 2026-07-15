@@ -94,8 +94,14 @@ export default function AdminModelApplicationsPage() {
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
-      setApps(data || []);
-      setInitialCount((data || []).length);
+      // Review-ready first: an app with a photo can be decided right now
+      // (photo-request returners land here), the rest stay newest-first
+      const sorted = [...(data || [])].sort(
+        (a: ModelApplication, b: ModelApplication) =>
+          (b.profile_photo_url ? 1 : 0) - (a.profile_photo_url ? 1 : 0)
+      );
+      setApps(sorted);
+      setInitialCount(sorted.length);
       setCurrentIndex(0);
       setSessionActioned(0);
     } catch (err) {
@@ -181,7 +187,7 @@ export default function AdminModelApplicationsPage() {
     setUpdating("request_photo");
     try {
       await patchStatus(current, "request_photo");
-      toast.success("Photo request sent — she's auto-approved when it's uploaded");
+      toast.success("Photo request sent — she'll return to this queue when it's uploaded");
       removeCurrent();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Photo request failed");
@@ -509,7 +515,7 @@ export default function AdminModelApplicationsPage() {
                   size="lg"
                   onClick={handleRequestPhoto}
                   disabled={updating !== null}
-                  title="You're-selected email; auto-approved the moment she uploads a photo — → or Enter"
+                  title="You're-selected email; she returns to this queue for review when she uploads a photo — → or Enter"
                   className="h-16 px-6 rounded-full bg-amber-500 hover:bg-amber-600 text-black font-semibold"
                 >
                   {updating === "request_photo" ? (

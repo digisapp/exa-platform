@@ -436,8 +436,9 @@ export async function sendModelApplicationReceivedEmail({
 }
 
 // "You've been selected — add your photo" — sent when an admin hits Request
-// photo on a pending application. Upload auto-approves, so this is the last
-// step between the applicant and going live.
+// photo on a pending application. The upload returns her to the triage queue
+// for the final (looks-based) review, so the copy promises a fast decision,
+// not instant approval.
 export async function sendPhotoRequestEmail({
   to,
   modelName,
@@ -467,8 +468,8 @@ export async function sendPhotoRequestEmail({
       : "Add your photo and you're live on EXA";
     const greeting = isSpanish ? `Hola ${escapeHtml(modelName)},` : `Hey ${escapeHtml(modelName)},`;
     const bodyText = isSpanish
-      ? "¡Buenas noticias! Revisamos tu solicitud y queremos que estés en EXA. Solo falta una cosa: tu foto de perfil. Súbela y tu perfil se activa al instante — sin más esperas ni revisiones."
-      : "Great news — we reviewed your application and we want you on EXA. Just one thing is missing: your profile photo. Upload it and your profile goes live instantly — no more waiting, no second review.";
+      ? "¡Buenas noticias! Revisamos tu solicitud y nos encantó tu perfil. Solo falta una cosa: tu foto de perfil. Súbela y nuestro equipo hará la revisión final — te avisamos muy pronto."
+      : "Great news — we reviewed your application and loved your profile. Just one thing is missing: your profile photo. Upload it and our team will take a final look — you'll hear from us shortly.";
     const ctaText = isSpanish ? "Agregar Mi Foto" : "Add My Photo";
     const tipText = isSpanish
       ? "Tip: una foto clara de tu rostro funciona mejor — es lo primero que ven marcas y fans."

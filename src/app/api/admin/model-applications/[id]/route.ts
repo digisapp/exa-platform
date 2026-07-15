@@ -89,10 +89,10 @@ export async function PATCH(
 
     // A model without a photo is invisible everywhere (explore, gigs, search),
     // so approving her only creates a dead profile. Use "Request photo"
-    // instead — she's auto-approved the moment she uploads one.
+    // instead — the upload puts her back in the queue for the final review.
     if (status === "approved" && !(application as any).profile_photo_url) {
       return NextResponse.json(
-        { error: "No profile photo yet — use \"Request photo\" instead: she gets a you're-selected email and is auto-approved the moment she uploads one." },
+        { error: "No profile photo yet — use \"Request photo\" instead: she gets a you're-selected email and returns to this queue for review once it's uploaded." },
         { status: 400 }
       );
     }
