@@ -92,16 +92,6 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: '/events',
-        destination: '/shows',
-        permanent: true,
-      },
-      {
-        source: '/events/:slug*',
-        destination: '/shows/:slug*',
-        permanent: true,
-      },
-      {
         source: '/workshops/miami-swim-week-runway-workshop-2026',
         destination: '/workshops/runway-workshop',
         permanent: true,
