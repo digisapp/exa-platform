@@ -41,6 +41,9 @@ import {
   X,
 } from "lucide-react";
 import { ImageCropper } from "@/components/upload/ImageCropper";
+import { TikTokIcon } from "@/components/ui/tiktok-icon";
+import { formatInches } from "@/lib/measurements";
+import { MODEL_EARNING_ACTIONS } from "@/lib/coin-config";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 import { isContentMediaPath } from "@/lib/content-media";
 import { toast } from "sonner";
@@ -308,13 +311,13 @@ export default function AdminModelDetailPage() {
             .select("*", { count: "exact", head: true })
             .eq("following_id", actor.id);
 
-          // Total earned (exclude purchases - only actual earnings from fans)
+          // Total earned from fans (see MODEL_EARNING_ACTIONS for why this is
+          // a whitelist and carries no amount filter).
           const { data: earnings } = await (supabase
             .from("coin_transactions") as any)
             .select("amount")
             .eq("actor_id", actor.id)
-            .gt("amount", 0)
-            .neq("action", "purchase");
+            .in("action", [...MODEL_EARNING_ACTIONS]);
 
           const totalEarned = earnings?.reduce((sum: number, tx: any) => sum + tx.amount, 0) || 0;
 
@@ -579,6 +582,12 @@ export default function AdminModelDetailPage() {
       for (const [key, value] of Object.entries(form)) {
         // Send as-is; API normalizes "" to null
         payload[key] = value ?? null;
+      }
+      // Free-text inch fields: store the normalized `34"` form
+      for (const key of ["bust", "waist", "hips"] as const) {
+        if (typeof payload[key] === "string") {
+          payload[key] = formatInches(payload[key] as string);
+        }
       }
 
       const res = await fetch(`/api/admin/models/${model.id}`, {
@@ -929,7 +938,7 @@ export default function AdminModelDetailPage() {
               {instagramHandle && (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Instagram className="h-4 w-4 text-pink-500" />
+                    <Instagram className="h-4 w-4 text-pink-500" aria-label="Instagram" />
                     <a
                       href={`https://instagram.com/${instagramHandle.replace("@", "").replace(/\s+/g, "")}`}
                       target="_blank"
@@ -949,7 +958,7 @@ export default function AdminModelDetailPage() {
               {model.tiktok_username && (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">TikTok</span>
+                    <TikTokIcon className="h-4 w-4 text-pink-500" aria-label="TikTok" role="img" />
                     <a
                       href={`https://tiktok.com/@${model.tiktok_username.replace("@", "")}`}
                       target="_blank"
@@ -1011,19 +1020,19 @@ export default function AdminModelDetailPage() {
                   {model.bust && (
                     <div>
                       <p className="text-xs text-muted-foreground">Bust</p>
-                      <p className="font-medium">{model.bust}</p>
+                      <p className="font-medium">{formatInches(model.bust)}</p>
                     </div>
                   )}
                   {model.waist && (
                     <div>
                       <p className="text-xs text-muted-foreground">Waist</p>
-                      <p className="font-medium">{model.waist}</p>
+                      <p className="font-medium">{formatInches(model.waist)}</p>
                     </div>
                   )}
                   {model.hips && (
                     <div>
                       <p className="text-xs text-muted-foreground">Hips</p>
-                      <p className="font-medium">{model.hips}</p>
+                      <p className="font-medium">{formatInches(model.hips)}</p>
                     </div>
                   )}
                   {model.dress_size && (

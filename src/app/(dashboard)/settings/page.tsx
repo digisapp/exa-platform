@@ -23,6 +23,7 @@ import { ModelPrivacyTab } from "@/components/settings/ModelPrivacyTab";
 import { ModelFollowersTab } from "@/components/settings/ModelFollowersTab";
 import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
+import { formatInches } from "@/lib/measurements";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -695,9 +696,9 @@ export default function ProfilePage() {
         city: toTitleCase(model.city),
         state: model.state,
         height: model.height,
-        bust: model.bust,
-        waist: model.waist,
-        hips: model.hips,
+        bust: formatInches(model.bust),
+        waist: formatInches(model.waist),
+        hips: formatInches(model.hips),
         dress_size: model.dress_size,
         shoe_size: model.shoe_size,
         hair_color: model.hair_color,

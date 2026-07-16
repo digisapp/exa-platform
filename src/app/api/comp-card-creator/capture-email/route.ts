@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { formatInches } from "@/lib/measurements";
 
 const schema = z.object({
   email: z.string().email().max(254),
@@ -49,9 +50,9 @@ export async function POST(request: NextRequest) {
       instagram: parsed.data.instagram?.trim() || null,
       website: parsed.data.website?.trim() || null,
       height: parsed.data.height?.trim() || null,
-      bust: parsed.data.bust?.trim() || null,
-      waist: parsed.data.waist?.trim() || null,
-      hips: parsed.data.hips?.trim() || null,
+      bust: formatInches(parsed.data.bust?.trim()) || null,
+      waist: formatInches(parsed.data.waist?.trim()) || null,
+      hips: formatInches(parsed.data.hips?.trim()) || null,
       eye_color: parsed.data.eye_color?.trim() || null,
       hair_color: parsed.data.hair_color?.trim() || null,
       dress_size: parsed.data.dress_size?.trim() || null,

@@ -13,6 +13,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatInches } from "@/lib/measurements";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -84,9 +85,9 @@ export default function CompCardLeadsPage() {
       m.city || "",
       m.state || "",
       m.height || "",
-      m.bust || "",
-      m.waist || "",
-      m.hips || "",
+      formatInches(m.bust) || "",
+      formatInches(m.waist) || "",
+      formatInches(m.hips) || "",
       m.eye_color || "",
       m.hair_color || "",
       m.dress_size || "",
@@ -200,9 +201,9 @@ export default function CompCardLeadsPage() {
                     {(m.height || m.bust || m.waist || m.hips) && (
                       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground pt-1">
                         {m.height && <span>H: {m.height}</span>}
-                        {m.bust && <span>B: {m.bust}</span>}
-                        {m.waist && <span>W: {m.waist}</span>}
-                        {m.hips && <span>Hp: {m.hips}</span>}
+                        {m.bust && <span>B: {formatInches(m.bust)}</span>}
+                        {m.waist && <span>W: {formatInches(m.waist)}</span>}
+                        {m.hips && <span>Hp: {formatInches(m.hips)}</span>}
                       </div>
                     )}
                   </div>
