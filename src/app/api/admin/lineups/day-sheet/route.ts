@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { formatInches } from "@/lib/measurements";
 
 // GET /api/admin/lineups/day-sheet?event_id=xxx — full event schedule
 export async function GET(req: NextRequest) {
@@ -88,7 +89,7 @@ export async function GET(req: NextRequest) {
               <td class="notes">${lm.outfit_notes || ""}</td>
             </tr>`;
           }
-          const measurements = [m?.bust, m?.hips].filter(Boolean).join(" / ") || "\u2014";
+          const measurements = [formatInches(m?.bust), formatInches(m?.hips)].filter(Boolean).join(" / ") || "\u2014";
           const ig = m?.instagram_url
             ? m.instagram_url.replace(/https?:\/\/(www\.)?instagram\.com\//, "@").replace(/\/$/, "")
             : "\u2014";

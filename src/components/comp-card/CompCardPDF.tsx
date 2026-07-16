@@ -11,6 +11,7 @@ import {
   Circle,
   Rect,
 } from "@react-pdf/renderer";
+import { formatInches } from "@/lib/measurements";
 
 const ORIGIN = typeof window !== "undefined" ? window.location.origin : "https://www.examodels.com";
 
@@ -256,9 +257,9 @@ export default function CompCardPDF({ model, photos, logoColor, nameColor = "#ff
   // Build measurements array - only include filled fields
   const measurements: { label: string; value: string }[] = [];
   if (model.height) measurements.push({ label: "Height", value: model.height });
-  if (model.bust) measurements.push({ label: "Bust", value: model.bust });
-  if (model.waist) measurements.push({ label: "Waist", value: model.waist });
-  if (model.hips) measurements.push({ label: "Hips", value: model.hips });
+  if (model.bust) measurements.push({ label: "Bust", value: formatInches(model.bust)! });
+  if (model.waist) measurements.push({ label: "Waist", value: formatInches(model.waist)! });
+  if (model.hips) measurements.push({ label: "Hips", value: formatInches(model.hips)! });
   if (model.eye_color) measurements.push({ label: "Eyes", value: model.eye_color });
   if (model.hair_color) measurements.push({ label: "Hair", value: model.hair_color });
   if (model.dress_size) measurements.push({ label: "Dress", value: model.dress_size });

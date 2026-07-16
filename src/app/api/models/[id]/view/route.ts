@@ -44,28 +44,37 @@ export async function POST(
       return NextResponse.json({ success: true, counted: false, reason: "not_approved" });
     }
 
-    // Increment profile views (service role: visitors have no UPDATE policy on models)
+    // Increment profile views (service role: visitors have no UPDATE policy on
+    // models) and log a profile_views row — the dashboard's 30-day views stat
+    // counts that table, which sat empty because only the counter was bumped.
+    // The table dedupes to one row per viewer per day via partial unique
+    // indexes: (model_id, viewer_id, view_date) for logged-in viewers and
+    // (model_id, ip_address, view_date) for anon, so anon rows need the IP.
+    // Row insert is best-effort; the lifetime counter stays source of truth.
     const serviceClient = createServiceRoleClient();
-    const { error } = await serviceClient
-      .from("models")
-      .update({ profile_views: (model.profile_views || 0) + 1 })
-      .eq("id", modelId);
+    const anonIp = user
+      ? null
+      : request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+    const [{ error }, { error: logError }] = await Promise.all([
+      serviceClient
+        .from("models")
+        .update({ profile_views: (model.profile_views || 0) + 1 })
+        .eq("id", modelId),
+      (serviceClient.from("profile_views") as any).insert({
+        model_id: modelId,
+        viewer_id: user?.id ?? null,
+        ip_address: anonIp,
+        referrer: request.headers.get("referer")?.slice(0, 500) ?? null,
+        user_agent: request.headers.get("user-agent")?.slice(0, 500) ?? null,
+      }),
+    ]);
 
     if (error) {
       logger.error("Failed to increment views", error);
       return NextResponse.json({ error: "Failed to track view" }, { status: 500 });
     }
-
-    // Also log a profile_views row — the dashboard's 30-day views stat counts
-    // this table, which sat empty because only the counter above was bumped.
-    // Best-effort: the lifetime counter stays the source of truth.
-    const { error: logError } = await (serviceClient.from("profile_views") as any).insert({
-      model_id: modelId,
-      viewer_id: user?.id ?? null,
-      referrer: request.headers.get("referer")?.slice(0, 500) ?? null,
-      user_agent: request.headers.get("user-agent")?.slice(0, 500) ?? null,
-    });
-    if (logError) {
+    // 23505 = same viewer already logged today (the dedup indexes working)
+    if (logError && logError.code !== "23505") {
       logger.error("Failed to log profile view row", logError);
     }
 

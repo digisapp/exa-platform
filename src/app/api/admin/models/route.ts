@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { escapeIlike } from "@/lib/utils";
+import { MODEL_EARNING_ACTIONS } from "@/lib/coin-config";
 
 // Admin client for efficient RPC calls
 const getAdminClient = () => createServiceRoleClient();
@@ -204,8 +205,7 @@ export async function GET(request: NextRequest) {
               adminClient.from("coin_transactions")
                 .select("actor_id, amount")
                 .in("actor_id", batch)
-                .gt("amount", 0)
-                .neq("action", "purchase")
+                .in("action", [...MODEL_EARNING_ACTIONS])
             )
           : Promise.resolve([]),
         // Conversations - batch query on actor_ids
@@ -425,13 +425,12 @@ export async function GET(request: NextRequest) {
       actorIds.length > 0
         ? adminClient.from("follows").select("following_id").in("following_id", actorIds)
         : { data: [] },
-      // Get earnings (exclude purchases - only count actual earnings from fans)
+      // Get earnings (MODEL_EARNING_ACTIONS — keep in sync with detail page)
       actorIds.length > 0
         ? adminClient.from("coin_transactions")
             .select("actor_id, amount")
             .in("actor_id", actorIds)
-            .gt("amount", 0)
-            .neq("action", "purchase")
+            .in("action", [...MODEL_EARNING_ACTIONS])
         : { data: [] },
       // Get conversation counts
       actorIds.length > 0

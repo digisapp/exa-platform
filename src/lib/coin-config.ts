@@ -61,6 +61,32 @@ export function counterpartyIdOf(tx: { metadata?: Record<string, unknown> | null
   return (m?.recipient_model_id || m?.recipient_id || m?.model_id) as string | undefined;
 }
 
+/**
+ * Every coin_transactions action that credits a MODEL for real fan/brand
+ * revenue. This is the single source of truth for "earned" stats — sum rows
+ * matching these actions with no amount filter (clawback reversals net out).
+ *
+ * Deliberately excluded: `purchase` (fan buys), `signup_bonus` (removed
+ * 2026-06-12; model rows were ledgered but never credited to balances),
+ * `daily_spin` / `first_purchase_bonus` / `subscription_renewal` (fan-side
+ * grants that ride along on fan→model converted actors), and fan-spend
+ * actions (`video_call`, `voice_call`, `*_sent`, `content_unlock`,
+ * `ppv_unlock`, `exa_boost*`, `auction_escrow*`, `ticket_purchase`).
+ */
+export const MODEL_EARNING_ACTIONS = [
+  "content_sale",
+  "message_received",
+  "tip_received",
+  "live_wall_tip_received",
+  "ppv_sale",
+  "auction_sale",
+  "booking_payment",
+  "booking_payment_received",
+  "video_call_received",
+  "voice_call_received",
+  "affiliate_commission",
+] as const;
+
 // Minimum withdrawal amounts
 export const MIN_WITHDRAWAL_COINS = 500;
 export const MIN_WITHDRAWAL_USD = MIN_WITHDRAWAL_COINS * COIN_USD_RATE; // $50
