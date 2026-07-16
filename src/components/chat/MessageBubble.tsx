@@ -616,7 +616,7 @@ export const MessageBubble = memo(function MessageBubble({
               {hasMediaPrice && isOwn && (
                 <div className="flex items-center gap-1 mt-1 text-xs text-white/70">
                   <Lock className="h-3 w-3" />
-                  <span>PPV: {message.media_price} coins</span>
+                  <span>Paid: {message.media_price} coins</span>
                 </div>
               )}
             </div>

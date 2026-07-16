@@ -16,26 +16,56 @@ async function isAdmin(supabase: any, userId: string) {
   return actor?.type === "admin";
 }
 
-// Batch size for chunked queries to avoid memory issues
-const BATCH_SIZE = 500;
-const MAX_COMPUTED_SORT_MODELS = 2000; // Cap for computed field sorting
+// Batch size for chunked .in() queries. Must stay small: 400+ UUIDs push the
+// request URL past Node fetch's 16KB header limit and the query fails outright
+// (verified empirically — 300 ok, 400 fails).
+const BATCH_SIZE = 200;
+const MAX_COMPUTED_SORT_MODELS = 10000; // Cap for computed field sorting
+// PostgREST silently truncates any response to max_rows (1000 on this project),
+// regardless of the requested .range() — every potentially-large query must page.
+const PAGE_ROWS = 1000;
 
-// Helper to run queries in batches and aggregate results
+// Helper to run queries in batches and aggregate results.
+// queryFn must apply .range(from, to) (and a stable .order()) to its query.
 async function batchQuery<T>(
   ids: string[],
-  queryFn: (batchIds: string[]) => Promise<{ data: T[] | null; error: any }>
+  queryFn: (batchIds: string[], from: number, to: number) => Promise<{ data: T[] | null; error: any }>
 ): Promise<T[]> {
   const results: T[] = [];
   for (let i = 0; i < ids.length; i += BATCH_SIZE) {
     const batch = ids.slice(i, i + BATCH_SIZE);
-    const { data, error } = await queryFn(batch);
-    if (error) {
-      console.error("Batch query error:", error);
-      continue;
+    for (let from = 0; ; from += PAGE_ROWS) {
+      const { data, error } = await queryFn(batch, from, from + PAGE_ROWS - 1);
+      if (error) {
+        // Surface the failure — silently continuing here once shipped a page
+        // full of zero counts that looked like a broken sort
+        console.error("Batch query error:", error);
+        throw error;
+      }
+      if (data) results.push(...data);
+      if (!data || data.length < PAGE_ROWS) break;
     }
-    if (data) results.push(...data);
   }
   return results;
+}
+
+// Fetch all rows of a query by paging past the PostgREST max_rows cap.
+// queryFn must apply .range(from, to) and a deterministic .order().
+async function fetchPaged<T>(
+  queryFn: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any; count?: number | null }>,
+  maxRows: number
+): Promise<{ rows: T[]; count: number }> {
+  const rows: T[] = [];
+  let count = 0;
+  for (let from = 0; from < maxRows; from += PAGE_ROWS) {
+    const to = Math.min(from + PAGE_ROWS, maxRows) - 1;
+    const { data, error, count: exactCount } = await queryFn(from, to);
+    if (error) throw error;
+    if (typeof exactCount === "number") count = exactCount;
+    if (data) rows.push(...data);
+    if (!data || data.length < to - from + 1) break;
+  }
+  return { rows, count };
 }
 
 export async function GET(request: NextRequest) {
@@ -133,19 +163,17 @@ export async function GET(request: NextRequest) {
     const adminClient = getAdminClient();
 
     if (isSortingByComputedField) {
-      // For computed field sorting: fetch model IDs first with a reasonable limit
-      let allModelsQuery = supabase.from("models")
-        .select("id, user_id, created_at, claimed_at, last_active_at", { count: "exact" });
-      allModelsQuery = applyFilters(allModelsQuery);
-      allModelsQuery = allModelsQuery.order("created_at", { ascending: false }).range(0, MAX_COMPUTED_SORT_MODELS - 1);
+      // For computed field sorting: fetch ALL matching model IDs (paged past the
+      // PostgREST max_rows cap; the id tiebreak keeps paging deterministic when
+      // bulk-imported models share a created_at)
+      const { rows: allModels, count } = await fetchPaged<any>((from, to) => {
+        let q = supabase.from("models")
+          .select("id, user_id, created_at, claimed_at, last_active_at", { count: "exact" });
+        q = applyFilters(q);
+        return q.order("created_at", { ascending: false }).order("id", { ascending: true }).range(from, to);
+      }, MAX_COMPUTED_SORT_MODELS);
 
-      const { data: allModels, count, error: allError } = await allModelsQuery;
-      if (allError) {
-        console.error("Error fetching models for computed sort:", allError);
-        throw allError;
-      }
-
-      if (!allModels || allModels.length === 0) {
+      if (allModels.length === 0) {
         return NextResponse.json({ models: [], total: 0 });
       }
 
@@ -174,51 +202,56 @@ export async function GET(request: NextRequest) {
         referralData,
       ] = await Promise.all([
         // Image counts - batch query (content_items portfolio images)
-        batchQuery(allModelIds, async (batch) =>
-          (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "portfolio").eq("media_type", "image")
+        batchQuery(allModelIds, async (batch, from, to) =>
+          (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "portfolio").eq("media_type", "image").order("id", { ascending: true }).range(from, to)
         ),
         // Video counts - batch query (content_items portfolio videos)
-        batchQuery(allModelIds, async (batch) =>
-          (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "portfolio").eq("media_type", "video")
+        batchQuery(allModelIds, async (batch, from, to) =>
+          (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "portfolio").eq("media_type", "video").order("id", { ascending: true }).range(from, to)
         ),
         // PPV counts - batch query (content_items with exclusive status)
-        batchQuery(allModelIds, async (batch) =>
-          (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "exclusive")
+        batchQuery(allModelIds, async (batch, from, to) =>
+          (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "exclusive").order("id", { ascending: true }).range(from, to)
         ),
         // Last exclusive content - batch query
-        batchQuery(allModelIds, async (batch) =>
-          (adminClient as any).from("content_items").select("model_id, created_at").in("model_id", batch).eq("status", "exclusive")
+        batchQuery(allModelIds, async (batch, from, to) =>
+          (adminClient as any).from("content_items").select("model_id, created_at").in("model_id", batch).eq("status", "exclusive").order("id", { ascending: true }).range(from, to)
         ),
         // Last media - batch query (portfolio content)
-        batchQuery(allModelIds, async (batch) =>
-          (adminClient as any).from("content_items").select("model_id, created_at").in("model_id", batch).eq("status", "portfolio")
+        batchQuery(allModelIds, async (batch, from, to) =>
+          (adminClient as any).from("content_items").select("model_id, created_at").in("model_id", batch).eq("status", "portfolio").order("id", { ascending: true }).range(from, to)
         ),
         // Followers - batch query on actor_ids
         allActorIds.length > 0
-          ? batchQuery(allActorIds, async (batch) =>
-              adminClient.from("follows").select("following_id").in("following_id", batch)
+          ? batchQuery(allActorIds, async (batch, from, to) =>
+              adminClient.from("follows").select("following_id").in("following_id", batch).order("follower_id", { ascending: true }).order("following_id", { ascending: true }).range(from, to)
             )
           : Promise.resolve([]),
         // Earnings - batch query on actor_ids (only get totals, not individual transactions)
         allActorIds.length > 0
-          ? batchQuery(allActorIds, async (batch) =>
+          ? batchQuery(allActorIds, async (batch, from, to) =>
               adminClient.from("coin_transactions")
                 .select("actor_id, amount")
                 .in("actor_id", batch)
                 .in("action", [...MODEL_EARNING_ACTIONS])
+                .order("id", { ascending: true })
+                .range(from, to)
             )
           : Promise.resolve([]),
         // Conversations - batch query on actor_ids
         allActorIds.length > 0
-          ? batchQuery(allActorIds, async (batch) =>
+          ? batchQuery(allActorIds, async (batch, from, to) =>
               adminClient.from("conversation_participants")
                 .select("actor_id, conversation_id")
                 .in("actor_id", batch)
+                .order("conversation_id", { ascending: true })
+                .order("actor_id", { ascending: true })
+                .range(from, to)
             )
           : Promise.resolve([]),
         // Referrals - batch query on model_ids
-        batchQuery(allModelIds, async (batch) =>
-          adminClient.from("fans").select("referred_by_model_id").in("referred_by_model_id", batch)
+        batchQuery(allModelIds, async (batch, from, to) =>
+          adminClient.from("fans").select("referred_by_model_id").in("referred_by_model_id", batch).order("id", { ascending: true }).range(from, to)
         ),
       ]);
 
@@ -338,6 +371,36 @@ export async function GET(request: NextRequest) {
         return aIdx - bIdx;
       });
 
+      // Enrich from the values already computed above — no need to re-query
+      const computedById = new Map<string, any>(modelsWithComputedValues.map((m: any) => [m.id, m]));
+      const enriched = models.map((model: any) => {
+        const c = computedById.get(model.id);
+        return {
+          ...model,
+          followers_count: c?.followers_count || 0,
+          total_earned: c?.total_earned || 0,
+          content_count: c?.content_count || 0,
+          image_count: c?.image_count || 0,
+          video_count: c?.video_count || 0,
+          ppv_count: c?.ppv_count || 0,
+          last_post: c?.last_post || null,
+          message_count: c?.message_count || 0,
+          referral_count: c?.referral_count || 0,
+          last_seen: c?.last_seen || null,
+          joined_at: c?.joined_at || model.claimed_at || model.created_at,
+        };
+      });
+
+      return NextResponse.json(
+        { models: enriched, total: totalCount },
+        {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
+            'Pragma': 'no-cache',
+          },
+        }
+      );
+
     } else {
       // For DB-sortable fields: use standard pagination
       let query = supabase.from("models")
@@ -380,34 +443,36 @@ export async function GET(request: NextRequest) {
     // Run all aggregation queries in parallel using admin client for consistent access
     const [
       actorsResult,
-      premiumCountsResult,
-      imageCountsResult,
-      videoCountsResult,
-      lastPremiumResult,
-      lastMediaResult,
+      premiumCountsData,
+      imageCountsData,
+      videoCountsData,
+      lastPremiumData,
+      lastMediaData,
     ] = await Promise.all([
       // Get actors for user_ids
       userIds.length > 0
         ? adminClient.from("actors").select("id, user_id").in("user_id", userIds)
         : { data: [] },
       // Get PPV counts (content_items with exclusive status)
-      (adminClient as any).from("content_items").select("model_id").in("model_id", modelIds).eq("status", "exclusive"),
+      batchQuery(modelIds, async (batch, from, to) =>
+        (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "exclusive").order("id", { ascending: true }).range(from, to)
+      ),
       // Get image counts from content_items (portfolio images)
-      (adminClient as any).from("content_items").select("model_id").in("model_id", modelIds).eq("status", "portfolio").eq("media_type", "image"),
+      batchQuery(modelIds, async (batch, from, to) =>
+        (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "portfolio").eq("media_type", "image").order("id", { ascending: true }).range(from, to)
+      ),
       // Get video counts from content_items (portfolio videos)
-      (adminClient as any).from("content_items").select("model_id").in("model_id", modelIds).eq("status", "portfolio").eq("media_type", "video"),
+      batchQuery(modelIds, async (batch, from, to) =>
+        (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "portfolio").eq("media_type", "video").order("id", { ascending: true }).range(from, to)
+      ),
       // Get last exclusive content dates
-      (adminClient as any).from("content_items")
-        .select("model_id, created_at")
-        .in("model_id", modelIds)
-        .eq("status", "exclusive")
-        .order("created_at", { ascending: false }),
+      batchQuery(modelIds, async (batch, from, to) =>
+        (adminClient as any).from("content_items").select("model_id, created_at").in("model_id", batch).eq("status", "exclusive").order("id", { ascending: true }).range(from, to)
+      ),
       // Get last content item dates (portfolio)
-      (adminClient as any).from("content_items")
-        .select("model_id, created_at")
-        .in("model_id", modelIds)
-        .eq("status", "portfolio")
-        .order("created_at", { ascending: false }),
+      batchQuery(modelIds, async (batch, from, to) =>
+        (adminClient as any).from("content_items").select("model_id, created_at").in("model_id", batch).eq("status", "portfolio").order("id", { ascending: true }).range(from, to)
+      ),
     ]);
 
     const actors = actorsResult.data || [];
@@ -416,81 +481,92 @@ export async function GET(request: NextRequest) {
 
     // Run actor-dependent queries in parallel
     const [
-      followCountsResult,
-      earningsResult,
-      conversationsResult,
-      referralsResult,
+      followCountsData,
+      earningsData,
+      conversationsData,
+      referralsData,
     ] = await Promise.all([
       // Get follower counts
       actorIds.length > 0
-        ? adminClient.from("follows").select("following_id").in("following_id", actorIds)
-        : { data: [] },
+        ? batchQuery(actorIds, async (batch, from, to) =>
+            adminClient.from("follows").select("following_id").in("following_id", batch).order("follower_id", { ascending: true }).order("following_id", { ascending: true }).range(from, to)
+          )
+        : Promise.resolve([]),
       // Get earnings (MODEL_EARNING_ACTIONS — keep in sync with detail page)
       actorIds.length > 0
-        ? adminClient.from("coin_transactions")
-            .select("actor_id, amount")
-            .in("actor_id", actorIds)
-            .in("action", [...MODEL_EARNING_ACTIONS])
-        : { data: [] },
+        ? batchQuery(actorIds, async (batch, from, to) =>
+            adminClient.from("coin_transactions")
+              .select("actor_id, amount")
+              .in("actor_id", batch)
+              .in("action", [...MODEL_EARNING_ACTIONS])
+              .order("id", { ascending: true })
+              .range(from, to)
+          )
+        : Promise.resolve([]),
       // Get conversation counts
       actorIds.length > 0
-        ? adminClient.from("conversation_participants")
-            .select("actor_id, conversation_id")
-            .in("actor_id", actorIds)
-        : { data: [] },
+        ? batchQuery(actorIds, async (batch, from, to) =>
+            adminClient.from("conversation_participants")
+              .select("actor_id, conversation_id")
+              .in("actor_id", batch)
+              .order("conversation_id", { ascending: true })
+              .order("actor_id", { ascending: true })
+              .range(from, to)
+          )
+        : Promise.resolve([]),
       // Get referral counts (fans who signed up from viewing this model's profile)
       modelIds.length > 0
-        ? adminClient.from("fans")
-            .select("referred_by_model_id")
-            .in("referred_by_model_id", modelIds)
-        : { data: [] },
+        ? batchQuery(modelIds, async (batch, from, to) =>
+            adminClient.from("fans").select("referred_by_model_id").in("referred_by_model_id", batch).order("id", { ascending: true }).range(from, to)
+          )
+        : Promise.resolve([]),
     ]);
 
     // Build lookup maps
     const followerMap = new Map<string, number>();
-    (followCountsResult.data || []).forEach((f: any) => {
+    (followCountsData as any[]).forEach((f: any) => {
       followerMap.set(f.following_id, (followerMap.get(f.following_id) || 0) + 1);
     });
 
     const earningsMap = new Map<string, number>();
-    (earningsResult.data || []).forEach((tx: any) => {
+    (earningsData as any[]).forEach((tx: any) => {
       earningsMap.set(tx.actor_id, (earningsMap.get(tx.actor_id) || 0) + tx.amount);
     });
 
     const ppvMap = new Map<string, number>();
-    (premiumCountsResult.data || []).forEach((c: any) => {
+    (premiumCountsData as any[]).forEach((c: any) => {
       ppvMap.set(c.model_id, (ppvMap.get(c.model_id) || 0) + 1);
     });
 
     const imageMap = new Map<string, number>();
-    (imageCountsResult.data || []).forEach((c: any) => {
+    (imageCountsData as any[]).forEach((c: any) => {
       imageMap.set(c.model_id, (imageMap.get(c.model_id) || 0) + 1);
     });
 
     const videoMap = new Map<string, number>();
-    (videoCountsResult.data || []).forEach((c: any) => {
+    (videoCountsData as any[]).forEach((c: any) => {
       videoMap.set(c.model_id, (videoMap.get(c.model_id) || 0) + 1);
     });
 
     const lastPostMap = new Map<string, string>();
-    (lastPremiumResult.data || []).forEach((p: any) => {
+    (lastPremiumData as any[]).forEach((p: any) => {
       if (!lastPostMap.has(p.model_id) || new Date(p.created_at) > new Date(lastPostMap.get(p.model_id)!)) {
         lastPostMap.set(p.model_id, p.created_at);
       }
     });
-    (lastMediaResult.data || []).forEach((m: any) => {
+    (lastMediaData as any[]).forEach((m: any) => {
       if (!lastPostMap.has(m.model_id) || new Date(m.created_at) > new Date(lastPostMap.get(m.model_id)!)) {
         lastPostMap.set(m.model_id, m.created_at);
       }
     });
 
     const messageMap = new Map<string, number>();
-    (conversationsResult.data || []).forEach((c: any) => {
+    (conversationsData as any[]).forEach((c: any) => {
       messageMap.set(c.actor_id, (messageMap.get(c.actor_id) || 0) + 1);
     });
 
     const referralMap = new Map<string, number>();
-    (referralsResult.data || []).forEach((f: any) => {
+    (referralsData as any[]).forEach((f: any) => {
       referralMap.set(f.referred_by_model_id, (referralMap.get(f.referred_by_model_id) || 0) + 1);
     });
 

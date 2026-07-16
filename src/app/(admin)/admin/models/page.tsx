@@ -404,7 +404,7 @@ export default function AdminModelsPage() {
       "Username", "First Name", "Last Name", "Email", "City", "State",
       "Height", "Hair Color", "Focus",
       "Approved", "Instagram", "IG Followers", "TT Followers", "Rating", "Profile Views",
-      "Followers", "Pics", "Videos", "PPV", "Earned", "Referrals", "Joined"
+      "Followers", "Pics", "Videos", "Paid", "Earned", "Referrals", "Joined"
     ];
 
     const rows = models.map(m => [
@@ -774,7 +774,7 @@ export default function AdminModelsPage() {
                       <div className="flex items-center"><Video className="h-4 w-4 mr-1" />Vids<SortIndicator active={sortField === "video_count"} direction={sortDirection} /></div>
                     </TableHead>
                     <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("ppv_count")}>
-                      <div className="flex items-center"><Lock className="h-4 w-4 mr-1" />PPV<SortIndicator active={sortField === "ppv_count"} direction={sortDirection} /></div>
+                      <div className="flex items-center"><Lock className="h-4 w-4 mr-1" />Paid<SortIndicator active={sortField === "ppv_count"} direction={sortDirection} /></div>
                     </TableHead>
                     <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("profile_views")}>
                       <div className="flex items-center"><Eye className="h-4 w-4 mr-1" />Views<SortIndicator active={sortField === "profile_views"} direction={sortDirection} /></div>
