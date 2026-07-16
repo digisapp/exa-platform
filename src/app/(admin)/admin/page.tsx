@@ -30,6 +30,7 @@ import {
   Share2,
   ShieldCheck,
   Crown,
+  Trophy,
 } from "lucide-react";
 
 type Color =
@@ -119,6 +120,7 @@ export default async function AdminPage() {
     },
     { href: "/admin/rosters", label: "Client Rosters", icon: Share2, color: "cyan" },
     { href: "/admin/traffic", label: "Traffic", icon: BarChart3, color: "blue" },
+    { href: "/admin/stats", label: "Leaderboards", icon: Trophy, color: "amber" },
     { href: "/admin/transactions", label: "Purchases", icon: Coins, color: "amber" },
     { href: "/admin/payouts", label: "Payouts", icon: Banknote, color: "emerald" },
     { href: "/admin/usernames", label: "Usernames", icon: AtSign, color: "purple" },
