@@ -7,6 +7,7 @@ import { X, Search, CheckCircle, XCircle, RefreshCw, Loader2 } from "lucide-reac
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { formatInches } from "@/lib/measurements";
 
 function parseHeightToInches(height: string | null | undefined): number | null {
   if (!height) return null;
@@ -194,9 +195,9 @@ function ApplicationCard({
             {(app.model?.bust || app.model?.waist || app.model?.hips) && (
               <p className="text-xs text-white/60">
                 {[
-                  app.model.bust  && `B ${app.model.bust}`,
-                  app.model.waist && `W ${app.model.waist}`,
-                  app.model.hips  && `H ${app.model.hips}`,
+                  app.model.bust  && `B ${formatInches(app.model.bust)}`,
+                  app.model.waist && `W ${formatInches(app.model.waist)}`,
+                  app.model.hips  && `H ${formatInches(app.model.hips)}`,
                 ].filter(Boolean).join(" · ")}
               </p>
             )}

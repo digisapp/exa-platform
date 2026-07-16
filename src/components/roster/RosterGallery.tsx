@@ -7,6 +7,7 @@ import {
   Dialog, DialogContent, DialogTitle,
 } from "@/components/ui/dialog";
 import { Instagram, MapPin, BadgeCheck, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { formatInches } from "@/lib/measurements";
 
 export interface RosterModel {
   id: string;
@@ -215,9 +216,9 @@ export function RosterGallery({
 
                 <div>
                   <MeasureRow label="Height" value={active.height} />
-                  <MeasureRow label="Bust" value={active.bust} />
-                  <MeasureRow label="Waist" value={active.waist} />
-                  <MeasureRow label="Hips" value={active.hips} />
+                  <MeasureRow label="Bust" value={formatInches(active.bust)} />
+                  <MeasureRow label="Waist" value={formatInches(active.waist)} />
+                  <MeasureRow label="Hips" value={formatInches(active.hips)} />
                   <MeasureRow label="Dress" value={active.dress_size} />
                   <MeasureRow label="Shoe" value={active.shoe_size} />
                   <MeasureRow label="Hair" value={active.hair_color} />

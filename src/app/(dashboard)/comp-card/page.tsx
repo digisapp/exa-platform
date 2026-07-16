@@ -31,6 +31,7 @@ import PrintOrderDialog from "@/components/comp-card/PrintOrderDialog";
 import { MiamiDigitalsBanner } from "@/components/comp-card/MiamiDigitalsBanner";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { formatInches } from "@/lib/measurements";
 import {
   cropToPosition,
   photoToBase64,
@@ -613,9 +614,9 @@ export default function CompCardPage() {
       // Measurements
       const meas: { label: string; value: string }[] = [];
       if (dm.height) meas.push({ label: "HEIGHT", value: dm.height });
-      if (dm.bust) meas.push({ label: "BUST", value: dm.bust });
-      if (dm.waist) meas.push({ label: "WAIST", value: dm.waist });
-      if (dm.hips) meas.push({ label: "HIPS", value: dm.hips });
+      if (dm.bust) meas.push({ label: "BUST", value: formatInches(dm.bust)! });
+      if (dm.waist) meas.push({ label: "WAIST", value: formatInches(dm.waist)! });
+      if (dm.hips) meas.push({ label: "HIPS", value: formatInches(dm.hips)! });
       if (dm.eye_color) meas.push({ label: "EYES", value: dm.eye_color });
       if (dm.hair_color) meas.push({ label: "HAIR", value: dm.hair_color });
       if (dm.dress_size) meas.push({ label: "DRESS", value: dm.dress_size });
@@ -761,9 +762,9 @@ export default function CompCardPage() {
   const measurements = model
     ? [
         { label: "Height", value: model.height },
-        { label: "Bust", value: model.bust },
-        { label: "Waist", value: model.waist },
-        { label: "Hips", value: model.hips },
+        { label: "Bust", value: formatInches(model.bust) },
+        { label: "Waist", value: formatInches(model.waist) },
+        { label: "Hips", value: formatInches(model.hips) },
         { label: "Eyes", value: model.eye_color },
         { label: "Hair", value: model.hair_color },
         { label: "Dress", value: model.dress_size },

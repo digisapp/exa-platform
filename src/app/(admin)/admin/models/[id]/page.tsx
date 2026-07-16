@@ -41,6 +41,8 @@ import {
   X,
 } from "lucide-react";
 import { ImageCropper } from "@/components/upload/ImageCropper";
+import { TikTokIcon } from "@/components/ui/tiktok-icon";
+import { formatInches } from "@/lib/measurements";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 import { isContentMediaPath } from "@/lib/content-media";
 import { toast } from "sonner";
@@ -308,13 +310,21 @@ export default function AdminModelDetailPage() {
             .select("*", { count: "exact", head: true })
             .eq("following_id", actor.id);
 
-          // Total earned (exclude purchases - only actual earnings from fans)
+          // Total earned from fans. Whitelist earning actions: excluding only
+          // "purchase" let phantom signup_bonus rows (bonus removed 2026-06-12,
+          // never credited to model balances) and fan-era rows on converted
+          // actors (daily_spin, first_purchase_bonus) inflate the number.
+          // No amount filter so any future clawback reversals net out.
           const { data: earnings } = await (supabase
             .from("coin_transactions") as any)
             .select("amount")
             .eq("actor_id", actor.id)
-            .gt("amount", 0)
-            .neq("action", "purchase");
+            .in("action", [
+              "content_sale",
+              "message_received",
+              "tip_received",
+              "live_wall_tip_received",
+            ]);
 
           const totalEarned = earnings?.reduce((sum: number, tx: any) => sum + tx.amount, 0) || 0;
 
@@ -579,6 +589,12 @@ export default function AdminModelDetailPage() {
       for (const [key, value] of Object.entries(form)) {
         // Send as-is; API normalizes "" to null
         payload[key] = value ?? null;
+      }
+      // Free-text inch fields: store the normalized `34"` form
+      for (const key of ["bust", "waist", "hips"] as const) {
+        if (typeof payload[key] === "string") {
+          payload[key] = formatInches(payload[key] as string);
+        }
       }
 
       const res = await fetch(`/api/admin/models/${model.id}`, {
@@ -949,7 +965,7 @@ export default function AdminModelDetailPage() {
               {model.tiktok_username && (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">TikTok</span>
+                    <TikTokIcon className="h-4 w-4 text-pink-500" />
                     <a
                       href={`https://tiktok.com/@${model.tiktok_username.replace("@", "")}`}
                       target="_blank"
@@ -1011,19 +1027,19 @@ export default function AdminModelDetailPage() {
                   {model.bust && (
                     <div>
                       <p className="text-xs text-muted-foreground">Bust</p>
-                      <p className="font-medium">{model.bust}</p>
+                      <p className="font-medium">{formatInches(model.bust)}</p>
                     </div>
                   )}
                   {model.waist && (
                     <div>
                       <p className="text-xs text-muted-foreground">Waist</p>
-                      <p className="font-medium">{model.waist}</p>
+                      <p className="font-medium">{formatInches(model.waist)}</p>
                     </div>
                   )}
                   {model.hips && (
                     <div>
                       <p className="text-xs text-muted-foreground">Hips</p>
-                      <p className="font-medium">{model.hips}</p>
+                      <p className="font-medium">{formatInches(model.hips)}</p>
                     </div>
                   )}
                   {model.dress_size && (

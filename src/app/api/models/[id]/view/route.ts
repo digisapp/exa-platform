@@ -56,6 +56,19 @@ export async function POST(
       return NextResponse.json({ error: "Failed to track view" }, { status: 500 });
     }
 
+    // Also log a profile_views row — the dashboard's 30-day views stat counts
+    // this table, which sat empty because only the counter above was bumped.
+    // Best-effort: the lifetime counter stays the source of truth.
+    const { error: logError } = await (serviceClient.from("profile_views") as any).insert({
+      model_id: modelId,
+      viewer_id: user?.id ?? null,
+      referrer: request.headers.get("referer")?.slice(0, 500) ?? null,
+      user_agent: request.headers.get("user-agent")?.slice(0, 500) ?? null,
+    });
+    if (logError) {
+      logger.error("Failed to log profile view row", logError);
+    }
+
     return NextResponse.json({ success: true, counted: true });
   } catch (error) {
     logger.error("View tracking error", error);

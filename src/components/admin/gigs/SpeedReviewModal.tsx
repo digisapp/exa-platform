@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatInches } from "@/lib/measurements";
 import {
   CheckCircle,
   XCircle,
@@ -398,7 +399,7 @@ export default function SpeedReviewModal({
                       <div className="flex justify-between items-center">
                         <span className="text-white/35 text-sm">Bust</span>
                         <span className="text-white text-sm font-medium">
-                          {current.model.bust}
+                          {formatInches(current.model.bust)}
                         </span>
                       </div>
                     )}
@@ -406,7 +407,7 @@ export default function SpeedReviewModal({
                       <div className="flex justify-between items-center">
                         <span className="text-white/35 text-sm">Waist</span>
                         <span className="text-white text-sm font-medium">
-                          {current.model.waist}
+                          {formatInches(current.model.waist)}
                         </span>
                       </div>
                     )}
@@ -414,7 +415,7 @@ export default function SpeedReviewModal({
                       <div className="flex justify-between items-center">
                         <span className="text-white/35 text-sm">Hips</span>
                         <span className="text-white text-sm font-medium">
-                          {current.model.hips}
+                          {formatInches(current.model.hips)}
                         </span>
                       </div>
                     )}
