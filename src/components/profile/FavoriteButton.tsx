@@ -66,7 +66,9 @@ export function FavoriteButton({ modelId, initialFavorited, isLoggedIn }: Favori
         disabled={loading}
         aria-label={label}
         className={cn(
-          "w-11 h-11 rounded-full flex items-center justify-center transition-all",
+          // Sized to match ShareButton (w-7) — the two sit side by side in the
+          // profile header and a larger heart reads as oversized next to it.
+          "w-7 h-7 rounded-full flex items-center justify-center transition-all",
           isFavorited
             ? "bg-pink-500/80 hover:bg-pink-500 shadow-[0_0_16px_rgba(236,72,153,0.6)]"
             : "bg-white/10 hover:bg-white/20",
@@ -75,7 +77,7 @@ export function FavoriteButton({ modelId, initialFavorited, isLoggedIn }: Favori
       >
         <Heart
           className={cn(
-            "h-5 w-5 transition-transform",
+            "h-3.5 w-3.5 transition-transform",
             isFavorited ? "fill-white text-white" : "text-white/80",
             bouncing && "scale-125"
           )}
