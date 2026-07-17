@@ -61,6 +61,8 @@ interface TravelTrip {
   status: string;
   cover_image_url: string | null;
   description: string | null;
+  application_deadline: string | null;
+  require_id_verification: boolean;
   applicant_count?: number;
 }
 
@@ -76,7 +78,8 @@ interface TravelApplicant {
   payment_status: string | null;
   admin_note: string | null;
   note: string | null;
-  trip: { title: string; location_city: string; location_state: string } | null;
+  confirmed_at: string | null;
+  trip: { title: string; start_at?: string; location_city: string; location_state: string } | null;
   model: {
     id: string;
     username: string;
@@ -95,12 +98,57 @@ const tripStatusColors: Record<string, string> = {
   cancelled: "bg-red-500/20 text-red-400",
 };
 
+// Keys match the DB CHECK constraint values (pending/accepted/rejected/
+// withdrawn/waitlist) — NOT the display words "approved"/"declined".
 const appStatusColors: Record<string, string> = {
-  pending:  "bg-amber-500/20 text-amber-400",
-  approved: "bg-green-500/20 text-green-400",
-  declined: "bg-red-500/20 text-red-400",
-  waitlist: "bg-blue-500/20 text-blue-400",
+  pending:   "bg-amber-500/20 text-amber-400",
+  accepted:  "bg-green-500/20 text-green-400",
+  rejected:  "bg-red-500/20 text-red-400",
+  withdrawn: "bg-zinc-500/20 text-zinc-400",
+  waitlist:  "bg-blue-500/20 text-blue-400",
 };
+
+// Route all application decisions through the admin API route — it enforces
+// capacity + the travel 18+/verified-ID gate, handles badges and waitlist
+// promotion, and audit-logs. On acceptance it also fires the standard
+// congrats chat message + email (same pattern as /admin/gigs).
+async function submitAppDecision(
+  app: TravelApplicant,
+  status: string,
+  trip?: { title: string; start_at?: string; location_city?: string; location_state?: string }
+): Promise<boolean> {
+  const res = await fetch(`/api/admin/gig-applications/${app.id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    toast.error(data.error || "Failed to update");
+    return false;
+  }
+  toast.success(`Application ${status}`);
+
+  if (status === "accepted") {
+    const tripInfo = trip || app.trip || undefined;
+    fetch("/api/admin/send-gig-notification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "accepted",
+        modelId: app.model_id,
+        gigTitle: tripInfo?.title,
+        gigDate: tripInfo?.start_at
+          ? format(new Date(tripInfo.start_at), "MMMM d, yyyy")
+          : undefined,
+        gigLocation: tripInfo
+          ? [tripInfo.location_city, tripInfo.location_state].filter(Boolean).join(", ") || undefined
+          : undefined,
+      }),
+    }).catch(() => toast.error("Accepted, but the notification email failed to send"));
+  }
+  return true;
+}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -172,11 +220,13 @@ function TripsTab({ supabase }: { supabase: any }) {
   const [appLoading, setAppLoading] = useState(false);
   const [processingApp, setProcessingApp] = useState<string | null>(null);
 
-  const [form, setForm] = useState({
+  const emptyForm = {
     title: "", location_city: "", location_state: "", description: "",
-    start_at: "", end_at: "", compensation_type: "hosted",
+    start_at: "", end_at: "", application_deadline: "", compensation_type: "hosted",
     compensation_amount: 0, spots: 10, status: "upcoming",
-  });
+    cover_image_url: "", require_id_verification: false,
+  };
+  const [form, setForm] = useState(emptyForm);
 
   const loadTrips = useCallback(async () => {
     setLoading(true);
@@ -208,9 +258,7 @@ function TripsTab({ supabase }: { supabase: any }) {
 
   function openCreate() {
     setEditingTrip(null);
-    setForm({ title: "", location_city: "", location_state: "", description: "",
-      start_at: "", end_at: "", compensation_type: "hosted", compensation_amount: 0,
-      spots: 10, status: "upcoming" });
+    setForm(emptyForm);
     setShowForm(true);
   }
 
@@ -219,14 +267,18 @@ function TripsTab({ supabase }: { supabase: any }) {
     setForm({
       title: trip.title,
       location_city: trip.location_city,
-      location_state: trip.location_state,
+      location_state: trip.location_state || "",
       description: trip.description || "",
       start_at: trip.start_at ? trip.start_at.slice(0, 10) : "",
       end_at: trip.end_at ? trip.end_at.slice(0, 10) : "",
+      application_deadline: trip.application_deadline ? trip.application_deadline.slice(0, 10) : "",
       compensation_type: trip.compensation_type,
-      compensation_amount: trip.compensation_amount,
+      // Stored in cents platform-wide; the form edits dollars.
+      compensation_amount: (trip.compensation_amount || 0) / 100,
       spots: trip.spots,
       status: trip.status,
+      cover_image_url: trip.cover_image_url || "",
+      require_id_verification: trip.require_id_verification ?? false,
     });
     setShowForm(true);
   }
@@ -237,51 +289,62 @@ function TripsTab({ supabase }: { supabase: any }) {
       return;
     }
     setSaving(true);
-    const slug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     const payload = {
+      ...(editingTrip ? { id: editingTrip.id } : {}),
       title: form.title,
-      slug: editingTrip ? editingTrip.slug : `${slug}-${Date.now()}`,
-      type: "travel",
       location_city: form.location_city,
-      location_state: form.location_state,
+      location_state: form.location_state || null,
       description: form.description || null,
-      start_at: form.start_at ? new Date(form.start_at).toISOString() : null,
+      start_at: new Date(form.start_at).toISOString(),
       end_at: form.end_at ? new Date(form.end_at).toISOString() : null,
+      application_deadline: form.application_deadline ? new Date(form.application_deadline).toISOString() : null,
       compensation_type: form.compensation_type,
-      compensation_amount: Number(form.compensation_amount),
+      compensation_amount: Math.round(Number(form.compensation_amount) * 100),
       spots: Number(form.spots),
       status: form.status,
-      visibility: "public",
+      cover_image_url: form.cover_image_url || null,
+      require_id_verification: form.require_id_verification,
     };
 
-    const { error } = editingTrip
-      ? await (supabase.from("gigs") as any).update(payload).eq("id", editingTrip.id)
-      : await (supabase.from("gigs") as any).insert(payload);
+    const res = await fetch("/api/admin/travel/trips", {
+      method: editingTrip ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
 
-    if (error) { toast.error("Failed to save trip"); }
+    if (!res.ok) { toast.error(data.error || "Failed to save trip"); }
     else { toast.success(editingTrip ? "Trip updated" : "Trip created"); setShowForm(false); loadTrips(); }
     setSaving(false);
   }
 
   async function updateTripStatus(id: string, status: string) {
-    const { error } = await (supabase.from("gigs") as any).update({ status }).eq("id", id);
-    if (error) toast.error("Failed to update");
+    const res = await fetch("/api/admin/travel/trips", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    });
+    const data = await res.json();
+    if (!res.ok) toast.error(data.error || "Failed to update");
     else { toast.success("Status updated"); loadTrips(); }
   }
 
   async function deleteTrip(id: string) {
     if (!confirm("Delete this trip?")) return;
-    await (supabase.from("gigs") as any).delete().eq("id", id);
-    toast.success("Trip deleted");
-    loadTrips();
+    const res = await fetch("/api/admin/travel/trips", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    const data = await res.json();
+    if (!res.ok) toast.error(data.error || "Failed to delete trip");
+    else { toast.success("Trip deleted"); loadTrips(); }
   }
 
-  async function updateAppStatus(appId: string, status: string) {
-    setProcessingApp(appId);
-    const { error } = await (supabase.from("gig_applications") as any)
-      .update({ status, reviewed_at: new Date().toISOString() }).eq("id", appId);
-    if (error) toast.error("Failed to update");
-    else { toast.success(`Application ${status}`); if (selectedTrip) loadApplicants(selectedTrip); }
+  async function updateAppStatus(app: TravelApplicant, status: string) {
+    setProcessingApp(app.id);
+    const ok = await submitAppDecision(app, status, selectedTrip || undefined);
+    if (ok && selectedTrip) loadApplicants(selectedTrip);
     setProcessingApp(null);
   }
 
@@ -323,6 +386,11 @@ function TripsTab({ supabase }: { supabase: any }) {
                       <Badge className={appStatusColors[app.status] || "bg-zinc-500/20 text-zinc-400"}>
                         {app.status}
                       </Badge>
+                      {app.status === "accepted" && (
+                        <Badge className={app.confirmed_at ? "bg-emerald-500/20 text-emerald-400" : "bg-zinc-500/20 text-zinc-400"}>
+                          {app.confirmed_at ? "✓ confirmed" : "awaiting confirmation"}
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                       {app.instagram_handle && (
@@ -347,7 +415,7 @@ function TripsTab({ supabase }: { supabase: any }) {
                       <>
                         <Button
                           size="sm"
-                          onClick={() => updateAppStatus(app.id, "accepted")}
+                          onClick={() => updateAppStatus(app, "accepted")}
                           disabled={processingApp === app.id}
                           className="bg-green-500/20 text-green-400 hover:bg-green-500/30"
                         >
@@ -356,7 +424,7 @@ function TripsTab({ supabase }: { supabase: any }) {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => updateAppStatus(app.id, "rejected")}
+                          onClick={() => updateAppStatus(app, "rejected")}
                           disabled={processingApp === app.id}
                           className="text-red-400 hover:bg-red-500/10"
                         >
@@ -408,6 +476,11 @@ function TripsTab({ supabase }: { supabase: any }) {
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="font-semibold truncate">{trip.title}</h3>
                         <div className="flex items-center gap-2 shrink-0">
+                          {trip.require_id_verification && (
+                            <Badge className="bg-cyan-500/20 text-cyan-400" title="Verified ID required to accept">
+                              ID required
+                            </Badge>
+                          )}
                           <Badge className={tripStatusColors[trip.status] || "bg-zinc-500/20 text-zinc-400"}>
                             {trip.status}
                           </Badge>
@@ -460,7 +533,7 @@ function TripsTab({ supabase }: { supabase: any }) {
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                       <Button size="sm" variant="ghost" asChild>
-                        <Link href={`/travel`} target="_blank">
+                        <Link href={`/travel/${trip.slug}`} target="_blank">
                           <ExternalLink className="h-3.5 w-3.5" />
                         </Link>
                       </Button>
@@ -543,6 +616,32 @@ function TripsTab({ supabase }: { supabase: any }) {
                 </Select>
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Application Deadline</Label>
+                <Input type="date" value={form.application_deadline}
+                  onChange={(e) => setForm({ ...form, application_deadline: e.target.value })} />
+              </div>
+              <div>
+                <Label>Cover Image URL</Label>
+                <Input value={form.cover_image_url} placeholder="https://…"
+                  onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })} />
+              </div>
+            </div>
+            <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-800 bg-zinc-900/40 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.require_id_verification}
+                onChange={(e) => setForm({ ...form, require_id_verification: e.target.checked })}
+                className="h-4 w-4 accent-violet-500"
+              />
+              <span className="text-sm">
+                Require verified ID to accept
+                <span className="block text-xs text-muted-foreground">
+                  Models can apply, but can&apos;t be accepted until an admin has verified their government ID.
+                </span>
+              </span>
+            </label>
             <div>
               <Label>Description</Label>
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -586,7 +685,7 @@ function ApplicantsTab({ supabase }: { supabase: any }) {
       .select(`
         *,
         model:models(id, username, first_name, last_name, profile_photo_url),
-        trip:gigs!gig_applications_gig_id_fkey(title, location_city, location_state)
+        trip:gigs!gig_applications_gig_id_fkey(title, start_at, location_city, location_state)
       `)
       .in("gig_id", gigIds)
       .order("applied_at", { ascending: false });
@@ -597,14 +696,11 @@ function ApplicantsTab({ supabase }: { supabase: any }) {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  async function updateStatus(appId: string, status: string) {
-    setProcessingId(appId);
-    const { error } = await (supabase.from("gig_applications") as any)
-      .update({ status, reviewed_at: new Date().toISOString() }).eq("id", appId);
-    if (error) toast.error("Failed to update");
-    else {
-      toast.success(`Application ${status}`);
-      setApplicants((prev) => prev.map((a) => a.id === appId ? { ...a, status } : a));
+  async function updateStatus(app: TravelApplicant, status: string) {
+    setProcessingId(app.id);
+    const ok = await submitAppDecision(app, status);
+    if (ok) {
+      setApplicants((prev) => prev.map((a) => (a.id === app.id ? { ...a, status } : a)));
     }
     setProcessingId(null);
   }
@@ -692,6 +788,11 @@ function ApplicantsTab({ supabase }: { supabase: any }) {
                     <Badge className={appStatusColors[app.status] || "bg-zinc-500/20 text-zinc-400"}>
                       {app.status}
                     </Badge>
+                    {app.status === "accepted" && (
+                      <Badge className={app.confirmed_at ? "bg-emerald-500/20 text-emerald-400" : "bg-zinc-500/20 text-zinc-400"}>
+                        {app.confirmed_at ? "✓ confirmed" : "awaiting confirmation"}
+                      </Badge>
+                    )}
                     {app.spot_type && (
                       <Badge variant="outline" className="text-xs">{app.spot_type}</Badge>
                     )}
@@ -727,7 +828,7 @@ function ApplicantsTab({ supabase }: { supabase: any }) {
                     <>
                       <Button
                         size="sm"
-                        onClick={() => updateStatus(app.id, "accepted")}
+                        onClick={() => updateStatus(app, "accepted")}
                         disabled={processingId === app.id}
                         className="bg-green-500/20 text-green-400 hover:bg-green-500/30 border-green-500/30"
                         variant="outline"
@@ -737,7 +838,7 @@ function ApplicantsTab({ supabase }: { supabase: any }) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => updateStatus(app.id, "rejected")}
+                        onClick={() => updateStatus(app, "rejected")}
                         disabled={processingId === app.id}
                         className="text-red-400 hover:bg-red-500/10"
                       >

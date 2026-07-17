@@ -1,7 +1,7 @@
 export const revalidate = 60;
 
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
@@ -26,7 +26,6 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ApplyButton } from "@/components/gigs/ApplyButton";
-import { TripApplicationForm } from "@/components/gigs/TripApplicationForm";
 import { CreatorHousePaymentButton } from "@/components/gigs/CreatorHousePaymentButton";
 import { MSW_2026_SCHEDULE, type MSWScheduleEntry } from "@/lib/msw-schedule";
 import type { Metadata } from "next";
@@ -73,6 +72,12 @@ export default async function GigDetailPage({ params }: Props) {
 
   if (!gig) {
     notFound();
+  }
+
+  // Travel trips have their own dedicated page (EXA Travel Phase 1) — the old
+  // in-gig TripApplicationForm had hardcoded 2026 content-trip dates.
+  if (gig.type === "travel") {
+    redirect(`/travel/${gig.slug}`);
   }
 
   // Check if user has already applied
@@ -456,13 +461,6 @@ export default async function GigDetailPage({ params }: Props) {
                       />
                     )}
                   </div>
-                ) : gig.type === "travel" && canApply ? (
-                  <TripApplicationForm
-                    gigId={gig.id}
-                    gigSlug={slug}
-                    modelId={modelId}
-                    isLoggedIn={!!user}
-                  />
                 ) : canApply ? (
                   <ApplyButton
                     gigId={gig.id}

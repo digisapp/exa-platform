@@ -63,8 +63,10 @@ export async function POST(request: NextRequest) {
         if (result.success) {
           sent++;
 
-          // Log in brand_outreach_emails
-          await supabase.from("brand_outreach_emails").insert({
+          // Log in brand_outreach_emails — surface failures instead of
+          // silently losing send history (there are zero logged rows for the
+          // Feb/Mar 2026 travel outreach wave; don't let that repeat)
+          const { error: logError } = await supabase.from("brand_outreach_emails").insert({
             contact_id: contact.id,
             subject,
             body_html: emailBody,
@@ -73,6 +75,9 @@ export async function POST(request: NextRequest) {
             resend_message_id: (result as any).messageId,
             status: "sent",
           });
+          if (logError) {
+            console.error("Failed to log travel outreach email:", logError, { contactId: contact.id });
+          }
 
           // Update contact status to contacted (only if still new)
           await supabase
