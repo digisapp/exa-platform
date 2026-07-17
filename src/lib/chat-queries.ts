@@ -2,6 +2,7 @@ import { cache } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { batchQuery } from "@/lib/supabase/batch";
 import { isChatMediaPath } from "@/lib/chat-media";
 
 /**
@@ -14,30 +15,6 @@ export const getConversationList = cache(async (actorId: string) => {
   const adminClient = createServiceRoleClient();
   return fetchConversationList(supabase, adminClient, actorId);
 });
-
-// PostgREST fails outright (no rows, no thrown error from the client) once an
-// .in() list pushes the request URL past the ~16KB gateway limit (~300 UUIDs).
-// The admin inbox sits in 700+ conversations, so every id list here must be
-// batched. 200 per query, same convention as /api/admin/models (PR #143).
-const IN_BATCH_SIZE = 200;
-
-async function batchIn<T>(
-  ids: string[],
-  queryFn: (batchIds: string[]) => PromiseLike<{ data: T[] | null; error: unknown }>
-): Promise<T[]> {
-  const batches: string[][] = [];
-  for (let i = 0; i < ids.length; i += IN_BATCH_SIZE) {
-    batches.push(ids.slice(i, i + IN_BATCH_SIZE));
-  }
-  const results = await Promise.all(batches.map((batch) => queryFn(batch)));
-  const rows: T[] = [];
-  for (const { data, error } of results) {
-    // A failed batch must not silently render every conversation as "Unknown"
-    if (error) throw error;
-    if (data) rows.push(...data);
-  }
-  return rows;
-}
 
 /**
  * Shared conversation list query used by both chats layout and page.
@@ -90,9 +67,12 @@ export async function fetchConversationList(
     }
   }
 
-  // Batch fetch: all other participants for all conversations
-  const allParticipants: any[] = await batchIn(conversationIds, (batch) =>
-    supabase
+  // Batch fetch: all other participants for all conversations. batchQuery
+  // chunks the id list — a single .in() with every id fails outright past
+  // ~300 UUIDs (16KB URL limit); the admin actor sits in 700+ conversations,
+  // and the swallowed failure rendered every conversation as "Unknown".
+  const allParticipants: any[] = await batchQuery(conversationIds, async (batch, from, to) =>
+    (supabase as any)
       .from("conversation_participants")
       .select(`
         conversation_id,
@@ -104,6 +84,9 @@ export async function fetchConversationList(
       `)
       .in("conversation_id", batch)
       .neq("actor_id", actorId)
+      .order("conversation_id", { ascending: true })
+      .order("actor_id", { ascending: true })
+      .range(from, to)
   );
 
   // Get user IDs for models and actor IDs for fans/brands
@@ -111,24 +94,31 @@ export async function fetchConversationList(
   const fanActorIds = [...new Set((allParticipants || []).filter((p: any) => p.actor?.type === "fan").map((p: any) => p.actor?.id).filter(Boolean))];
   const brandActorIds = [...new Set((allParticipants || []).filter((p: any) => p.actor?.type === "brand").map((p: any) => p.actor?.id).filter(Boolean))];
 
-  // Fetch all models, fans (admin client to bypass RLS), and brands
+  // Fetch all models, fans (admin client to bypass RLS), and brands — batched
   const [models, fans, brands] = await Promise.all([
-    batchIn<any>(userIds, (batch) =>
-      supabase
+    batchQuery<any>(userIds, async (batch, from, to) =>
+      (supabase as any)
         .from("models")
         .select("user_id, username, profile_photo_url")
         .in("user_id", batch)
+        .order("user_id", { ascending: true })
+        .range(from, to)
     ),
-    batchIn<any>(fanActorIds, (batch) =>
-      adminClient
+    batchQuery<any>(fanActorIds, async (batch, from, to) =>
+      (adminClient as any)
         .from("fans")
         .select("id, display_name, username, avatar_url")
         .in("id", batch)
+        .order("id", { ascending: true })
+        .range(from, to)
     ),
-    batchIn<any>(brandActorIds, (batch) =>
-      (supabase.from("brands") as any)
+    batchQuery<any>(brandActorIds, async (batch, from, to) =>
+      (supabase as any)
+        .from("brands")
         .select("id, company_name, logo_url")
         .in("id", batch)
+        .order("id", { ascending: true })
+        .range(from, to)
     ),
   ]);
 

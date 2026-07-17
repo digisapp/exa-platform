@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { batchQuery } from "@/lib/supabase/batch";
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimitAsync } from "@/lib/rate-limit";
 import { assertNotSuspended } from "@/lib/auth/suspension";
@@ -91,21 +92,22 @@ export async function POST(request: NextRequest) {
     const conversationIds = participations.map((p) => p.conversation_id);
 
     // Get other participants in these conversations with their types.
-    // Batched: one .in() with every id fails outright past ~300 UUIDs (16KB
-    // URL limit), which would kill the whole blast for a model with 300+
-    // conversations.
-    const otherParticipants: any[] = [];
-    for (let i = 0; i < conversationIds.length; i += 200) {
-      const { data } = await supabase
+    // batchQuery chunks the id list — one .in() with every id fails outright
+    // past ~300 UUIDs (16KB URL limit), which would kill the whole blast for
+    // a model with 300+ conversations.
+    const otherParticipants: any[] = await batchQuery(conversationIds, async (batch, from, to) =>
+      (supabase as any)
         .from("conversation_participants")
         .select(`
           conversation_id,
           actor:actors(id, type)
         `)
-        .in("conversation_id", conversationIds.slice(i, i + 200))
-        .neq("actor_id", actor.id) as { data: any[] | null };
-      if (data) otherParticipants.push(...data);
-    }
+        .in("conversation_id", batch)
+        .neq("actor_id", actor.id)
+        .order("conversation_id", { ascending: true })
+        .order("actor_id", { ascending: true })
+        .range(from, to)
+    );
 
     if (otherParticipants.length === 0) {
       return NextResponse.json({
