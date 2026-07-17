@@ -72,10 +72,17 @@ export default async function RatesPage({ searchParams }: Props) {
   const params = await searchParams;
   const supabase = await createClient();
 
-  // Fetch models who have opted in to the rates page and have at least one rate set
+  // Fetch models who have opted in to the rates page and have at least one
+  // rate set. Explicit columns — select("*") pulled the full row (PII,
+  // admin_rating) into a public page for no reason.
   let query = supabase
     .from("models")
-    .select("*")
+    .select(`
+      id, username, profile_photo_url, city, state, show_location, last_active_at,
+      photoshoot_hourly_rate, photoshoot_half_day_rate, photoshoot_full_day_rate,
+      promo_hourly_rate, brand_ambassador_daily_rate, private_event_hourly_rate,
+      social_companion_hourly_rate, meet_greet_rate
+    `)
     .eq("is_approved", true)
     .eq("show_on_rates_page", true);
 
@@ -84,7 +91,10 @@ export default async function RatesPage({ searchParams }: Props) {
     query = query.eq("state", params.state);
   }
 
-  const { data: allModels } = await query.order("created_at", { ascending: false }) as { data: any[] | null };
+  // Admin rating tier leads (5★ first, 1-2★ last), newest within each tier.
+  const { data: allModels } = await query
+    .order("rating_tier", { ascending: false })
+    .order("created_at", { ascending: false }) as { data: any[] | null };
 
   // Filter models that have at least one booking rate set
   let models = (allModels || []).filter((model) => {

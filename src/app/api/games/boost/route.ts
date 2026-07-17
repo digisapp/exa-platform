@@ -138,7 +138,11 @@ export async function GET(request: NextRequest) {
       `)
       .eq("is_approved", true)
       .is("deleted_at", null)
-      .not("profile_photo_url", "is", null);
+      .not("profile_photo_url", "is", null)
+      // 1-2★ admin-rated models never enter the swipe deck — the deck is
+      // random-order by design, so filtering (not sorting) is the brand gate
+      // here. Unrated models compute to tier 3 and stay in.
+      .gte("rating_tier", 3);
 
     const { data: fetchedModels, error } = deckTarget > 0
       ? await query.limit(1000)
