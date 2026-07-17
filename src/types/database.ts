@@ -4059,6 +4059,7 @@ export type Database = {
           admin_note: string | null
           amount_paid: number | null
           applied_at: string | null
+          confirmed_at: string | null
           digis_username: string | null
           gig_id: string
           id: string
@@ -4080,6 +4081,7 @@ export type Database = {
           admin_note?: string | null
           amount_paid?: number | null
           applied_at?: string | null
+          confirmed_at?: string | null
           digis_username?: string | null
           gig_id: string
           id?: string
@@ -4101,6 +4103,7 @@ export type Database = {
           admin_note?: string | null
           amount_paid?: number | null
           applied_at?: string | null
+          confirmed_at?: string | null
           digis_username?: string | null
           gig_id?: string
           id?: string
@@ -4208,6 +4211,7 @@ export type Database = {
           location_name: string | null
           location_state: string | null
           points_for_completion: number | null
+          require_id_verification: boolean
           requirements: Json | null
           slug: string
           spots: number | null
@@ -4238,6 +4242,7 @@ export type Database = {
           location_name?: string | null
           location_state?: string | null
           points_for_completion?: number | null
+          require_id_verification?: boolean
           requirements?: Json | null
           slug: string
           spots?: number | null
@@ -4268,6 +4273,7 @@ export type Database = {
           location_name?: string | null
           location_state?: string | null
           points_for_completion?: number | null
+          require_id_verification?: boolean
           requirements?: Json | null
           slug?: string
           spots?: number | null

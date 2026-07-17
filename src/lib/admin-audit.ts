@@ -92,6 +92,8 @@ export const AdminActions = {
 
   // Gig actions
   GIG_CREATED: "gig_created",
+  GIG_UPDATED: "gig_updated",
+  GIG_DELETED: "gig_deleted",
   GIG_APPLICATION_APPROVED: "gig_application_approved",
   GIG_APPLICATION_REJECTED: "gig_application_rejected",
 } as const;

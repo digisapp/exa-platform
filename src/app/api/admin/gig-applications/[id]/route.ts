@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { sendGigApplicationAcceptedEmail, sendGigWaitlistedEmail } from "@/lib/email";
 import { postLiveWallSystemMessage } from "@/lib/live-wall-system";
+import { isAdultDob } from "@/lib/age";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
 
@@ -179,7 +180,7 @@ export async function PATCH(
     if (status === "accepted" && application.status !== "accepted") {
       const { data: capacityGig } = await adminClient
         .from("gigs")
-        .select("spots, spots_filled, status")
+        .select("spots, spots_filled, status, type, require_id_verification")
         .eq("id", application.gig_id)
         .single();
       if (capacityGig) {
@@ -188,6 +189,30 @@ export async function PATCH(
         }
         if (capacityGig.spots && (capacityGig.spots_filled ?? 0) >= capacityGig.spots) {
           return NextResponse.json({ error: "All spots for this gig are already filled" }, { status: 409 });
+        }
+
+        // Travel trips mean real-world attendance: the model must have an 18+
+        // DOB on file, and — when the trip demands it — a completed admin ID
+        // verification (models.identity_verified_at, the payout-gate flow).
+        if (capacityGig.type === "travel" || capacityGig.require_id_verification) {
+          const { data: applicantModel } = await (adminClient as any)
+            .from("models")
+            .select("dob, date_of_birth, verified_dob, identity_verified_at, username")
+            .eq("id", application.model_id)
+            .single();
+          const dob = applicantModel?.verified_dob || applicantModel?.dob || applicantModel?.date_of_birth;
+          if (!dob || !isAdultDob(dob)) {
+            return NextResponse.json(
+              { error: `Cannot accept @${applicantModel?.username || "model"}: no 18+ date of birth on file. Ask them to complete their profile first.` },
+              { status: 409 }
+            );
+          }
+          if (capacityGig.require_id_verification && !applicantModel?.identity_verified_at) {
+            return NextResponse.json(
+              { error: `Cannot accept @${applicantModel?.username || "model"}: this trip requires verified ID and they haven't completed identity verification yet.` },
+              { status: 409 }
+            );
+          }
         }
       }
     }

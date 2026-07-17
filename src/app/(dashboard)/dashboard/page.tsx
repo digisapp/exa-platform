@@ -27,7 +27,9 @@ import {
   Flame,
   Sparkles,
   Heart,
+  Plane,
 } from "lucide-react";
+import { ConfirmSpotButton } from "@/components/travel/ConfirmSpotButton";
 import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
@@ -266,6 +268,18 @@ export default async function DashboardPage() {
     .from("gig_applications") as any)
     .select("gig_id, status")
     .eq("model_id", model.id);
+
+  // Upcoming EXA Travel trips the model is accepted to (for the trips strip)
+  const { data: upcomingTripApps } = await (supabase
+    .from("gig_applications") as any)
+    .select("id, confirmed_at, gig:gigs!inner(id, slug, title, type, status, start_at, end_at, location_city, location_state)")
+    .eq("model_id", model.id)
+    .eq("status", "accepted")
+    .eq("gig.type", "travel")
+    .neq("gig.status", "cancelled");
+  const upcomingTrips = (upcomingTripApps || [])
+    .filter((a: any) => a.gig?.start_at && new Date(a.gig.end_at || a.gig.start_at) >= new Date())
+    .sort((a: any, b: any) => new Date(a.gig.start_at).getTime() - new Date(b.gig.start_at).getTime());
 
   // Get model's auctions for the priority inbox
   const { data: modelAuctions } = await (supabase as any)
@@ -745,6 +759,48 @@ export default async function DashboardPage() {
          ────────────────────────────────────────────────────── */}
       {welcomeBack && (
         <WelcomeBackPulse username={model.username || ""} data={welcomeBack} />
+      )}
+
+      {/* ──────────────────────────────────────────────────────
+          UPCOMING TRIPS — accepted EXA Travel trips; unconfirmed
+          spots need action so this sits above the checklist
+         ────────────────────────────────────────────────────── */}
+      {upcomingTrips.length > 0 && (
+        <section className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-transparent overflow-hidden">
+          <header className="flex items-center justify-between p-4 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <Plane className="h-4 w-4 text-violet-400" />
+              <h3 className="text-sm font-semibold">Upcoming trips</h3>
+            </div>
+            <Link href="/trips" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+              My Trips <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </header>
+          <div className="p-3 space-y-2">
+            {upcomingTrips.slice(0, 2).map((app: any) => (
+              <div
+                key={app.id}
+                className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.03]"
+              >
+                <div className="flex-1 min-w-0">
+                  <Link href={`/travel/${app.gig.slug}`} className="text-sm font-medium text-white hover:text-violet-300 truncate block">
+                    {app.gig.title}
+                  </Link>
+                  <p className="text-xs text-white/50">
+                    {[app.gig.location_city, app.gig.location_state].filter(Boolean).join(", ")}
+                    {app.gig.start_at &&
+                      ` · ${new Date(app.gig.start_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
+                  </p>
+                </div>
+                {app.confirmed_at ? (
+                  <span className="text-xs font-semibold text-emerald-400 shrink-0">✓ Confirmed</span>
+                ) : (
+                  <ConfirmSpotButton applicationId={app.id} />
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* ──────────────────────────────────────────────────────

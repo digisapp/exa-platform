@@ -330,6 +330,18 @@ export default async function TravelPage() {
         {(openTrips.length > 0 || upcomingTrips.length > 0) && (
           <section id="trips" className="py-12 md:py-20 border-t border-white/5">
             <div className="container px-6 md:px-16">
+              {(actorType === "model" || actorType === "admin") && myApplications.length > 0 && (
+                <div className="flex justify-end mb-6">
+                  <Link
+                    href="/trips"
+                    className="inline-flex items-center gap-1.5 text-sm text-violet-400 hover:text-violet-300"
+                  >
+                    <Plane className="h-4 w-4" />
+                    My Trips
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              )}
               {/* Open Trips */}
               {openTrips.length > 0 && (
                 <div className={upcomingTrips.length > 0 ? "mb-16" : ""}>
@@ -436,7 +448,7 @@ function TravelCard({
   const isUrgent = spotsLeft !== null && spotsLeft <= 3 && !isUpcoming;
 
   return (
-    <Link href={`/gigs/${trip.slug}`}>
+    <Link href={`/travel/${trip.slug}`}>
       <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
         <div className="aspect-[3/4] relative bg-gradient-to-br from-violet-500/20 to-cyan-500/20 overflow-hidden">
           {trip.cover_image_url ? (
