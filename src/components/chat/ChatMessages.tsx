@@ -145,10 +145,26 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
       let lastHeight = vv.height;
       const handleViewportResize = () => {
         const shrunk = vv.height < lastHeight;
+        const grew = vv.height > lastHeight;
         lastHeight = vv.height;
         if (shrunk && nearBottomRef.current) {
           requestAnimationFrame(() => {
             messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+          });
+        }
+        if (grew) {
+          // Keyboard closed. iOS Safari can leave the layout viewport
+          // stranded scrolled up by the old keyboard height, which floats the
+          // composer ~30% above the (fixed) bottom nav until the user scrolls.
+          // Clamp the window back into the document's real scroll range.
+          requestAnimationFrame(() => {
+            const maxScroll = Math.max(
+              0,
+              document.documentElement.scrollHeight - window.innerHeight
+            );
+            if (window.scrollY > maxScroll) {
+              window.scrollTo(0, maxScroll);
+            }
           });
         }
       };

@@ -684,9 +684,6 @@ export default async function ModelProfilePage({ params }: Props) {
                     Bottom color is matched to the profile-card body (rgba(25,10,45)) so the photo
                     melts seamlessly into the card content section below — no visible seam. */}
                 <div className="absolute inset-x-0 bottom-0 z-10 pt-20 pb-5 px-5 bg-gradient-to-t from-[#190a2d] via-[#190a2d]/85 via-30% to-transparent text-left">
-                  {/* Synthwave gradient accent — top edge of dock */}
-                  <div className="absolute top-16 left-5 right-5 h-px bg-gradient-to-r from-transparent via-pink-400/70 to-transparent" />
-
                   {/* Name */}
                   <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)] leading-[1.05]">
                     {displayName}

@@ -136,6 +136,17 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd[1]) }}
         />
+        {/* Google Translate (our widget or iOS Safari translate) rewraps text
+            nodes in <font> tags behind React's back; React's next re-render
+            then throws NotFoundError on removeChild/insertBefore and the
+            nearest error boundary swallows the whole page ("Something went
+            wrong" after a successful tip/unlock). Tolerate foreign nodes
+            instead of crashing. Must run before hydration, hence inline. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){if(typeof Node!=='function'||!Node.prototype)return;var rc=Node.prototype.removeChild;Node.prototype.removeChild=function(child){if(child&&child.parentNode!==this){if(window.console)console.warn('Suppressed removeChild on foreign node (translation extension?)');return child;}return rc.apply(this,arguments);};var ib=Node.prototype.insertBefore;Node.prototype.insertBefore=function(newNode,ref){if(ref&&ref.parentNode!==this){if(window.console)console.warn('Suppressed insertBefore with foreign reference node (translation extension?)');return newNode;}return ib.apply(this,arguments);};})();`,
+          }}
+        />
       </head>
       <body className={`${poppins.className} ${poppins.variable} bg-background text-foreground antialiased min-h-screen`}>
         <a
