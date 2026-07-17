@@ -95,7 +95,7 @@ const ACTION_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
     bgColor: "bg-blue-500/10",
   },
   ppv_unlock: {
-    label: "PPV Unlock",
+    label: "Content Unlock",
     icon: <Lock className="h-3.5 w-3.5" />,
     color: "text-orange-400",
     bgColor: "bg-orange-500/10",
@@ -300,7 +300,7 @@ export default function FanDetailSheet({ fan, open, onClose }: FanDetailSheetPro
                 { label: "Tips to models", val: fan.tips_spent || 0, icon: <Heart className="h-3.5 w-3.5" />, color: "text-pink-400", bar: "bg-pink-500" },
                 { label: "Live Wall tips", val: fan.live_wall_spent || 0, icon: <Sparkles className="h-3.5 w-3.5" />, color: "text-violet-400", bar: "bg-violet-500" },
                 { label: "Paid messages", val: fan.messages_spent || 0, icon: <MessageCircle className="h-3.5 w-3.5" />, color: "text-blue-400", bar: "bg-blue-500" },
-                { label: "Content / PPV", val: fan.content_spent || 0, icon: <Lock className="h-3.5 w-3.5" />, color: "text-orange-400", bar: "bg-orange-500" },
+                { label: "Content unlocks", val: fan.content_spent || 0, icon: <Lock className="h-3.5 w-3.5" />, color: "text-orange-400", bar: "bg-orange-500" },
               ].filter(c => c.val > 0).map(c => (
                 <div key={c.label} className="flex items-center gap-3">
                   <span className={`flex items-center gap-1.5 text-xs w-32 flex-shrink-0 ${c.color}`}>

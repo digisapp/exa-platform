@@ -244,7 +244,7 @@ export default function ModeloPage() {
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
                 <IncomeItem label="Propinas" />
-                <IncomeItem label="Contenido PPV" />
+                <IncomeItem label="Contenido de pago" />
                 <IncomeItem label="Mensajes pagados" />
                 <IncomeItem label="Sesiones de fotos" />
                 <IncomeItem label="Gigs de marcas" />
@@ -396,7 +396,7 @@ export default function ModeloPage() {
               <QuickStartItem emoji="📸" text="Sube tu foto de perfil" />
               <QuickStartItem emoji="🖼️" text="Agrega 5 fotos de portafolio" />
               <QuickStartItem emoji="💰" text="Establece tus tarifas" />
-              <QuickStartItem emoji="🔒" text="Publica 1 contenido PPV" />
+              <QuickStartItem emoji="🔒" text="Publica 1 contenido de pago" />
               <QuickStartItem emoji="🏦" text="Conecta tu banco" />
               <QuickStartItem emoji="🔗" text="Pon EXA en tu bio" />
             </div>

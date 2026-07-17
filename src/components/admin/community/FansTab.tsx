@@ -432,7 +432,7 @@ export default function FansTab() {
                             { val: fan.tips_spent || 0, label: "Tips", icon: <Heart className="h-2.5 w-2.5" />, color: "text-pink-400" },
                             { val: fan.live_wall_spent || 0, label: "Live Wall", icon: <Sparkles className="h-2.5 w-2.5" />, color: "text-violet-400" },
                             { val: fan.messages_spent || 0, label: "Messages", icon: <MessageCircle className="h-2.5 w-2.5" />, color: "text-blue-400" },
-                            { val: fan.content_spent || 0, label: "Content/PPV", icon: <Coins className="h-2.5 w-2.5" />, color: "text-green-400" },
+                            { val: fan.content_spent || 0, label: "Content", icon: <Coins className="h-2.5 w-2.5" />, color: "text-green-400" },
                           ].filter(c => c.val > 0);
                           const hasMultiple = categories.length > 1;
                           return (

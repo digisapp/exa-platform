@@ -249,7 +249,7 @@ export function PremiumContentCard({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {content.title || "PPV Content"}
+              {content.title || "Exclusive Content"}
             </DialogTitle>
             {content.description && (
               <DialogDescription>{content.description}</DialogDescription>
