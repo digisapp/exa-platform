@@ -140,11 +140,14 @@ export default function RootLayout({
             nodes in <font> tags behind React's back; React's next re-render
             then throws NotFoundError on removeChild/insertBefore and the
             nearest error boundary swallows the whole page ("Something went
-            wrong" after a successful tip/unlock). Tolerate foreign nodes
-            instead of crashing. Must run before hydration, hence inline. */}
+            wrong" after a successful tip/unlock). Delegate the operation to
+            the node's REAL parent instead of no-oping — a plain no-op leaves
+            Google's injected text nodes behind as visible ghost fragments
+            ("AND"/"or" floating next to chat messages and avatars). Must run
+            before hydration, hence inline. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){if(typeof Node!=='function'||!Node.prototype)return;var rc=Node.prototype.removeChild;Node.prototype.removeChild=function(child){if(child&&child.parentNode!==this){if(window.console)console.warn('Suppressed removeChild on foreign node (translation extension?)');return child;}return rc.apply(this,arguments);};var ib=Node.prototype.insertBefore;Node.prototype.insertBefore=function(newNode,ref){if(ref&&ref.parentNode!==this){if(window.console)console.warn('Suppressed insertBefore with foreign reference node (translation extension?)');return newNode;}return ib.apply(this,arguments);};})();`,
+            __html: `(function(){if(typeof Node!=='function'||!Node.prototype)return;var rc=Node.prototype.removeChild;Node.prototype.removeChild=function(child){if(child&&child.parentNode!==this){if(child.parentNode)rc.call(child.parentNode,child);return child;}return rc.apply(this,arguments);};var ib=Node.prototype.insertBefore;Node.prototype.insertBefore=function(newNode,ref){if(ref&&ref.parentNode!==this){if(ref.parentNode)return ib.call(ref.parentNode,newNode,ref);return this.appendChild(newNode);}return ib.apply(this,arguments);};})();`,
           }}
         />
       </head>
