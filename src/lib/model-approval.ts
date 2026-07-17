@@ -261,18 +261,22 @@ export async function approveModelApplication({
       if (modelActor) {
         let conversationId: string | null = null;
 
-        // Single query: find shared conversation instead of looping
-        const { data: adminConvs } = await adminClient
+        // Find a shared conversation starting from the MODEL's side — she's in
+        // at most a handful. Starting from the admin (700+ conversations) put
+        // every id into one .in(), which blows PostgREST's ~16KB URL limit and
+        // silently matches nothing, so each approval spawned a new conversation.
+        const { data: modelConvs } = await adminClient
           .from("conversation_participants")
           .select("conversation_id")
-          .eq("actor_id", reviewerActorId);
+          .eq("actor_id", modelActor.id)
+          .limit(200);
 
-        if (adminConvs?.length) {
-          const convIds = adminConvs.map((c: { conversation_id: string }) => c.conversation_id);
+        if (modelConvs?.length) {
+          const convIds = modelConvs.map((c: { conversation_id: string }) => c.conversation_id);
           const { data: match } = await adminClient
             .from("conversation_participants")
             .select("conversation_id")
-            .eq("actor_id", modelActor.id)
+            .eq("actor_id", reviewerActorId)
             .in("conversation_id", convIds)
             .limit(1)
             .single();

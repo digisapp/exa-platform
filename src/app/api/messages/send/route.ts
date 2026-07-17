@@ -177,17 +177,22 @@ export async function POST(request: NextRequest) {
         .eq("actor_id", sender.id);
 
       if (senderParticipations && senderParticipations.length > 0) {
+        // Batched: one .in() with every id fails outright past ~300 UUIDs
+        // (16KB URL limit) — the admin actor sits in 700+ conversations, and
+        // a failed check would silently fork a duplicate conversation.
         const convIds = senderParticipations.map(p => p.conversation_id);
-        const { data: match } = await adminClient
-          .from("conversation_participants")
-          .select("conversation_id")
-          .eq("actor_id", targetActor.id)
-          .in("conversation_id", convIds)
-          .limit(1)
-          .maybeSingle();
+        for (let i = 0; i < convIds.length && !conversationId; i += 200) {
+          const { data: match } = await adminClient
+            .from("conversation_participants")
+            .select("conversation_id")
+            .eq("actor_id", targetActor.id)
+            .in("conversation_id", convIds.slice(i, i + 200))
+            .limit(1)
+            .maybeSingle();
 
-        if (match) {
-          conversationId = match.conversation_id;
+          if (match) {
+            conversationId = match.conversation_id;
+          }
         }
       }
 

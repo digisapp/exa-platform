@@ -124,17 +124,21 @@ export async function POST(request: NextRequest) {
     if (senderParticipations && senderParticipations.length > 0) {
       const conversationIds = senderParticipations.map(p => p.conversation_id);
 
-      // Use admin client to check if model is in any of these conversations
-      const { data: recipientParticipation } = await adminClient
-        .from("conversation_participants")
-        .select("conversation_id")
-        .eq("actor_id", targetActor.id)
-        .in("conversation_id", conversationIds)
-        .limit(1)
-        .maybeSingle();
+      // Use admin client to check if model is in any of these conversations.
+      // Batched: a single .in() fails outright past ~300 UUIDs (16KB URL
+      // limit), which would silently report "no conversation" and fork a new one.
+      for (let i = 0; i < conversationIds.length && !existingConversationId; i += 200) {
+        const { data: recipientParticipation } = await adminClient
+          .from("conversation_participants")
+          .select("conversation_id")
+          .eq("actor_id", targetActor.id)
+          .in("conversation_id", conversationIds.slice(i, i + 200))
+          .limit(1)
+          .maybeSingle();
 
-      if (recipientParticipation) {
-        existingConversationId = recipientParticipation.conversation_id;
+        if (recipientParticipation) {
+          existingConversationId = recipientParticipation.conversation_id;
+        }
       }
     }
 

@@ -2,6 +2,7 @@ import { cache } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { batchQuery } from "@/lib/supabase/batch";
 import { isChatMediaPath } from "@/lib/chat-media";
 
 /**
@@ -66,50 +67,60 @@ export async function fetchConversationList(
     }
   }
 
-  // Batch fetch: Get all other participants for all conversations in ONE query
-  const { data: allParticipants } = conversationIds.length > 0
-    ? await supabase
-        .from("conversation_participants")
-        .select(`
-          conversation_id,
-          actor:actors(
-            id,
-            type,
-            user_id
-          )
-        `)
-        .in("conversation_id", conversationIds)
-        .neq("actor_id", actorId) as { data: any[] | null }
-    : { data: [] };
+  // Batch fetch: all other participants for all conversations. batchQuery
+  // chunks the id list — a single .in() with every id fails outright past
+  // ~300 UUIDs (16KB URL limit); the admin actor sits in 700+ conversations,
+  // and the swallowed failure rendered every conversation as "Unknown".
+  const allParticipants: any[] = await batchQuery(conversationIds, async (batch, from, to) =>
+    (supabase as any)
+      .from("conversation_participants")
+      .select(`
+        conversation_id,
+        actor:actors(
+          id,
+          type,
+          user_id
+        )
+      `)
+      .in("conversation_id", batch)
+      .neq("actor_id", actorId)
+      .order("conversation_id", { ascending: true })
+      .order("actor_id", { ascending: true })
+      .range(from, to)
+  );
 
   // Get user IDs for models and actor IDs for fans/brands
   const userIds = [...new Set((allParticipants || []).map((p: any) => p.actor?.user_id).filter(Boolean))];
   const fanActorIds = [...new Set((allParticipants || []).filter((p: any) => p.actor?.type === "fan").map((p: any) => p.actor?.id).filter(Boolean))];
   const brandActorIds = [...new Set((allParticipants || []).filter((p: any) => p.actor?.type === "brand").map((p: any) => p.actor?.id).filter(Boolean))];
 
-  // Fetch all models for these users
-  const { data: models } = userIds.length > 0
-    ? await supabase
+  // Fetch all models, fans (admin client to bypass RLS), and brands — batched
+  const [models, fans, brands] = await Promise.all([
+    batchQuery<any>(userIds, async (batch, from, to) =>
+      (supabase as any)
         .from("models")
         .select("user_id, username, profile_photo_url")
-        .in("user_id", userIds) as { data: any[] | null }
-    : { data: [] };
-
-  // Fetch all fans (use admin client to bypass RLS)
-  const { data: fans } = fanActorIds.length > 0
-    ? await adminClient
+        .in("user_id", batch)
+        .order("user_id", { ascending: true })
+        .range(from, to)
+    ),
+    batchQuery<any>(fanActorIds, async (batch, from, to) =>
+      (adminClient as any)
         .from("fans")
         .select("id, display_name, username, avatar_url")
-        .in("id", fanActorIds) as { data: any[] | null }
-    : { data: [] };
-
-  // Fetch all brands
-  const { data: brands } = brandActorIds.length > 0
-    ? await (supabase
-        .from("brands") as any)
+        .in("id", batch)
+        .order("id", { ascending: true })
+        .range(from, to)
+    ),
+    batchQuery<any>(brandActorIds, async (batch, from, to) =>
+      (supabase as any)
+        .from("brands")
         .select("id, company_name, logo_url")
-        .in("id", brandActorIds) as { data: any[] | null }
-    : { data: [] };
+        .in("id", batch)
+        .order("id", { ascending: true })
+        .range(from, to)
+    ),
+  ]);
 
   // Create lookup maps
   const modelsByUserId = new Map((models || []).map((m: any) => [m.user_id, m]));

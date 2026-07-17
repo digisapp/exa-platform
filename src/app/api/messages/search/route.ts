@@ -48,24 +48,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
 
-    // Get all conversation IDs the user participates in
-    const { data: participations } = await supabase
-      .from("conversation_participants")
-      .select("conversation_id")
-      .eq("actor_id", actor.id);
-
-    if (!participations || participations.length === 0) {
-      return NextResponse.json({ messages: [], total: 0 });
-    }
-
-    const userConvIds = participations.map(p => p.conversation_id);
-
     // If searching within a specific conversation, verify access
-    if (conversationId && !userConvIds.includes(conversationId)) {
-      return NextResponse.json({ error: "Not a participant" }, { status: 403 });
-    }
+    if (conversationId) {
+      const { data: membership } = await supabase
+        .from("conversation_participants")
+        .select("conversation_id")
+        .eq("actor_id", actor.id)
+        .eq("conversation_id", conversationId)
+        .maybeSingle();
 
-    const targetConvIds = conversationId ? [conversationId] : userConvIds;
+      if (!membership) {
+        return NextResponse.json({ error: "Not a participant" }, { status: 403 });
+      }
+    }
 
     // Full-text search using Postgres ts_query
     // Convert user query to tsquery format (split words, join with &)
@@ -83,15 +78,22 @@ export async function GET(request: NextRequest) {
 
     // Use RPC for full-text search since Supabase JS doesn't support textSearch with to_tsquery directly
     // Fall back to ilike for simple queries
-    const query = supabase
+    // No .in(userConvIds) filter for the all-conversations case: messages RLS
+    // ("Users can view messages in their conversations") already scopes rows to
+    // the caller, and an .in() with 300+ UUIDs fails outright (16KB URL limit) —
+    // it 500'd search for the admin actor, who sits in 700+ conversations.
+    let query = supabase
       .from("messages")
       .select("id, conversation_id, sender_id, content, media_type, created_at, reply_to_id", { count: "exact" })
-      .in("conversation_id", targetConvIds)
       .is("deleted_at", null)
       .not("content", "is", null)
       .ilike("content", `%${q.replace(/[%_]/g, "\\$&").trim()}%`)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
+
+    if (conversationId) {
+      query = query.eq("conversation_id", conversationId);
+    }
 
     const { data: messages, count, error } = await query;
 
