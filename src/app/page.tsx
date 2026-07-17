@@ -99,8 +99,14 @@ export default async function HomePage() {
     .gte("admin_rating", 4)
     .limit(50);
 
-  // Randomize the order
-  const topModels = shuffleArray(topModelsData || []) as any[];
+  // 5★ superstars lead the carousel, 4★ follow; shuffle within each tier so
+  // the row stays fresh between visits. admin_rating is only fetched to split
+  // the tiers — strip it before it serializes into the client payload.
+  const topModelsRated = (topModelsData || []) as any[];
+  const topModels = [
+    ...shuffleArray(topModelsRated.filter((m) => m.admin_rating === 5)),
+    ...shuffleArray(topModelsRated.filter((m) => m.admin_rating !== 5)),
+  ].map(({ admin_rating: _rating, ...model }) => model) as any[];
 
   // Fetch upcoming + currently-running events/gigs.
   // Multi-day events (e.g. Miami Swim Week) should keep showing on the homepage

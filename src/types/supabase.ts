@@ -5804,6 +5804,7 @@ export type Database = {
           rate_max: number | null
           rate_min: number | null
           rate_type: string | null
+          rating_tier: number
           reliability_score: number | null
           shoe_size: string | null
           show_additional_info: boolean | null

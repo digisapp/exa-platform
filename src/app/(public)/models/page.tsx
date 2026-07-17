@@ -151,9 +151,11 @@ export default async function ModelsPage({
     supabase.from("models").select(MODEL_CARD_FIELDS).eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
   );
 
-  // Sort — recently-active models first by default; nulls (never active) go last,
-  // with created_at as a stable tiebreaker. When a brand requests a CPM sort
-  // (collab tool), it must take precedence, so apply it as the primary order.
+  // Sort — admin rating tier first (5★ superstars lead, 1-2★ sink to the last
+  // pages; unrated computes to tier 3 so the bulk of the roster stays visible),
+  // then recently-active within each tier, created_at as a stable tiebreaker.
+  // When a brand explicitly requests a CPM sort (collab tool), that intent
+  // wins, so it stays the primary order with tier demoted to tiebreak.
   const cpmSortActive =
     params.collabs === "1" && (params.cpm_sort === "cpm_low" || params.cpm_sort === "cpm_high");
   if (cpmSortActive) {
@@ -164,6 +166,7 @@ export default async function ModelsPage({
     });
   }
   modelsQuery = modelsQuery
+    .order("rating_tier", { ascending: false })
     .order("last_active_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
 
@@ -193,11 +196,13 @@ export default async function ModelsPage({
       .not("deactivated", "is", true)
       .not("profile_photo_url", "is", null)
       .limit(5) as Promise<{ data: any[] | null }>,
-    // Trending models — this week's EXA Spotlight leaders
+    // Trending models — this week's EXA Spotlight leaders. 1-2★ models can't
+    // trend: engagement points must not override the admin brand-image gate.
     (supabase
       .from("top_model_leaderboard") as any)
       .select("week_points, models!inner(id, username, profile_photo_url)")
       .gt("week_points", 0)
+      .gte("models.rating_tier", 3)
       .eq("models.is_approved", true)
       .is("models.deleted_at", null)
       .not("models.deactivated", "is", true)
