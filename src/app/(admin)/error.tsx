@@ -1,9 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw, Home } from "lucide-react";
-import Link from "next/link";
+import { RouteErrorScreen } from "@/components/system/RouteErrorScreen";
 
 export default function AdminError({
   error,
@@ -12,33 +9,15 @@ export default function AdminError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    console.error("Admin error:", error);
-  }, [error]);
-
   return (
-    <div className="min-h-[60vh] flex items-center justify-center px-4">
-      <div className="text-center max-w-md">
-        <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
-          <AlertTriangle className="h-8 w-8 text-red-500" />
-        </div>
-        <h2 className="text-2xl font-bold mb-2">Admin Panel Error</h2>
-        <p className="text-muted-foreground mb-6">
-          Something went wrong in the admin panel. Please try again.
-        </p>
-        <div className="flex gap-3 justify-center">
-          <Button onClick={reset} variant="outline">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Try Again
-          </Button>
-          <Button asChild>
-            <Link href="/admin">
-              <Home className="mr-2 h-4 w-4" />
-              Admin Home
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </div>
+    <RouteErrorScreen
+      error={error}
+      reset={reset}
+      logLabel="Admin error"
+      title="Admin Panel Error"
+      description="Something went wrong in the admin panel. Please try again."
+      homeHref="/admin"
+      homeLabel="Admin Home"
+    />
   );
 }

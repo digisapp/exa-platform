@@ -2,7 +2,8 @@
 
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { isStaleBuildError, reloadOnceForStaleBuild } from "@/lib/stale-build";
 
 interface Props {
   children: ReactNode;
@@ -27,6 +28,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
+    if (isStaleBuildError(error)) {
+      reloadOnceForStaleBuild();
+      return;
+    }
     this.props.onError?.(error, errorInfo);
   }
 
@@ -40,6 +45,15 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      if (isStaleBuildError(this.state.error)) {
+        return (
+          <div className="flex flex-col items-center justify-center min-h-[200px] p-8 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-violet-400 mb-4" />
+            <p className="text-muted-foreground">Updating to the latest version…</p>
+          </div>
+        );
+      }
+
       if (this.props.fallback) {
         return this.props.fallback;
       }

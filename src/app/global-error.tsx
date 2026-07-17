@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+import { isStaleBuildError, reloadOnceForStaleBuild } from "@/lib/stale-build";
 
 export default function GlobalError({
   error,
@@ -11,6 +12,9 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
+    if (isStaleBuildError(error)) {
+      if (reloadOnceForStaleBuild()) return;
+    }
     Sentry.captureException(error);
   }, [error]);
 

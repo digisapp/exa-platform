@@ -1,14 +1,20 @@
 // EXA Models Service Worker
-const CACHE_NAME = 'exa-models-v1';
+//
+// Deliberately minimal: the ONLY job is an offline fallback page for
+// navigations. Do not intercept scripts, styles, images, or Next.js RSC/data
+// fetches — iOS Safari kills and restarts service workers aggressively, and a
+// fetch handler that catches those failures ends up converting transient
+// blips into synthetic 503s that Next.js renders as "Something went wrong"
+// error screens (mid-2026 mobile error wave). The browser HTTP cache and CDN
+// already handle static asset caching.
+const CACHE_NAME = 'exa-models-v2';
 
-// Assets to cache on install
 const STATIC_ASSETS = [
   '/offline.html',
   '/exa-logo-white.png',
   '/apple-icon.png',
 ];
 
-// Install event - cache static assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -18,7 +24,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -32,45 +37,17 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - network first, fallback to cache
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
-
-  // Skip API requests and external URLs
-  const url = new URL(event.request.url);
-  if (url.pathname.startsWith('/api/') || url.origin !== self.location.origin) {
+  // Full-page navigations only; let the browser handle everything else.
+  if (event.request.method !== 'GET' || event.request.mode !== 'navigate') {
     return;
   }
 
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Cache successful responses for static assets
-        if (response.ok && (
-          event.request.destination === 'image' ||
-          event.request.destination === 'font' ||
-          event.request.destination === 'style'
-        )) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return response;
-      })
-      .catch(() => {
-        // Return cached version or offline page
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          // Return offline page for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('/offline.html');
-          }
-          return new Response('Offline', { status: 503 });
-        });
-      })
+    fetch(event.request).catch(() => {
+      return caches.match('/offline.html').then((cachedResponse) => {
+        return cachedResponse || new Response('Offline', { status: 503 });
+      });
+    })
   );
 });

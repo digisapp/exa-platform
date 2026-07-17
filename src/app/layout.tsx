@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
+import { StaleBuildRecovery } from "@/components/system/StaleBuildRecovery";
 import { GoogleTranslate } from "@/components/GoogleTranslate";
 import { SpanishBanner } from "@/components/SpanishBanner";
 import { I18nProvider } from "@/i18n";
@@ -152,6 +153,7 @@ export default function RootLayout({
           <PageViewTracker />
         </Suspense>
         <ServiceWorkerRegistration />
+        <StaleBuildRecovery />
         <Toaster position="top-center" />
         <GoogleTranslate />
         <SpanishBanner />
