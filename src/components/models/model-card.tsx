@@ -166,8 +166,8 @@ export const ModelCard = memo(function ModelCard({
   const cardImageUrl = resolveMediaUrl(model.profile_photo_url);
 
   return (
-    <Link href={`/${model.username}`} target={linkTarget} rel={linkRel}>
-      <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
+    <Link href={`/${model.username}`} target={linkTarget} rel={linkRel} className="cv-auto block h-full">
+      <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] active:scale-[0.98] active:duration-0 transition-all h-full group">
         {/* Image with Hover Overlay */}
         <div className="aspect-[3/4] relative bg-gradient-to-br from-[#FF69B4]/20 to-[#9400D3]/20 overflow-hidden">
           {cardImageUrl ? (

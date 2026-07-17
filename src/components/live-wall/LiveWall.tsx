@@ -155,11 +155,21 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
       return;
     }
     computeInfoPos();
-    const handler = () => computeInfoPos();
-    window.addEventListener("scroll", handler, true);
+    // rAF-coalesced + passive: the raw handler reads layout
+    // (getBoundingClientRect) and would block iOS momentum scroll.
+    let raf = 0;
+    const handler = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        computeInfoPos();
+      });
+    };
+    window.addEventListener("scroll", handler, { capture: true, passive: true });
     window.addEventListener("resize", handler);
     return () => {
-      window.removeEventListener("scroll", handler, true);
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", handler, { capture: true });
       window.removeEventListener("resize", handler);
     };
   }, [showInfo, computeInfoPos]);

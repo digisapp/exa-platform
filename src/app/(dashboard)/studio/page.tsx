@@ -169,7 +169,7 @@ export default function ContentPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* ───── Hero header ───── */}
         <section

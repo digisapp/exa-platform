@@ -95,7 +95,7 @@ export default async function SwimCrownPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#0f1628] to-[#0a0a1a]">
+    <div className="min-h-dvh bg-gradient-to-b from-[#0a0a1a] via-[#0f1628] to-[#0a0a1a]">
       <Navbar user={navbarUser} actorType={actorType} />
 
       <main>

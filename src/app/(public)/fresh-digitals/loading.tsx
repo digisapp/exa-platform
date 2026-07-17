@@ -1,6 +1,6 @@
 export default function FreshDigitalsLoading() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <div className="container mx-auto px-4 py-16">
         <div className="animate-pulse max-w-5xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12">

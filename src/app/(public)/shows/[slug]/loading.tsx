@@ -1,6 +1,6 @@
 export default function ShowLoading() {
   return (
-    <div className="min-h-screen bg-black animate-pulse">
+    <div className="min-h-dvh bg-black animate-pulse">
       {/* Hero skeleton */}
       <div className="relative h-[50vh] md:h-[60vh] bg-white/5" />
 

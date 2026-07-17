@@ -167,7 +167,7 @@ export default async function AuctionDetailPage({ params }: PageProps) {
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Navbar
           user={user ? {
             id: user.id,

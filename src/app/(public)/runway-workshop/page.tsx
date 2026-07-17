@@ -149,7 +149,7 @@ export default async function RunwayWorkshopPage() {
   if (!workshop) {
     return (
       <CoinBalanceProvider initialBalance={coinBalance}>
-        <div className="min-h-screen bg-background">
+        <div className="min-h-dvh bg-background">
           <Navbar
             user={
               user
@@ -204,7 +204,7 @@ export default async function RunwayWorkshopPage() {
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Navbar
           user={
             user

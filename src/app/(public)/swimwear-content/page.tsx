@@ -74,7 +74,7 @@ export default function SwimwearContentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <nav className="border-b">
         <div className="container flex items-center justify-between h-16 px-4">
           <Link href="/">

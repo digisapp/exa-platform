@@ -241,8 +241,9 @@ export default function MyContentPage() {
                   </div>
                 )}
 
-                {/* Hover overlay with actions */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
+                {/* Action overlay — always visible on touch (no hover on iOS),
+                    hover-revealed on pointer devices */}
+                <div className="absolute inset-0 bg-black/60 transition-opacity duration-300 flex items-center justify-center gap-2 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
                   <Button
                     size="sm"
                     variant="secondary"

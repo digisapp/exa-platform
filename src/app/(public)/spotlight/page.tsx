@@ -89,7 +89,7 @@ export default async function TopModelsPage() {
 
   return (
     <CoinBalanceProvider initialBalance={initialUser?.coinBalance || 0}>
-      <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
+      <div className="min-h-dvh bg-gradient-to-b from-background to-background/95">
         <Navbar user={navbarUser} actorType={actorType} />
 
         <main className="container mx-auto px-4 py-6 pb-24 md:pb-6">

@@ -204,7 +204,7 @@ export default function ClaimPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-dvh flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
       </div>
     );
@@ -212,7 +212,7 @@ export default function ClaimPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center p-4">
+      <div className="min-h-dvh relative flex items-center justify-center p-4">
         <FloatingOrbs />
         <Card className="w-full max-w-md relative z-10 glass-card">
           <CardHeader className="text-center">
@@ -233,7 +233,7 @@ export default function ClaimPage() {
   }
 
   return (
-    <div className="min-h-screen relative py-8 px-4">
+    <div className="min-h-dvh relative py-8 px-4">
       <FloatingOrbs />
 
       <div className="relative z-10 max-w-md mx-auto">

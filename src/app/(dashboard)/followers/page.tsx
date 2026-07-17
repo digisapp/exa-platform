@@ -143,7 +143,7 @@ export default async function FollowersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Navbar />
 
       <main className="container px-8 md:px-16 py-8 max-w-6xl mx-auto">

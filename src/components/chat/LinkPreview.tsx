@@ -82,6 +82,8 @@ export const LinkPreview = memo(function LinkPreview({ url, isOwn }: LinkPreview
             src={data.image}
             alt={data.title || "Link preview"}
             className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
             onError={() => setImgError(true)}
           />
         </div>

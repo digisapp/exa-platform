@@ -827,7 +827,7 @@ export default function AdminBrandsPage() {
   const [activeTab, setActiveTab] = useState<"accounts" | "outreach" | "sponsors">("accounts");
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-dvh bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">

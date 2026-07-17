@@ -503,7 +503,7 @@ function LoadingFallback() {
 
 export default function CallRequestPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-cyan-500/5">
+    <div className="min-h-dvh flex items-center justify-center p-4 bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-cyan-500/5">
       <Suspense fallback={<LoadingFallback />}>
         <CallRequestForm />
       </Suspense>

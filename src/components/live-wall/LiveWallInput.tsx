@@ -84,11 +84,22 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
       if (showStickers) setStickerPos(computePopupPos(stickerBtnRef.current, 340));
     };
     update();
-    window.addEventListener("scroll", update, true);
-    window.addEventListener("resize", update);
+    // rAF-coalesced + passive: computePopupPos reads layout
+    // (getBoundingClientRect) and would block iOS momentum scroll.
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        update();
+      });
+    };
+    window.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    window.addEventListener("resize", onScroll);
     return () => {
-      window.removeEventListener("scroll", update, true);
-      window.removeEventListener("resize", update);
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll, { capture: true });
+      window.removeEventListener("resize", onScroll);
     };
   }, [showEmojis, showStickers, computePopupPos]);
 
@@ -243,7 +254,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
                 setImageFile(null);
                 setStickerUrl(null);
               }}
-              className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center"
+              className="tap-target absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center"
             >
               <X className="h-3 w-3 text-white" />
             </button>

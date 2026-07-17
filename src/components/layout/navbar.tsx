@@ -152,7 +152,9 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
   const usdValue = coinsToUsd(coinBalance);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-violet-500/10 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+    // Mobile gets a solid fill: a full-width backdrop-blur bar re-rasterizes
+    // on every scroll frame on iOS (worst with the fixed gradient behind it).
+    <header className="sticky top-0 z-50 w-full border-b border-violet-500/10 bg-[#0d0018]/95 md:bg-background/80 md:backdrop-blur-xl md:supports-[backdrop-filter]:bg-background/60">
       <div className="container px-4 md:px-8 lg:px-16 flex h-16 items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">

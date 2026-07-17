@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function SwimCrownEntryPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#0f1628] to-[#0a0a1a]">
+    <div className="min-h-dvh bg-gradient-to-b from-[#0a0a1a] via-[#0f1628] to-[#0a0a1a]">
       <Navbar user={null} actorType={null} />
 
       <main className="container mx-auto px-4 py-8 pb-24 md:pb-8">

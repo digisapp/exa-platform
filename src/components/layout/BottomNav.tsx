@@ -32,7 +32,7 @@ function NavItem({
     <Link
       href={href}
       className={cn(
-        "relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all",
+        "relative flex flex-col items-center justify-center flex-1 h-full gap-1 select-none transition-[color,transform,opacity] duration-150 active:scale-[0.92] active:opacity-70 active:duration-0",
         active ? "text-white" : "text-white/50 hover:text-white/80"
       )}
     >
@@ -61,11 +61,11 @@ export function BottomNav({ user, actorType, unreadCount: unreadCountProp = 0, n
   // Admin: minimal 3-tab layout
   if (actorType === "admin") {
     return (
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#0a0014]/90 backdrop-blur-xl border-t border-violet-500/15 safe-area-pb shadow-[0_-8px_24px_rgba(0,0,0,0.4)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#0d0018] border-t border-violet-500/15 safe-area-pb shadow-[0_-8px_24px_rgba(0,0,0,0.4)]">
         <div className="flex items-center justify-around h-16 px-2">
           <NavItem href="/admin" active={isActive("/admin")}>
             <div className="relative">
-              <Home className={cn("transition-all", isActive("/admin") ? "h-[22px] w-[22px] text-pink-400" : "h-5 w-5")} />
+              <Home className={cn("h-5 w-5 transition-[color,transform]", isActive("/admin") && "scale-110 text-pink-400")} />
               {notificationCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-pink-500 text-white rounded-full shadow-[0_0_8px_rgba(236,72,153,0.7)]">
                   {notificationCount > 9 ? "9+" : notificationCount}
@@ -77,7 +77,7 @@ export function BottomNav({ user, actorType, unreadCount: unreadCountProp = 0, n
 
           <NavItem href="/chats" active={isActive("/chats")}>
             <div className="relative">
-              <MessageCircle className={cn("transition-all", isActive("/chats") ? "h-[22px] w-[22px] text-pink-400" : "h-5 w-5")} />
+              <MessageCircle className={cn("h-5 w-5 transition-[color,transform]", isActive("/chats") && "scale-110 text-pink-400")} />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-pink-500 text-white rounded-full shadow-[0_0_8px_rgba(236,72,153,0.7)]">
                   {unreadCount > 99 ? "99+" : unreadCount}
@@ -102,13 +102,13 @@ export function BottomNav({ user, actorType, unreadCount: unreadCountProp = 0, n
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#0a0014]/90 backdrop-blur-xl border-t border-violet-500/15 safe-area-pb shadow-[0_-8px_24px_rgba(0,0,0,0.4)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#0d0018] border-t border-violet-500/15 safe-area-pb shadow-[0_-8px_24px_rgba(0,0,0,0.4)]">
       <div className="flex items-center justify-around h-16 px-2">
 
         {/* Home — notification badge for models/brands (replaces top bar bell) */}
         <NavItem href={homePath} active={isActive(homePath)}>
           <div className="relative">
-            <Home className={cn("transition-all", isActive(homePath) ? "h-[22px] w-[22px] text-pink-400" : "h-5 w-5")} />
+            <Home className={cn("h-5 w-5 transition-[color,transform]", isActive(homePath) && "scale-110 text-pink-400")} />
             {actorType !== "fan" && notificationCount > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-pink-500 text-white rounded-full shadow-[0_0_8px_rgba(236,72,153,0.7)]">
                 {notificationCount > 9 ? "9+" : notificationCount}
@@ -121,12 +121,12 @@ export function BottomNav({ user, actorType, unreadCount: unreadCountProp = 0, n
         {/* Studio (model) or Explore (fan/brand) */}
         {actorType === "model" ? (
           <NavItem href="/studio" active={isActive("/studio")}>
-            <Images className={cn("transition-all", isActive("/studio") ? "h-[22px] w-[22px] text-pink-400" : "h-5 w-5")} />
+            <Images className={cn("h-5 w-5 transition-[color,transform]", isActive("/studio") && "scale-110 text-pink-400")} />
             <span className="text-[10px] font-medium">{t.nav.studio}</span>
           </NavItem>
         ) : (
           <NavItem href="/models" active={isActive("/models")}>
-            <Users className={cn("transition-all", isActive("/models") ? "h-[22px] w-[22px] text-pink-400" : "h-5 w-5")} />
+            <Users className={cn("h-5 w-5 transition-[color,transform]", isActive("/models") && "scale-110 text-pink-400")} />
             <span className="text-[10px] font-medium">{t.nav.explore}</span>
           </NavItem>
         )}
@@ -134,7 +134,7 @@ export function BottomNav({ user, actorType, unreadCount: unreadCountProp = 0, n
         {/* Chats */}
         <NavItem href="/chats" active={isActive("/chats")}>
           <div className="relative">
-            <MessageCircle className={cn("transition-all", isActive("/chats") ? "h-[22px] w-[22px] text-pink-400" : "h-5 w-5")} />
+            <MessageCircle className={cn("h-5 w-5 transition-[color,transform]", isActive("/chats") && "scale-110 text-pink-400")} />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-pink-500 text-white rounded-full shadow-[0_0_8px_rgba(236,72,153,0.7)]">
                 {unreadCount > 99 ? "99+" : unreadCount}
@@ -147,17 +147,17 @@ export function BottomNav({ user, actorType, unreadCount: unreadCountProp = 0, n
         {/* 4th slot: Gigs (model) | Favorites (fan) | Campaigns (brand) */}
         {actorType === "model" ? (
           <NavItem href="/gigs" active={isActive("/gigs")}>
-            <Briefcase className={cn("transition-all", isActive("/gigs") ? "h-[22px] w-[22px] text-cyan-400" : "h-5 w-5")} />
+            <Briefcase className={cn("h-5 w-5 transition-[color,transform]", isActive("/gigs") && "scale-110 text-cyan-400")} />
             <span className="text-[10px] font-medium">{t.nav.gigs}</span>
           </NavItem>
         ) : actorType === "fan" ? (
           <NavItem href="/favorites" active={isActive("/favorites")}>
-            <Heart className={cn("transition-all", isActive("/favorites") ? "h-[22px] w-[22px] text-pink-400 fill-pink-400" : "h-5 w-5")} />
+            <Heart className={cn("h-5 w-5 transition-[color,transform]", isActive("/favorites") && "scale-110 text-pink-400 fill-pink-400")} />
             <span className="text-[10px] font-medium">{t.nav.favorites}</span>
           </NavItem>
         ) : (
           <NavItem href="/campaigns" active={isActive("/campaigns")}>
-            <Megaphone className={cn("transition-all", isActive("/campaigns") ? "h-[22px] w-[22px] text-pink-400" : "h-5 w-5")} />
+            <Megaphone className={cn("h-5 w-5 transition-[color,transform]", isActive("/campaigns") && "scale-110 text-pink-400")} />
             <span className="text-[10px] font-medium">{t.nav.campaigns}</span>
           </NavItem>
         )}

@@ -220,7 +220,7 @@ export default async function GigDetailPage({ params }: Props) {
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
     {/* pb clears the fixed mobile apply bar so it never permanently covers the footer */}
-    <div className={`min-h-screen bg-background ${canApply ? "pb-28 lg:pb-0" : ""}`}>
+    <div className={`min-h-dvh bg-background ${canApply ? "pb-28 lg:pb-0" : ""}`}>
       <Navbar
         user={user ? {
           id: user.id,

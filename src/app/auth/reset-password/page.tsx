@@ -169,7 +169,7 @@ function ResetPasswordForm() {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="min-h-dvh flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-pink-500" />
@@ -183,7 +183,7 @@ function ResetPasswordForm() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="min-h-dvh flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="text-5xl mb-4">⚠️</div>
@@ -202,7 +202,7 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="min-h-dvh flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -219,7 +219,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <Link href="/" className="flex justify-center mb-4">
@@ -292,7 +292,7 @@ function ResetPasswordForm() {
 
 function LoadingFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-pink-500" />

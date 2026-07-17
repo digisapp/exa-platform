@@ -137,7 +137,8 @@ export function PremiumContentCard({
       <div
         ref={containerRef}
         className={cn(
-          "relative rounded-xl overflow-hidden cursor-pointer group",
+          "cv-auto relative rounded-xl overflow-hidden cursor-pointer group",
+          "transition-transform duration-150 active:scale-[0.98] active:duration-0",
           "bg-gradient-to-br from-gray-900 to-gray-800",
           isVideo ? "aspect-video" : "aspect-[3/4]"
         )}
@@ -161,11 +162,7 @@ export function PremiumContentCard({
                   playsInline
                   loop
                   preload="metadata"
-                  className={cn(
-                    "absolute inset-0 w-full h-full object-cover transition-all duration-300",
-                    !isUnlocked && !isFree && !isOwner && "blur-[14px] scale-110 brightness-[0.85]",
-                    isUnlocked && "group-hover:scale-105"
-                  )}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   onError={() => setImageError(true)}
                 />
                 {/* Mute/Unmute toggle */}
@@ -188,6 +185,7 @@ export function PremiumContentCard({
                 src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
                 alt={content.title || "Premium content"}
                 fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className={cn(
                   "object-cover transition-all duration-300",
                   !isUnlocked && !isFree && !isOwner && "blur-[2px] brightness-[0.85]",
@@ -219,7 +217,9 @@ export function PremiumContentCard({
             {/* Floating coin price with glass effect */}
             <div className={cn(
               "flex items-center gap-2 px-4 py-2.5",
-              "bg-black/30 backdrop-blur-sm",
+              // Blur only ≥sm: per-card backdrop-filters multiply across the
+              // feed and drag iOS scroll; a darker fill reads the same.
+              "bg-black/45 sm:bg-black/30 sm:backdrop-blur-sm",
               "border border-white/20 rounded-full",
               "shadow-2xl shadow-black/50",
               "transition-all duration-300 group-hover:scale-105 group-hover:bg-black/40"
@@ -268,6 +268,7 @@ export function PremiumContentCard({
                   src={content.preview_url}
                   alt="Preview"
                   fill
+                  sizes="(max-width: 640px) 100vw, 448px"
                   className="object-cover blur-[2px] brightness-[0.85]"
                 />
               ) : (

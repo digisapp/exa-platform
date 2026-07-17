@@ -1,6 +1,6 @@
 export default function ForModelsLoading() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <div className="container mx-auto px-4 py-20">
         <div className="animate-pulse space-y-12 max-w-5xl mx-auto">
           <div className="text-center space-y-4">

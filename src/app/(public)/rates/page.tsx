@@ -125,7 +125,7 @@ export default async function RatesPage({ searchParams }: Props) {
   const states = [...new Set((allModels || []).map((m) => m.state).filter(Boolean))].sort();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <div className="bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-blue-500/10 border-b">
         <div className="container max-w-6xl mx-auto px-4 py-12">

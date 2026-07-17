@@ -1,6 +1,6 @@
 export default function BoostLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-dvh flex items-center justify-center">
       <div className="animate-pulse space-y-6 w-full max-w-md mx-auto px-4">
         <div className="h-8 bg-muted rounded w-1/2 mx-auto" />
         <div className="aspect-[3/4] bg-muted rounded-2xl" />
