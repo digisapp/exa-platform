@@ -1,44 +1,23 @@
 "use client";
 
-import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw, Home } from "lucide-react";
-import Link from "next/link";
+import { RouteErrorScreen } from "@/components/system/RouteErrorScreen";
 
-export default function GlobalError({
+export default function RootError({
   error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    console.error("Unhandled error:", error);
-  }, [error]);
-
   return (
-    <div className="min-h-[60vh] flex items-center justify-center px-4">
-      <div className="text-center max-w-md">
-        <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
-          <AlertTriangle className="h-8 w-8 text-red-500" />
-        </div>
-        <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
-        <p className="text-muted-foreground mb-6">
-          An unexpected error occurred. Please try again or return to the homepage.
-        </p>
-        <div className="flex gap-3 justify-center">
-          <Button onClick={reset} variant="outline">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Try Again
-          </Button>
-          <Button asChild>
-            <Link href="/">
-              <Home className="mr-2 h-4 w-4" />
-              Go Home
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </div>
+    <RouteErrorScreen
+      error={error}
+      reset={reset}
+      logLabel="Unhandled error"
+      title="Something went wrong"
+      description="An unexpected error occurred. Please try again or return to the homepage."
+      homeHref="/"
+      homeLabel="Go Home"
+    />
   );
 }
