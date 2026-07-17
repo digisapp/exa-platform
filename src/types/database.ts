@@ -10080,6 +10080,7 @@ export type Database = {
         Args: { p_withdrawal_id: string }
         Returns: boolean
       }
+      count_page_views: { Args: { start_date: string }; Returns: number }
       count_unique_visitors: { Args: { start_date: string }; Returns: number }
       create_notification: {
         Args: {
@@ -10284,6 +10285,23 @@ export type Database = {
         Returns: {
           count: number
           country: string
+        }[]
+      }
+      get_signups_by_country: {
+        Args: { limit_count: number; start_date: string }
+        Returns: {
+          country: string
+          signups: number
+          models: number
+          fans: number
+        }[]
+      }
+      get_country_visitor_breakdown: {
+        Args: { limit_count: number; start_date: string }
+        Returns: {
+          country: string
+          visitors: number
+          views: number
         }[]
       }
       get_current_actor_id: { Args: never; Returns: string }
