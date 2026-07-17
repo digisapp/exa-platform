@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { escapeIlike } from "@/lib/utils";
 import { MODEL_EARNING_ACTIONS } from "@/lib/coin-config";
+import { batchQuery, fetchPaged } from "@/lib/supabase/batch";
 
 // Admin client for efficient RPC calls
 const getAdminClient = () => createServiceRoleClient();
@@ -16,57 +17,7 @@ async function isAdmin(supabase: any, userId: string) {
   return actor?.type === "admin";
 }
 
-// Batch size for chunked .in() queries. Must stay small: 400+ UUIDs push the
-// request URL past Node fetch's 16KB header limit and the query fails outright
-// (verified empirically — 300 ok, 400 fails).
-const BATCH_SIZE = 200;
 const MAX_COMPUTED_SORT_MODELS = 10000; // Cap for computed field sorting
-// PostgREST silently truncates any response to max_rows (1000 on this project),
-// regardless of the requested .range() — every potentially-large query must page.
-const PAGE_ROWS = 1000;
-
-// Helper to run queries in batches and aggregate results.
-// queryFn must apply .range(from, to) (and a stable .order()) to its query.
-async function batchQuery<T>(
-  ids: string[],
-  queryFn: (batchIds: string[], from: number, to: number) => Promise<{ data: T[] | null; error: any }>
-): Promise<T[]> {
-  const results: T[] = [];
-  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
-    const batch = ids.slice(i, i + BATCH_SIZE);
-    for (let from = 0; ; from += PAGE_ROWS) {
-      const { data, error } = await queryFn(batch, from, from + PAGE_ROWS - 1);
-      if (error) {
-        // Surface the failure — silently continuing here once shipped a page
-        // full of zero counts that looked like a broken sort
-        console.error("Batch query error:", error);
-        throw error;
-      }
-      if (data) results.push(...data);
-      if (!data || data.length < PAGE_ROWS) break;
-    }
-  }
-  return results;
-}
-
-// Fetch all rows of a query by paging past the PostgREST max_rows cap.
-// queryFn must apply .range(from, to) and a deterministic .order().
-async function fetchPaged<T>(
-  queryFn: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any; count?: number | null }>,
-  maxRows: number
-): Promise<{ rows: T[]; count: number }> {
-  const rows: T[] = [];
-  let count = 0;
-  for (let from = 0; from < maxRows; from += PAGE_ROWS) {
-    const to = Math.min(from + PAGE_ROWS, maxRows) - 1;
-    const { data, error, count: exactCount } = await queryFn(from, to);
-    if (error) throw error;
-    if (typeof exactCount === "number") count = exactCount;
-    if (data) rows.push(...data);
-    if (!data || data.length < to - from + 1) break;
-  }
-  return { rows, count };
-}
 
 export async function GET(request: NextRequest) {
   try {
