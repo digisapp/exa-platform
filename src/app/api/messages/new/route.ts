@@ -123,21 +123,26 @@ export async function POST(request: NextRequest) {
     let existingConversationId: string | null = null;
 
     if (existingParticipations && existingParticipations.length > 0) {
-      // Check if any of sender's conversations include the recipient
+      // Check if any of sender's conversations include the recipient.
+      // Batched: one .in() with every id dies past ~300 UUIDs (16KB URL
+      // limit) — the admin actor alone sits in 700+ conversations, and the
+      // failed check silently spawned a duplicate conversation per message.
       const conversationIds = existingParticipations.map(
         (p) => p.conversation_id
       );
 
-      const { data: recipientParticipation } = await supabase
-        .from("conversation_participants")
-        .select("conversation_id")
-        .eq("actor_id", recipientId)
-        .in("conversation_id", conversationIds)
-        .limit(1)
-        .single() as { data: { conversation_id: string } | null };
+      for (let i = 0; i < conversationIds.length && !existingConversationId; i += 200) {
+        const { data: recipientParticipation } = await supabase
+          .from("conversation_participants")
+          .select("conversation_id")
+          .eq("actor_id", recipientId)
+          .in("conversation_id", conversationIds.slice(i, i + 200))
+          .limit(1)
+          .maybeSingle() as { data: { conversation_id: string } | null };
 
-      if (recipientParticipation) {
-        existingConversationId = recipientParticipation.conversation_id;
+        if (recipientParticipation) {
+          existingConversationId = recipientParticipation.conversation_id;
+        }
       }
     }
 

@@ -15,6 +15,30 @@ export const getConversationList = cache(async (actorId: string) => {
   return fetchConversationList(supabase, adminClient, actorId);
 });
 
+// PostgREST fails outright (no rows, no thrown error from the client) once an
+// .in() list pushes the request URL past the ~16KB gateway limit (~300 UUIDs).
+// The admin inbox sits in 700+ conversations, so every id list here must be
+// batched. 200 per query, same convention as /api/admin/models (PR #143).
+const IN_BATCH_SIZE = 200;
+
+async function batchIn<T>(
+  ids: string[],
+  queryFn: (batchIds: string[]) => PromiseLike<{ data: T[] | null; error: unknown }>
+): Promise<T[]> {
+  const batches: string[][] = [];
+  for (let i = 0; i < ids.length; i += IN_BATCH_SIZE) {
+    batches.push(ids.slice(i, i + IN_BATCH_SIZE));
+  }
+  const results = await Promise.all(batches.map((batch) => queryFn(batch)));
+  const rows: T[] = [];
+  for (const { data, error } of results) {
+    // A failed batch must not silently render every conversation as "Unknown"
+    if (error) throw error;
+    if (data) rows.push(...data);
+  }
+  return rows;
+}
+
 /**
  * Shared conversation list query used by both chats layout and page.
  * Avoids duplicating the same N+1 fetch logic in two places.
@@ -66,50 +90,47 @@ export async function fetchConversationList(
     }
   }
 
-  // Batch fetch: Get all other participants for all conversations in ONE query
-  const { data: allParticipants } = conversationIds.length > 0
-    ? await supabase
-        .from("conversation_participants")
-        .select(`
-          conversation_id,
-          actor:actors(
-            id,
-            type,
-            user_id
-          )
-        `)
-        .in("conversation_id", conversationIds)
-        .neq("actor_id", actorId) as { data: any[] | null }
-    : { data: [] };
+  // Batch fetch: all other participants for all conversations
+  const allParticipants: any[] = await batchIn(conversationIds, (batch) =>
+    supabase
+      .from("conversation_participants")
+      .select(`
+        conversation_id,
+        actor:actors(
+          id,
+          type,
+          user_id
+        )
+      `)
+      .in("conversation_id", batch)
+      .neq("actor_id", actorId)
+  );
 
   // Get user IDs for models and actor IDs for fans/brands
   const userIds = [...new Set((allParticipants || []).map((p: any) => p.actor?.user_id).filter(Boolean))];
   const fanActorIds = [...new Set((allParticipants || []).filter((p: any) => p.actor?.type === "fan").map((p: any) => p.actor?.id).filter(Boolean))];
   const brandActorIds = [...new Set((allParticipants || []).filter((p: any) => p.actor?.type === "brand").map((p: any) => p.actor?.id).filter(Boolean))];
 
-  // Fetch all models for these users
-  const { data: models } = userIds.length > 0
-    ? await supabase
+  // Fetch all models, fans (admin client to bypass RLS), and brands
+  const [models, fans, brands] = await Promise.all([
+    batchIn<any>(userIds, (batch) =>
+      supabase
         .from("models")
         .select("user_id, username, profile_photo_url")
-        .in("user_id", userIds) as { data: any[] | null }
-    : { data: [] };
-
-  // Fetch all fans (use admin client to bypass RLS)
-  const { data: fans } = fanActorIds.length > 0
-    ? await adminClient
+        .in("user_id", batch)
+    ),
+    batchIn<any>(fanActorIds, (batch) =>
+      adminClient
         .from("fans")
         .select("id, display_name, username, avatar_url")
-        .in("id", fanActorIds) as { data: any[] | null }
-    : { data: [] };
-
-  // Fetch all brands
-  const { data: brands } = brandActorIds.length > 0
-    ? await (supabase
-        .from("brands") as any)
+        .in("id", batch)
+    ),
+    batchIn<any>(brandActorIds, (batch) =>
+      (supabase.from("brands") as any)
         .select("id, company_name, logo_url")
-        .in("id", brandActorIds) as { data: any[] | null }
-    : { data: [] };
+        .in("id", batch)
+    ),
+  ]);
 
   // Create lookup maps
   const modelsByUserId = new Map((models || []).map((m: any) => [m.user_id, m]));

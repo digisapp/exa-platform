@@ -67,14 +67,29 @@ export async function GET() {
 
   let recentMessages: any[] = [];
   if (conversationIds.length > 0) {
-    const { data: messages } = await (adminClient.from("messages") as any)
-      .select("id, conversation_id, sender_id, content, created_at, is_system")
-      .in("conversation_id", conversationIds)
-      .neq("sender_id", actor.id)
-      .eq("is_system", false)
-      .gte("created_at", sevenDaysAgo.toISOString())
-      .order("created_at", { ascending: false })
-      .limit(20);
+    // Batched: one .in() with every id fails outright past ~300 UUIDs (16KB
+    // URL limit) — the admin actor sits in 700+ conversations, which silently
+    // dropped every message notification from the bell.
+    const batches: string[][] = [];
+    for (let i = 0; i < conversationIds.length; i += 200) {
+      batches.push(conversationIds.slice(i, i + 200));
+    }
+    const batchResults = await Promise.all(
+      batches.map((batch) =>
+        (adminClient.from("messages") as any)
+          .select("id, conversation_id, sender_id, content, created_at, is_system")
+          .in("conversation_id", batch)
+          .neq("sender_id", actor.id)
+          .eq("is_system", false)
+          .gte("created_at", sevenDaysAgo.toISOString())
+          .order("created_at", { ascending: false })
+          .limit(20)
+      )
+    );
+    const messages = batchResults
+      .flatMap((r: any) => r.data || [])
+      .sort((a: any, b: any) => b.created_at.localeCompare(a.created_at))
+      .slice(0, 20);
 
     recentMessages = (messages || []).filter((msg: any) => {
       const lastRead = lastReadMap.get(msg.conversation_id);
