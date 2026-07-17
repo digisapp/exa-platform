@@ -1,6 +1,6 @@
 export default function ScheduleCallLoading() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <div className="container mx-auto px-4 py-16">
         <div className="animate-pulse max-w-xl mx-auto space-y-6">
           <div className="h-10 bg-muted rounded w-2/3 mx-auto" />

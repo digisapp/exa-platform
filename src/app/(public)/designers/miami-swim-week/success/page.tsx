@@ -29,7 +29,7 @@ export default async function MswBrandSuccessPage({ searchParams }: Props) {
   const modelCount = models === "20" ? 20 : 15;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Navbar />
 
       <main className="container px-4 py-24 flex flex-col items-center text-center">

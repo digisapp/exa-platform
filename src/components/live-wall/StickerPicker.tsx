@@ -177,6 +177,7 @@ export function StickerPicker({ onSelect, onClose, style, triggerRef }: Props) {
                   src={s.url}
                   alt={s.name}
                   loading="lazy"
+                  decoding="async"
                   className="max-w-full max-h-full object-contain"
                 />
               </button>

@@ -56,7 +56,7 @@ export default async function BrandPublicProfile({ params }: Props) {
   const joinedYear = new Date(brand.created_at).getFullYear();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Background glow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-32 left-1/4 w-96 h-96 rounded-full bg-cyan-500/8 blur-3xl" />

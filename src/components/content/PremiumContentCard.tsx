@@ -137,7 +137,7 @@ export function PremiumContentCard({
       <div
         ref={containerRef}
         className={cn(
-          "relative rounded-xl overflow-hidden cursor-pointer group",
+          "cv-auto relative rounded-xl overflow-hidden cursor-pointer group",
           "transition-transform duration-150 active:scale-[0.98] active:duration-0",
           "bg-gradient-to-br from-gray-900 to-gray-800",
           isVideo ? "aspect-video" : "aspect-[3/4]"

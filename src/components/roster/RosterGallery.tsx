@@ -84,7 +84,7 @@ export function RosterGallery({
   const prevPhoto = () => setPhotoIdx((i) => (i - 1 + gallery.length) % gallery.length);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-dvh bg-[#0a0a0f] text-white">
       {/* Header */}
       <header className="border-b border-white/10 bg-gradient-to-b from-pink-500/10 to-transparent">
         <div className="max-w-7xl mx-auto px-6 py-10">
@@ -116,7 +116,7 @@ export function RosterGallery({
                 >
                   <div className="relative aspect-[3/4] bg-gradient-to-br from-pink-500/10 to-violet-500/10 overflow-hidden">
                     {hero ? (
-                      <img src={hero} alt={displayName(m)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                      <img src={hero} alt={displayName(m)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-white/30">
                         {displayName(m).charAt(0).toUpperCase()}

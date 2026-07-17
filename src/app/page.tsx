@@ -278,7 +278,7 @@ export default async function HomePage() {
   );
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-dvh relative">
       {/* Floating Orbs Background */}
       <FloatingOrbs />
 

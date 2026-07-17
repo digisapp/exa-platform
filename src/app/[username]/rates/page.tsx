@@ -135,7 +135,7 @@ export default async function ModelRatesPage({ params }: Props) {
   const displayName = model.username;
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-dvh relative">
       <FloatingOrbs />
 
       {/* Preview Banner for unapproved profiles (owner or admin viewing) */}

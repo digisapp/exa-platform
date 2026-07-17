@@ -68,7 +68,7 @@ export default async function SwimCrownEntrySuccessPage() {
   const votingUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://exa.ai"}/swimcrown/contestants`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a1628] via-[#0d1f35] to-[#0a1628]">
+    <div className="min-h-dvh bg-gradient-to-b from-[#0a1628] via-[#0d1f35] to-[#0a1628]">
       <Navbar user={navbarUser} actorType={actorType} />
 
       <main className="container mx-auto px-4 py-16 pb-24 md:pb-16">

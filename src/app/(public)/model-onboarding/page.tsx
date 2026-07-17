@@ -84,7 +84,7 @@ function ModelOnboardingContent() {
 
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="min-h-dvh bg-background flex items-center justify-center px-4">
         <div className="text-center max-w-md space-y-4">
           <div className="inline-flex p-4 rounded-full bg-emerald-500/20 mb-2">
             <CheckCircle className="h-12 w-12 text-emerald-400" />
@@ -122,7 +122,7 @@ function ModelOnboardingContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <div className="border-b border-border/40 bg-background/95 backdrop-blur">
         <div className="container max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">

@@ -45,10 +45,12 @@ function FeedCardActions({
   item,
   isFollowed,
   onFollowed,
+  onFollowRevert,
 }: {
   item: FeedItem;
   isFollowed: boolean;
   onFollowed: (modelId: string) => void;
+  onFollowRevert: (modelId: string) => void;
 }) {
   const [liked, setLiked] = useState(item.isLiked);
   const [count, setCount] = useState(item.like_count);
@@ -84,6 +86,9 @@ function FeedCardActions({
   const follow = async () => {
     if (followBusy) return;
     setFollowBusy(true);
+    // Optimistic: mark followed immediately (hides the nudge under the
+    // finger), revert if the write fails.
+    onFollowed(item.model.id);
     try {
       const res = await fetch("/api/favorites", {
         method: "POST",
@@ -91,9 +96,9 @@ function FeedCardActions({
         body: JSON.stringify({ modelId: item.model.id }),
       });
       if (!res.ok) throw new Error();
-      onFollowed(item.model.id);
       toast.success(`Following @${item.model.username}`);
     } catch {
+      onFollowRevert(item.model.id);
       toast.error("Couldn't follow — try again");
     } finally {
       setFollowBusy(false);
@@ -161,6 +166,12 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
   }, [items]);
   const markFollowed = (modelId: string) =>
     setFollowedModelIds((prev) => new Set(prev).add(modelId));
+  const revertFollowed = (modelId: string) =>
+    setFollowedModelIds((prev) => {
+      const next = new Set(prev);
+      next.delete(modelId);
+      return next;
+    });
 
   const handleUnlock = (_contentId: string, newBalance: number) => {
     setBalance(newBalance);
@@ -197,7 +208,10 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
             const modelName = item.model.username;
             const isFollowed = followedModelIds.has(item.model.id);
             return (
-              <div key={`content-${item.id}`} className="rounded-xl border border-border/50 bg-card overflow-hidden">
+              // cv-auto lets the browser skip layout/paint for offscreen cards —
+              // the feed DOM grows unbounded via "Show More" and every card
+              // carries media.
+              <div key={`content-${item.id}`} className="cv-auto rounded-xl border border-border/50 bg-card overflow-hidden">
                 {/* Model header */}
                 <Link
                   href={`/${item.model.username}`}
@@ -249,7 +263,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
                     onUnlock={handleUnlock}
                   />
                 </div>
-                <FeedCardActions item={item} isFollowed={isFollowed} onFollowed={markFollowed} />
+                <FeedCardActions item={item} isFollowed={isFollowed} onFollowed={markFollowed} onFollowRevert={revertFollowed} />
               </div>
             );
         })}

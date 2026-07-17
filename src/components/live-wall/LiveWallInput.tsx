@@ -254,7 +254,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
                 setImageFile(null);
                 setStickerUrl(null);
               }}
-              className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center"
+              className="tap-target absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center"
             >
               <X className="h-3 w-3 text-white" />
             </button>

@@ -90,7 +90,7 @@ function MiamiDigitalsContent() {
 
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="min-h-dvh bg-background flex items-center justify-center px-4">
         <div className="max-w-md w-full rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent p-8 text-center space-y-4 shadow-[0_0_28px_rgba(52,211,153,0.2)]">
           <div className="relative inline-flex items-center justify-center">
             <div className="absolute inset-0 rounded-full bg-emerald-500/40 blur-2xl" />
@@ -136,7 +136,7 @@ function MiamiDigitalsContent() {
 
   if (!isPrintPickupWindowOpen()) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="min-h-dvh bg-background flex items-center justify-center px-4">
         <div className="max-w-md w-full rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-transparent p-8 text-center space-y-4 shadow-[0_0_28px_rgba(167,139,250,0.2)]">
           <div className="relative inline-flex items-center justify-center">
             <div className="absolute inset-0 rounded-full bg-violet-500/40 blur-2xl" />
@@ -180,7 +180,7 @@ function MiamiDigitalsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <div className="border-b border-border/40 bg-background/95 backdrop-blur">
         <div className="container max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">

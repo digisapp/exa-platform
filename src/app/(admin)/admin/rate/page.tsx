@@ -271,7 +271,7 @@ export default function AdminRatePage() {
   const progress = totalUnrated > 0 ? ((totalRated + sessionRated) / (totalUnrated + totalRated + sessionRated)) * 100 : 0;
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <div ref={containerRef} className="min-h-dvh bg-gradient-to-b from-background to-muted/20">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b">
         <div className="container px-4 py-4">

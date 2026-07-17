@@ -84,7 +84,7 @@ function ScheduleCallContent() {
 
   if (state === "success") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-dvh bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent p-8 text-center space-y-4 shadow-[0_0_28px_rgba(52,211,153,0.2)]">
           <div className="relative inline-flex items-center justify-center">
             <div className="absolute inset-0 rounded-full bg-emerald-500/40 blur-2xl" />
@@ -104,7 +104,7 @@ function ScheduleCallContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-background flex items-center justify-center p-4">
       <div className="max-w-lg w-full rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 md:p-8">
         <div className="text-center mb-6">
           <div className="relative mx-auto mb-3 inline-flex items-center justify-center">
@@ -248,7 +248,7 @@ export default function ScheduleCallPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="min-h-dvh bg-background flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
         </div>
       }

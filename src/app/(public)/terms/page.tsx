@@ -115,7 +115,7 @@ export default function TermsPage() {
   return (
     <CoinBalanceProvider initialBalance={0}>
       <Navbar />
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-dvh bg-black text-white">
         <div className="mx-auto max-w-3xl px-6 py-16 sm:py-24">
           <header className="mb-12">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pink-400">

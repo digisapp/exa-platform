@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 
 export default function ModeloPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Navbar />
 
       <main className="container px-4 md:px-8 py-12 max-w-4xl mx-auto">

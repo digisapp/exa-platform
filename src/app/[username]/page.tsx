@@ -462,7 +462,7 @@ export default async function ModelProfilePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="min-h-screen relative">
+      <div className="min-h-dvh relative">
         <FloatingOrbs />
 
         {/* Track profile view */}

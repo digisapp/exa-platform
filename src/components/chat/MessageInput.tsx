@@ -497,7 +497,7 @@ export function MessageInput({
           </div>
           <button
             onClick={removeAttachment}
-            className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center shadow-lg hover:bg-destructive/90"
+            className="tap-target absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center shadow-lg hover:bg-destructive/90"
           >
             <X className="h-3 w-3" />
           </button>

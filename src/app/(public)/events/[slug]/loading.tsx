@@ -1,6 +1,6 @@
 export default function EventLandingLoading() {
   return (
-    <div className="min-h-screen bg-background animate-pulse">
+    <div className="min-h-dvh bg-background animate-pulse">
       {/* Hero skeleton */}
       <div className="container px-4 md:px-8 pt-12 md:pt-20 pb-10 space-y-4">
         <div className="h-6 w-24 bg-white/5 rounded-full" />

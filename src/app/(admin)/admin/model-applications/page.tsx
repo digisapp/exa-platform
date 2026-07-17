@@ -312,7 +312,7 @@ export default function AdminModelApplicationsPage() {
   const age = ageFromDob(current?.date_of_birth ?? null);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <div className="min-h-dvh bg-gradient-to-b from-background to-muted/20">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b">
         <div className="container px-4 py-4">

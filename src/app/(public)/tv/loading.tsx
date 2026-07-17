@@ -1,6 +1,6 @@
 export default function TvLoading() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <div className="bg-gradient-to-br from-violet-950 via-black to-pink-950 pt-16 pb-10 md:pt-20 md:pb-14">
         <div className="container px-4 md:px-8">
           <div className="animate-pulse space-y-4">

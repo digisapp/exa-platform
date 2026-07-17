@@ -33,7 +33,7 @@ export default async function ExaDollsGalleryPage() {
   const dolls = models || [];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <main className="container px-8 md:px-16 py-12">
         {/* Header */}
         <div className="text-center mb-10">

@@ -1,6 +1,6 @@
 export default function TravelLoading() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <div className="container mx-auto px-4 py-16">
         <div className="animate-pulse space-y-8">
           <div className="h-10 bg-muted rounded w-1/3" />

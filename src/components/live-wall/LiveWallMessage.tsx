@@ -349,6 +349,7 @@ export function LiveWallMessage({
               alt=""
               className="rounded-lg max-h-[200px] w-auto object-cover border border-white/10"
               loading="lazy"
+              decoding="async"
             />
           </div>
         )}

@@ -54,7 +54,7 @@ export default async function RosterPage({ params }: PageProps) {
 
   if (isRevoked || isExpired) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center px-6 text-center">
+      <div className="min-h-dvh bg-[#0a0a0f] text-white flex flex-col items-center justify-center px-6 text-center">
         <Link href="/" className="mb-5" aria-label="EXA Models home">
           <Image src="/exa-logo-white.png" alt="EXA Models" width={120} height={48} className="h-10 w-auto" priority />
         </Link>
