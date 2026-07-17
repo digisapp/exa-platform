@@ -44,6 +44,7 @@ interface AnalyticsData {
   browserBreakdown: { browser: string; count: number }[];
   countryBreakdown: { country: string; count: number }[];
   countryVisitors: { country: string; visitors: number; views: number }[];
+  signupsByCountry: { country: string; signups: number; models: number; fans: number }[];
 }
 
 const COLORS = ["#ec4899", "#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
@@ -139,14 +140,17 @@ const getRegion = (country: string): string => {
 
 const regionTotals = (
   countries: { country: string; visitors: number }[],
-): { region: string; visitors: number }[] => {
-  const totals = new Map<string, number>();
-  for (const c of countries) {
-    const region = getRegion(c.country);
-    totals.set(region, (totals.get(region) || 0) + c.visitors);
-  }
+  signups: { country: string; signups: number }[],
+): { region: string; visitors: number; signups: number }[] => {
+  const totals = new Map<string, { visitors: number; signups: number }>();
+  const add = (region: string, visitors: number, count: number) => {
+    const t = totals.get(region) || { visitors: 0, signups: 0 };
+    totals.set(region, { visitors: t.visitors + visitors, signups: t.signups + count });
+  };
+  for (const c of countries) add(getRegion(c.country), c.visitors, 0);
+  for (const s of signups) add(getRegion(s.country), 0, s.signups);
   return [...totals.entries()]
-    .map(([region, visitors]) => ({ region, visitors }))
+    .map(([region, t]) => ({ region, ...t }))
     .sort((a, b) => b.visitors - a.visitors);
 };
 
@@ -230,7 +234,9 @@ export default function TrafficPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Traffic Analytics</h1>
-            <p className="text-muted-foreground">Monitor your platform traffic and engagement</p>
+            <p className="text-muted-foreground">
+              Real traffic only — admin/team devices excluded from all stats
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -560,7 +566,7 @@ export default function TrafficPage() {
           {data?.countryVisitors && data.countryVisitors.length > 0 ? (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {regionTotals(data.countryVisitors).map((region) => (
+                {regionTotals(data.countryVisitors, data.signupsByCountry || []).map((region) => (
                   <div
                     key={region.region}
                     className="p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-violet-500/10 border border-blue-500/20 text-center"
@@ -569,25 +575,38 @@ export default function TrafficPage() {
                       {region.visitors.toLocaleString()}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">{region.region}</p>
+                    <p className="text-xs font-medium text-pink-500 mt-1">
+                      {region.signups.toLocaleString()} signups
+                    </p>
                   </div>
                 ))}
               </div>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                {data.countryVisitors.map((country) => (
-                  <div
-                    key={country.country}
-                    className="p-4 rounded-lg bg-muted/50 text-center"
-                  >
-                    <p className="text-3xl mb-1">{getCountryFlag(country.country)}</p>
-                    <p className="text-2xl font-bold text-blue-500">
-                      {country.visitors.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">visitors</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {country.country} · {country.views.toLocaleString()} views
-                    </p>
-                  </div>
-                ))}
+                {data.countryVisitors.map((country) => {
+                  const signups = (data.signupsByCountry || []).find(
+                    (s) => s.country === country.country,
+                  );
+                  return (
+                    <div
+                      key={country.country}
+                      className="p-4 rounded-lg bg-muted/50 text-center"
+                    >
+                      <p className="text-3xl mb-1">{getCountryFlag(country.country)}</p>
+                      <p className="text-2xl font-bold text-blue-500">
+                        {country.visitors.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">visitors</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {country.country} · {country.views.toLocaleString()} views
+                      </p>
+                      <p className="text-xs font-medium text-pink-500 mt-1">
+                        {signups
+                          ? `${signups.signups} signups (${signups.models}m · ${signups.fans}f)`
+                          : "0 signups"}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             </>
           ) : (

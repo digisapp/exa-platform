@@ -34,7 +34,10 @@ export async function GET(request: NextRequest) {
     startDate.setDate(startDate.getDate() - days);
     const startDateStr = startDate.toISOString();
 
-    // Fetch all analytics data in parallel
+    // Fetch all analytics data in parallel.
+    // All page_views functions exclude internal/admin devices (20260717000006);
+    // service-role client is required for the REVOKEd functions.
+    const serviceClient = createServiceRoleClient();
     const [
       totalViewsResult,
       uniqueVisitorsResult,
@@ -45,12 +48,10 @@ export async function GET(request: NextRequest) {
       browserBreakdownResult,
       countryBreakdownResult,
       countryVisitorsResult,
+      signupsByCountryResult,
     ] = await Promise.all([
-      // Total page views
-      supabase
-        .from("page_views")
-        .select("id", { count: "exact", head: true })
-        .gte("created_at", startDateStr),
+      // Total page views (internal excluded)
+      serviceClient.rpc("count_page_views", { start_date: startDateStr }),
 
       // Unique visitors
       supabase.rpc("count_unique_visitors", { start_date: startDateStr }),
@@ -73,15 +74,20 @@ export async function GET(request: NextRequest) {
       // Country breakdown
       supabase.rpc("get_country_breakdown", { start_date: startDateStr, limit_count: 10 }),
 
-      // Unique real visitors per country (internal/admin devices excluded).
-      // Service-role client: the RPC is REVOKEd from authenticated (20260717000005).
-      createServiceRoleClient().rpc("get_country_visitor_breakdown", {
+      // Unique real visitors per country
+      serviceClient.rpc("get_country_visitor_breakdown", {
+        start_date: startDateStr,
+        limit_count: 20,
+      }),
+
+      // New model/fan signups attributed to the country of their first located view
+      serviceClient.rpc("get_signups_by_country", {
         start_date: startDateStr,
         limit_count: 20,
       }),
     ]);
 
-    const totalViews = totalViewsResult.count || 0;
+    const totalViews = totalViewsResult.data || 0;
     const uniqueVisitors = uniqueVisitorsResult.data || 0;
 
     return NextResponse.json({
@@ -95,6 +101,7 @@ export async function GET(request: NextRequest) {
       browserBreakdown: browserBreakdownResult.data || [],
       countryBreakdown: countryBreakdownResult.data || [],
       countryVisitors: countryVisitorsResult.data || [],
+      signupsByCountry: signupsByCountryResult.data || [],
     });
   } catch (error) {
     console.error("Analytics API error:", error);
