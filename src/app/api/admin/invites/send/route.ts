@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendModelInviteEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -196,8 +197,11 @@ export async function POST(request: NextRequest) {
       });
 
       if (result?.success) {
-        // Update invite_sent_at
-        await supabase.from("models")
+        // Update invite_sent_at. Service role: models UPDATE policies are
+        // own-row only (20260716000001) and invite targets are unclaimed
+        // (user_id null), so a session-client write silently no-ops — the
+        // stamp never lands and the next batch re-emails the same models.
+        await createServiceRoleClient().from("models")
           .update({ invite_sent_at: new Date().toISOString() })
           .eq("id", model.id);
         sent++;

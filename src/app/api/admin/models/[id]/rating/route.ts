@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
@@ -40,7 +41,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Rating must be 1-5 or null" }, { status: 400 });
     }
 
-    const { error } = await supabase
+    // Service role: models UPDATE policies are own-row only (20260716000001),
+    // so a session-client write to another model's row silently no-ops.
+    const { error } = await createServiceRoleClient()
       .from("models")
       .update({ admin_rating: rating, updated_at: new Date().toISOString() })
       .eq("id", id);

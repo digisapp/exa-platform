@@ -73,8 +73,14 @@ export async function PATCH(
     const updates = parsed.data;
     const { is_approved } = updates;
 
+    // Admin verified above; use the service role for the actual writes — since
+    // the RLS lockdown (20260716000001) the only UPDATE policies on models are
+    // own-row, so a session-client update of someone else's row matches 0 rows
+    // and reports success without persisting anything.
+    const adminDb = createServiceRoleClient();
+
     // Get current model data before update
-    const { data: model } = await (supabase
+    const { data: model } = await (adminDb
       .from("models")
       .select("email, first_name, last_name, username, is_approved, user_id, preferred_language, profile_photo_url") as any)
       .eq("id", id)
@@ -104,7 +110,7 @@ export async function PATCH(
     }
 
     // Update the model
-    const { error } = await supabase
+    const { error } = await adminDb
       .from("models")
       .update(updatePayload)
       .eq("id", id);
@@ -114,7 +120,7 @@ export async function PATCH(
     // Update actor type based on approval status (only if approval changed)
     if (statusChanged && model.user_id) {
       const newActorType = is_approved ? "model" : "fan";
-      const { error: actorError } = await supabase
+      const { error: actorError } = await adminDb
         .from("actors")
         .update({ type: newActorType })
         .eq("user_id", model.user_id);
@@ -127,7 +133,6 @@ export async function PATCH(
     // Auto-set profile_photo_url from first portfolio image on first approval
     if (statusChanged && is_approved && !model.profile_photo_url && !updatePayload.profile_photo_url) {
       try {
-        const adminDb = createServiceRoleClient();
         const { data: firstImage } = await (adminDb as any)
           .from("content_items")
           .select("media_url")
