@@ -179,14 +179,18 @@ export function PremiumContentCard({
               </>
             ) : (
               // Locked videos land here too: their preview_url is a blurred
-              // JPEG teaser frame captured at upload, not a playable video
+              // JPEG teaser frame captured at upload, not a playable video.
+              // The preview is already heavily blurred server-side (the real
+              // paywall — the full file never reaches the client); the light
+              // CSS blur only smooths compression artifacts, so the fan can
+              // just make out the silhouette.
               <Image
                 src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
                 alt={content.title || "Premium content"}
                 fill
                 className={cn(
                   "object-cover transition-all duration-300",
-                  !isUnlocked && !isFree && !isOwner && "blur-[14px] scale-110 brightness-[0.85]",
+                  !isUnlocked && !isFree && !isOwner && "blur-[2px] brightness-[0.85]",
                   isUnlocked && "group-hover:scale-105"
                 )}
                 onError={() => setImageError(true)}
@@ -264,7 +268,7 @@ export function PremiumContentCard({
                   src={content.preview_url}
                   alt="Preview"
                   fill
-                  className="object-cover blur-[14px] brightness-[0.85]"
+                  className="object-cover blur-[2px] brightness-[0.85]"
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-pink-500/20 to-violet-500/20">
