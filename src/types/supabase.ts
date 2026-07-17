@@ -10121,6 +10121,14 @@ export type Database = {
           country: string
         }[]
       }
+      get_country_visitor_breakdown: {
+        Args: { limit_count: number; start_date: string }
+        Returns: {
+          country: string
+          visitors: number
+          views: number
+        }[]
+      }
       get_current_actor_id: { Args: never; Returns: string }
       get_current_user_model_id: { Args: never; Returns: string }
       get_daily_views: {

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
       dailyViewsResult,
       browserBreakdownResult,
       countryBreakdownResult,
+      countryVisitorsResult,
     ] = await Promise.all([
       // Total page views
       supabase
@@ -70,6 +72,13 @@ export async function GET(request: NextRequest) {
 
       // Country breakdown
       supabase.rpc("get_country_breakdown", { start_date: startDateStr, limit_count: 10 }),
+
+      // Unique real visitors per country (internal/admin devices excluded).
+      // Service-role client: the RPC is REVOKEd from authenticated (20260717000005).
+      createServiceRoleClient().rpc("get_country_visitor_breakdown", {
+        start_date: startDateStr,
+        limit_count: 20,
+      }),
     ]);
 
     const totalViews = totalViewsResult.count || 0;
@@ -85,6 +94,7 @@ export async function GET(request: NextRequest) {
       dailyViews: dailyViewsResult.data || [],
       browserBreakdown: browserBreakdownResult.data || [],
       countryBreakdown: countryBreakdownResult.data || [],
+      countryVisitors: countryVisitorsResult.data || [],
     });
   } catch (error) {
     console.error("Analytics API error:", error);

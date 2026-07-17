@@ -43,6 +43,7 @@ interface AnalyticsData {
   dailyViews: { date: string; views: number; visitors: number }[];
   browserBreakdown: { browser: string; count: number }[];
   countryBreakdown: { country: string; count: number }[];
+  countryVisitors: { country: string; visitors: number; views: number }[];
 }
 
 const COLORS = ["#ec4899", "#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
@@ -101,6 +102,52 @@ const getCountryFlag = (country: string): string => {
     }
   }
   return "🌍";
+};
+
+// ISO code → region, for expansion goal-setting
+const codeToRegion: Record<string, string> = {
+  US: "North America", CA: "North America",
+  MX: "Latin America", BR: "Latin America", AR: "Latin America", CO: "Latin America",
+  CL: "Latin America", PE: "Latin America", VE: "Latin America", EC: "Latin America",
+  GT: "Latin America", CU: "Latin America", BO: "Latin America", PY: "Latin America",
+  UY: "Latin America", DO: "Latin America", CR: "Latin America", PA: "Latin America",
+  PR: "Latin America", JM: "Latin America", TT: "Latin America", HN: "Latin America",
+  SV: "Latin America", NI: "Latin America",
+  GB: "Europe", DE: "Europe", FR: "Europe", ES: "Europe", IT: "Europe", NL: "Europe",
+  BE: "Europe", AT: "Europe", CH: "Europe", SE: "Europe", NO: "Europe", DK: "Europe",
+  FI: "Europe", IE: "Europe", PT: "Europe", PL: "Europe", CZ: "Europe", RO: "Europe",
+  HU: "Europe", UA: "Europe", GR: "Europe", HR: "Europe", RS: "Europe", BG: "Europe",
+  SK: "Europe", SI: "Europe", LT: "Europe", LV: "Europe", EE: "Europe", BY: "Europe",
+  MD: "Europe", IS: "Europe", LU: "Europe", MT: "Europe", CY: "Europe", MC: "Europe",
+  RU: "Europe", TR: "Europe", AL: "Europe", BA: "Europe", MK: "Europe", ME: "Europe",
+  IN: "Asia", CN: "Asia", JP: "Asia", KR: "Asia", PH: "Asia", ID: "Asia", TH: "Asia",
+  VN: "Asia", MY: "Asia", SG: "Asia", TW: "Asia", HK: "Asia", PK: "Asia", BD: "Asia",
+  LK: "Asia", NP: "Asia", MM: "Asia", KH: "Asia", LA: "Asia", KZ: "Asia", UZ: "Asia",
+  AZ: "Asia", GE: "Asia", AM: "Asia", AE: "Asia", SA: "Asia", IL: "Asia", KW: "Asia",
+  QA: "Asia", BH: "Asia", OM: "Asia", JO: "Asia", LB: "Asia", IQ: "Asia", IR: "Asia",
+  AF: "Asia", MN: "Asia",
+  AU: "Oceania", NZ: "Oceania", FJ: "Oceania", PG: "Oceania",
+  ZA: "Africa", NG: "Africa", KE: "Africa", EG: "Africa", MA: "Africa", DZ: "Africa",
+  TN: "Africa", GH: "Africa", ET: "Africa", TZ: "Africa", UG: "Africa", CM: "Africa",
+  CI: "Africa", SN: "Africa", ZW: "Africa", ZM: "Africa", MZ: "Africa", AO: "Africa",
+};
+
+const getRegion = (country: string): string => {
+  const code = country.length === 2 ? country.toUpperCase() : countryToCode[country];
+  return (code && codeToRegion[code]) || "Other";
+};
+
+const regionTotals = (
+  countries: { country: string; visitors: number }[],
+): { region: string; visitors: number }[] => {
+  const totals = new Map<string, number>();
+  for (const c of countries) {
+    const region = getRegion(c.country);
+    totals.set(region, (totals.get(region) || 0) + c.visitors);
+  }
+  return [...totals.entries()]
+    .map(([region, visitors]) => ({ region, visitors }))
+    .sort((a, b) => b.visitors - a.visitors);
 };
 
 const deviceIcons: Record<string, React.ReactNode> = {
@@ -498,29 +545,51 @@ export default function TrafficPage() {
         </Card>
       </div>
 
-      {/* Country Breakdown */}
+      {/* Real Visitors by Country */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5 text-blue-500" />
-            Top Countries
+            Real Visitors by Country
           </CardTitle>
-          <CardDescription>Views by country</CardDescription>
+          <CardDescription>
+            Unique people per country — admin/team devices excluded
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          {data?.countryBreakdown && data.countryBreakdown.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {data.countryBreakdown.map((country) => (
-                <div
-                  key={country.country}
-                  className="p-4 rounded-lg bg-muted/50 text-center"
-                >
-                  <p className="text-3xl mb-1">{getCountryFlag(country.country)}</p>
-                  <p className="text-2xl font-bold text-blue-500">{country.count.toLocaleString()}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{country.country}</p>
-                </div>
-              ))}
-            </div>
+        <CardContent className="space-y-6">
+          {data?.countryVisitors && data.countryVisitors.length > 0 ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {regionTotals(data.countryVisitors).map((region) => (
+                  <div
+                    key={region.region}
+                    className="p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-violet-500/10 border border-blue-500/20 text-center"
+                  >
+                    <p className="text-2xl font-bold text-violet-400">
+                      {region.visitors.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">{region.region}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {data.countryVisitors.map((country) => (
+                  <div
+                    key={country.country}
+                    className="p-4 rounded-lg bg-muted/50 text-center"
+                  >
+                    <p className="text-3xl mb-1">{getCountryFlag(country.country)}</p>
+                    <p className="text-2xl font-bold text-blue-500">
+                      {country.visitors.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground">visitors</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {country.country} · {country.views.toLocaleString()} views
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="py-8 text-center text-muted-foreground">
               No country data yet
