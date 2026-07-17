@@ -5737,6 +5737,7 @@ export type Database = {
           coin_balance: number | null
           collab_types: string[] | null
           college: string | null
+          comp_card_assets: Json | null
           comp_card_exported_at: string | null
           country_code: string | null
           created_at: string | null
@@ -5864,6 +5865,7 @@ export type Database = {
           coin_balance?: number | null
           collab_types?: string[] | null
           college?: string | null
+          comp_card_assets?: Json | null
           comp_card_exported_at?: string | null
           country_code?: string | null
           created_at?: string | null
@@ -5991,6 +5993,7 @@ export type Database = {
           coin_balance?: number | null
           collab_types?: string[] | null
           college?: string | null
+          comp_card_assets?: Json | null
           comp_card_exported_at?: string | null
           country_code?: string | null
           created_at?: string | null

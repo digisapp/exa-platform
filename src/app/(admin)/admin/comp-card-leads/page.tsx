@@ -11,6 +11,7 @@ import {
   Users,
   Download,
   ExternalLink,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatInches } from "@/lib/measurements";
@@ -35,6 +36,7 @@ interface CompCardModel {
   shoe_size: string | null;
   profile_photo_url: string | null;
   comp_card_exported_at: string;
+  comp_card_files: { pdf?: string; front?: string; back?: string } | null;
 }
 
 export default function CompCardLeadsPage() {
@@ -207,6 +209,47 @@ export default function CompCardLeadsPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Saved card preview (only exports since card copies shipped) */}
+                  {m.comp_card_files && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      {m.comp_card_files.front && (
+                        <a href={m.comp_card_files.front} target="_blank" rel="noreferrer" title="Front card">
+                          {/* signed URLs are short-lived — plain img, not next/image */}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={m.comp_card_files.front}
+                            alt="Comp card front"
+                            loading="lazy"
+                            className="h-16 w-auto rounded border border-border object-cover hover:opacity-80"
+                          />
+                        </a>
+                      )}
+                      {m.comp_card_files.back && (
+                        <a href={m.comp_card_files.back} target="_blank" rel="noreferrer" title="Back card">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={m.comp_card_files.back}
+                            alt="Comp card back"
+                            loading="lazy"
+                            className="h-16 w-auto rounded border border-border object-cover hover:opacity-80"
+                          />
+                        </a>
+                      )}
+                      {m.comp_card_files.pdf && (
+                        <a
+                          href={m.comp_card_files.pdf}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="View PDF"
+                          className="flex flex-col items-center justify-center gap-0.5 h-16 w-12 rounded border border-border text-muted-foreground hover:text-foreground hover:opacity-80"
+                        >
+                          <FileText className="h-5 w-5" />
+                          <span className="text-[10px] font-medium">PDF</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
 
                   <p className="text-xs text-muted-foreground shrink-0">
                     {new Date(m.comp_card_exported_at).toLocaleDateString()}{" "}

@@ -400,6 +400,31 @@ export default function CompCardPage() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
+  // Fire-and-forget: store a copy of the exported card in the private
+  // comp-cards bucket so admins can view it on /admin/comp-card-leads.
+  const saveCardCopy = (kind: "pdf" | "jpeg", blobs: Record<string, Blob>) => {
+    (async () => {
+      const res = await fetch("/api/comp-card-creator/save-card", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind }),
+      });
+      if (!res.ok) return;
+      const { uploads } = await res.json();
+      await Promise.all(
+        Object.entries(blobs).map(async ([key, blob]) => {
+          const target = uploads?.[key];
+          if (!target?.signedUrl) return;
+          await fetch(target.signedUrl, {
+            method: "PUT",
+            headers: { "Content-Type": blob.type },
+            body: blob,
+          });
+        })
+      );
+    })().catch(() => {});
+  };
+
   const generatePdfBlob = async (): Promise<Blob> => {
     const dm = displayModel;
     if (!dm || selectedIds.length === 0) throw new Error("No photos selected");
@@ -431,6 +456,7 @@ export default function CompCardPage() {
     setExporting(true);
     try {
       const blob = await generatePdfBlob();
+      saveCardCopy("pdf", { pdf: blob });
       downloadBlob(blob, `${filePrefix}-CompCard.pdf`);
       toast.success("Comp card downloaded!");
     } catch (error) {
@@ -451,6 +477,7 @@ export default function CompCardPage() {
     setSharing(true);
     try {
       const blob = await generatePdfBlob();
+      saveCardCopy("pdf", { pdf: blob });
       const file = new File([blob], `${filePrefix}-CompCard.pdf`, {
         type: "application/pdf",
       });
@@ -725,6 +752,7 @@ export default function CompCardPage() {
       bCtx.drawImage(qrImg, BW - PAD - qrSize, footerY, qrSize, qrSize);
 
       const backBlob = await canvasToBlob(bCanvas);
+      saveCardCopy("jpeg", { front: frontBlob, back: backBlob });
       const files = [
         new File([frontBlob], `${filePrefix}-CompCard-Front.jpg`, { type: "image/jpeg" }),
         new File([backBlob], `${filePrefix}-CompCard-Back.jpg`, { type: "image/jpeg" }),
