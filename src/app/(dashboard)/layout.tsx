@@ -194,7 +194,7 @@ export default async function DashboardLayout({
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
       <UnreadCountProvider initialCount={unreadCount}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <RouteFocusManager />
         <ActivityTracker />
         <Navbar
@@ -212,7 +212,9 @@ export default async function DashboardLayout({
         />
         {actor?.type === "fan" && profileData?.is_suspended && <SuspensionBanner />}
         <DashboardClientWrapper actorId={actor?.id || null} actorType={actor?.type || null}>
-          <main className="container px-4 md:px-8 py-8 pb-24 md:pb-8">{children}</main>
+          {/* Bottom padding clears the fixed BottomNav (4rem) plus the home
+              indicator inset on notched iPhones. */}
+          <main className="container px-4 md:px-8 py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8">{children}</main>
         </DashboardClientWrapper>
         <BottomNav
           user={{

@@ -24,10 +24,16 @@ export function FavoriteButton({ modelId, initialFavorited, isLoggedIn }: Favori
       return;
     }
 
+    // Optimistic: fill the heart under the finger, revert if the write fails.
+    const newState = !isFavorited;
+    setIsFavorited(newState);
+    setBouncing(true);
+    setTimeout(() => setBouncing(false), 300);
+
     setLoading(true);
     try {
       const res = await fetch("/api/favorites", {
-        method: isFavorited ? "DELETE" : "POST",
+        method: newState ? "POST" : "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ modelId }),
       });
@@ -37,12 +43,6 @@ export function FavoriteButton({ modelId, initialFavorited, isLoggedIn }: Favori
         throw new Error(data.error || "Failed to update favorite");
       }
 
-      const newState = !isFavorited;
-      setIsFavorited(newState);
-
-      setBouncing(true);
-      setTimeout(() => setBouncing(false), 300);
-
       if (newState) {
         toast.success("Added to favorites", {
           action: { label: "View Favs", onClick: () => router.push("/favorites") },
@@ -51,6 +51,7 @@ export function FavoriteButton({ modelId, initialFavorited, isLoggedIn }: Favori
         toast.success("Removed from favorites");
       }
     } catch (error) {
+      setIsFavorited(!newState);
       toast.error(error instanceof Error ? error.message : "Failed to update");
     } finally {
       setLoading(false);
@@ -68,11 +69,10 @@ export function FavoriteButton({ modelId, initialFavorited, isLoggedIn }: Favori
         className={cn(
           // Sized to match ShareButton (w-7) — the two sit side by side in the
           // profile header and a larger heart reads as oversized next to it.
-          "w-7 h-7 rounded-full flex items-center justify-center transition-all",
+          "w-7 h-7 rounded-full flex items-center justify-center transition-all active:scale-90",
           isFavorited
             ? "bg-pink-500/80 hover:bg-pink-500 shadow-[0_0_16px_rgba(236,72,153,0.6)]"
-            : "bg-white/10 hover:bg-white/20",
-          loading && "opacity-50 cursor-not-allowed"
+            : "bg-white/10 hover:bg-white/20"
         )}
       >
         <Heart

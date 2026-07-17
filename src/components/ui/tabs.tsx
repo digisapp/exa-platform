@@ -44,7 +44,7 @@ function TabsTrigger({
       data-slot="tabs-trigger"
       className={cn(
         // Base
-        "inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap transition-all outline-none disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap select-none transition-[color,background-color,box-shadow,transform] duration-150 outline-none disabled:pointer-events-none disabled:opacity-50 active:scale-95 active:duration-0",
         "text-white/60 hover:text-white/90",
         // Active — pink/violet gradient + glow
         "data-[state=active]:bg-gradient-to-br data-[state=active]:from-pink-500/20 data-[state=active]:to-violet-500/20 data-[state=active]:text-white data-[state=active]:shadow-[0_0_14px_rgba(236,72,153,0.2)]",

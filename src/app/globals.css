@@ -132,8 +132,37 @@
   body {
     font-family: var(--font-sans);
     color: var(--foreground);
+    /* dvh: 100vh includes the collapsed iOS URL bar, so the layout jumps as
+       the bar expands/collapses during scroll. */
     min-height: 100vh;
+    min-height: 100dvh;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Kill the iOS double-tap-to-zoom wait on every control so taps commit
+     instantly (viewport allows pinch-zoom, so this must be per-element). */
+  button,
+  [role="button"],
+  a,
+  label,
+  summary,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  /* Touch devices: long-pressing a control should not pop the iOS
+     callout/selection UI — that reads as "broken tap". Text content
+     elsewhere stays selectable. */
+  @media (pointer: coarse) {
+    button,
+    [role="button"],
+    summary {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
   }
 
   /* Dark mode gradient background.
@@ -409,11 +438,15 @@
 }
 
 /* Lighter orbs on phones: smaller blur radius + fewer layers keeps GPU
-   compositing (battery/jank) in check on iPhone */
+   compositing (battery/jank) in check on iPhone. Animation is fully off —
+   moving a giant blurred layer re-rasterizes it and fights the scroll
+   compositor; the static glow looks near-identical (42s drift). */
 @media (max-width: 640px) {
   .orb {
     filter: blur(80px);
     opacity: 0.4;
+    animation: none;
+    will-change: auto;
   }
 
   .orb-4,
@@ -565,13 +598,16 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 20px rgba(255, 237, 78, 0.5);
 }
 
-/* Pulse Animation for Online Status */
+/* Pulse Animation for Online Status.
+   Animates opacity (compositor-only) instead of box-shadow — the dot renders
+   once per model card, so a shadow keyframe means N simultaneous repaints
+   while scrolling a grid. */
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+    opacity: 1;
   }
   50% {
-    box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00;
+    opacity: 0.55;
   }
 }
 
@@ -580,6 +616,7 @@ input:focus, textarea:focus, select:focus {
   height: 12px;
   background: #00ff00;
   border-radius: 50%;
+  box-shadow: 0 0 8px #00ff00, 0 0 16px #00ff00;
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
@@ -775,6 +812,8 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
+/* Opacity pulse (compositor-only) — the old background-position shimmer
+   repainted the gradient every frame, and skeletons cover whole screens. */
 .skeleton {
   background: linear-gradient(
     90deg,
@@ -782,17 +821,7 @@ input:focus, textarea:focus, select:focus {
     rgba(148, 0, 211, 0.15) 50%,
     rgba(255, 105, 180, 0.1) 100%
   );
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
-}
-
-@keyframes skeleton-shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
 
 /* Shimmer animation for loading states and highlights */
@@ -873,4 +902,20 @@ input:focus, textarea:focus, select:focus {
 .animate-float-delayed {
   animation: gentle-float 6s ease-in-out infinite;
   animation-delay: 3s;
+}
+
+/* Blanket guard for the remaining infinite/decorative animations (the ones
+   above only cover orbs/marquee/gradient/glimmer individually). */
+@media (prefers-reduced-motion: reduce) {
+  .profile-pic-breathing,
+  .profile-pic-breathing::before,
+  .event-ticker-scroll,
+  .online-indicator,
+  .animate-gold-glow,
+  .skeleton,
+  .animate-shimmer,
+  .animate-float,
+  .animate-float-delayed {
+    animation: none;
+  }
 }

@@ -145,13 +145,21 @@ export default function RootLayout({
             Google's injected text nodes behind as visible ghost fragments
             ("AND"/"or" floating next to chat messages and avatars). Must run
             before hydration, hence inline. */}
+        {/* iOS Safari only applies :active pseudo-classes (button press
+            feedback) when at least one touch listener exists on the page.
+            Register a passive no-op so pressed states fire everywhere. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.addEventListener('touchstart',function(){},{passive:true});`,
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){if(typeof Node!=='function'||!Node.prototype)return;var rc=Node.prototype.removeChild;Node.prototype.removeChild=function(child){if(child&&child.parentNode!==this){if(child.parentNode)rc.call(child.parentNode,child);return child;}return rc.apply(this,arguments);};var ib=Node.prototype.insertBefore;Node.prototype.insertBefore=function(newNode,ref){if(ref&&ref.parentNode!==this){if(ref.parentNode)return ib.call(ref.parentNode,newNode,ref);return this.appendChild(newNode);}return ib.apply(this,arguments);};})();`,
           }}
         />
       </head>
-      <body className={`${poppins.className} ${poppins.variable} bg-background text-foreground antialiased min-h-screen`}>
+      <body className={`${poppins.className} ${poppins.variable} bg-background text-foreground antialiased min-h-dvh`}>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none"

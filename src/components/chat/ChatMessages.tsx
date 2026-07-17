@@ -228,7 +228,7 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
             role="log"
             aria-label="Chat messages"
             aria-live="polite"
-            className="flex-1 overflow-y-auto p-4"
+            className="flex-1 overflow-y-auto overscroll-contain p-4"
           >
             {/* Load more indicator */}
             {loadingMore && (
