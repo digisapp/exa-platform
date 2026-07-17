@@ -158,8 +158,9 @@ export async function PATCH(
         })
         .eq("id", id);
     } else if (status === "processing") {
-      // Just update status to processing
-      const { error } = await supabase
+      // Just update status to processing (service role: client write grants on
+      // withdrawal_requests are revoked — all writes go through service role/RPC)
+      const { error } = await adminClient
         .from("withdrawal_requests")
         .update({
           status: "processing",
