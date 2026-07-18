@@ -64,6 +64,9 @@ interface TravelTrip {
   application_deadline: string | null;
   require_id_verification: boolean;
   applicant_count?: number;
+  accepted_count?: number;
+  confirmed_count?: number;
+  pending_count?: number;
 }
 
 interface TravelApplicant {
@@ -220,6 +223,50 @@ function TripsTab({ supabase }: { supabase: any }) {
   const [appLoading, setAppLoading] = useState(false);
   const [processingApp, setProcessingApp] = useState<string | null>(null);
 
+  const [uploadingCover, setUploadingCover] = useState(false);
+
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Use a JPEG, PNG, or WebP image");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image too large — 10MB max");
+      return;
+    }
+    setUploadingCover(true);
+    try {
+      const res = await fetch("/api/admin/travel/upload-cover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType: file.type }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to get upload URL");
+        return;
+      }
+      const put = await fetch(data.signedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!put.ok) {
+        toast.error("Upload failed");
+        return;
+      }
+      setForm((prev) => ({ ...prev, cover_image_url: data.publicUrl }));
+      toast.success("Cover uploaded");
+    } catch {
+      toast.error("Upload failed");
+    } finally {
+      setUploadingCover(false);
+    }
+  }
+
   const emptyForm = {
     title: "", location_city: "", location_state: "", description: "",
     start_at: "", end_at: "", application_deadline: "", compensation_type: "hosted",
@@ -231,14 +278,20 @@ function TripsTab({ supabase }: { supabase: any }) {
   const loadTrips = useCallback(async () => {
     setLoading(true);
     const { data } = await (supabase.from("gigs") as any)
-      .select("*, gig_applications(count)")
+      .select("*, gig_applications(status, confirmed_at)")
       .eq("type", "travel")
       .order("start_at", { ascending: true });
     setTrips(
-      (data || []).map((g: any) => ({
-        ...g,
-        applicant_count: g.gig_applications?.[0]?.count ?? 0,
-      }))
+      (data || []).map((g: any) => {
+        const apps: { status: string; confirmed_at: string | null }[] = g.gig_applications || [];
+        return {
+          ...g,
+          applicant_count: apps.length,
+          pending_count: apps.filter((a) => a.status === "pending").length,
+          accepted_count: apps.filter((a) => a.status === "accepted").length,
+          confirmed_count: apps.filter((a) => a.status === "accepted" && a.confirmed_at).length,
+        };
+      })
     );
     setLoading(false);
   }, [supabase]);
@@ -501,6 +554,16 @@ function TripsTab({ supabase }: { supabase: any }) {
                           {trip.spots_filled}/{trip.spots} spots
                         </span>
                       </div>
+                      {/* Application funnel at a glance */}
+                      {(trip.applicant_count ?? 0) > 0 && (
+                        <p className="mt-1.5 text-xs">
+                          <span className="text-amber-400">{trip.pending_count} pending</span>
+                          <span className="text-muted-foreground"> · </span>
+                          <span className="text-green-400">{trip.accepted_count} accepted</span>
+                          <span className="text-muted-foreground"> · </span>
+                          <span className="text-emerald-300">{trip.confirmed_count} confirmed</span>
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2 mt-3 flex-wrap">
@@ -550,104 +613,163 @@ function TripsTab({ supabase }: { supabase: any }) {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingTrip ? "Edit Trip" : "New Travel Trip"}</DialogTitle>
+            <DialogTitle className="flex items-center justify-between gap-3 pr-6">
+              {editingTrip ? "Edit Trip" : "New Travel Trip"}
+              {editingTrip && (
+                <Link
+                  href={`/travel/${editingTrip.slug}`}
+                  target="_blank"
+                  className="text-xs font-normal text-violet-400 hover:text-violet-300 flex items-center gap-1"
+                >
+                  Preview public page <ExternalLink className="h-3 w-3" />
+                </Link>
+              )}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Title *</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Dominican Republic Villa Retreat" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-5">
+            {/* ── Basics ── */}
+            <div className="space-y-3">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">Basics</p>
               <div>
-                <Label>City *</Label>
-                <Input value={form.location_city} onChange={(e) => setForm({ ...form, location_city: e.target.value })}
-                  placeholder="Punta Cana" />
+                <Label>Title *</Label>
+                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="Dominican Republic Villa Retreat" />
               </div>
-              <div>
-                <Label>Country / State</Label>
-                <Input value={form.location_state} onChange={(e) => setForm({ ...form, location_state: e.target.value })}
-                  placeholder="Dominican Republic" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Start Date *</Label>
-                <Input type="date" value={form.start_at} onChange={(e) => setForm({ ...form, start_at: e.target.value })} />
-              </div>
-              <div>
-                <Label>End Date</Label>
-                <Input type="date" value={form.end_at} onChange={(e) => setForm({ ...form, end_at: e.target.value })} />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>City *</Label>
+                  <Input value={form.location_city} onChange={(e) => setForm({ ...form, location_city: e.target.value })}
+                    placeholder="Punta Cana" />
+                </div>
+                <div>
+                  <Label>Country / State</Label>
+                  <Input value={form.location_state} onChange={(e) => setForm({ ...form, location_state: e.target.value })}
+                    placeholder="Dominican Republic" />
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Compensation Type</Label>
-                <Select value={form.compensation_type} onValueChange={(v) => setForm({ ...form, compensation_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="hosted">Hosted (free)</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="revenue_share">Revenue Share</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Amount ($)</Label>
-                <Input type="number" value={form.compensation_amount}
-                  onChange={(e) => setForm({ ...form, compensation_amount: Number(e.target.value) })} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Model Spots</Label>
-                <Input type="number" value={form.spots}
-                  onChange={(e) => setForm({ ...form, spots: Number(e.target.value) })} />
-              </div>
-              <div>
-                <Label>Status</Label>
-                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="upcoming">Upcoming</SelectItem>
-                    <SelectItem value="open">Open (taking apps)</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
-                  </SelectContent>
-                </Select>
+
+            {/* ── Cover ── */}
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">Cover Image</p>
+              <div className="flex items-center gap-3">
+                <div className="w-24 h-16 rounded-lg overflow-hidden bg-violet-500/10 border border-zinc-800 flex items-center justify-center shrink-0">
+                  {form.cover_image_url ? (
+                    <img src={form.cover_image_url} alt="Cover preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <Plane className="h-5 w-5 text-violet-400/40" />
+                  )}
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <label className="inline-flex">
+                    <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleCoverUpload} />
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer border transition-colors ${
+                      uploadingCover
+                        ? "border-zinc-700 text-zinc-500"
+                        : "border-violet-500/40 text-violet-300 hover:bg-violet-500/10"
+                    }`}>
+                      {uploadingCover ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                      {uploadingCover ? "Uploading…" : form.cover_image_url ? "Replace image" : "Upload image"}
+                    </span>
+                  </label>
+                  <Input
+                    value={form.cover_image_url}
+                    placeholder="…or paste an image URL"
+                    className="h-8 text-xs"
+                    onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+
+            {/* ── Dates ── */}
+            <div className="space-y-3">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">Dates</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Start Date *</Label>
+                  <Input type="date" value={form.start_at} onChange={(e) => setForm({ ...form, start_at: e.target.value })} />
+                </div>
+                <div>
+                  <Label>End Date</Label>
+                  <Input type="date" value={form.end_at} onChange={(e) => setForm({ ...form, end_at: e.target.value })} />
+                </div>
+              </div>
               <div>
                 <Label>Application Deadline</Label>
                 <Input type="date" value={form.application_deadline}
                   onChange={(e) => setForm({ ...form, application_deadline: e.target.value })} />
               </div>
-              <div>
-                <Label>Cover Image URL</Label>
-                <Input value={form.cover_image_url} placeholder="https://…"
-                  onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })} />
+            </div>
+
+            {/* ── Compensation ── */}
+            <div className="space-y-3">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">Compensation</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Type</Label>
+                  <Select value={form.compensation_type} onValueChange={(v) => setForm({ ...form, compensation_type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hosted">Hosted (free)</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="revenue_share">Revenue Share</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Amount ($)</Label>
+                  <Input type="number" value={form.compensation_amount}
+                    onChange={(e) => setForm({ ...form, compensation_amount: Number(e.target.value) })} />
+                </div>
               </div>
             </div>
-            <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-800 bg-zinc-900/40 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.require_id_verification}
-                onChange={(e) => setForm({ ...form, require_id_verification: e.target.checked })}
-                className="h-4 w-4 accent-violet-500"
-              />
-              <span className="text-sm">
-                Require verified ID to accept
-                <span className="block text-xs text-muted-foreground">
-                  Models can apply, but can&apos;t be accepted until an admin has verified their government ID.
+
+            {/* ── Capacity & access ── */}
+            <div className="space-y-3">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">Capacity &amp; Access</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Model Spots</Label>
+                  <Input type="number" value={form.spots}
+                    onChange={(e) => setForm({ ...form, spots: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="upcoming">Upcoming</SelectItem>
+                      <SelectItem value="open">Open (taking apps)</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-800 bg-zinc-900/40 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.require_id_verification}
+                  onChange={(e) => setForm({ ...form, require_id_verification: e.target.checked })}
+                  className="h-4 w-4 accent-violet-500"
+                />
+                <span className="text-sm">
+                  Require verified ID to accept
+                  <span className="block text-xs text-muted-foreground">
+                    Models can apply, but can&apos;t be accepted until an admin has verified their government ID.
+                  </span>
                 </span>
-              </span>
-            </label>
-            <div>
-              <Label>Description</Label>
+              </label>
+            </div>
+
+            {/* ── Description ── */}
+            <div className="space-y-3">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">Description</p>
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
                 rows={4} placeholder="What's included, schedule highlights..." />
             </div>
-            <Button onClick={saveTrip} disabled={saving} className="w-full bg-violet-500 hover:bg-violet-600">
+
+            <Button onClick={saveTrip} disabled={saving || uploadingCover} className="w-full bg-violet-500 hover:bg-violet-600">
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               {editingTrip ? "Save Changes" : "Create Trip"}
             </Button>
