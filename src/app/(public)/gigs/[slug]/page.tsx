@@ -450,7 +450,7 @@ export default async function GigDetailPage({ params }: Props) {
                       )}
                     </div>
 
-                    {gig.title?.toLowerCase().includes("creator house") &&
+                    {gig.is_creator_house &&
                      existingApplication.status === "accepted" &&
                      existingApplication.payment_status !== "paid" &&
                      modelId && (
