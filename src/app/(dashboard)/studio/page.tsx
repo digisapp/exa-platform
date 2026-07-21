@@ -632,7 +632,7 @@ function ContentItemCard({
 
   return (
     <div
-      className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
+      className="group relative aspect-[3/4] cursor-pointer overflow-hidden rounded-lg border bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
       role="button"
       tabIndex={0}
       aria-label={`Edit ${item.title || 'content item'}`}
@@ -1547,7 +1547,7 @@ function UploadDialog({
                   <div
                     key={f.id}
                     className={cn(
-                      'relative aspect-square overflow-hidden rounded-lg bg-muted',
+                      'relative aspect-[3/4] overflow-hidden rounded-lg bg-muted',
                       f.status === 'error' && 'ring-2 ring-destructive',
                     )}
                   >
@@ -1590,7 +1590,7 @@ function UploadDialog({
                 {files.length < MAX_FILES && (
                   <button
                     type="button"
-                    className="flex aspect-square flex-col items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/50"
+                    className="flex aspect-[3/4] flex-col items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/50"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={finishing}
                   >
