@@ -56,21 +56,22 @@ export default async function ModelsPage({
   const params = await searchParams;
   const supabase = await createClient();
 
-  // Require authentication - guests cannot view models
+  // Anonymous visitors browse the grid read-only: cards link to (already
+  // public) profiles, while follow/favorite clicks open AuthRequiredDialog.
+  // Same activation-over-gating call as /gigs — show value, gate the action.
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    redirect("/signin?redirect=/models");
-  }
 
-  // Check actor type - models cannot access this page
-  const { data: actorCheck } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", user.id)
-    .single() as { data: { type: string } | null };
+  if (user) {
+    // Check actor type - models cannot access this page
+    const { data: actorCheck } = await supabase
+      .from("actors")
+      .select("type")
+      .eq("user_id", user.id)
+      .single() as { data: { type: string } | null };
 
-  if (actorCheck?.type === "model") {
-    redirect("/dashboard");
+    if (actorCheck?.type === "model") {
+      redirect("/dashboard");
+    }
   }
 
   // Helper to apply all active filters to a query
@@ -209,12 +210,14 @@ export default async function ModelsPage({
       .not("models.profile_photo_url", "is", null)
       .order("week_points", { ascending: false })
       .limit(5) as Promise<{ data: any[] | null }>,
-    // Actor info
-    (supabase
-      .from("actors") as any)
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as Promise<{ data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null }>,
+    // Actor info (logged-in only)
+    user
+      ? (supabase
+          .from("actors") as any)
+          .select("id, type")
+          .eq("user_id", user.id)
+          .single() as Promise<{ data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null }>
+      : Promise.resolve({ data: null as { id: string; type: "admin" | "model" | "brand" | "fan" } | null }),
   ]);
 
   const totalPages = Math.ceil((totalCount || 0) / PAGE_SIZE);
@@ -244,7 +247,7 @@ export default async function ModelsPage({
   let profileData: any = null;
   let coinBalance = 0;
 
-  if (actor) {
+  if (user && actor) {
     // Profile query and favorites query are independent — run in parallel
     const [profileResult, favoritesResult] = await Promise.all([
       // Profile info based on actor type
