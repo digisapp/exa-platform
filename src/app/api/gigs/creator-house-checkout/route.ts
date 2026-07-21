@@ -45,12 +45,16 @@ export async function POST(request: NextRequest) {
     // Get gig details
     const { data: gig } = await supabase
       .from("gigs")
-      .select("id, title, slug, start_at, end_at, location_city, location_state")
+      .select("id, title, slug, start_at, end_at, location_city, location_state, is_creator_house")
       .eq("id", gigId)
-      .single() as { data: { id: string; title: string; slug: string; start_at: string | null; end_at: string | null; location_city: string | null; location_state: string | null } | null };
+      .single() as { data: { id: string; title: string; slug: string; start_at: string | null; end_at: string | null; location_city: string | null; location_state: string | null; is_creator_house: boolean } | null };
 
     if (!gig) {
       return NextResponse.json({ error: "Gig not found" }, { status: 404 });
+    }
+
+    if (!gig.is_creator_house) {
+      return NextResponse.json({ error: "This gig does not require payment" }, { status: 400 });
     }
 
     // Verify application exists and is accepted

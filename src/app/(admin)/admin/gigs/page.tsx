@@ -26,11 +26,11 @@ import {
   Send,
   FileEdit,
   GraduationCap,
+  Plane,
 } from "lucide-react";
 import Link from "next/link";
 // Email sending is done via API route to keep server-only code out of client bundle
 
-import WorkshopsPanel from "@/components/admin/gigs/WorkshopsPanel";
 import GigApplicationsPanel from "@/components/admin/gigs/GigApplicationsPanel";
 import GigPreviewModal from "@/components/admin/gigs/GigPreviewModal";
 
@@ -53,6 +53,7 @@ interface Gig {
   status: string;
   created_at: string;
   event_id: string | null;
+  is_creator_house: boolean;
 }
 
 interface Event {
@@ -101,9 +102,6 @@ interface Application {
 }
 
 export default function AdminGigsPage() {
-  // Tab state
-  const [activeTab, setActiveTab] = useState<"gigs" | "workshops">("gigs");
-
   // Gig state
   const [gigs, setGigs] = useState<Gig[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -139,6 +137,7 @@ export default function AdminGigsPage() {
     compensation_amount: 0,
     spots: 10,
     event_id: "",
+    is_creator_house: false,
   });
   const [uploadingGallery, setUploadingGallery] = useState(false);
 
@@ -157,9 +156,13 @@ export default function AdminGigsPage() {
 
   async function loadGigs() {
     setLoading(true);
+    // Travel trips (type = "travel") are managed exclusively in /admin/travel —
+    // its form knows travel-specific fields, and publishing here would fire the
+    // all-models announcement blast.
     const { data, error } = await (supabase
       .from("gigs") as any)
       .select("*")
+      .neq("type", "travel")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) {
@@ -396,6 +399,7 @@ export default function AdminGigsPage() {
       compensation_amount: 0,
       spots: 10,
       event_id: "",
+      is_creator_house: false,
     });
     setEditingGig(null);
     setShowForm(false);
@@ -442,6 +446,7 @@ export default function AdminGigsPage() {
       compensation_amount: (gig.compensation_amount || 0) / 100,
       spots: gig.spots || 10,
       event_id: gig.event_id || "",
+      is_creator_house: gig.is_creator_house || false,
     });
     setShowForm(true);
   }
@@ -614,6 +619,7 @@ export default function AdminGigsPage() {
             compensation_amount: formData.compensation_amount * 100,
             spots: formData.spots,
             event_id: formData.event_id || null,
+            is_creator_house: formData.is_creator_house,
           })
           .eq("id", editingGig.id);
 
@@ -645,6 +651,7 @@ export default function AdminGigsPage() {
             status: "draft",
             visibility: "public",
             event_id: formData.event_id || null,
+            is_creator_house: formData.is_creator_house,
           });
 
         if (error) throw error;
@@ -789,7 +796,7 @@ export default function AdminGigsPage() {
             }
           }
 
-          const isCreatorHouse = gig?.title?.toLowerCase().includes("creator house");
+          const isCreatorHouse = !!gig?.is_creator_house;
 
           await fetch("/api/admin/send-gig-notification", {
             method: "POST",
@@ -851,53 +858,34 @@ export default function AdminGigsPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold exa-gradient-text">
-              {activeTab === "gigs" ? "Manage Gigs" : "Manage Workshops"}
-            </h1>
+            <h1 className="text-3xl font-bold exa-gradient-text">Manage Gigs</h1>
             <p className="text-xs text-white/40 mt-1">
-              {activeTab === "gigs" ? `${gigs.length} gig${gigs.length !== 1 ? "s" : ""} total` : "Training workshops"}
+              {`${gigs.length} gig${gigs.length !== 1 ? "s" : ""} total`}
             </p>
           </div>
         </div>
-        {activeTab === "gigs" && (
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/travel">
+              <Plane className="h-4 w-4 mr-2" />
+              Travel Trips
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/workshops">
+              <GraduationCap className="h-4 w-4 mr-2" />
+              Workshops
+            </Link>
+          </Button>
           <Button onClick={() => { resetForm(); setShowForm(true); }} className="exa-gradient-button border-0">
             <Plus className="h-4 w-4 mr-2" />
             Create Gig
           </Button>
-        )}
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 rounded-xl w-fit bg-black/40 border border-white/[0.07]">
-        <button
-          onClick={() => setActiveTab("gigs")}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${
-            activeTab === "gigs"
-              ? "bg-pink-500/20 text-pink-300 border border-pink-500/30"
-              : "text-white/40 hover:text-white/70 hover:bg-white/[0.05]"
-          }`}
-        >
-          <Sparkles className="h-4 w-4" />
-          Gigs
-        </button>
-        <button
-          onClick={() => setActiveTab("workshops")}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${
-            activeTab === "workshops"
-              ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
-              : "text-white/40 hover:text-white/70 hover:bg-white/[0.05]"
-          }`}
-        >
-          <GraduationCap className="h-4 w-4" />
-          Workshops
-        </button>
-      </div>
-
-      {/* Gigs Tab Content */}
-      {activeTab === "gigs" && (
-        <>
-          {/* Create/Edit Form */}
-          {showForm && (
+      {/* Create/Edit Form */}
+      {showForm && (
         <div className="glass-card rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-white/[0.06]">
             <h2 className="font-semibold text-white/85">{editingGig ? "Edit Gig" : "Create New Gig"}</h2>
@@ -930,7 +918,6 @@ export default function AdminGigsPage() {
                     <SelectContent>
                       <SelectItem value="show">Show</SelectItem>
                       <SelectItem value="photoshoot">Photoshoot</SelectItem>
-                      <SelectItem value="travel">Travel</SelectItem>
                       <SelectItem value="campaign">Campaign</SelectItem>
                       <SelectItem value="content">Content</SelectItem>
                       <SelectItem value="hosting">Hosting</SelectItem>
@@ -966,6 +953,23 @@ export default function AdminGigsPage() {
                   </p>
                 </div>
               )}
+
+              {/* Creator House flag */}
+              <label htmlFor="is_creator_house" className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] border border-white/10 cursor-pointer">
+                <input
+                  id="is_creator_house"
+                  type="checkbox"
+                  checked={formData.is_creator_house}
+                  onChange={(e) => setFormData({ ...formData, is_creator_house: e.target.checked })}
+                  className="mt-0.5 h-4 w-4 accent-pink-500"
+                />
+                <span>
+                  <span className="block text-sm font-medium">Creator House gig (paid spot)</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Accepted models pay $1,400 to secure their spot — acceptance sends the payment email and the gig page shows checkout instead of a plain confirmation.
+                  </span>
+                </span>
+              </label>
 
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
@@ -1375,13 +1379,6 @@ export default function AdminGigsPage() {
           onSendMassEmail={async () => {}}
         />
       </div>
-        </>
-      )}
-
-      {/* Workshops Tab Content */}
-      {activeTab === "workshops" && (
-        <WorkshopsPanel />
-      )}
 
       {/* Gig Preview Modal */}
       <GigPreviewModal
