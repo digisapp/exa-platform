@@ -79,7 +79,7 @@ export default function AdminRatePage() {
 
   // Filters
   const [stateFilter, setStateFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("visible_pending");
+  const [statusFilter, setStatusFilter] = useState<string>("visible");
 
   // Swipe animation
   const x = useMotionValue(0);
@@ -92,27 +92,31 @@ export default function AdminRatePage() {
   const loadModels = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from("models")
-        .select("*")
-        .is("admin_rating", null)
-        .order("instagram_followers", { ascending: false, nullsFirst: false });
+      // Only models that can appear in public feeds are worth rating: must have
+      // a profile photo and not be soft-deleted. Same base filters drive the
+      // deck and both counters so the progress bar matches the active pool.
+      const applyPoolFilters = (q: any) => {
+        q = q.is("deleted_at", null).not("profile_photo_url", "is", null);
+        if (statusFilter === "visible_pending") {
+          q = q.eq("is_approved", true).not("invite_token", "is", null).is("user_id", null);
+        } else if (statusFilter === "visible") {
+          q = q.eq("is_approved", true);
+        } else if (statusFilter === "all_pending") {
+          q = q.not("invite_token", "is", null).is("user_id", null);
+        }
+        if (stateFilter !== "all") {
+          q = q.eq("state", stateFilter);
+        }
+        return q;
+      };
 
-      // Status filter
-      if (statusFilter === "visible_pending") {
-        query = query.eq("is_approved", true).not("invite_token", "is", null).is("user_id", null);
-      } else if (statusFilter === "visible") {
-        query = query.eq("is_approved", true);
-      } else if (statusFilter === "all_pending") {
-        query = query.not("invite_token", "is", null).is("user_id", null);
-      }
-
-      // State filter
-      if (stateFilter !== "all") {
-        query = query.eq("state", stateFilter);
-      }
-
-      query = query.limit(100);
+      const query = applyPoolFilters(
+        supabase
+          .from("models")
+          .select("*")
+          .is("admin_rating", null)
+          .order("instagram_followers", { ascending: false, nullsFirst: false })
+      ).limit(100);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -121,21 +125,19 @@ export default function AdminRatePage() {
       setCurrentIndex(0);
 
       // Get total counts
-      const { count: unratedCount } = await supabase
-        .from("models")
-        .select("*", { count: "exact", head: true })
-        .is("admin_rating", null)
-        .eq("is_approved", true)
-        .not("invite_token", "is", null)
-        .is("user_id", null);
+      const { count: unratedCount } = await applyPoolFilters(
+        supabase
+          .from("models")
+          .select("*", { count: "exact", head: true })
+          .is("admin_rating", null)
+      );
 
-      const { count: ratedCount } = await supabase
-        .from("models")
-        .select("*", { count: "exact", head: true })
-        .not("admin_rating", "is", null)
-        .eq("is_approved", true)
-        .not("invite_token", "is", null)
-        .is("user_id", null);
+      const { count: ratedCount } = await applyPoolFilters(
+        supabase
+          .from("models")
+          .select("*", { count: "exact", head: true })
+          .not("admin_rating", "is", null)
+      );
 
       setTotalUnrated(unratedCount || 0);
       setTotalRated(ratedCount || 0);
@@ -349,7 +351,7 @@ export default function AdminRatePage() {
             <p className="text-muted-foreground mb-4">
               No more unrated models matching your filters.
             </p>
-            <Button onClick={() => { setStateFilter("all"); setStatusFilter("visible_pending"); }}>
+            <Button onClick={() => { setStateFilter("all"); setStatusFilter("visible"); }}>
               Clear Filters
             </Button>
           </div>
