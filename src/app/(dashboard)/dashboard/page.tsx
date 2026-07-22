@@ -34,12 +34,48 @@ import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { ProfilePhotoBanner } from "@/components/dashboard/ProfilePhotoBanner";
-import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
+import { AvailabilityToggle } from "@/components/dashboard/AvailabilityToggle";
+import { NudgeSlot } from "@/components/dashboard/NudgeSlot";
+import { PayoutSetupPrompt } from "@/components/dashboard/PayoutSetupPrompt";
+import { PushNudgeCard } from "@/components/dashboard/PushNudgeCard";
+import { MODEL_EARNING_ACTIONS, PAYOUT_NUDGE_MIN_COINS } from "@/lib/coin-config";
+import { SpotlightAdmirers } from "@/components/dashboard/SpotlightAdmirers";
 import { CastingReadiness } from "@/components/dashboard/CastingReadiness";
 import { computeCastingReadiness } from "@/lib/casting-readiness";
 import { WelcomeBackPulse } from "@/components/dashboard/WelcomeBackPulse";
 import { computeWelcomeBackPulse } from "@/lib/welcome-back";
 import { getHeroPortrait } from "@/lib/hero-portrait";
+
+// Earned-this-month KPI: sum ledger rows for the current CALENDAR month,
+// filtered to MODEL_EARNING_ACTIONS (a model's own `purchase` rows and
+// fan-spend actions must not inflate "earned"; negative clawback reversals
+// net out — no amount filter, per the coin-config contract).
+//
+// Deliberately NOT get_earnings_summary: that RPC self-authorizes on
+// auth.uid() (20260708000003), which is NULL under this page's service-role
+// client, so it silently returns an empty set — and it also counts every
+// positive action incl. purchases over a rolling month, which is a
+// different number. Paged in 1000s because PostgREST max_rows silently
+// truncates any larger response.
+async function sumEarningsThisMonth(admin: any, actorId: string): Promise<number> {
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  const PAGE = 1000;
+  let total = 0;
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await (admin.from("coin_transactions") as any)
+      .select("amount")
+      .eq("actor_id", actorId)
+      .in("action", MODEL_EARNING_ACTIONS as unknown as string[])
+      .gte("created_at", monthStart)
+      .order("created_at", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error || !data) break;
+    total += data.reduce((sum: number, row: any) => sum + (row.amount || 0), 0);
+    if (data.length < PAGE) break;
+  }
+  return total;
+}
 
 // Helper function to format relative time
 function getTimeAgo(dateString: string): string {
@@ -112,14 +148,20 @@ export default async function DashboardPage() {
 
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
 
   const [
     { data: allBookings },
     { data: rawPortfolioPhotos },
     { count: followerCount },
     { count: views30d },
+    earningsThisMonth,
+    { count: bankAccountCount },
+    { data: payoneerAccount },
     castingReadiness,
     welcomeBack,
+    { count: weekSpotlightLikes },
   ] = await Promise.all([
     // Get pending bookings for this model - use adminClient to bypass RLS
     (adminClient.from("bookings") as any)
@@ -144,6 +186,25 @@ export default async function DashboardPage() {
       .select("*", { count: "exact", head: true })
       .eq("model_id", model.id)
       .gte("view_date", thirtyDaysAgo.toISOString().split("T")[0]),
+    // Earned-this-month KPI (identity header, taps to /wallet)
+    sumEarningsThisMonth(adminClient, actor.id),
+    // Payout-nudge eligibility: is any payout method on file?
+    // (bank_accounts + payoneer_accounts queries were removed in #73 —
+    // re-added here as cheap aggregates; zelle_info rides on the model row.)
+    // Only worth asking when the balance clears the nudge threshold — below
+    // it the nudge never renders, so skip both queries.
+    (model.coin_balance || 0) >= PAYOUT_NUDGE_MIN_COINS
+      ? (adminClient.from("bank_accounts") as any)
+          .select("id", { count: "exact", head: true })
+          .eq("model_id", model.id)
+      : Promise.resolve({ count: 0 }),
+    (model.coin_balance || 0) >= PAYOUT_NUDGE_MIN_COINS
+      ? (adminClient.from("payoneer_accounts") as any)
+          .select("id, can_receive_payments")
+          .eq("model_id", model.id)
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
     // Runway Ready meter — model row already loaded above, pass it through
     computeCastingReadiness(adminClient, model.id, model),
     // Welcome-back pulse — model.last_active_at is still the PREVIOUS visit
@@ -154,7 +215,29 @@ export default async function DashboardPage() {
       actorId: actor.id,
       lastActiveAt: model.last_active_at ?? null,
     }),
+    // Spotlight likes, AGGREGATE ONLY (weekly; all-time fetched below) —
+    // fan-side Spotlight markets right-swipes as anonymous, so no identities
+    // ever reach this page. Service client: top_model_votes has no
+    // model-facing read path worth relying on, and resolving anything
+    // further would cross fans RLS. Same query shape as welcome-back.ts /
+    // weekly-digest.
+    (adminClient.from("top_model_votes") as any)
+      .select("id", { count: "exact", head: true })
+      .eq("model_id", model.id)
+      .eq("vote_type", "like")
+      .gte("created_at", weekAgo.toISOString()),
   ]);
+
+  // All-time Spotlight likes back the Admirers card, which only renders on a
+  // non-zero week — skip the full-table count for the (typical) zero week.
+  let allTimeSpotlightLikes = 0;
+  if ((weekSpotlightLikes || 0) > 0) {
+    const { count } = await (adminClient.from("top_model_votes") as any)
+      .select("id", { count: "exact", head: true })
+      .eq("model_id", model.id)
+      .eq("vote_type", "like");
+    allTimeSpotlightLikes = count || 0;
+  }
 
   // Filter for pending/counter bookings in JS
   const pendingBookings = (allBookings || []).filter(
@@ -610,30 +693,6 @@ export default async function DashboardPage() {
     ? `${model.first_name} ${model.last_name || ""}`.trim()
     : model.username || "Model";
 
-  const checklistSteps = [
-    {
-      key: "photo",
-      title: "Add your profile photo",
-      description: "You won't appear on EXA until you add one — it's what makes you visible to brands and fans.",
-      href: "/settings",
-      done: Boolean(model.profile_photo_url),
-    },
-    {
-      key: "profile",
-      title: "Write your bio",
-      description: "Tell brands and fans who you are and what you're looking for.",
-      href: "/settings",
-      done: Boolean(model.bio),
-    },
-    {
-      key: "portfolio",
-      title: "Upload portfolio photos",
-      description: "Your best shots power your public profile and gig applications.",
-      href: "/studio",
-      done: portfolioPhotos.length > 0,
-    },
-  ];
-
   // Priority inbox placement: an item in the inbox (offer, booking, bid) is
   // money waiting and outranks browsing gigs, so a non-empty inbox renders
   // above Gigs for You; the empty state stays tucked below.
@@ -751,7 +810,47 @@ export default async function DashboardPage() {
         portfolioPhotos={portfolioPhotos}
         followerCount={followerCount || 0}
         views30d={views30d || 0}
+        earningsThisMonth={earningsThisMonth || 0}
+        identityExtra={
+          // Compact pill, not a card (dashboard declutter convention).
+          // Writes via the service-role /api/model/availability route.
+          <AvailabilityToggle initialAvailable={!!model.available_for_calls} />
+        }
       />
+
+      {/* ──────────────────────────────────────────────────────
+          NUDGE SLOT — at most ONE of the cards inside renders per page
+          view (declutter convention: the owner deleted nudge piles
+          twice). Child order = priority: payout money beats push. Each
+          card still runs its own client checks (localStorage snooze,
+          Notification.permission) and only claims the slot when it
+          would actually show, so a snoozed payout card lets push win.
+         ────────────────────────────────────────────────────── */}
+      <NudgeSlot>
+        {/* PAYOUT NUDGE v2 — single dismissible row, only when there is
+            real money (>= first-cashout minimum) AND no payout method on
+            file. Eligibility resolved here server-side; the component only
+            handles dismissal (14-day localStorage snooze). Not a repeat of
+            #73's mistake: no identity/pending states re-implemented — it
+            just points at /wallet, which owns all of that. */}
+        {(model.coin_balance || 0) >= PAYOUT_NUDGE_MIN_COINS &&
+          !model.zelle_info &&
+          (bankAccountCount || 0) === 0 &&
+          !payoneerAccount?.can_receive_payments && (
+            <PayoutSetupPrompt
+              coins={model.coin_balance || 0}
+              needsIdentity={!model.identity_verified_at}
+            />
+          )}
+        {/* PUSH NUDGE — only for models with money on the books (earned
+            this month OR live balance — cheapest proxy for "has ever
+            earned", both already computed above). The component itself
+            requires push support + permission still undecided + not
+            snoozed before claiming the slot. */}
+        {((earningsThisMonth || 0) > 0 || (model.coin_balance || 0) > 0) && (
+          <PushNudgeCard />
+        )}
+      </NudgeSlot>
 
       {/* ──────────────────────────────────────────────────────
           WELCOME BACK — only for genuinely returning models
@@ -763,7 +862,7 @@ export default async function DashboardPage() {
 
       {/* ──────────────────────────────────────────────────────
           UPCOMING TRIPS — accepted EXA Travel trips; unconfirmed
-          spots need action so this sits above the checklist
+          spots need action so this sits above the Runway Ready meter
          ────────────────────────────────────────────────────── */}
       {upcomingTrips.length > 0 && (
         <section className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-transparent overflow-hidden">
@@ -804,12 +903,8 @@ export default async function DashboardPage() {
       )}
 
       {/* ──────────────────────────────────────────────────────
-          GETTING STARTED — renders only while steps remain
-         ────────────────────────────────────────────────────── */}
-      <GettingStartedChecklist steps={checklistSteps} />
-
-      {/* ──────────────────────────────────────────────────────
-          RUNWAY READY — casting readiness meter
+          RUNWAY READY — the single onboarding/readiness meter
+          (absorbed the old GettingStartedChecklist, 2026-07-22)
          ────────────────────────────────────────────────────── */}
       <CastingReadiness
         score={castingReadiness.score}
@@ -842,6 +937,18 @@ export default async function DashboardPage() {
       <div className="lg:hidden" data-live-wall>
         <LiveWallServer actorId={actor.id} actorType={actor.type} />
       </div>
+
+      {/* ──────────────────────────────────────────────────────
+          SPOTLIGHT ADMIRERS — aggregate-only likes card + thank-you
+          blast CTA. Informational (sits by Activity, NOT in the
+          NudgeSlot); renders nothing on a zero week (declutter).
+         ────────────────────────────────────────────────────── */}
+      {(weekSpotlightLikes || 0) > 0 && (
+        <SpotlightAdmirers
+          weekLikes={weekSpotlightLikes || 0}
+          allTimeLikes={allTimeSpotlightLikes || 0}
+        />
+      )}
 
       {/* ──────────────────────────────────────────────────────
           ACTIVITY — full-width

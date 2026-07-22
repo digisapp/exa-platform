@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateRoomName, generateToken } from "@/lib/livekit";
 import { sendVideoCallRequestEmail } from "@/lib/email";
 import { sendIncomingCallSMS } from "@/lib/sms";
+import { sendPushToActor } from "@/lib/push";
+import { isReachableForCalls } from "@/lib/call-availability";
 import { CALL_RATE_LIMITS } from "@/types/video-calls";
 import { z } from "zod";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -59,7 +61,11 @@ export async function POST(request: NextRequest) {
     if (suspended) return suspended;
 
     let recipientActor: { id: string } | null = null;
-    let recipientModel: { id: string; username: string | null; first_name: string | null; user_id: string | null; video_call_rate: number | null; voice_call_rate: number | null; email?: string | null; phone?: string | null; video_is_online?: boolean | null; preferred_language?: string | null } | null = null;
+    let recipientModel: { id: string; username: string | null; first_name: string | null; user_id: string | null; video_call_rate: number | null; voice_call_rate: number | null; email?: string | null; phone?: string | null; video_is_online?: boolean | null; available_for_calls?: boolean | null; preferred_language?: string | null } | null = null;
+    // True only when the recipient resolved to a real models row (the
+    // conversation path can also target a fan, for whom the reachability
+    // gate must not apply).
+    let recipientIsModel = false;
     let conversationId: string | null = providedConversationId || null;
 
     // If conversationId provided, get recipient from conversation
@@ -101,12 +107,13 @@ export async function POST(request: NextRequest) {
         // Try to get model info (might be a model or fan)
         const { data: model } = await supabase
           .from("models")
-          .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, phone, video_is_online, preferred_language")
+          .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, phone, video_is_online, available_for_calls, preferred_language")
           .eq("user_id", recipientActorData.user_id)
           .single();
 
         if (model) {
           recipientModel = model;
+          recipientIsModel = true;
         } else {
           // Recipient is a fan, set default values
           recipientModel = {
@@ -123,7 +130,7 @@ export async function POST(request: NextRequest) {
       // Use recipientUsername to find recipient
       const { data: model } = await supabase
         .from("models")
-        .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, phone, video_is_online, preferred_language")
+        .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, phone, video_is_online, available_for_calls, preferred_language")
         .eq("username", recipientUsername)
         .eq("is_approved", true)
         .single();
@@ -133,6 +140,7 @@ export async function POST(request: NextRequest) {
       }
 
       recipientModel = model;
+      recipientIsModel = true;
 
       // Get recipient's actor
       const { data: actor } = await supabase
@@ -152,13 +160,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
     }
 
-    // Don't let a fan start a call into dead air. If the model isn't currently
-    // online (offline-models cron flips this off after ~2 min of inactivity),
-    // return a clear, actionable error instead of a call that just hangs until
-    // it auto-declines. Only gates fans calling real models.
-    if (callerActor.type === "fan" && recipientModel.video_is_online === false) {
+    // Don't let a fan start a call into dead air. Reachable = video_is_online
+    // (on-site heartbeat, cleared by the offline-models cron after ~2 min)
+    // OR available_for_calls (the manual toggle — an available model gets
+    // rung via email/SMS/push even without an open tab). Only gates fans
+    // calling real models.
+    if (callerActor.type === "fan" && recipientIsModel && !isReachableForCalls(recipientModel)) {
       return NextResponse.json({
-        error: `${recipientModel.username || "This model"} is offline right now. Try again when they're online, or send a message.`,
+        error: `${recipientModel.username || "This model"} isn't taking calls right now. Try again when they're available, or send a message.`,
         code: "recipient_offline",
       }, { status: 409 });
     }
@@ -323,6 +332,21 @@ export async function POST(request: NextRequest) {
         recipientModel.preferred_language || "en"
       ).catch((err) => logger.error(`Failed to send ${callType} call SMS`, err));
     }
+
+    // Web push ring (non-blocking): reaches a closed tab the instant the call
+    // starts — the whole point of available_for_calls. Gated per-actor by the
+    // push_preferences 'calls' toggle inside sendPushToActor; no-op without
+    // subscriptions. Same tag per session so a re-ring replaces, not stacks.
+    sendPushToActor(
+      recipientActor.id,
+      {
+        title: callType === "voice" ? "Incoming voice call" : "Incoming video call",
+        body: `${callerName} is calling you now${requiresCoins ? ` · ${callRate} coins/min` : ""} — tap to answer.`,
+        url: `/chats/${conversationId}`,
+        tag: `call-${session.id}`,
+      },
+      "calls"
+    ).catch((err) => logger.error(`Failed to send ${callType} call push`, err));
 
     return NextResponse.json({
       sessionId: session.id,

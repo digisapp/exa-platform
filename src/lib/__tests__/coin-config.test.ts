@@ -5,9 +5,24 @@ import {
   usdToCoins,
   formatUsd,
   formatCoins,
+  messageCoinCost,
+  minWithdrawalCoins,
   COIN_USD_RATE,
   MIN_WITHDRAWAL_COINS,
   MIN_WITHDRAWAL_USD,
+  FIRST_CASHOUT_MIN_COINS,
+  FIRST_CASHOUT_MIN_USD,
+  PAYOUT_NUDGE_MIN_COINS,
+  DEFAULT_MESSAGE_COST,
+  CONTENT_UNLOCK_MIN_COINS,
+  CONTENT_PRICE_MAX_COINS,
+  CONTENT_UNLOCK_DEFAULT_COINS,
+  CHAT_MEDIA_MIN_COINS,
+  CHAT_MEDIA_MAX_COINS,
+  MESSAGE_RATE_MIN_COINS,
+  MESSAGE_RATE_MAX_COINS,
+  CALL_RATE_MIN_COINS,
+  CALL_RATE_MAX_COINS,
 } from "../coin-config";
 
 describe("coinsToUsd", () => {
@@ -127,5 +142,77 @@ describe("constants", () => {
 
   it("MIN_WITHDRAWAL_USD equals coins * rate", () => {
     expect(MIN_WITHDRAWAL_USD).toBe(MIN_WITHDRAWAL_COINS * COIN_USD_RATE);
+  });
+
+  // These mirror hard-coded values in migration 20260722000801 (the
+  // withdrawal_requests CHECK constraint + both withdrawal RPCs) — if a
+  // test here fails after an edit, the DB gates must change in lockstep.
+  it("FIRST_CASHOUT_MIN_COINS is 100 ($10)", () => {
+    expect(FIRST_CASHOUT_MIN_COINS).toBe(100);
+    expect(FIRST_CASHOUT_MIN_USD).toBe(FIRST_CASHOUT_MIN_COINS * COIN_USD_RATE);
+    expect(FIRST_CASHOUT_MIN_USD).toBeCloseTo(10);
+  });
+
+  it("payout nudge gate matches the first-cashout minimum", () => {
+    expect(PAYOUT_NUDGE_MIN_COINS).toBe(FIRST_CASHOUT_MIN_COINS);
+  });
+});
+
+describe("minWithdrawalCoins", () => {
+  it("first-ever cashout unlocks at 100 coins", () => {
+    expect(minWithdrawalCoins(false)).toBe(FIRST_CASHOUT_MIN_COINS);
+  });
+
+  it("repeat cashouts stay at the 500-coin minimum", () => {
+    expect(minWithdrawalCoins(true)).toBe(MIN_WITHDRAWAL_COINS);
+  });
+});
+
+describe("pricing floors / defaults / caps", () => {
+  it("content unlock floor is 5 coins (raised from 1 on 2026-07-22, forward-only)", () => {
+    expect(CONTENT_UNLOCK_MIN_COINS).toBe(5);
+  });
+
+  it("content price cap is 10,000 coins", () => {
+    expect(CONTENT_PRICE_MAX_COINS).toBe(10000);
+  });
+
+  it("content unlock default is 100 coins, inside the floor/cap range", () => {
+    expect(CONTENT_UNLOCK_DEFAULT_COINS).toBe(100);
+    expect(CONTENT_UNLOCK_DEFAULT_COINS).toBeGreaterThanOrEqual(CONTENT_UNLOCK_MIN_COINS);
+    expect(CONTENT_UNLOCK_DEFAULT_COINS).toBeLessThanOrEqual(CONTENT_PRICE_MAX_COINS);
+  });
+
+  it("chat media price range is 10–10,000 coins", () => {
+    expect(CHAT_MEDIA_MIN_COINS).toBe(10);
+    expect(CHAT_MEDIA_MAX_COINS).toBe(10000);
+  });
+
+  it("message rate floor is owned by DEFAULT_MESSAGE_COST (5 coins), cap 100", () => {
+    expect(MESSAGE_RATE_MIN_COINS).toBe(DEFAULT_MESSAGE_COST);
+    expect(MESSAGE_RATE_MIN_COINS).toBe(5);
+    expect(MESSAGE_RATE_MAX_COINS).toBe(100);
+  });
+
+  it("call rate range is 10–1,000 coins", () => {
+    expect(CALL_RATE_MIN_COINS).toBe(10);
+    expect(CALL_RATE_MAX_COINS).toBe(1000);
+  });
+});
+
+describe("messageCoinCost", () => {
+  it("falls back to the floor when the model has no rate", () => {
+    expect(messageCoinCost(null)).toBe(MESSAGE_RATE_MIN_COINS);
+    expect(messageCoinCost(undefined)).toBe(MESSAGE_RATE_MIN_COINS);
+  });
+
+  it("floors sub-floor rates", () => {
+    expect(messageCoinCost(0)).toBe(MESSAGE_RATE_MIN_COINS);
+    expect(messageCoinCost(3)).toBe(MESSAGE_RATE_MIN_COINS);
+  });
+
+  it("passes through rates at or above the floor", () => {
+    expect(messageCoinCost(5)).toBe(5);
+    expect(messageCoinCost(25)).toBe(25);
   });
 });

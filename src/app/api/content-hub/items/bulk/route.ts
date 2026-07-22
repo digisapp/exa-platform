@@ -9,15 +9,29 @@ import {
   isContentMediaPath,
   syncContentItemStorageForStatus,
 } from "@/lib/content-media";
+import { CONTENT_PRICE_MAX_COINS, CONTENT_UNLOCK_MIN_COINS } from "@/lib/coin-config";
 
-const bulkSchema = z.object({
-  ids: z.array(z.string().uuid()).min(1).max(50),
-  action: z.enum(["update_status", "update_price", "delete", "add_tag", "remove_tag", "set_set"]),
-  status: z.enum(["private", "portfolio", "exclusive"]).optional(),
-  coin_price: z.number().int().min(0).max(10000).optional(),
-  tag: z.string().optional(),
-  set_id: z.string().uuid().nullable().optional(),
-});
+const bulkSchema = z
+  .object({
+    ids: z.array(z.string().uuid()).min(1).max(50),
+    action: z.enum(["update_status", "update_price", "delete", "add_tag", "remove_tag", "set_set"]),
+    status: z.enum(["private", "portfolio", "exclusive"]).optional(),
+    coin_price: z.number().int().min(0).max(CONTENT_PRICE_MAX_COINS).optional(),
+    tag: z.string().optional(),
+    set_id: z.string().uuid().nullable().optional(),
+  })
+  // Flipping items to Pay to Unlock must carry an at-or-above-floor price in
+  // the same call — otherwise items keep their old price (often 0, which every
+  // fan-facing query filters out). The studio UI always sends both together.
+  .refine(
+    (d) =>
+      !(d.action === "update_status" && d.status === "exclusive") ||
+      (d.coin_price !== undefined && d.coin_price >= CONTENT_UNLOCK_MIN_COINS),
+    {
+      message: `Paid content needs a coin price of at least ${CONTENT_UNLOCK_MIN_COINS}`,
+      path: ["coin_price"],
+    }
+  );
 
 export async function POST(request: NextRequest) {
   try {
@@ -119,6 +133,16 @@ export async function POST(request: NextRequest) {
       case "update_price": {
         if (coin_price === undefined) {
           return NextResponse.json({ error: "coin_price is required for update_price" }, { status: 400 });
+        }
+        // Items that are Pay to Unlock must stay at or above the content floor
+        if (
+          coin_price < CONTENT_UNLOCK_MIN_COINS &&
+          items.some((item: any) => item.status === "exclusive")
+        ) {
+          return NextResponse.json(
+            { error: `Paid content needs a coin price of at least ${CONTENT_UNLOCK_MIN_COINS}` },
+            { status: 400 }
+          );
         }
         ({ error } = await service
           .from("content_items")

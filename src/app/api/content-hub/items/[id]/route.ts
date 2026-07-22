@@ -10,12 +10,13 @@ import {
   signContentMediaUrls,
   syncContentItemStorageForStatus,
 } from "@/lib/content-media";
+import { CONTENT_PRICE_MAX_COINS, CONTENT_UNLOCK_MIN_COINS } from "@/lib/coin-config";
 
 const updateItemSchema = z.object({
   title: z.string().max(200).optional().nullable(),
   description: z.string().max(1000).optional().nullable(),
   status: z.enum(["private", "portfolio", "exclusive"]).optional(),
-  coin_price: z.number().int().min(0).max(10000).optional(),
+  coin_price: z.number().int().min(0).max(CONTENT_PRICE_MAX_COINS).optional(),
   tags: z.array(z.string()).optional().nullable(),
   publish_at: z.string().datetime().optional().nullable(),
   set_id: z.string().uuid().optional().nullable(),
@@ -69,13 +70,14 @@ export async function PATCH(
       );
     }
 
-    // 0-coin PPV items are filtered out of every fan-facing query — reject the
-    // resulting state instead of silently hiding the item
+    // Reject a resulting sub-floor paid state instead of silently hiding the
+    // item (fan-facing queries filter coin_price > 0). Forward-only floor:
+    // editing a grandfathered sub-floor item forces re-pricing to the floor.
     const nextStatus = parsed.data.status ?? existing.status;
     const nextPrice = parsed.data.coin_price ?? existing.coin_price ?? 0;
-    if (nextStatus === "exclusive" && nextPrice < 1) {
+    if (nextStatus === "exclusive" && nextPrice < CONTENT_UNLOCK_MIN_COINS) {
       return NextResponse.json(
-        { error: "PPV content needs a coin price of at least 1" },
+        { error: `Paid content needs a coin price of at least ${CONTENT_UNLOCK_MIN_COINS}` },
         { status: 400 }
       );
     }

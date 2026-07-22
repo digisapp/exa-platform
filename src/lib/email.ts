@@ -136,11 +136,13 @@ export async function sendModelApprovalEmail({
     const steps = isSpanish ? [
       { title: "Agrega Tu Foto de Perfil", desc: "No apareces en EXA hasta que tengas una — es lo que te hace visible para marcas y fans." },
       { title: "Completa Tu Perfil", desc: "Agrega tu bio, medidas y fotos de portafolio para destacar." },
+      { title: "Establece Tus Tarifas", desc: "Los fans no pueden enviarte mensajes ni llamarte hasta que fijes una tarifa — hazlo en examodels.com/settings?tab=rates." },
       { title: "Explora Gigs y Oportunidades", desc: "Encuentra trabajos de modelaje, colaboraciones con marcas y oportunidades pagadas." },
       { title: "Gana Monedas y Cobra", desc: "Recibe propinas de fans, vende contenido premium y retira tus ganancias." },
     ] : [
       { title: "Add Your Profile Photo", desc: "You won't appear on EXA until you have one — it's what makes you visible to brands and fans." },
       { title: "Complete Your Profile", desc: "Add your bio, measurements, and portfolio photos to stand out." },
+      { title: "Set Your Rates", desc: "Fans can't message or call you until a rate is set — do it at examodels.com/settings?tab=rates." },
       { title: "Browse Gigs & Opportunities", desc: "Find modeling gigs, brand collaborations, and paid opportunities." },
       { title: "Earn Coins & Get Paid", desc: "Receive tips from fans, sell premium content, and cash out your earnings." },
     ];
@@ -2054,6 +2056,149 @@ export async function sendVideoCallRequestEmail({
   }
 }
 
+// Missed-call recovery: a fan rang and the model never picked up. ONE email
+// per model per 6h window (deduped via chat_nudges_sent 'missed_call' in the
+// sweep-stale-calls notify pass) — positive re-engagement, never a scold.
+// callerName is the fan's @username/display_name (fans have no real names on
+// file); the model is greeted by their own first name (own-inbox exception).
+export async function sendMissedCallEmail({
+  to,
+  modelName,
+  callerName,
+  callType = "video",
+  callRate,
+  missedAt,
+}: {
+  to: string;
+  modelName: string;
+  callerName: string;
+  callType?: "video" | "voice";
+  callRate: number;
+  missedAt?: string | Date | null;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      logger.info("Skipping missed call email - recipient is unsubscribed", { to });
+      return;
+    }
+    const resend = getResendClient();
+    const dashboardUrl = `${BASE_URL}/dashboard`;
+    const callTypeLabel = callType === "voice" ? "voice" : "video";
+    const missedAtLabel = missedAt
+      ? new Date(missedAt).toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          timeZone: "America/New_York",
+          timeZoneName: "short",
+        })
+      : null;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: `💜 ${callerName} tried to ${callTypeLabel} call you`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <p style="margin: 0; font-size: 48px;">📞</p>
+              <h1 style="margin: 10px 0 0; color: white; font-size: 24px; font-weight: bold;">
+                A fan tried to reach you!
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${escapeHtml(modelName)}! ✨
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #ffffff;">${escapeHtml(callerName)}</strong> tried to ${callTypeLabel} call you${missedAtLabel ? ` at <strong style="color: #ffffff;">${escapeHtml(missedAtLabel)}</strong>` : " just now"}, but the call rang out. Fans who call once almost always try again — be ready for the next one.
+              </p>
+
+              ${callRate > 0 ? `
+              <!-- Potential earnings -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px; text-align: center;">
+                    <p style="margin: 0 0 5px; color: #71717a; font-size: 14px;">Every minute on a call earns you</p>
+                    <p style="margin: 0; color: #ec4899; font-size: 28px; font-weight: bold;">${callRate} coins/min</p>
+                  </td>
+                </tr>
+              </table>
+              ` : ""}
+
+              <!-- Go available tip -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #1e1b4b; border-radius: 8px; border-left: 3px solid #8b5cf6;">
+                    <p style="margin: 0; color: #c4b5fd; font-size: 14px; line-height: 1.6;">
+                      💡 Flip on <strong style="color: #ffffff;">Available for calls</strong> on your dashboard and fans can ring you even when you're not on EXA — we'll ping you the moment a call comes in.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Go Available for Calls
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
 // Send email when model receives a new offer
 export async function sendOfferReceivedEmail({
   to,
@@ -2951,6 +3096,162 @@ export async function sendOfferReminderEmail({
   }
 }
 
+// Offer-expiry reminder — sent by /api/cron/offer-reminders (second pass) to
+// models with an UNANSWERED offer whose window is closing: dated offers
+// 24-48h before event_date, undated offers 5-6 days after they arrived.
+// ONE send per response, deduped via offer_responses.expiry_reminder_sent_at.
+// Positive respond-nudge only (never "you missed out" language) and
+// @username greeting per the model-name-privacy convention.
+export async function sendOfferExpiryReminderEmail({
+  to,
+  username,
+  offerTitle,
+  brandName,
+  eventDate,
+  eventTime,
+  location,
+  compensation,
+  offerId,
+}: {
+  to: string;
+  username: string;
+  offerTitle: string;
+  brandName: string;
+  /** Pre-formatted date string; omitted for undated offers. */
+  eventDate?: string;
+  eventTime?: string;
+  location?: string;
+  compensation?: string;
+  offerId: string;
+}) {
+  try {
+    // Notification-class like the other offer emails (received / event
+    // reminder) — this is an actionable nudge about a specific invitation.
+    if (await isEmailUnsubscribed(to, "notification")) {
+      logger.info("Skipping offer expiry reminder email - recipient is unsubscribed", { to });
+      return { success: true, skipped: true };
+    }
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+    const offerUrl = `${BASE_URL}/offers/${offerId}`;
+
+    const subject = eventDate
+      ? `⏳ Still time: ${offerTitle} — ${brandName} is waiting for your answer`
+      : `💌 ${brandName} is waiting to hear from you about ${offerTitle}`;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #09090b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #09090b; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #18181b; border-radius: 16px; overflow: hidden; border: 1px solid #27272a;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 50%, #ec4899 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">
+                An Offer Is Waiting on You ✨
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey @${escapeHtml(username)}! 👋
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #ffffff;">${escapeHtml(brandName)}</strong> sent you an offer and would love an answer${eventDate ? " — the date is coming up fast" : ""}. It only takes a tap to accept or pass.
+              </p>
+
+              <!-- Offer Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 20px;">${escapeHtml(offerTitle)}</h2>
+
+                    ${eventDate ? `
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">📅</td>
+                        <td style="color: #22d3ee; font-size: 16px; font-weight: 600;">${escapeHtml(eventDate)}${eventTime ? ` at ${escapeHtml(eventTime)}` : ""}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+
+                    ${location ? `
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">📍</td>
+                        <td style="color: #ffffff; font-size: 14px;">${escapeHtml(location)}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+
+                    ${compensation ? `
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">💰</td>
+                        <td style="color: #34d399; font-size: 16px; font-weight: 600;">${escapeHtml(compensation)}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+                ${eventDate ? "Offers close once the date passes — lock yours in while it's still open. 🚀" : "A quick yes or no keeps brands coming back with more. 🚀"}
+              </p>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${offerUrl}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #ec4899 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Review &amp; Respond
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Offer expiry reminder email error", error);
+    return { success: false, error };
+  }
+}
+
 // ============================================
 // COIN BALANCE REMINDER EMAIL
 // ============================================
@@ -3279,7 +3580,7 @@ export async function sendCoinBalanceReminderEmail({
               </table>
 
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6; text-align: center;">
-                You've hit the $50 minimum! Withdraw your earnings or tip a model who inspires you.
+                You're past the payout minimum! Withdraw your earnings or tip a model who inspires you. First cashouts unlock at just $10 — after that, the minimum is $50.
               </p>
 
               <!-- CTA Buttons -->
@@ -3347,31 +3648,99 @@ export async function sendCoinBalanceReminderEmail({
   }
 }
 
+// Day-3 / day-10 profile-completion reminder for newly approved claimed
+// models — sent by /api/cron/stalled-new-models. Checklist state comes from
+// computeCastingReadiness (casting-readiness.ts) so the email never nags
+// about something she already finished. Marketing-class: suppressed for
+// marketing-unsubscribed recipients and carries an unsubscribe footer.
 export async function sendProfileCompletionReminderEmail({
   to,
-  modelName,
   username,
-  hasPhoto,
+  dayNumber = 3,
+  checklist,
 }: {
   to: string;
-  modelName: string;
   username: string;
-  hasPhoto: boolean;
+  /** Days since approval (3 or 10) — varies the subject line. */
+  dayNumber?: number;
+  checklist: {
+    profileBasics: boolean;
+    ratesSet: boolean;
+    freshContent: boolean;
+  };
 }) {
   try {
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      return { success: true, skipped: true };
+    }
+
     const resend = getResendClient();
     const dashboardUrl = `${BASE_URL}/dashboard`;
     const profileUrl = `${BASE_URL}/${username}`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
 
-    const photoMessage = hasPhoto
-      ? "We noticed your profile photo could use an upgrade! A high-quality photo helps you stand out to brands and get more bookings."
-      : "We noticed you haven't uploaded a profile photo yet! Adding one is the #1 way to get noticed by brands and fans.";
+    const subject =
+      dayNumber >= 10
+        ? `@${username}, fans are browsing — finish your EXA profile ✨`
+        : `@${username}, your EXA profile is almost ready ✨`;
+
+    const items = [
+      {
+        // Flag = photo && bio (see stalled-new-models' checklist mapping) —
+        // the copy must only promise what the flag actually checks.
+        done: checklist.profileBasics,
+        title: "Add your photo & bio",
+        desc: "Your face and your story — the first things casting sees",
+        href: `${BASE_URL}/settings`,
+        linkLabel: "Complete profile",
+      },
+      {
+        done: checklist.ratesSet,
+        title: "Set your message & call rates",
+        desc: "Fans can't message or call you until a rate is set",
+        href: `${BASE_URL}/settings?tab=rates`,
+        linkLabel: "Set rates",
+      },
+      {
+        done: checklist.freshContent,
+        title: "Post your first photos in Studio",
+        desc: "Profiles with fresh content get seen first",
+        href: `${BASE_URL}/studio`,
+        linkLabel: "Open Studio",
+      },
+    ];
+
+    const checklistHtml = items
+      .map(
+        (item, i) => `
+                <tr>
+                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="width: 30px; vertical-align: middle;">
+                          <span style="color: ${item.done ? "#22c55e" : "#ec4899"}; font-size: 18px; font-weight: bold;">${item.done ? "✓" : `${i + 1}.`}</span>
+                        </td>
+                        <td style="vertical-align: middle;">
+                          <p style="margin: 0; color: ${item.done ? "#71717a" : "#ffffff"}; font-weight: 500;">${item.title}</p>
+                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">${
+                            item.done
+                              ? "Done — nice work!"
+                              : `${item.desc} · <a href="${item.href}" style="color: #a78bfa; text-decoration: underline;">${item.linkLabel}</a>`
+                          }</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="height: 8px;"></td></tr>`
+      )
+      .join("");
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       replyTo: REPLY_TO_EMAIL,
       to: [to],
-      subject: `${modelName}, let's make your EXA profile shine!`,
+      subject,
       html: `
 <!DOCTYPE html>
 <html>
@@ -3392,7 +3761,7 @@ export async function sendProfileCompletionReminderEmail({
                 Complete Your Profile
               </h1>
               <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
-                A few quick updates to get more bookings!
+                A few quick steps and you're fully live
               </p>
             </td>
           </tr>
@@ -3401,13 +3770,13 @@ export async function sendProfileCompletionReminderEmail({
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
-                Hey ${escapeHtml(modelName)}!
+                Hey @${escapeHtml(username)},
               </p>
               <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                ${photoMessage}
+                Your profile is live at <a href="${profileUrl}" style="color: #ec4899; text-decoration: none;">examodels.com/${escapeHtml(username)}</a> — let's make sure fans and casting see you at your best.
               </p>
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                Models with complete profiles get <strong style="color: #ec4899;">5x more views</strong> and are more likely to be featured on our homepage and get booked for gigs!
+                Complete profiles get <strong style="color: #ec4899;">seen first</strong> — in fan feeds, in Spotlight, and when we cast for upcoming shows.
               </p>
 
               <!-- Checklist -->
@@ -3416,76 +3785,7 @@ export async function sendProfileCompletionReminderEmail({
               </h2>
 
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
-                <!-- Item 1 -->
-                <tr>
-                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
-                    <table cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td style="width: 30px; vertical-align: middle;">
-                          <span style="color: #ec4899; font-size: 18px; font-weight: bold;">1.</span>
-                        </td>
-                        <td style="vertical-align: middle;">
-                          <p style="margin: 0; color: #ffffff; font-weight: 500;">Upload a stunning profile photo</p>
-                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">High-quality headshot or professional photo</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr><td style="height: 8px;"></td></tr>
-
-                <!-- Item 2 -->
-                <tr>
-                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
-                    <table cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td style="width: 30px; vertical-align: middle;">
-                          <span style="color: #ec4899; font-size: 18px; font-weight: bold;">2.</span>
-                        </td>
-                        <td style="vertical-align: middle;">
-                          <p style="margin: 0; color: #ffffff; font-weight: 500;">Add your measurements</p>
-                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">Height, bust, waist, hips - brands need these!</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr><td style="height: 8px;"></td></tr>
-
-                <!-- Item 3 -->
-                <tr>
-                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
-                    <table cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td style="width: 30px; vertical-align: middle;">
-                          <span style="color: #ec4899; font-size: 18px; font-weight: bold;">3.</span>
-                        </td>
-                        <td style="vertical-align: middle;">
-                          <p style="margin: 0; color: #ffffff; font-weight: 500;">Write a bio</p>
-                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">Tell brands about yourself and your experience</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr><td style="height: 8px;"></td></tr>
-
-                <!-- Item 4 -->
-                <tr>
-                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
-                    <table cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td style="width: 30px; vertical-align: middle;">
-                          <span style="color: #ec4899; font-size: 18px; font-weight: bold;">4.</span>
-                        </td>
-                        <td style="vertical-align: middle;">
-                          <p style="margin: 0; color: #ffffff; font-weight: 500;">Set your booking rates</p>
-                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">Let brands know your rates for photoshoots, events & more</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
+                ${checklistHtml}
               </table>
 
               <!-- CTA Button -->
@@ -3493,7 +3793,7 @@ export async function sendProfileCompletionReminderEmail({
                 <tr>
                   <td align="center">
                     <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 30px; font-weight: 600; font-size: 16px;">
-                      Complete My Profile
+                      Finish My Profile
                     </a>
                   </td>
                 </tr>
@@ -3505,17 +3805,17 @@ export async function sendProfileCompletionReminderEmail({
             </td>
           </tr>
 
-          <!-- Motivation -->
+          <!-- Pro tip -->
           <tr>
             <td style="padding: 0 30px 30px;">
               <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-radius: 12px; padding: 20px;">
                 <tr>
                   <td style="text-align: center;">
                     <p style="margin: 0 0 10px; color: #ffffff; font-size: 16px; font-weight: 600;">
-                      Did you know?
+                      Pro tip
                     </p>
                     <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.5;">
-                      Complete profiles are featured on our homepage carousel, seen by thousands of brands and fans every day!
+                      Put examodels.com/${escapeHtml(username)} in your Instagram or TikTok bio — models who bring their audience get seen first.
                     </p>
                   </td>
                 </tr>
@@ -3523,18 +3823,7 @@ export async function sendProfileCompletionReminderEmail({
             </td>
           </tr>
 
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
-              <p style="margin: 0 0 10px; color: #a1a1aa; font-size: 14px;">
-                <a href="${profileUrl}" style="color: #ec4899; text-decoration: none;">View your profile</a> |
-                <a href="https://instagram.com/examodels" style="color: #ec4899; text-decoration: none;">Follow us on Instagram</a>
-              </p>
-              <p style="margin: 0; color: #71717a; font-size: 12px;">
-                EXA Models - Where Models Shine
-              </p>
-            </td>
-          </tr>
+          ${generateEmailFooter(unsubscribeToken)}
 
         </table>
       </td>
@@ -8552,6 +8841,21 @@ export async function sendModelWeeklyDigestEmail({
 
               ${statTilesHtml}
 
+              ${spotlightLikes > 0 ? `
+              <!-- Spotlight likes → thank-you blast CTA (dashboard card).
+                   Aggregate count only — likers stay anonymous. -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 25px;">
+                <tr>
+                  <td style="padding: 16px 20px; background: linear-gradient(135deg, rgba(236,72,153,0.12) 0%, rgba(139,92,246,0.08) 100%); border: 1px solid rgba(236,72,153,0.35); border-radius: 12px; text-align: center;">
+                    <p style="margin: 0; color: #f9a8d4; font-size: 15px; line-height: 1.6;">
+                      💖 ${spotlightLikes} fan${spotlightLikes === 1 ? "" : "s"} liked you in Spotlight this week —
+                      <a href="${wallUrl}" style="color: #ec4899; font-weight: 600; text-decoration: none;">say thanks with a blast</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              ` : ""}
+
               <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.6; text-align: center;">
                 Fans are looking — give them something new to find. 🚀
               </p>
@@ -8599,3 +8903,332 @@ export async function sendModelWeeklyDigestEmail({
   }
 }
 
+
+// "Finish your application" — sent by /api/cron/applicant-chase to pending
+// applicants who stalled on email confirmation and/or the profile photo.
+// Positive tone only (never rejection language). Max 2 sends per applicant,
+// enforced by application_nudges_sent (CHECK + UNIQUE). Notification-class
+// like the other application emails so genuinely stuck applicants still get
+// it. Bilingual EN/ES like its siblings (received / photo-request).
+export async function sendFinishApplicationEmail({
+  to,
+  applicantName,
+  language = "en",
+  missingEmailConfirm,
+  missingPhoto,
+  confirmToken,
+  isSecondNudge = false,
+}: {
+  to: string;
+  applicantName: string;
+  language?: string;
+  missingEmailConfirm: boolean;
+  missingPhoto: boolean;
+  /** model_applications.email_confirm_token — required for the confirm CTA */
+  confirmToken?: string | null;
+  isSecondNudge?: boolean;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const statusUrl = `${BASE_URL}/pending-approval`;
+    const confirmUrl =
+      missingEmailConfirm && confirmToken
+        ? `${BASE_URL}/api/auth/confirm-application?token=${confirmToken}`
+        : null;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const isSpanish = language?.startsWith("es");
+
+    const subject = isSecondNudge
+      ? isSpanish
+        ? "Guardamos tu lugar — falta un paso ✨ - EXA Models"
+        : "Still holding your spot — one step left ✨ - EXA Models"
+      : isSpanish
+        ? "Tu solicitud en EXA está casi lista ✨ - EXA Models"
+        : "Your EXA application is almost complete ✨ - EXA Models";
+
+    const headerTitle = isSpanish ? "¡Ya Casi!" : "Almost There!";
+    const headerSubtitle = isSpanish
+      ? "Completa tu solicitud para estar en vivo en EXA"
+      : "Finish your application to go live on EXA";
+    const greeting = isSpanish
+      ? `Hola ${escapeHtml(applicantName)},`
+      : `Hey ${escapeHtml(applicantName)},`;
+
+    let bodyText: string;
+    if (missingEmailConfirm && missingPhoto) {
+      bodyText = isSpanish
+        ? "Recibimos tu solicitud y nos encantaría revisarla — solo faltan dos cosas rápidas: confirma tu correo y agrega tu foto de perfil. Haz ambas y nuestro equipo se encarga del resto."
+        : "Your application is in and we'd love to review it — just two quick things left: confirm your email and add your profile photo. Do both and our team takes it from there.";
+    } else if (missingEmailConfirm) {
+      bodyText = isSpanish
+        ? "Recibimos tu solicitud y nos encantaría revisarla — solo falta una cosa: confirma tu correo. Un clic y nuestro equipo se encarga del resto."
+        : "Your application is in and we'd love to review it — one quick thing left: confirm your email address. One click and our team takes it from there.";
+    } else {
+      bodyText = isSpanish
+        ? "Tu solicitud va muy bien — lo único que falta es tu foto de perfil. Súbela y nuestro equipo hará la revisión final."
+        : "Your application is looking good — the only thing missing is your profile photo. Add it and our team will take the final look.";
+    }
+
+    const primaryCtaText = confirmUrl
+      ? isSpanish
+        ? "Confirmar Mi Correo"
+        : "Confirm My Email"
+      : isSpanish
+        ? "Agregar Mi Foto"
+        : "Add My Photo";
+    const primaryCtaUrl = confirmUrl || statusUrl;
+    const secondaryText = confirmUrl
+      ? missingPhoto
+        ? isSpanish
+          ? "Después agrega tu foto →"
+          : "Then add your photo →"
+        : isSpanish
+          ? "Ver estado de tu solicitud"
+          : "Check application status"
+      : null;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                ${headerTitle}
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                ${headerSubtitle}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                ${greeting}
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                ${bodyText}
+              </p>
+
+              <!-- Primary CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: ${secondaryText ? "16px" : "24px"};">
+                <tr>
+                  <td align="center">
+                    <a href="${primaryCtaUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      ${primaryCtaText}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              ${secondaryText ? `
+              <p style="margin: 0 0 24px; text-align: center;">
+                <a href="${statusUrl}" style="color: #a78bfa; font-size: 14px; text-decoration: underline;">
+                  ${secondaryText}
+                </a>
+              </p>
+              ` : ""}
+              <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+                ${isSpanish
+                  ? "Tu lugar sigue reservado — estamos aquí cuando estés lista."
+                  : "Your spot is still reserved — we're here whenever you're ready."}
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
+// First-weeks "getting started" digest — the weekly-digest cron's variant for
+// claimed models approved <30 days ago with zero activity to report. Instead
+// of skipping them (the old behavior), send a short checklist + one CTA so
+// the quiet first weeks still get a positive touchpoint. Same suppression
+// semantics as the other digests: marketing-class + unsubscribe footer, and
+// the cron claims the same digest_sends model-week key so a model gets
+// EITHER this OR "you were seen this week", never both.
+export async function sendModelGettingStartedDigestEmail({
+  to,
+  username,
+  checklist,
+}: {
+  to: string;
+  username: string;
+  checklist: {
+    hasPhotoAndBio: boolean;
+    hasRates: boolean;
+    hasContent: boolean;
+  };
+}) {
+  try {
+    // Digests are marketing email — respect the marketing suppression list
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+    const profileUrl = `${BASE_URL}/${username}`;
+    const dashboardUrl = `${BASE_URL}/dashboard`;
+
+    const subject = `⚡ @${username}, let's get you seen on EXA — 3 quick wins`;
+
+    const items = [
+      {
+        done: checklist.hasPhotoAndBio,
+        title: "Complete your profile",
+        desc: "Photo, bio and measurements — it's your comp card",
+      },
+      {
+        done: checklist.hasRates,
+        title: "Set your rates",
+        desc: "So fans can message and call you",
+      },
+      {
+        done: checklist.hasContent,
+        title: "Post your first content",
+        desc: "3-5 photos in Studio is the perfect start",
+      },
+    ];
+
+    const checklistHtml = items
+      .map(
+        (item, i) => `
+                <tr>
+                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="width: 30px; vertical-align: middle;">
+                          <span style="color: ${item.done ? "#22c55e" : "#ec4899"}; font-size: 18px; font-weight: bold;">${item.done ? "✓" : `${i + 1}.`}</span>
+                        </td>
+                        <td style="vertical-align: middle;">
+                          <p style="margin: 0; color: ${item.done ? "#71717a" : "#ffffff"}; font-weight: 500;">${item.title}</p>
+                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">${item.done ? "Done — nice work!" : item.desc}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="height: 8px;"></td></tr>`
+      )
+      .join("");
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                Getting Started on EXA
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Your first weeks, made easy
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey @${escapeHtml(username)},
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Your profile is live at <a href="${profileUrl}" style="color: #ec4899; text-decoration: none;">examodels.com/${escapeHtml(username)}</a> and new fans are browsing every week. Here's what gets a new profile found:
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                ${checklistHtml}
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Open My Dashboard
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Getting started digest email error", error);
+    return { success: false, error };
+  }
+}

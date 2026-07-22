@@ -7,6 +7,11 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useContentData, ContentItem } from '@/hooks/useContentData';
+import {
+  CONTENT_PRICE_MAX_COINS,
+  CONTENT_UNLOCK_DEFAULT_COINS,
+  CONTENT_UNLOCK_MIN_COINS,
+} from '@/lib/coin-config';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -780,8 +785,8 @@ function ItemEditDialog({
   const mediaUrl = getMediaUrl(item.media_url);
 
   const handleSave = async () => {
-    if (status === 'exclusive' && coinPrice < 1) {
-      toast.error('Paid content needs a price of at least 1 coin — fans never see 0-coin items.');
+    if (status === 'exclusive' && coinPrice < CONTENT_UNLOCK_MIN_COINS) {
+      toast.error(`Paid content needs a price of at least ${CONTENT_UNLOCK_MIN_COINS} coins.`);
       return;
     }
     setSaving(true);
@@ -855,7 +860,8 @@ function ItemEditDialog({
               onValueChange={(v) => {
                 const next = v as ContentItem['status'];
                 setStatus(next);
-                if (next === 'exclusive' && coinPrice < 1) setCoinPrice(100);
+                if (next === 'exclusive' && coinPrice < CONTENT_UNLOCK_MIN_COINS)
+                  setCoinPrice(CONTENT_UNLOCK_DEFAULT_COINS);
               }}
             >
               <SelectTrigger>
@@ -883,8 +889,8 @@ function ItemEditDialog({
                 <Input
                   id="edit-price"
                   type="number"
-                  min={1}
-                  max={10000}
+                  min={CONTENT_UNLOCK_MIN_COINS}
+                  max={CONTENT_PRICE_MAX_COINS}
                   value={coinPrice}
                   onChange={(e) => setCoinPrice(Number(e.target.value))}
                   className="pl-9"
@@ -1206,7 +1212,7 @@ function UploadDialog({
 }) {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [visibility, setVisibility] = useState<'private' | 'portfolio' | 'exclusive'>('private');
-  const [coinPrice, setCoinPrice] = useState(100);
+  const [coinPrice, setCoinPrice] = useState(CONTENT_UNLOCK_DEFAULT_COINS);
   const [finishing, setFinishing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraImageRef = useRef<HTMLInputElement>(null);
@@ -1237,7 +1243,7 @@ function UploadDialog({
       });
       setFiles([]);
       setVisibility('private');
-      setCoinPrice(100);
+      setCoinPrice(CONTENT_UNLOCK_DEFAULT_COINS);
       setFinishing(false);
       startedRef.current = new Set();
       activeRef.current = 0;
@@ -1478,8 +1484,8 @@ function UploadDialog({
       onOpenChange(false);
       return;
     }
-    if (visibility === 'exclusive' && coinPrice < 1) {
-      toast.error('Paid content needs a price of at least 1 coin — fans never see 0-coin items.');
+    if (visibility === 'exclusive' && coinPrice < CONTENT_UNLOCK_MIN_COINS) {
+      toast.error(`Paid content needs a price of at least ${CONTENT_UNLOCK_MIN_COINS} coins.`);
       return;
     }
     // Uploads are already Private rows — only Public / Pay to Unlock need a flip
@@ -1739,8 +1745,8 @@ function UploadDialog({
                     <Input
                       id="upload-price"
                       type="number"
-                      min={1}
-                      max={10000}
+                      min={CONTENT_UNLOCK_MIN_COINS}
+                      max={CONTENT_PRICE_MAX_COINS}
                       value={coinPrice}
                       onChange={(e) => setCoinPrice(Number(e.target.value))}
                       className="pl-9"
@@ -1801,7 +1807,7 @@ function BulkPriceDialog({
   title?: string;
   description?: string;
 }) {
-  const [price, setPrice] = useState(100);
+  const [price, setPrice] = useState(CONTENT_UNLOCK_DEFAULT_COINS);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1818,8 +1824,8 @@ function BulkPriceDialog({
             <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="number"
-              min={1}
-              max={10000}
+              min={CONTENT_UNLOCK_MIN_COINS}
+              max={CONTENT_PRICE_MAX_COINS}
               value={price}
               onChange={(e) => setPrice(Number(e.target.value))}
               className="pl-9"
@@ -1832,7 +1838,11 @@ function BulkPriceDialog({
             <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button className="flex-1" disabled={price < 1} onClick={() => onConfirm(price)}>
+            <Button
+              className="flex-1"
+              disabled={price < CONTENT_UNLOCK_MIN_COINS}
+              onClick={() => onConfirm(price)}
+            >
               Apply
             </Button>
           </div>

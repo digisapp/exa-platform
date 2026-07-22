@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { batchQuery } from "@/lib/supabase/batch";
+import { sendBlastToConversations } from "@/lib/messages/blast-send";
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimitAsync } from "@/lib/rate-limit";
 import { assertNotSuspended } from "@/lib/auth/suspension";
@@ -133,68 +134,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Send message to each conversation in parallel (batched)
-    const batchSize = 10;
-    let sentCount = 0;
-    const errors: string[] = [];
-    // Track which inserts actually landed — unread counters must only be
-    // bumped for those, or partially failed blasts leave phantom badges.
-    const sentConversationIds: string[] = [];
-
-    for (let i = 0; i < targetConversations.length; i += batchSize) {
-      const batch = targetConversations.slice(i, i + batchSize);
-
-      const results = await Promise.allSettled(
-        batch.map(async (p) => {
-          // Insert message directly (model sending is free)
-          const { error } = await supabase.from("messages").insert({
-            conversation_id: p.conversation_id,
-            sender_id: actor.id,
-            content: message.trim(),
-            is_system: false,
-          });
-
-          if (error) throw error;
-
-          // Update conversation timestamp
-          await supabase
-            .from("conversations")
-            .update({ updated_at: new Date().toISOString() })
-            .eq("id", p.conversation_id);
-
-          return true;
-        })
-      );
-
-      results.forEach((result, index) => {
-        if (result.status === "fulfilled") {
-          sentCount++;
-          sentConversationIds.push(batch[index].conversation_id);
-        } else {
-          errors.push(`Failed to send to conversation ${batch[index].conversation_id}`);
-        }
-      });
-    }
-
-    // Bump recipients' unread counters so the blast actually surfaces a badge.
-    // The direct inserts above (unlike send_message_with_coins) don't touch
-    // unread_count, and RLS blocks updating another participant's row, so this
-    // goes through a SECURITY DEFINER RPC. The RPC is service-role-only
-    // (20260711100001, per the RPC lockdown convention) — auth already
-    // happened above, so the sender is passed explicitly.
-    if (sentConversationIds.length > 0) {
-      const serviceClient = createServiceRoleClient();
-      const { error: unreadError } = await (serviceClient as any).rpc(
-        "increment_unread_for_conversations",
-        {
-          p_conversation_ids: sentConversationIds,
-          p_sender_actor_id: actor.id,
-        }
-      );
-      if (unreadError) {
-        logger.error("Blast unread increment failed", unreadError);
-      }
-    }
+    // Send message to each conversation in parallel (batched inserts +
+    // updated_at bumps + the unread-counter RPC — shared mechanics live in
+    // blast-send.ts). Auth already happened above; the helper writes via the
+    // service client, inserting the exact rows RLS allowed the model anyway.
+    const serviceClient = createServiceRoleClient();
+    const { sent: sentCount, failedConversationIds } = await sendBlastToConversations(
+      serviceClient,
+      actor.id,
+      message.trim(),
+      targetConversations.map((p) => p.conversation_id as string)
+    );
+    const errors = failedConversationIds.map(
+      (id) => `Failed to send to conversation ${id}`
+    );
 
     return NextResponse.json({
       success: true,

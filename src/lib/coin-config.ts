@@ -50,6 +50,38 @@ export function messageCoinCost(modelRate: number | null | undefined): number {
   return Math.max(DEFAULT_MESSAGE_COST, modelRate ?? DEFAULT_MESSAGE_COST);
 }
 
+// ─── PRICING FLOORS / DEFAULTS / CAPS ────────────────────────────────────
+// Single source of truth for every model-priced surface. Every client input
+// AND server enforcement point imports from here — never restate these
+// numbers at a priced surface, or client and server silently drift.
+// ─────────────────────────────────────────────────────────────────────────
+
+// Studio "Pay to Unlock" content (content_items.coin_price). Floor raised
+// 1 → 5 on 2026-07-22, FORWARD-ONLY: new writes/edits are held to it, but
+// existing sub-floor items stay live and unlockable (no backfill, and the
+// DB CHECK stays coin_price >= 0 — 0 is valid for private/portfolio rows).
+export const CONTENT_UNLOCK_MIN_COINS = 5;
+export const CONTENT_PRICE_MAX_COINS = 10000;
+// Pre-filled price when a studio dialog first offers Pay to Unlock
+export const CONTENT_UNLOCK_DEFAULT_COINS = 100;
+
+// Locked chat media (messages.media_price) — set in MessageInput, enforced
+// server-side in /api/messages/send (messages/new carries no media price)
+export const CHAT_MEDIA_MIN_COINS = 10;
+export const CHAT_MEDIA_MAX_COINS = 10000;
+
+// Model per-message rate (models.message_rate). The floor is owned by
+// DEFAULT_MESSAGE_COST so the rate floor and the messageCoinCost() charge
+// fallback can never diverge.
+export const MESSAGE_RATE_MIN_COINS = DEFAULT_MESSAGE_COST;
+export const MESSAGE_RATE_MAX_COINS = 100;
+
+// Model per-minute call rates (models.video_call_rate / voice_call_rate).
+// NOTE: rate floors (message + call) are enforced client-side only — rates
+// persist via a session-client write in settings, no API route in the path.
+export const CALL_RATE_MIN_COINS = 10;
+export const CALL_RATE_MAX_COINS = 1000;
+
 /**
  * Counterparty model id from a coin_transactions metadata blob. The key varies
  * by RPC: send_tip writes recipient_model_id, send_message_with_coins and
@@ -65,6 +97,9 @@ export function counterpartyIdOf(tx: { metadata?: Record<string, unknown> | null
  * Every coin_transactions action that credits a MODEL for real fan/brand
  * revenue. This is the single source of truth for "earned" stats — sum rows
  * matching these actions with no amount filter (clawback reversals net out).
+ * Consumed by the Monday owner email's model-activation north star
+ * (weekly-analytics-report cron: "first $1 within 14 days of approval"), so
+ * changing this list changes that metric's definition.
  *
  * Deliberately excluded: `purchase` (fan buys), `signup_bonus` (removed
  * 2026-06-12; model rows were ledgered but never credited to balances),
@@ -87,9 +122,30 @@ export const MODEL_EARNING_ACTIONS = [
   "affiliate_commission",
 ] as const;
 
-// Minimum withdrawal amounts
+// ─── WITHDRAWAL MINIMUMS ─────────────────────────────────────────────────
+// A model's FIRST-ever cashout unlocks at 100 coins ($10) so new earners
+// feel real money fast; every payout after that is held to 500 ($50).
+// "First" = zero prior withdrawal_requests rows with status 'completed'
+// (cancelled/failed attempts don't burn the exception). The REAL gates
+// live in the DB — CHECK (coins >= 100) on withdrawal_requests plus the
+// v_min_coins branch inside create_withdrawal_request /
+// create_payoneer_withdrawal_request (20260722000801) — these constants
+// only keep the UI/toasts in step. Change them together or client and
+// server drift.
 export const MIN_WITHDRAWAL_COINS = 500;
 export const MIN_WITHDRAWAL_USD = MIN_WITHDRAWAL_COINS * COIN_USD_RATE; // $50
+export const FIRST_CASHOUT_MIN_COINS = 100;
+export const FIRST_CASHOUT_MIN_USD = FIRST_CASHOUT_MIN_COINS * COIN_USD_RATE; // $10
+
+/** Withdrawal floor for a model — mirrors the RPCs' first-vs-repeat branch. */
+export function minWithdrawalCoins(hasPriorCompletedWithdrawal: boolean): number {
+  return hasPriorCompletedWithdrawal ? MIN_WITHDRAWAL_COINS : FIRST_CASHOUT_MIN_COINS;
+}
+
+// Dashboard payout nudge gate — tied to the first-cashout minimum so the
+// nudge appears exactly when cashing out becomes possible (PR #73 killed
+// the v1 prompt partly for firing at any balance > 0).
+export const PAYOUT_NUDGE_MIN_COINS = FIRST_CASHOUT_MIN_COINS;
 
 // Payout methods
 export type PayoutMethod = 'bank' | 'payoneer';

@@ -1,6 +1,8 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendAuctionSoldEmail, sendAuctionWonEmail } from "@/lib/email";
+import { notifyModelEarning } from "@/lib/earning-notifications";
+import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { logger } from "@/lib/logger";
 
 // as any needed: nullable field mismatches with models.user_id and RPC Json results
@@ -112,6 +114,24 @@ export async function GET(request: NextRequest) {
               ]);
 
               const model = modelResult.data;
+
+              // Light the bell + web push ('earnings' toggle) for the
+              // seller — independent of email delivery (claimed models
+              // only; helper no-ops on null user_id so unclaimed imports
+              // are never touched). auction.model_id IS the actor id.
+              await notifyModelEarning(supabase, {
+                recipientUserId: model?.user_id,
+                recipientActorId: auction.model_id,
+                type: "auction_sale",
+                title: "🏆 Auction sold",
+                message: `"${auction.title}" sold for ${data.amount} coins`,
+                amountCoins: data.amount,
+                metadata: { auction_id: auction.id, winner_id: data.winner_id },
+                push: {
+                  body: `"${auction.title}" sold for ${data.amount} coins (${formatUsd(coinsToUsd(data.amount))})`,
+                  url: `/bids/${auction.id}`,
+                },
+              });
 
               if (model) {
                 const modelName = model.first_name

@@ -171,7 +171,7 @@ export default async function BrandPublicProfile({ params }: Props) {
             <Link href="/models">Browse Models on EXA</Link>
           </Button>
           <Button asChild variant="outline" className="flex-1 border-white/10 hover:border-white/20">
-            <Link href="/signup">Join EXA</Link>
+            <Link href="/apply">Join EXA</Link>
           </Button>
         </div>
 

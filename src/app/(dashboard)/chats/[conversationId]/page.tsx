@@ -165,13 +165,15 @@ export default async function ChatPage({ params }: PageProps) {
       let otherBrand: Brand | null = null;
 
       if (otherActor.type === "model" && otherActor.user_id) {
-        // Models use user_id to lookup
-        const { data } = await supabase
-          .from("models")
-          .select("id, username, profile_photo_url, last_active_at, message_rate, voice_call_rate, video_call_rate")
+        // Models use user_id to lookup. video_is_online + available_for_calls
+        // drive the chat header's call-CTA gating (same reachability signal
+        // as /api/calls/start). Cast: available_for_calls is newer than the
+        // generated DB types.
+        const { data } = await (supabase.from("models") as any)
+          .select("id, username, profile_photo_url, last_active_at, message_rate, voice_call_rate, video_call_rate, video_is_online, available_for_calls")
           .eq("user_id", otherActor.user_id)
           .maybeSingle();
-        otherModel = data;
+        otherModel = data as ChatParticipantModel | null;
       } else if (otherActor.type === "fan") {
         // Fans use actor.id as their id (use admin client to bypass RLS)
         const { data } = await adminClient

@@ -61,6 +61,14 @@
       "schedule": "0 17 * * 5"
     },
     {
+      "path": "/api/cron/applicant-chase",
+      "schedule": "0 15 * * *"
+    },
+    {
+      "path": "/api/cron/stalled-new-models",
+      "schedule": "0 16 * * *"
+    },
+    {
       "path": "/api/cron/weekly-analytics-report",
       "schedule": "0 13 * * 1"
     }

@@ -6,13 +6,63 @@ const adminClient = createServiceRoleClient();
 
 export type FeedItem = {
   id: string;
-  type: "tip" | "follower" | "message";
+  // Money types beyond "tip" map from coin_transactions actions; the chat
+  // media action 'ppv_sale' is deliberately renamed "media_unlock" here so
+  // no 'ppv' string ever reaches a client payload (no-PPV copy rule).
+  // "offer_expiring" is the one type read straight from notifications rows
+  // (offer-reminders cron) — every notifications type MUST have a feed
+  // source here or the badge counts rows with nothing to show (ghost badge).
+  type:
+    | "tip"
+    | "live_wall_tip"
+    | "content_sale"
+    | "media_unlock"
+    | "auction_sale"
+    | "follower"
+    | "message"
+    | "offer_expiring";
   actor: { name: string; avatar: string | null; type: string; username?: string | null } | null;
   amount?: number;
   messagePreview?: string;
   conversationId?: string;
+  /** offer_expiring only — deep link target */
+  offerId?: string;
   createdAt: string;
 };
+
+// Ledger actions that credit the model and belong in the bell feed. Must
+// stay a superset of every type inserted by insertEarningNotification
+// (src/lib/earning-notifications.ts) — the badge counts notifications rows
+// while this feed is reconstructed from the ledger, so any notification
+// type without a matching action here becomes a ghost badge.
+const EARNING_FEED_ACTIONS = [
+  "tip_received",
+  "live_wall_tip_received",
+  "content_sale",
+  "ppv_sale",
+  "auction_sale",
+] as const;
+
+const ACTION_TO_FEED_TYPE: Record<string, FeedItem["type"]> = {
+  tip_received: "tip",
+  live_wall_tip_received: "live_wall_tip",
+  content_sale: "content_sale",
+  ppv_sale: "media_unlock",
+  auction_sale: "auction_sale",
+};
+
+// Counterparty actor id — the metadata key varies by RPC: transfer_coins
+// writes sender_id, tip_live_wall_message writes tipper_actor_id, content/
+// media unlocks write buyer_id, end_auction writes winner_id.
+function earningCounterpartyId(metadata: Record<string, any> | null | undefined): string | undefined {
+  return (
+    metadata?.sender_id ||
+    metadata?.tipper_actor_id ||
+    metadata?.buyer_id ||
+    metadata?.winner_id ||
+    undefined
+  );
+}
 
 export async function GET() {
   const supabase = await createClient();
@@ -33,15 +83,16 @@ export async function GET() {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   const [
-    { data: recentTips },
+    { data: recentEarnings },
     { data: recentFollowers },
     { data: modelParticipations },
     { count: unreadCount },
+    { data: recentNotificationRows },
   ] = await Promise.all([
     (adminClient.from("coin_transactions") as any)
-      .select("id, amount, created_at, metadata")
+      .select("id, amount, action, created_at, metadata")
       .eq("actor_id", actor.id)
-      .eq("action", "tip_received")
+      .in("action", EARNING_FEED_ACTIONS as unknown as string[])
       .gte("created_at", sevenDaysAgo.toISOString())
       .order("created_at", { ascending: false })
       .limit(10),
@@ -58,7 +109,21 @@ export async function GET() {
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .is("read_at", null),
+    // Notification-row feed sources (currently just offer_expiring, written
+    // by the offer-reminders cron). Filtered by type in JS rather than SQL
+    // so this query never references an enum value the DB might not have
+    // yet (pre-migration an .eq() on an unknown enum literal errors).
+    (supabase.from("notifications") as any)
+      .select("id, type, message, metadata, created_at")
+      .eq("user_id", user.id)
+      .gte("created_at", sevenDaysAgo.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
+
+  const offerExpiryNotifs = (recentNotificationRows || []).filter(
+    (n: any) => n.type === "offer_expiring"
+  ).slice(0, 5);
 
   const conversationIds = (modelParticipations || []).map((p: any) => p.conversation_id);
   const lastReadMap = new Map<string, string | null>(
@@ -97,7 +162,7 @@ export async function GET() {
     }).slice(0, 10);
   }
 
-  const tipSenderIds = (recentTips || []).map((t: any) => t.metadata?.sender_id).filter(Boolean);
+  const tipSenderIds = (recentEarnings || []).map((t: any) => earningCounterpartyId(t.metadata)).filter(Boolean);
   const followerIds = (recentFollowers || []).map((f: any) => f.follower_id).filter(Boolean);
   const messageSenderIds = recentMessages.map((m: any) => m.sender_id).filter(Boolean);
   const allIds = [...new Set([...tipSenderIds, ...followerIds, ...messageSenderIds])];
@@ -142,13 +207,16 @@ export async function GET() {
   }
 
   const feed: FeedItem[] = [
-    ...(recentTips || []).map((tip: any) => ({
-      id: `tip-${tip.id}`,
-      type: "tip" as const,
-      actor: actorsMap.get(tip.metadata?.sender_id) || null,
-      amount: tip.amount,
-      createdAt: tip.created_at,
-    })),
+    ...(recentEarnings || []).map((tx: any) => {
+      const counterpartyId = earningCounterpartyId(tx.metadata);
+      return {
+        id: `earn-${tx.id}`,
+        type: ACTION_TO_FEED_TYPE[tx.action] ?? ("tip" as const),
+        actor: (counterpartyId && actorsMap.get(counterpartyId)) || null,
+        amount: tx.amount,
+        createdAt: tx.created_at,
+      };
+    }),
     ...(recentFollowers || []).map((follow: any) => ({
       id: `follow-${follow.follower_id}-${follow.created_at}`,
       type: "follower" as const,
@@ -162,6 +230,14 @@ export async function GET() {
       messagePreview: msg.content?.slice(0, 50) + (msg.content?.length > 50 ? "..." : ""),
       conversationId: msg.conversation_id,
       createdAt: msg.created_at,
+    })),
+    ...offerExpiryNotifs.map((n: any) => ({
+      id: `notif-${n.id}`,
+      type: "offer_expiring" as const,
+      actor: null,
+      messagePreview: n.message || "An offer is waiting for your answer",
+      offerId: n.metadata?.offer_id as string | undefined,
+      createdAt: n.created_at,
     })),
   ]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

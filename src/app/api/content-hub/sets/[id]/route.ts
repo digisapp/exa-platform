@@ -4,11 +4,12 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { CONTENT_PRICE_MAX_COINS } from "@/lib/coin-config";
 
 const updateSetSchema = z.object({
   title: z.string().max(200).optional(),
   description: z.string().max(1000).optional(),
-  coin_price: z.number().int().min(0).max(10000).optional(),
+  coin_price: z.number().int().min(0).max(CONTENT_PRICE_MAX_COINS).optional(),
   status: z.enum(["draft", "live", "archived"]).optional(),
   cover_item_id: z.string().uuid().nullable().optional(),
   position: z.number().int().min(0).optional(),

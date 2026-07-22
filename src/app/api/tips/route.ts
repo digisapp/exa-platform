@@ -3,6 +3,8 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { assertNotSuspended } from "@/lib/auth/suspension";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
+import { notifyModelEarning } from "@/lib/earning-notifications";
+import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { z } from "zod";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
@@ -228,14 +230,16 @@ export async function POST(request: NextRequest) {
         .eq("id", finalConversationId);
     }
 
-    // Get recipient display name for response and send email
+    // Get recipient display name for response and send email.
+    // Service client: user_id is needed for the bell notification and may
+    // not be readable cross-user through RLS.
     let recipientName = "Model";
     if (recipient.type === "model") {
-      const { data: model } = await supabase
+      const { data: model } = await adminClient
         .from("models")
-        .select("email, first_name, username")
+        .select("email, first_name, username, user_id")
         .eq("id", recipientId)
-        .single() as { data: { email: string | null; first_name: string | null; username: string } | null };
+        .single() as { data: { email: string | null; first_name: string | null; username: string; user_id: string | null } | null };
       recipientName = model?.username || "Model";
 
       // Send email notification to model (non-blocking)
@@ -247,6 +251,28 @@ export async function POST(request: NextRequest) {
           amount: result.amount,
         }).catch((err) => logger.error("Failed to send tip email", err));
       }
+
+      // Light the bell + web push ('earnings' toggle) for claimed models
+      // only (helper no-ops when user_id is null — unclaimed imports
+      // untouched). Push deep-links into the conversation so the model can
+      // thank the tipper; recipientId IS the actor id.
+      await notifyModelEarning(adminClient, {
+        recipientUserId: model?.user_id,
+        recipientActorId: recipientId,
+        type: "tip_received",
+        title: "💰 Tip received",
+        message: `${senderName} tipped you ${result.amount} coins`,
+        amountCoins: result.amount,
+        metadata: {
+          sender_id: sender.id,
+          conversation_id: finalConversationId || null,
+          gift: gift?.key || null,
+        },
+        push: {
+          body: `${senderName} tipped you ${result.amount} coins (${formatUsd(coinsToUsd(result.amount))})`,
+          url: finalConversationId ? `/chats/${finalConversationId}` : "/wallet",
+        },
+      });
     }
 
     return NextResponse.json({

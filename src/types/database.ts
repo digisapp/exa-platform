@@ -6473,6 +6473,7 @@ export type Database = {
         Row: {
           checked_in_at: string | null
           created_at: string
+          expiry_reminder_sent_at: string | null
           id: string
           model_id: string
           no_show: boolean | null
@@ -6485,6 +6486,7 @@ export type Database = {
         Insert: {
           checked_in_at?: string | null
           created_at?: string
+          expiry_reminder_sent_at?: string | null
           id?: string
           model_id: string
           no_show?: boolean | null
@@ -6497,6 +6499,7 @@ export type Database = {
         Update: {
           checked_in_at?: string | null
           created_at?: string
+          expiry_reminder_sent_at?: string | null
           id?: string
           model_id?: string
           no_show?: boolean | null
@@ -10889,6 +10892,11 @@ export type Database = {
         | "model_rejected"
         | "new_follower"
         | "system_announcement"
+        | "content_sale"
+        | "ppv_sale"
+        | "auction_sale"
+        | "live_wall_tip_received"
+        | "offer_expiring"
       payout_method_type: "bank" | "payoneer" | "stripe_connect"
       rate_type: "hourly" | "half_day" | "full_day" | "per_event" | "custom"
       tag_category:
@@ -11098,6 +11106,11 @@ export const Constants = {
         "model_rejected",
         "new_follower",
         "system_announcement",
+        "content_sale",
+        "ppv_sale",
+        "auction_sale",
+        "live_wall_tip_received",
+        "offer_expiring",
       ],
       payout_method_type: ["bank", "payoneer", "stripe_connect"],
       rate_type: ["hourly", "half_day", "full_day", "per_event", "custom"],

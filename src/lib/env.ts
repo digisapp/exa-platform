@@ -7,6 +7,11 @@
  */
 
 // Required server-side environment variables
+//
+// Deliberately optional (their libs degrade to logged no-ops when unset —
+// do NOT add them here): TWILIO_* (lib/sms.ts) and VAPID_PUBLIC_KEY /
+// VAPID_PRIVATE_KEY / VAPID_SUBJECT / NEXT_PUBLIC_VAPID_PUBLIC_KEY
+// (lib/push.ts web push).
 const requiredEnvVars = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',

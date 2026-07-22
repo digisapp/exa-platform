@@ -4,6 +4,8 @@ import { assertNotSuspended } from "@/lib/auth/suspension";
 import { NextRequest, NextResponse } from "next/server";
 import type { BuyNowResponse } from "@/types/auctions";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { notifyModelEarning } from "@/lib/earning-notifications";
+import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 
 const adminClient = createServiceRoleClient();
 
@@ -79,6 +81,42 @@ export async function POST(
     });
 
     const buyResult = result as Record<string, any>;
+
+    // Light the bell + web push ('earnings' toggle) for the seller — a
+    // buy-now IS an auction sale and writes the same 'auction_sale' ledger
+    // row the bell feed reads, so a notifications row here keeps badge and
+    // popover consistent. Claimed models only (helper no-ops on null
+    // user_id); auction.model_id IS the actor id.
+    try {
+      const { data: soldAuction } = await (adminClient
+        .from("auctions") as any)
+        .select("title, model_id")
+        .eq("id", auctionId)
+        .single();
+      if (soldAuction?.model_id) {
+        const { data: sellerModel } = await (adminClient
+          .from("models") as any)
+          .select("user_id")
+          .eq("id", soldAuction.model_id)
+          .single();
+        await notifyModelEarning(adminClient, {
+          recipientUserId: sellerModel?.user_id,
+          recipientActorId: soldAuction.model_id,
+          type: "auction_sale",
+          title: "🏆 Auction sold",
+          message: `"${soldAuction.title}" sold for ${buyResult.amount} coins`,
+          amountCoins: buyResult.amount,
+          metadata: { auction_id: auctionId, buyer_id: actor.id, is_buy_now: true },
+          push: {
+            body: `"${soldAuction.title}" sold for ${buyResult.amount} coins (${formatUsd(coinsToUsd(buyResult.amount))})`,
+            url: `/bids/${auctionId}`,
+          },
+        });
+      }
+    } catch (notifyError) {
+      // Never fail a successful purchase over a bell row
+      console.error("Buy-now notification error:", notifyError);
+    }
     const response: BuyNowResponse = {
       success: true,
       amount: buyResult.amount,

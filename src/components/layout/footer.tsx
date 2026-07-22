@@ -39,12 +39,12 @@ export function Footer() {
             <h3 className="font-semibold mb-4">For Models</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/signup" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/apply" className="text-muted-foreground hover:text-primary transition-colors">
                   Join EXA
                 </Link>
               </li>
               <li>
-                <Link href="/signin" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/apply" className="text-muted-foreground hover:text-primary transition-colors">
                   Sign Up
                 </Link>
               </li>

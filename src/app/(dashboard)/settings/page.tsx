@@ -21,9 +21,12 @@ import { ModelRatesTab } from "@/components/settings/ModelRatesTab";
 import { ModelCollabsTab } from "@/components/settings/ModelCollabsTab";
 import { ModelPrivacyTab } from "@/components/settings/ModelPrivacyTab";
 import { ModelFollowersTab } from "@/components/settings/ModelFollowersTab";
+import { PushNotificationSettings } from "@/components/settings/PushNotificationSettings";
 import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { formatInches } from "@/lib/measurements";
+import { CALL_RATE_MIN_COINS, MESSAGE_RATE_MIN_COINS } from "@/lib/coin-config";
+import { trackEvent } from "@/lib/analytics-client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -726,9 +729,12 @@ export default function ProfilePage() {
         show_location: model.show_location,
         show_social_media: model.show_social_media,
 
-        video_call_rate: model.video_call_rate || 10,
-        voice_call_rate: model.voice_call_rate || 10,
-        message_rate: Math.max(5, model.message_rate || 5),
+        // Floor-clamp rates at save time. This is the last enforcement point —
+        // rates persist via this session-client write, there is no API route
+        // in the path to validate them server-side.
+        video_call_rate: Math.max(CALL_RATE_MIN_COINS, model.video_call_rate || 0),
+        voice_call_rate: Math.max(CALL_RATE_MIN_COINS, model.voice_call_rate || 0),
+        message_rate: Math.max(MESSAGE_RATE_MIN_COINS, model.message_rate || 0),
         // Booking rates
         photoshoot_hourly_rate: model.photoshoot_hourly_rate || 0,
         photoshoot_half_day_rate: model.photoshoot_half_day_rate || 0,
@@ -784,6 +790,32 @@ export default function ProfilePage() {
         .eq("id", model.id);
 
       if (error) throw error;
+
+      // North-star activation instrumentation: emit rate_set when this save
+      // actually changed a chat/call rate. savedModelStr still holds the
+      // pre-save snapshot at this point, so comparing against it keeps
+      // profile-only saves from firing. Fire-and-forget — never blocks the
+      // save (trackEvent swallows its own errors too).
+      try {
+        const prevSaved = savedModelStr ? JSON.parse(savedModelStr) : null;
+        if (
+          !prevSaved ||
+          prevSaved.video_call_rate !== updateData.video_call_rate ||
+          prevSaved.voice_call_rate !== updateData.voice_call_rate ||
+          prevSaved.message_rate !== updateData.message_rate
+        ) {
+          trackEvent("rate_set", {
+            modelId: model.id,
+            metadata: {
+              video_call_rate: updateData.video_call_rate,
+              voice_call_rate: updateData.voice_call_rate,
+              message_rate: updateData.message_rate,
+            },
+          });
+        }
+      } catch {
+        // analytics must never break the save
+      }
 
       // Refresh the dirty-state baseline so the "unsaved changes" bar clears.
       const savedSnapshot: Model = { ...model };
@@ -2053,6 +2085,13 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="privacy" className="space-y-6">
+          {/* Push notifications — MODEL-FACING ONLY for v1. Fan push opt-in
+              is deliberately DEFERRED: every push event today (calls,
+              messages, earnings, offers) targets models, so the fan/brand
+              settings above get no Notifications section until there's a
+              fan-facing event worth pushing. Saves independently of the
+              page's Save button (per-toggle instant persist). */}
+          <PushNotificationSettings />
           <ModelPrivacyTab
             model={model}
             onChange={setModel}

@@ -6,6 +6,7 @@ import { getModelId } from "@/lib/ids";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { processImage } from "@/lib/image-processing";
+import { CONTENT_PRICE_MAX_COINS, CONTENT_UNLOCK_MIN_COINS } from "@/lib/coin-config";
 import {
   CONTENT_MEDIA_BUCKET,
   isContentMediaPath,
@@ -23,14 +24,15 @@ const createItemSchema = z
     description: z.string().max(1000).optional().nullable(),
     preview_url: z.string().optional().nullable(),
     status: z.enum(["private", "portfolio", "exclusive"]).default("private"),
-    coin_price: z.number().int().min(0).max(10000).default(0),
+    coin_price: z.number().int().min(0).max(CONTENT_PRICE_MAX_COINS).default(0),
     tags: z.array(z.string()).optional().nullable(),
     publish_at: z.string().datetime().optional().nullable(),
     set_id: z.string().uuid().optional().nullable(),
   })
-  // 0-coin PPV items are filtered out of every fan-facing query — reject instead of silently hiding
-  .refine((d) => d.status !== "exclusive" || d.coin_price >= 1, {
-    message: "PPV content needs a coin price of at least 1",
+  // Sub-floor paid items are rejected instead of silently hidden (fan-facing
+  // queries filter coin_price > 0). Forward-only: existing sub-floor rows stay live.
+  .refine((d) => d.status !== "exclusive" || d.coin_price >= CONTENT_UNLOCK_MIN_COINS, {
+    message: `Paid content needs a coin price of at least ${CONTENT_UNLOCK_MIN_COINS}`,
     path: ["coin_price"],
   });
 

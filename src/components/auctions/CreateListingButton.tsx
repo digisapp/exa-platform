@@ -124,7 +124,7 @@ export function CreateListingButton({ isLoggedIn, actorType, className, children
 
             <p className="text-center text-xs text-zinc-500">
               Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-pink-400 hover:underline" onClick={() => setOpen(false)}>
+              <Link href="/apply" className="text-pink-400 hover:underline" onClick={() => setOpen(false)}>
                 Sign Up
               </Link>
             </p>

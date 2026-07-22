@@ -10,7 +10,20 @@ const BOT_PATTERNS = /bot|crawler|spider|googlebot|bingbot|slurp|duckduckbot|bai
 
 // Allowlist so random clients can't fill the table with junk event names.
 // Add new funnel events here as they're instrumented.
-const ALLOWED_EVENTS = new Set(["social_gate_click"]);
+//
+// Model-activation events (north-star funnel, 2026-07-22): rate_set fires
+// from the settings rates save. payout_method_added / push_subscribed /
+// availability_toggled are forward-provisioned — their emit points ship
+// with the payout, push, and call-availability workstreams. Emitters must
+// pass opts.modelId to trackEvent or the row loses model attribution
+// (only user_id is auto-attached from the session below).
+const ALLOWED_EVENTS = new Set([
+  "social_gate_click",
+  "rate_set",
+  "payout_method_added",
+  "push_subscribed",
+  "availability_toggled",
+]);
 
 export async function POST(request: NextRequest) {
   try {
