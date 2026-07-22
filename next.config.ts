@@ -87,6 +87,12 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        // /apply is the canonical model application page
+        source: '/signup',
+        destination: '/apply',
+        permanent: true,
+      },
+      {
         source: '/boost',
         destination: '/spotlight',
         permanent: true,

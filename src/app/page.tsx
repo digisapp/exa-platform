@@ -618,7 +618,7 @@ export default async function HomePage() {
                 </p>
                 <ul className="space-y-2 text-sm">
                   <li>
-                    <Link href="#signup" className="text-white/70 hover:text-pink-300 transition-colors">
+                    <Link href="/apply" className="text-white/70 hover:text-pink-300 transition-colors">
                       Models
                     </Link>
                   </li>

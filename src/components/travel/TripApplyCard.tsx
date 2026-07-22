@@ -219,7 +219,7 @@ export function TripApplyCard({
         <Plane className="h-10 w-10 mx-auto text-white/30" />
         <p className="text-sm text-white/60">
           EXA Travel trips are exclusive to EXA models.{" "}
-          <Link href="/signup" className="text-violet-400 hover:text-violet-300">
+          <Link href="/apply" className="text-violet-400 hover:text-violet-300">
             Apply to join the roster
           </Link>
         </p>

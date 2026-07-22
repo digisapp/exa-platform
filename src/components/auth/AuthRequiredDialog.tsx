@@ -35,7 +35,9 @@ export function AuthRequiredDialog({
             <Link href="/signin">Sign In</Link>
           </Button>
           <Button asChild variant="outline" className="w-full">
-            <Link href="/signup">Create Account</Link>
+            {/* Fan-action gate (follow/favorite) — must go to fan signup, never
+                the model application at /apply. */}
+            <Link href="/fan/signup">Create Account</Link>
           </Button>
         </div>
       </DialogContent>

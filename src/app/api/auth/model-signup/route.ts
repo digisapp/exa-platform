@@ -153,6 +153,7 @@ export async function POST(request: NextRequest) {
 
     const normalizedEmail = email; // Already normalized by Zod schema
     const normalizedInstagram = extractInstagramUsername(instagram_username);
+    const normalizedTikTok = extractTikTokUsername(tiktok_username);
 
     // Check for Instagram duplicate in existing models (claimed accounts only)
     if (normalizedInstagram) {
@@ -181,6 +182,38 @@ export async function POST(request: NextRequest) {
       if (existingAppByInsta && existingAppByInsta.email?.toLowerCase() !== normalizedEmail) {
         return NextResponse.json(
           { error: "This Instagram handle already has a pending application with a different email.", code: "instagram_pending" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Check for TikTok duplicate in existing models (claimed accounts only)
+    if (normalizedTikTok) {
+      const { data: existingModelByTikTok } = await adminClient
+        .from("models")
+        .select("id, email, user_id")
+        .ilike("tiktok_username", escapeIlike(normalizedTikTok))
+        .not("user_id", "is", null)  // Only check claimed models
+        .single();
+
+      if (existingModelByTikTok && existingModelByTikTok.email?.toLowerCase() !== normalizedEmail) {
+        return NextResponse.json(
+          { error: "This TikTok handle is already registered with a different email. Please use the email associated with your TikTok, or contact support.", code: "tiktok_taken" },
+          { status: 400 }
+        );
+      }
+
+      // Check for TikTok duplicate in pending applications
+      const { data: existingAppByTikTok } = await adminClient
+        .from("model_applications")
+        .select("id, email")
+        .ilike("tiktok_username", escapeIlike(normalizedTikTok))
+        .eq("status", "pending")
+        .single();
+
+      if (existingAppByTikTok && existingAppByTikTok.email?.toLowerCase() !== normalizedEmail) {
+        return NextResponse.json(
+          { error: "This TikTok handle already has a pending application with a different email.", code: "tiktok_pending" },
           { status: 400 }
         );
       }

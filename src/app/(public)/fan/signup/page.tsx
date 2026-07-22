@@ -335,7 +335,7 @@ export default function FanSignupPage() {
                 </div>
                 <div className="text-center text-sm text-muted-foreground">
                   Want to join as a model?{" "}
-                  <Link href="/#signup" className="text-pink-500 hover:underline font-medium">
+                  <Link href="/apply" className="text-pink-500 hover:underline font-medium">
                     Model signup
                   </Link>
                 </div>
