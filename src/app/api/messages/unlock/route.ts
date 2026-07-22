@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { sendPPVUnlockedEmail } from "@/lib/email";
+import { insertEarningNotification } from "@/lib/earning-notifications";
 import { logger } from "@/lib/logger";
 import { isChatMediaPath, signChatMediaUrl } from "@/lib/chat-media";
 
@@ -179,6 +180,18 @@ export async function POST(request: NextRequest) {
               amount: result.amount_paid,
             }).catch((err) => logger.error("PPV email error", err));
           }
+
+          // Light the bell. Internal type name is 'ppv_sale' (mirrors the
+          // ledger action) but the user-visible strings must never say
+          // "PPV" — model-facing copy is "paid photo/video".
+          await insertEarningNotification(adminDb, {
+            recipientUserId: senderActor.user_id,
+            type: "ppv_sale",
+            title: "💸 Paid media unlocked",
+            message: `${buyerName} unlocked your paid photo/video · +${result.amount_paid} coins`,
+            amountCoins: result.amount_paid,
+            metadata: { message_id: messageId, buyer_id: buyer.id },
+          });
         }
       }
     }

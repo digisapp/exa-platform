@@ -6,13 +6,57 @@ const adminClient = createServiceRoleClient();
 
 export type FeedItem = {
   id: string;
-  type: "tip" | "follower" | "message";
+  // Money types beyond "tip" map from coin_transactions actions; the chat
+  // media action 'ppv_sale' is deliberately renamed "media_unlock" here so
+  // no 'ppv' string ever reaches a client payload (no-PPV copy rule).
+  type:
+    | "tip"
+    | "live_wall_tip"
+    | "content_sale"
+    | "media_unlock"
+    | "auction_sale"
+    | "follower"
+    | "message";
   actor: { name: string; avatar: string | null; type: string; username?: string | null } | null;
   amount?: number;
   messagePreview?: string;
   conversationId?: string;
   createdAt: string;
 };
+
+// Ledger actions that credit the model and belong in the bell feed. Must
+// stay a superset of every type inserted by insertEarningNotification
+// (src/lib/earning-notifications.ts) — the badge counts notifications rows
+// while this feed is reconstructed from the ledger, so any notification
+// type without a matching action here becomes a ghost badge.
+const EARNING_FEED_ACTIONS = [
+  "tip_received",
+  "live_wall_tip_received",
+  "content_sale",
+  "ppv_sale",
+  "auction_sale",
+] as const;
+
+const ACTION_TO_FEED_TYPE: Record<string, FeedItem["type"]> = {
+  tip_received: "tip",
+  live_wall_tip_received: "live_wall_tip",
+  content_sale: "content_sale",
+  ppv_sale: "media_unlock",
+  auction_sale: "auction_sale",
+};
+
+// Counterparty actor id — the metadata key varies by RPC: transfer_coins
+// writes sender_id, tip_live_wall_message writes tipper_actor_id, content/
+// media unlocks write buyer_id, end_auction writes winner_id.
+function earningCounterpartyId(metadata: Record<string, any> | null | undefined): string | undefined {
+  return (
+    metadata?.sender_id ||
+    metadata?.tipper_actor_id ||
+    metadata?.buyer_id ||
+    metadata?.winner_id ||
+    undefined
+  );
+}
 
 export async function GET() {
   const supabase = await createClient();
@@ -33,15 +77,15 @@ export async function GET() {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   const [
-    { data: recentTips },
+    { data: recentEarnings },
     { data: recentFollowers },
     { data: modelParticipations },
     { count: unreadCount },
   ] = await Promise.all([
     (adminClient.from("coin_transactions") as any)
-      .select("id, amount, created_at, metadata")
+      .select("id, amount, action, created_at, metadata")
       .eq("actor_id", actor.id)
-      .eq("action", "tip_received")
+      .in("action", EARNING_FEED_ACTIONS as unknown as string[])
       .gte("created_at", sevenDaysAgo.toISOString())
       .order("created_at", { ascending: false })
       .limit(10),
@@ -97,7 +141,7 @@ export async function GET() {
     }).slice(0, 10);
   }
 
-  const tipSenderIds = (recentTips || []).map((t: any) => t.metadata?.sender_id).filter(Boolean);
+  const tipSenderIds = (recentEarnings || []).map((t: any) => earningCounterpartyId(t.metadata)).filter(Boolean);
   const followerIds = (recentFollowers || []).map((f: any) => f.follower_id).filter(Boolean);
   const messageSenderIds = recentMessages.map((m: any) => m.sender_id).filter(Boolean);
   const allIds = [...new Set([...tipSenderIds, ...followerIds, ...messageSenderIds])];
@@ -142,13 +186,16 @@ export async function GET() {
   }
 
   const feed: FeedItem[] = [
-    ...(recentTips || []).map((tip: any) => ({
-      id: `tip-${tip.id}`,
-      type: "tip" as const,
-      actor: actorsMap.get(tip.metadata?.sender_id) || null,
-      amount: tip.amount,
-      createdAt: tip.created_at,
-    })),
+    ...(recentEarnings || []).map((tx: any) => {
+      const counterpartyId = earningCounterpartyId(tx.metadata);
+      return {
+        id: `earn-${tx.id}`,
+        type: ACTION_TO_FEED_TYPE[tx.action] ?? ("tip" as const),
+        actor: (counterpartyId && actorsMap.get(counterpartyId)) || null,
+        amount: tx.amount,
+        createdAt: tx.created_at,
+      };
+    }),
     ...(recentFollowers || []).map((follow: any) => ({
       id: `follow-${follow.follower_id}-${follow.created_at}`,
       type: "follower" as const,

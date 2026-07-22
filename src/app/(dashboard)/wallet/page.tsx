@@ -27,7 +27,8 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
-import { MIN_WITHDRAWAL_COINS, coinsToUsd, counterpartyIdOf, formatUsd } from "@/lib/coin-config";
+import { coinsToUsd, counterpartyIdOf, formatUsd, minWithdrawalCoins } from "@/lib/coin-config";
+import { trackEvent } from "@/lib/analytics-client";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -127,6 +128,10 @@ export default function WalletPage() {
   // Payout state
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
+  // First-cashout state: false → the $10 first-cashout minimum applies.
+  // Derived from a dedicated COUNT (not the paged withdrawals list) so it
+  // mirrors the RPCs' EXISTS(status='completed') branch exactly.
+  const [hasPriorCompletedWithdrawal, setHasPriorCompletedWithdrawal] = useState(false);
   const [hasMoreWithdrawals, setHasMoreWithdrawals] = useState(false);
   const [loadingMoreWithdrawals, setLoadingMoreWithdrawals] = useState(false);
   const [showBankDialog, setShowBankDialog] = useState(false);
@@ -220,7 +225,7 @@ export default function WalletPage() {
           setModelId(model.id);
 
           // Load bank accounts, Payoneer account, and withdrawal requests in parallel
-          const [{ data: banks }, { data: payoneer }, { data: withdrawalData }] = await Promise.all([
+          const [{ data: banks }, { data: payoneer }, { data: withdrawalData }, { count: completedCount }] = await Promise.all([
             supabase
               .from("bank_accounts")
               .select("*")
@@ -236,11 +241,19 @@ export default function WalletPage() {
               .eq("model_id", model.id)
               .order("requested_at", { ascending: false })
               .limit(10) as unknown as Promise<{ data: WithdrawalRequest[] | null }>,
+            // First-cashout eligibility: any COMPLETED withdrawal ever?
+            // (own-row RLS select; count-only so pagination can't hide one)
+            supabase
+              .from("withdrawal_requests")
+              .select("id", { count: "exact", head: true })
+              .eq("model_id", model.id)
+              .eq("status", "completed") as unknown as Promise<{ count: number | null }>,
           ]);
           setBankAccounts(banks || []);
           setPayoneerAccount(payoneer);
           setWithdrawals(withdrawalData || []);
           setHasMoreWithdrawals((withdrawalData || []).length >= 10);
+          setHasPriorCompletedWithdrawal((completedCount || 0) > 0);
         }
       } else if (actor.type === "fan") {
         // Fans use actor.id as their id
@@ -414,6 +427,13 @@ export default function WalletPage() {
         const data = await response.json();
         throw new Error(data.error || "Failed to save Zelle info");
       }
+      // North-star funnel: first-time payout method save (updates excluded)
+      if (!zelleInfo) {
+        trackEvent("payout_method_added", {
+          modelId: modelId ?? undefined,
+          metadata: { method: "zelle" },
+        });
+      }
       setZelleInfo(zelleInput.trim());
       setShowZelleDialog(false);
       toast.success(zelleInfo ? "Zelle info updated!" : "Zelle info saved!");
@@ -458,6 +478,14 @@ export default function WalletPage() {
       }
 
       const newBankAccount = await response.json();
+
+      // North-star funnel: first-time payout method save (updates excluded)
+      if (bankAccounts.length === 0) {
+        trackEvent("payout_method_added", {
+          modelId: modelId ?? undefined,
+          metadata: { method: "bank" },
+        });
+      }
 
       toast.success(bankAccounts.length > 0 ? "Bank account updated!" : "Bank account added!");
       setShowBankDialog(false);
@@ -539,6 +567,17 @@ export default function WalletPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.payoneer_account) {
+          // North-star funnel: Payoneer counts as "added" the moment it can
+          // receive payments (registration completed on Payoneer's side)
+          if (
+            data.payoneer_account.can_receive_payments &&
+            !payoneerAccount?.can_receive_payments
+          ) {
+            trackEvent("payout_method_added", {
+              modelId: modelId ?? undefined,
+              metadata: { method: "payoneer" },
+            });
+          }
           setPayoneerAccount(data.payoneer_account);
         }
       }
@@ -551,8 +590,11 @@ export default function WalletPage() {
     if (!modelId || !withdrawAmount) return;
 
     const coins = parseInt(withdrawAmount);
-    if (coins < MIN_WITHDRAWAL_COINS) {
-      toast.error(`Minimum withdrawal is ${MIN_WITHDRAWAL_COINS} coins (${formatUsd(coinsToUsd(MIN_WITHDRAWAL_COINS))})`);
+    // First cashout unlocks at 100 coins ($10); repeats at 500 ($50).
+    // Must mirror the RPCs' v_min_coins branch (20260722000801).
+    const minCoins = minWithdrawalCoins(hasPriorCompletedWithdrawal);
+    if (coins < minCoins) {
+      toast.error(`Minimum withdrawal is ${minCoins} coins (${formatUsd(coinsToUsd(minCoins))})`);
       return;
     }
 
@@ -803,6 +845,7 @@ export default function WalletPage() {
           <TabsContent value="payouts">
             <PayoutsTab
               coinBalance={coinBalance}
+              hasPriorCompletedWithdrawal={hasPriorCompletedWithdrawal}
               zelleInfo={zelleInfo}
               zelleInput={zelleInput}
               setZelleInput={setZelleInput}

@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendAuctionSoldEmail, sendAuctionWonEmail } from "@/lib/email";
+import { insertEarningNotification } from "@/lib/earning-notifications";
 import { logger } from "@/lib/logger";
 
 // as any needed: nullable field mismatches with models.user_id and RPC Json results
@@ -112,6 +113,18 @@ export async function GET(request: NextRequest) {
               ]);
 
               const model = modelResult.data;
+
+              // Light the bell for the seller — independent of email
+              // delivery (claimed models only; helper no-ops on null
+              // user_id so unclaimed imports are never touched)
+              await insertEarningNotification(supabase, {
+                recipientUserId: model?.user_id,
+                type: "auction_sale",
+                title: "🏆 Auction sold",
+                message: `"${auction.title}" sold for ${data.amount} coins`,
+                amountCoins: data.amount,
+                metadata: { auction_id: auction.id, winner_id: data.winner_id },
+              });
 
               if (model) {
                 const modelName = model.first_name

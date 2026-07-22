@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { insertEarningNotification } from "@/lib/earning-notifications";
 
 const adminClient = createServiceRoleClient();
 
@@ -96,6 +97,41 @@ export async function POST(request: NextRequest) {
         { error: result.error || "Failed to send tip" },
         { status: 400 }
       );
+    }
+
+    // Light the bell for sub-super tips. tip_live_wall_message already
+    // inserts a 'tip_received' notification itself for amounts >= 50
+    // (20260426000002) — only cover the < 50 gap here, or super tips would
+    // double-notify. Recipient must be a CLAIMED model (bell is model-only
+    // and unclaimed imports are never touched).
+    if (amount < 50) {
+      try {
+        const { data: wallMessage } = await (adminClient
+          .from("live_wall_messages") as any)
+          .select("actor_id")
+          .eq("id", messageId)
+          .single();
+        if (wallMessage?.actor_id) {
+          const { data: recipientActor } = await (adminClient
+            .from("actors") as any)
+            .select("type, user_id")
+            .eq("id", wallMessage.actor_id)
+            .single();
+          if (recipientActor?.type === "model") {
+            await insertEarningNotification(adminClient, {
+              recipientUserId: recipientActor.user_id,
+              type: "live_wall_tip_received",
+              title: "💰 Live Wall tip",
+              message: `You received a ${amount}-coin tip on the Live Wall`,
+              amountCoins: amount,
+              metadata: { message_id: messageId, tipper_actor_id: actor.id },
+            });
+          }
+        }
+      } catch (notifyError) {
+        // Never fail a successful tip over a bell row
+        logger.error("Live wall tip notification error", notifyError);
+      }
     }
 
     return NextResponse.json({

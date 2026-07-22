@@ -122,9 +122,30 @@ export const MODEL_EARNING_ACTIONS = [
   "affiliate_commission",
 ] as const;
 
-// Minimum withdrawal amounts
+// ─── WITHDRAWAL MINIMUMS ─────────────────────────────────────────────────
+// A model's FIRST-ever cashout unlocks at 100 coins ($10) so new earners
+// feel real money fast; every payout after that is held to 500 ($50).
+// "First" = zero prior withdrawal_requests rows with status 'completed'
+// (cancelled/failed attempts don't burn the exception). The REAL gates
+// live in the DB — CHECK (coins >= 100) on withdrawal_requests plus the
+// v_min_coins branch inside create_withdrawal_request /
+// create_payoneer_withdrawal_request (20260722000801) — these constants
+// only keep the UI/toasts in step. Change them together or client and
+// server drift.
 export const MIN_WITHDRAWAL_COINS = 500;
 export const MIN_WITHDRAWAL_USD = MIN_WITHDRAWAL_COINS * COIN_USD_RATE; // $50
+export const FIRST_CASHOUT_MIN_COINS = 100;
+export const FIRST_CASHOUT_MIN_USD = FIRST_CASHOUT_MIN_COINS * COIN_USD_RATE; // $10
+
+/** Withdrawal floor for a model — mirrors the RPCs' first-vs-repeat branch. */
+export function minWithdrawalCoins(hasPriorCompletedWithdrawal: boolean): number {
+  return hasPriorCompletedWithdrawal ? MIN_WITHDRAWAL_COINS : FIRST_CASHOUT_MIN_COINS;
+}
+
+// Dashboard payout nudge gate — tied to the first-cashout minimum so the
+// nudge appears exactly when cashing out becomes possible (PR #73 killed
+// the v1 prompt partly for firing at any balance > 0).
+export const PAYOUT_NUDGE_MIN_COINS = FIRST_CASHOUT_MIN_COINS;
 
 // Payout methods
 export type PayoutMethod = 'bank' | 'payoneer';

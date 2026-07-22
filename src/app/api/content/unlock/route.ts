@@ -3,6 +3,7 @@ import { assertNotSuspended } from "@/lib/auth/suspension";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendContentPurchaseEmail } from "@/lib/email";
+import { insertEarningNotification } from "@/lib/earning-notifications";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
@@ -99,10 +100,11 @@ export async function POST(request: NextRequest) {
       if (content?.model_id) {
         // Send email notification to model (non-blocking)
         try {
-          // Get model info
-          const { data: model } = await supabase
+          // Get model info (service client: user_id is needed for the bell
+          // notification and may not be readable cross-user through RLS)
+          const { data: model } = await (service as any)
             .from("models")
-            .select("email, first_name, username")
+            .select("email, first_name, username, user_id")
             .eq("id", content.model_id)
             .single();
 
@@ -133,6 +135,16 @@ export async function POST(request: NextRequest) {
               coinsEarned: result.amount_paid,
             }).catch((err) => logger.error("Failed to send content purchase email", err));
           }
+
+          // Light the bell (claimed models only — helper no-ops on null user_id)
+          await insertEarningNotification(service, {
+            recipientUserId: model?.user_id,
+            type: "content_sale",
+            title: "💸 Content sale",
+            message: `${buyerName} unlocked "${content.title || "your content"}" · +${result.amount_paid} coins`,
+            amountCoins: result.amount_paid,
+            metadata: { content_item_id: contentId, buyer_id: actor.id },
+          });
         } catch (emailErr) {
           logger.error("Error preparing content purchase email", emailErr);
           // Non-critical, don't fail the unlock

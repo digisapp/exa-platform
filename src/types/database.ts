@@ -10889,6 +10889,10 @@ export type Database = {
         | "model_rejected"
         | "new_follower"
         | "system_announcement"
+        | "content_sale"
+        | "ppv_sale"
+        | "auction_sale"
+        | "live_wall_tip_received"
       payout_method_type: "bank" | "payoneer" | "stripe_connect"
       rate_type: "hourly" | "half_day" | "full_day" | "per_event" | "custom"
       tag_category:
@@ -11098,6 +11102,10 @@ export const Constants = {
         "model_rejected",
         "new_follower",
         "system_announcement",
+        "content_sale",
+        "ppv_sale",
+        "auction_sale",
+        "live_wall_tip_received",
       ],
       payout_method_type: ["bank", "payoneer", "stripe_connect"],
       rate_type: ["hourly", "half_day", "full_day", "per_event", "custom"],

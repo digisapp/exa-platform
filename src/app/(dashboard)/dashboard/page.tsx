@@ -35,11 +35,44 @@ import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { ProfilePhotoBanner } from "@/components/dashboard/ProfilePhotoBanner";
 import { AvailabilityToggle } from "@/components/dashboard/AvailabilityToggle";
+import { PayoutSetupPrompt } from "@/components/dashboard/PayoutSetupPrompt";
+import { MODEL_EARNING_ACTIONS, PAYOUT_NUDGE_MIN_COINS } from "@/lib/coin-config";
 import { CastingReadiness } from "@/components/dashboard/CastingReadiness";
 import { computeCastingReadiness } from "@/lib/casting-readiness";
 import { WelcomeBackPulse } from "@/components/dashboard/WelcomeBackPulse";
 import { computeWelcomeBackPulse } from "@/lib/welcome-back";
 import { getHeroPortrait } from "@/lib/hero-portrait";
+
+// Earned-this-month KPI: sum ledger rows for the current CALENDAR month,
+// filtered to MODEL_EARNING_ACTIONS (a model's own `purchase` rows and
+// fan-spend actions must not inflate "earned"; negative clawback reversals
+// net out — no amount filter, per the coin-config contract).
+//
+// Deliberately NOT get_earnings_summary: that RPC self-authorizes on
+// auth.uid() (20260708000003), which is NULL under this page's service-role
+// client, so it silently returns an empty set — and it also counts every
+// positive action incl. purchases over a rolling month, which is a
+// different number. Paged in 1000s because PostgREST max_rows silently
+// truncates any larger response.
+async function sumEarningsThisMonth(admin: any, actorId: string): Promise<number> {
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  const PAGE = 1000;
+  let total = 0;
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await (admin.from("coin_transactions") as any)
+      .select("amount")
+      .eq("actor_id", actorId)
+      .in("action", MODEL_EARNING_ACTIONS as unknown as string[])
+      .gte("created_at", monthStart)
+      .order("created_at", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error || !data) break;
+    total += data.reduce((sum: number, row: any) => sum + (row.amount || 0), 0);
+    if (data.length < PAGE) break;
+  }
+  return total;
+}
 
 // Helper function to format relative time
 function getTimeAgo(dateString: string): string {
@@ -118,6 +151,9 @@ export default async function DashboardPage() {
     { data: rawPortfolioPhotos },
     { count: followerCount },
     { count: views30d },
+    earningsThisMonth,
+    { count: bankAccountCount },
+    { data: payoneerAccount },
     castingReadiness,
     welcomeBack,
   ] = await Promise.all([
@@ -144,6 +180,19 @@ export default async function DashboardPage() {
       .select("*", { count: "exact", head: true })
       .eq("model_id", model.id)
       .gte("view_date", thirtyDaysAgo.toISOString().split("T")[0]),
+    // Earned-this-month KPI (identity header, taps to /wallet)
+    sumEarningsThisMonth(adminClient, actor.id),
+    // Payout-nudge eligibility: is any payout method on file?
+    // (bank_accounts + payoneer_accounts queries were removed in #73 —
+    // re-added here as cheap aggregates; zelle_info rides on the model row)
+    (adminClient.from("bank_accounts") as any)
+      .select("id", { count: "exact", head: true })
+      .eq("model_id", model.id),
+    (adminClient.from("payoneer_accounts") as any)
+      .select("id, can_receive_payments")
+      .eq("model_id", model.id)
+      .limit(1)
+      .maybeSingle(),
     // Runway Ready meter — model row already loaded above, pass it through
     computeCastingReadiness(adminClient, model.id, model),
     // Welcome-back pulse — model.last_active_at is still the PREVIOUS visit
@@ -727,12 +776,31 @@ export default async function DashboardPage() {
         portfolioPhotos={portfolioPhotos}
         followerCount={followerCount || 0}
         views30d={views30d || 0}
+        earningsThisMonth={earningsThisMonth || 0}
         identityExtra={
           // Compact pill, not a card (dashboard declutter convention).
           // Writes via the service-role /api/model/availability route.
           <AvailabilityToggle initialAvailable={!!model.available_for_calls} />
         }
       />
+
+      {/* ──────────────────────────────────────────────────────
+          PAYOUT NUDGE v2 — single dismissible row, only when there is
+          real money (>= first-cashout minimum) AND no payout method on
+          file. Eligibility resolved here server-side; the component only
+          handles dismissal (14-day localStorage snooze). Not a repeat of
+          #73's mistake: no identity/pending states re-implemented — it
+          just points at /wallet, which owns all of that.
+         ────────────────────────────────────────────────────── */}
+      {(model.coin_balance || 0) >= PAYOUT_NUDGE_MIN_COINS &&
+        !model.zelle_info &&
+        (bankAccountCount || 0) === 0 &&
+        !payoneerAccount?.can_receive_payments && (
+          <PayoutSetupPrompt
+            coins={model.coin_balance || 0}
+            needsIdentity={!model.identity_verified_at}
+          />
+        )}
 
       {/* ──────────────────────────────────────────────────────
           WELCOME BACK — only for genuinely returning models

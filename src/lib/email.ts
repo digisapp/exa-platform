@@ -3424,7 +3424,7 @@ export async function sendCoinBalanceReminderEmail({
               </table>
 
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6; text-align: center;">
-                You've hit the $50 minimum! Withdraw your earnings or tip a model who inspires you.
+                You're past the payout minimum! Withdraw your earnings or tip a model who inspires you. First cashouts unlock at just $10 — after that, the minimum is $50.
               </p>
 
               <!-- CTA Buttons -->

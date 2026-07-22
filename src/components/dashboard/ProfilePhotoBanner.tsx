@@ -4,7 +4,8 @@ import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Camera, Star, Loader2, ImageOff, Check, ExternalLink, Heart, Eye } from "lucide-react";
+import { Camera, Star, Loader2, ImageOff, Check, ExternalLink, Heart, Eye, Coins } from "lucide-react";
+import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,6 +37,10 @@ interface ProfilePhotoBannerProps {
   portfolioPhotos: PortfolioPhoto[];
   followerCount: number;
   views30d: number;
+  /** Coins earned this calendar month (MODEL_EARNING_ACTIONS sum) — shown
+      as a USD stat chip that taps through to /wallet. Hidden at 0 so quiet
+      months don't read as a demotivating "$0.00" (declutter convention). */
+  earningsThisMonth?: number;
   /** Compact control rendered in the identity column (e.g. the
       "Available for calls" pill) — keeps the dashboard card count flat. */
   identityExtra?: React.ReactNode;
@@ -58,6 +63,7 @@ export function ProfilePhotoBanner({
   portfolioPhotos: initialPortfolio,
   followerCount,
   views30d,
+  earningsThisMonth = 0,
   identityExtra,
 }: ProfilePhotoBannerProps) {
   // Avatar state
@@ -316,6 +322,20 @@ export function ProfilePhotoBanner({
                       </span>
                       <span className="text-white/50">views · 30d</span>
                     </span>
+                    {earningsThisMonth > 0 && (
+                      <Link
+                        href="/wallet"
+                        className="flex items-center gap-1.5 text-sm text-white/80 hover:text-white transition-colors group/earn"
+                      >
+                        <Coins className="h-3.5 w-3.5 text-emerald-400" />
+                        <span className="font-semibold text-emerald-300">
+                          {formatUsd(coinsToUsd(earningsThisMonth))}
+                        </span>
+                        <span className="text-white/50 group-hover/earn:text-emerald-300/80 transition-colors">
+                          this month
+                        </span>
+                      </Link>
+                    )}
                   </div>
 
                   {/* What each photo is for */}
