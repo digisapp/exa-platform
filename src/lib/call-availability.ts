@@ -22,6 +22,8 @@ export function isReachableForCalls(
   return !!(model.video_is_online || model.available_for_calls);
 }
 
-// Rollback lever for the fan-side CTA gating (server gate is unconditional).
-// Flip to false to restore "buttons always shown, 409 handled" behavior.
+// Chat-header-only lever: disables the header call buttons for fans when the
+// model is unreachable (the message box is the whole page there, so no knock
+// sheet). Profile-page CTAs no longer use this — they always render and open
+// the knock sheet (/api/calls/knock) when the model is offline.
 export const GATE_CALL_CTAS_ON_REACHABILITY = true;

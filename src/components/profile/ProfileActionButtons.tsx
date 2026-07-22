@@ -16,6 +16,9 @@ import {
   CheckCircle,
   PhoneOff,
   PhoneCall,
+  Moon,
+  BellRing,
+  Bell,
 } from "lucide-react";
 import {
   Dialog,
@@ -33,7 +36,6 @@ import { hapticFeedback } from "@/hooks/useHapticFeedback";
 import { showTipSuccessToast } from "@/lib/tip-toast";
 import { createClient } from "@/lib/supabase/client";
 import { messageCoinCost } from "@/lib/coin-config";
-import { GATE_CALL_CTAS_ON_REACHABILITY } from "@/lib/call-availability";
 import {
   TIP_GIFTS,
   SUPER_TIP_AMOUNTS,
@@ -130,6 +132,14 @@ export function ProfileActionButtons({
   const [ringSeconds, setRingSeconds] = useState(RING_TIMEOUT);
   const [callOutcome, setCallOutcome] = useState<"declined" | "missed" | null>(null);
   const [startingCall, setStartingCall] = useState<"video" | "voice" | null>(null);
+
+  // Offline knock sheet: what a call button opens when the model isn't
+  // reachable (knock = alert the model, watch = ping me when they're online)
+  const [offlineSheet, setOfflineSheet] = useState<"video" | "voice" | null>(null);
+  const [knockSending, setKnockSending] = useState<"knock" | "watch" | null>(null);
+  const [knockResult, setKnockResult] = useState<"knocked" | "watching" | null>(null);
+  // Live override when /api/calls/knock reports the ISR-cached page was stale
+  const [nowReachable, setNowReachable] = useState(false);
 
   const router = useRouter();
   const firstName = modelName?.split(" ")[0] || modelUsername;
@@ -263,14 +273,67 @@ export function ProfileActionButtons({
     }
   };
 
+  // Server-aligned reachability, with a client override for the ISR-stale
+  // case where /api/calls/knock reports the model is actually available.
+  const callsOffline = !isOwner && !callReachable && !nowReachable;
+
   const handleVideoCall = () => {
     if (!isLoggedIn) { setShowAuthDialog(true); return; }
+    if (callsOffline) { setKnockResult(null); setOfflineSheet("video"); return; }
     if (videoCallRate > 0) { setShowVideoConfirm(true); } else { startCall("video"); }
   };
 
   const handleVoiceCall = () => {
     if (!isLoggedIn) { setShowAuthDialog(true); return; }
+    if (callsOffline) { setKnockResult(null); setOfflineSheet("voice"); return; }
     if (voiceCallRate > 0) { setShowVoiceConfirm(true); } else { startCall("voice"); }
+  };
+
+  // ── Knock: the model is offline, do something better than dead air ────────
+  const sendKnock = async (mode: "knock" | "watch") => {
+    if (!offlineSheet || knockSending) return;
+    const callType = offlineSheet;
+    setKnockSending(mode);
+    try {
+      const res = await fetch("/api/calls/knock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ modelId, callType, mode }),
+      });
+      const data = await res.json();
+      if (res.ok && data.alreadyReachable) {
+        // The ISR-cached page was stale — the model is available. Call for real.
+        setNowReachable(true);
+        setOfflineSheet(null);
+        toast.success(`Good news — ${firstName} is available right now!`);
+        const rate = callType === "voice" ? voiceCallRate : videoCallRate;
+        if (rate > 0) {
+          if (callType === "voice") setShowVoiceConfirm(true); else setShowVideoConfirm(true);
+        } else {
+          startCall(callType);
+        }
+        return;
+      }
+      if (!res.ok) {
+        toast.error(data.error || "Something went wrong — try again");
+        return;
+      }
+      hapticFeedback("success");
+      setKnockResult(mode === "knock" ? "knocked" : "watching");
+    } catch {
+      toast.error("Something went wrong — try again");
+    } finally {
+      setKnockSending(null);
+    }
+  };
+
+  const focusMessageBox = () => {
+    setOfflineSheet(null);
+    // Let the dialog close before grabbing focus
+    setTimeout(() => {
+      chatInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      chatInputRef.current?.focus();
+    }, 150);
   };
 
   const handleTip = () => {
@@ -424,20 +487,18 @@ export function ProfileActionButtons({
     );
   }
 
-  // Call CTAs render only when the model is reachable (video_is_online OR
-  // available_for_calls, gated by GATE_CALL_CTAS_ON_REACHABILITY) — same
-  // signal /api/calls/start enforces, so no dead button that 409s. Owners
-  // always see their buttons (preview mode).
-  const gateCalls = GATE_CALL_CTAS_ON_REACHABILITY && !isOwner && !callReachable;
-  const showVideoCall = allowVideoCall && !gateCalls;
-  const showVoiceCall = allowVoiceCall && !gateCalls;
-  const callsHidden = gateCalls && (allowVideoCall || allowVoiceCall);
+  // Call CTAs always render when the model allows them. When the model isn't
+  // reachable (video_is_online OR available_for_calls — the same signal
+  // /api/calls/start enforces) the buttons open the knock sheet instead of
+  // ringing dead air, so offline demand becomes a knock instead of a 409.
+  const showVideoCall = allowVideoCall;
+  const showVoiceCall = allowVoiceCall;
 
   const hasSecondaryActions = showVideoCall || showVoiceCall || allowTips;
   const secondaryCount = [showVideoCall, showVoiceCall, allowTips].filter(Boolean).length;
   const secondaryGrid = secondaryCount === 1 ? "grid-cols-1" : secondaryCount === 2 ? "grid-cols-2" : "grid-cols-3";
 
-  if (!allowChat && !hasSecondaryActions && !callsHidden) return null;
+  if (!allowChat && !hasSecondaryActions) return null;
 
   const isPreview = isOwner;
 
@@ -538,20 +599,28 @@ export function ProfileActionButtons({
               <button
                 onClick={handleVideoCall}
                 disabled={startingCall !== null}
-                className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/30 hover:border-pink-500/50 text-pink-400 hover:text-pink-300 text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
+                className={cn(
+                  "flex items-center justify-center gap-1.5 h-9 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/30 hover:border-pink-500/50 text-pink-400 hover:text-pink-300 text-xs font-medium transition-all active:scale-95 disabled:opacity-50",
+                  callsOffline && "opacity-75 saturate-[0.85]"
+                )}
               >
                 {startingCall === "video" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Video className="h-3.5 w-3.5" />}
                 Video
+                {callsOffline && <Moon className="h-2.5 w-2.5 text-white/40" />}
               </button>
             )}
             {showVoiceCall && (
               <button
                 onClick={handleVoiceCall}
                 disabled={startingCall !== null}
-                className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 hover:border-blue-500/50 text-blue-400 hover:text-blue-300 text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
+                className={cn(
+                  "flex items-center justify-center gap-1.5 h-9 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 hover:border-blue-500/50 text-blue-400 hover:text-blue-300 text-xs font-medium transition-all active:scale-95 disabled:opacity-50",
+                  callsOffline && "opacity-75 saturate-[0.85]"
+                )}
               >
                 {startingCall === "voice" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Phone className="h-3.5 w-3.5" />}
                 Voice
+                {callsOffline && <Moon className="h-2.5 w-2.5 text-white/40" />}
               </button>
             )}
             {allowTips && (
@@ -566,12 +635,11 @@ export function ProfileActionButtons({
           </div>
         )}
 
-        {/* Subtle fallback when calls are allowed but the model isn't
-            reachable — the message box above stays the primary action. */}
-        {callsHidden && (
+        {/* Offline hint — the buttons still work, they just knock instead */}
+        {callsOffline && (showVideoCall || showVoiceCall) && (
           <p className="flex items-center justify-center gap-1.5 text-[11px] text-white/40">
-            <PhoneOff className="h-3 w-3" />
-            Not taking calls right now — send a message instead
+            <Moon className="h-3 w-3" />
+            {firstName} is offline — tap a call button and we&apos;ll let them know
           </p>
         )}
       </div>
@@ -619,6 +687,91 @@ export function ProfileActionButtons({
               <Button className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white" onClick={() => startCall("voice")}>Call Now</Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Offline knock sheet — the model isn't reachable, so the call button
+          offers the next-best things instead of dead air */}
+      <Dialog open={offlineSheet !== null} onOpenChange={(open) => { if (!open) { setOfflineSheet(null); setKnockResult(null); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Moon className="h-5 w-5 text-violet-400" /> {firstName} is offline right now
+            </DialogTitle>
+            <DialogDescription>
+              {knockResult === "knocked"
+                ? "Alert sent!"
+                : knockResult === "watching"
+                ? "You're on the list."
+                : `Calls only connect when ${firstName} is online — but you don't have to just wait.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {knockResult ? (
+            <div className="space-y-4 pt-2">
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/25">
+                <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-white/80 leading-relaxed">
+                  {knockResult === "knocked"
+                    ? `We've let ${firstName} know you're trying to call — and we'll ping you the moment they're online.`
+                    : `We'll ping you the moment ${firstName} is taking calls again.`}
+                </p>
+              </div>
+              {allowChat && (
+                <button
+                  onClick={focusMessageBox}
+                  className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white text-sm font-semibold transition-all active:scale-[0.98] shadow-lg shadow-pink-500/20"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Meanwhile, send {firstName} a message
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2.5 pt-2">
+              <button
+                onClick={() => sendKnock("knock")}
+                disabled={knockSending !== null}
+                className="w-full flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-pink-500/15 to-violet-500/15 hover:from-pink-500/25 hover:to-violet-500/25 border border-pink-500/30 hover:border-pink-500/50 transition-all active:scale-[0.98] disabled:opacity-50 text-left"
+              >
+                {knockSending === "knock"
+                  ? <Loader2 className="h-5 w-5 text-pink-400 animate-spin flex-shrink-0" />
+                  : <BellRing className="h-5 w-5 text-pink-400 flex-shrink-0" />}
+                <span>
+                  <span className="block text-sm font-semibold text-white">Let {firstName} know you&apos;re calling</span>
+                  <span className="block text-xs text-white/50 mt-0.5">They&apos;ll get an alert on their phone right away</span>
+                </span>
+              </button>
+
+              <button
+                onClick={() => sendKnock("watch")}
+                disabled={knockSending !== null}
+                className="w-full flex items-center gap-3 p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/25 transition-all active:scale-[0.98] disabled:opacity-50 text-left"
+              >
+                {knockSending === "watch"
+                  ? <Loader2 className="h-5 w-5 text-violet-400 animate-spin flex-shrink-0" />
+                  : <Bell className="h-5 w-5 text-violet-400 flex-shrink-0" />}
+                <span>
+                  <span className="block text-sm font-semibold text-white">Notify me when they&apos;re online</span>
+                  <span className="block text-xs text-white/50 mt-0.5">One ping the moment {firstName} is taking calls</span>
+                </span>
+              </button>
+
+              {allowChat && (
+                <button
+                  onClick={focusMessageBox}
+                  disabled={knockSending !== null}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/25 transition-all active:scale-[0.98] disabled:opacity-50 text-left"
+                >
+                  <MessageCircle className="h-5 w-5 text-blue-400 flex-shrink-0" />
+                  <span>
+                    <span className="block text-sm font-semibold text-white">Send a message instead</span>
+                    <span className="block text-xs text-white/50 mt-0.5">{firstName} replies to messages even when offline</span>
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

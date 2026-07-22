@@ -386,6 +386,11 @@ export default async function ModelProfilePage({ params }: Props) {
   const isOnline = !!model.video_is_online;
   const statusChipLabel = isOnline ? "Online" : callReachable ? "Taking calls" : null;
 
+  // Unclaimed imports can never become reachable and must never be emailed,
+  // so they get no call CTAs at all (no knock sheet either — /api/calls/knock
+  // rejects them server-side too).
+  const modelClaimed = !!model.user_id;
+
   // PORTRAIT HERO ROLLOUT — fully data-driven, no username gate.
   // Every model whose photo data qualifies gets the hero layout automatically.
   // The square `profile_photo_url` continues to power every circle on the
@@ -794,8 +799,8 @@ export default async function ModelProfilePage({ params }: Props) {
                     videoCallRate={model.video_call_rate || 0}
                     voiceCallRate={model.voice_call_rate || 0}
                     allowChat={model.allow_chat ?? true}
-                    allowVideoCall={model.allow_video_call ?? true}
-                    allowVoiceCall={model.allow_voice_call ?? true}
+                    allowVideoCall={modelClaimed && (model.allow_video_call ?? true)}
+                    allowVoiceCall={modelClaimed && (model.allow_voice_call ?? true)}
                     allowTips={model.allow_tips ?? true}
                     callReachable={callReachable}
                   />
@@ -993,8 +998,8 @@ export default async function ModelProfilePage({ params }: Props) {
               videoCallRate={model.video_call_rate || 0}
               voiceCallRate={model.voice_call_rate || 0}
               allowChat={model.allow_chat ?? true}
-              allowVideoCall={model.allow_video_call ?? true}
-              allowVoiceCall={model.allow_voice_call ?? true}
+              allowVideoCall={modelClaimed && (model.allow_video_call ?? true)}
+              allowVoiceCall={modelClaimed && (model.allow_voice_call ?? true)}
               allowTips={model.allow_tips ?? true}
               callReachable={callReachable}
             />
