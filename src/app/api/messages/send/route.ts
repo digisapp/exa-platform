@@ -8,7 +8,11 @@ import { escapeIlike } from "@/lib/utils";
 import { sendNewMessageNotificationEmail } from "@/lib/email";
 import { detectInPersonRequest } from "@/lib/in-person-request";
 import { logger } from "@/lib/logger";
-import { messageCoinCost } from "@/lib/coin-config";
+import {
+  CHAT_MEDIA_MAX_COINS,
+  CHAT_MEDIA_MIN_COINS,
+  messageCoinCost,
+} from "@/lib/coin-config";
 import {
   isChatMediaPath,
   isValidChatMediaStoragePath,
@@ -42,7 +46,13 @@ const sendMessageSchema = z.object({
     (val) => /^(image|video|audio)(\/[\w.+-]+)?$/.test(val),
     { message: "Invalid media type" }
   ).optional().nullable(),
-  mediaPrice: z.number().int().min(10, "Minimum price is 10 coins").max(10000, "Maximum price is 10,000 coins").optional().nullable(),
+  mediaPrice: z
+    .number()
+    .int()
+    .min(CHAT_MEDIA_MIN_COINS, `Minimum price is ${CHAT_MEDIA_MIN_COINS} coins`)
+    .max(CHAT_MEDIA_MAX_COINS, `Maximum price is ${CHAT_MEDIA_MAX_COINS.toLocaleString()} coins`)
+    .optional()
+    .nullable(),
   replyToId: z.string().uuid("Invalid reply message ID").optional().nullable(),
 }).refine(
   (data) => data.content?.trim() || data.mediaUrl,

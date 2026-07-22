@@ -5,9 +5,20 @@ import {
   usdToCoins,
   formatUsd,
   formatCoins,
+  messageCoinCost,
   COIN_USD_RATE,
   MIN_WITHDRAWAL_COINS,
   MIN_WITHDRAWAL_USD,
+  DEFAULT_MESSAGE_COST,
+  CONTENT_UNLOCK_MIN_COINS,
+  CONTENT_PRICE_MAX_COINS,
+  CONTENT_UNLOCK_DEFAULT_COINS,
+  CHAT_MEDIA_MIN_COINS,
+  CHAT_MEDIA_MAX_COINS,
+  MESSAGE_RATE_MIN_COINS,
+  MESSAGE_RATE_MAX_COINS,
+  CALL_RATE_MIN_COINS,
+  CALL_RATE_MAX_COINS,
 } from "../coin-config";
 
 describe("coinsToUsd", () => {
@@ -127,5 +138,54 @@ describe("constants", () => {
 
   it("MIN_WITHDRAWAL_USD equals coins * rate", () => {
     expect(MIN_WITHDRAWAL_USD).toBe(MIN_WITHDRAWAL_COINS * COIN_USD_RATE);
+  });
+});
+
+describe("pricing floors / defaults / caps", () => {
+  it("content unlock floor is 5 coins (raised from 1 on 2026-07-22, forward-only)", () => {
+    expect(CONTENT_UNLOCK_MIN_COINS).toBe(5);
+  });
+
+  it("content price cap is 10,000 coins", () => {
+    expect(CONTENT_PRICE_MAX_COINS).toBe(10000);
+  });
+
+  it("content unlock default is 100 coins, inside the floor/cap range", () => {
+    expect(CONTENT_UNLOCK_DEFAULT_COINS).toBe(100);
+    expect(CONTENT_UNLOCK_DEFAULT_COINS).toBeGreaterThanOrEqual(CONTENT_UNLOCK_MIN_COINS);
+    expect(CONTENT_UNLOCK_DEFAULT_COINS).toBeLessThanOrEqual(CONTENT_PRICE_MAX_COINS);
+  });
+
+  it("chat media price range is 10–10,000 coins", () => {
+    expect(CHAT_MEDIA_MIN_COINS).toBe(10);
+    expect(CHAT_MEDIA_MAX_COINS).toBe(10000);
+  });
+
+  it("message rate floor is owned by DEFAULT_MESSAGE_COST (5 coins), cap 100", () => {
+    expect(MESSAGE_RATE_MIN_COINS).toBe(DEFAULT_MESSAGE_COST);
+    expect(MESSAGE_RATE_MIN_COINS).toBe(5);
+    expect(MESSAGE_RATE_MAX_COINS).toBe(100);
+  });
+
+  it("call rate range is 10–1,000 coins", () => {
+    expect(CALL_RATE_MIN_COINS).toBe(10);
+    expect(CALL_RATE_MAX_COINS).toBe(1000);
+  });
+});
+
+describe("messageCoinCost", () => {
+  it("falls back to the floor when the model has no rate", () => {
+    expect(messageCoinCost(null)).toBe(MESSAGE_RATE_MIN_COINS);
+    expect(messageCoinCost(undefined)).toBe(MESSAGE_RATE_MIN_COINS);
+  });
+
+  it("floors sub-floor rates", () => {
+    expect(messageCoinCost(0)).toBe(MESSAGE_RATE_MIN_COINS);
+    expect(messageCoinCost(3)).toBe(MESSAGE_RATE_MIN_COINS);
+  });
+
+  it("passes through rates at or above the floor", () => {
+    expect(messageCoinCost(5)).toBe(5);
+    expect(messageCoinCost(25)).toBe(25);
   });
 });

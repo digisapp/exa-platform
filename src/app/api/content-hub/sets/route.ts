@@ -4,11 +4,12 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { CONTENT_PRICE_MAX_COINS } from "@/lib/coin-config";
 
 const createSetSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(1000).optional(),
-  coin_price: z.number().int().min(0).max(10000).optional(),
+  coin_price: z.number().int().min(0).max(CONTENT_PRICE_MAX_COINS).optional(),
 });
 
 export async function GET(_request: NextRequest) {

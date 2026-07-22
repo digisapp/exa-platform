@@ -14,6 +14,7 @@ import { EmojiPicker } from "./EmojiPicker";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { LibraryPicker } from "./LibraryPicker";
 import { hapticFeedback } from "@/hooks/useHapticFeedback";
+import { CHAT_MEDIA_MAX_COINS, CHAT_MEDIA_MIN_COINS } from "@/lib/coin-config";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -535,7 +536,7 @@ export function MessageInput({
                 setMediaPrice(null);
               } else {
                 setShowPriceInput(true);
-                setMediaPrice(10);
+                setMediaPrice(CHAT_MEDIA_MIN_COINS);
               }
             }}
             className={cn(
@@ -553,15 +554,19 @@ export function MessageInput({
               <Coins className="h-3.5 w-3.5 text-amber-400" />
               <input
                 type="number"
-                min={10}
-                max={10000}
-                value={mediaPrice ?? 10}
+                min={CHAT_MEDIA_MIN_COINS}
+                max={CHAT_MEDIA_MAX_COINS}
+                value={mediaPrice ?? CHAT_MEDIA_MIN_COINS}
                 onChange={(e) => {
                   const val = parseInt(e.target.value);
-                  setMediaPrice(isNaN(val) ? null : Math.max(10, Math.min(10000, val)));
+                  setMediaPrice(
+                    isNaN(val)
+                      ? null
+                      : Math.max(CHAT_MEDIA_MIN_COINS, Math.min(CHAT_MEDIA_MAX_COINS, val))
+                  );
                 }}
                 className="w-20 h-7 px-2 text-xs rounded-lg border border-pink-500/30 bg-white/5 text-white focus:border-pink-400/60 focus:outline-none focus:ring-2 focus:ring-pink-500/20"
-                placeholder="10"
+                placeholder={`${CHAT_MEDIA_MIN_COINS}`}
               />
               <span className="text-xs text-white/50">coins</span>
             </div>

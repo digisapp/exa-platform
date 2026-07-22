@@ -50,6 +50,38 @@ export function messageCoinCost(modelRate: number | null | undefined): number {
   return Math.max(DEFAULT_MESSAGE_COST, modelRate ?? DEFAULT_MESSAGE_COST);
 }
 
+// ─── PRICING FLOORS / DEFAULTS / CAPS ────────────────────────────────────
+// Single source of truth for every model-priced surface. Every client input
+// AND server enforcement point imports from here — never restate these
+// numbers at a priced surface, or client and server silently drift.
+// ─────────────────────────────────────────────────────────────────────────
+
+// Studio "Pay to Unlock" content (content_items.coin_price). Floor raised
+// 1 → 5 on 2026-07-22, FORWARD-ONLY: new writes/edits are held to it, but
+// existing sub-floor items stay live and unlockable (no backfill, and the
+// DB CHECK stays coin_price >= 0 — 0 is valid for private/portfolio rows).
+export const CONTENT_UNLOCK_MIN_COINS = 5;
+export const CONTENT_PRICE_MAX_COINS = 10000;
+// Pre-filled price when a studio dialog first offers Pay to Unlock
+export const CONTENT_UNLOCK_DEFAULT_COINS = 100;
+
+// Locked chat media (messages.media_price) — set in MessageInput, enforced
+// server-side in /api/messages/send (messages/new carries no media price)
+export const CHAT_MEDIA_MIN_COINS = 10;
+export const CHAT_MEDIA_MAX_COINS = 10000;
+
+// Model per-message rate (models.message_rate). The floor is owned by
+// DEFAULT_MESSAGE_COST so the rate floor and the messageCoinCost() charge
+// fallback can never diverge.
+export const MESSAGE_RATE_MIN_COINS = DEFAULT_MESSAGE_COST;
+export const MESSAGE_RATE_MAX_COINS = 100;
+
+// Model per-minute call rates (models.video_call_rate / voice_call_rate).
+// NOTE: rate floors (message + call) are enforced client-side only — rates
+// persist via a session-client write in settings, no API route in the path.
+export const CALL_RATE_MIN_COINS = 10;
+export const CALL_RATE_MAX_COINS = 1000;
+
 /**
  * Counterparty model id from a coin_transactions metadata blob. The key varies
  * by RPC: send_tip writes recipient_model_id, send_message_with_coins and

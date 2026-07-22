@@ -24,6 +24,7 @@ import { ModelFollowersTab } from "@/components/settings/ModelFollowersTab";
 import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { formatInches } from "@/lib/measurements";
+import { CALL_RATE_MIN_COINS, MESSAGE_RATE_MIN_COINS } from "@/lib/coin-config";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -726,9 +727,12 @@ export default function ProfilePage() {
         show_location: model.show_location,
         show_social_media: model.show_social_media,
 
-        video_call_rate: model.video_call_rate || 10,
-        voice_call_rate: model.voice_call_rate || 10,
-        message_rate: Math.max(5, model.message_rate || 5),
+        // Floor-clamp rates at save time. This is the last enforcement point —
+        // rates persist via this session-client write, there is no API route
+        // in the path to validate them server-side.
+        video_call_rate: Math.max(CALL_RATE_MIN_COINS, model.video_call_rate || 0),
+        voice_call_rate: Math.max(CALL_RATE_MIN_COINS, model.voice_call_rate || 0),
+        message_rate: Math.max(MESSAGE_RATE_MIN_COINS, model.message_rate || 0),
         // Booking rates
         photoshoot_hourly_rate: model.photoshoot_hourly_rate || 0,
         photoshoot_half_day_rate: model.photoshoot_half_day_rate || 0,

@@ -8,6 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Camera, BarChart3, User, Globe, ChevronDown } from "lucide-react";
 import type { Model } from "@/types/database";
+import {
+  CALL_RATE_MAX_COINS,
+  CALL_RATE_MIN_COINS,
+  MESSAGE_RATE_MAX_COINS,
+  MESSAGE_RATE_MIN_COINS,
+} from "@/lib/coin-config";
 
 const coinsToUSD = (coins: number) =>
   (coins * 0.10).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -42,7 +48,7 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                 </div>
                 <div>
                   <Label className="text-base font-semibold">Video Call Rate</Label>
-                  <p className="text-sm text-muted-foreground">Per minute (min: 10 coins)</p>
+                  <p className="text-sm text-muted-foreground">Per minute (min: {CALL_RATE_MIN_COINS} coins)</p>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1 pl-13 sm:pl-0">
@@ -50,8 +56,8 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                   <Input
                     type="number"
                     inputMode="numeric"
-                    min="10"
-                    max="1000"
+                    min={CALL_RATE_MIN_COINS}
+                    max={CALL_RATE_MAX_COINS}
                     value={model.video_call_rate ?? ""}
                     onChange={(e) => {
                       const raw = e.target.value;
@@ -62,8 +68,8 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                       }
                     }}
                     onBlur={() => {
-                      if (!model.video_call_rate || model.video_call_rate < 10) {
-                        onChange({ ...model, video_call_rate: 10 });
+                      if (!model.video_call_rate || model.video_call_rate < CALL_RATE_MIN_COINS) {
+                        onChange({ ...model, video_call_rate: CALL_RATE_MIN_COINS });
                       }
                     }}
                     className="w-20 text-right"
@@ -86,7 +92,7 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                 </div>
                 <div>
                   <Label className="text-base font-semibold">Voice Call Rate</Label>
-                  <p className="text-sm text-muted-foreground">Per minute (min: 10 coins)</p>
+                  <p className="text-sm text-muted-foreground">Per minute (min: {CALL_RATE_MIN_COINS} coins)</p>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1 pl-13 sm:pl-0">
@@ -94,8 +100,8 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                   <Input
                     type="number"
                     inputMode="numeric"
-                    min="10"
-                    max="1000"
+                    min={CALL_RATE_MIN_COINS}
+                    max={CALL_RATE_MAX_COINS}
                     value={model.voice_call_rate ?? ""}
                     onChange={(e) => {
                       const raw = e.target.value;
@@ -106,8 +112,8 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                       }
                     }}
                     onBlur={() => {
-                      if (!model.voice_call_rate || model.voice_call_rate < 10) {
-                        onChange({ ...model, voice_call_rate: 10 });
+                      if (!model.voice_call_rate || model.voice_call_rate < CALL_RATE_MIN_COINS) {
+                        onChange({ ...model, voice_call_rate: CALL_RATE_MIN_COINS });
                       }
                     }}
                     className="w-20 text-right"
@@ -130,7 +136,7 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                 </div>
                 <div>
                   <Label className="text-base font-semibold">Message Rate</Label>
-                  <p className="text-sm text-muted-foreground">Per message (min: 5 coins)</p>
+                  <p className="text-sm text-muted-foreground">Per message (min: {MESSAGE_RATE_MIN_COINS} coins)</p>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1 pl-13 sm:pl-0">
@@ -138,8 +144,8 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                   <Input
                     type="number"
                     inputMode="numeric"
-                    min="5"
-                    max="100"
+                    min={MESSAGE_RATE_MIN_COINS}
+                    max={MESSAGE_RATE_MAX_COINS}
                     value={model.message_rate ?? ""}
                     onChange={(e) => {
                       const raw = e.target.value;
@@ -150,8 +156,8 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                       }
                     }}
                     onBlur={() => {
-                      if (!model.message_rate || model.message_rate < 5) {
-                        onChange({ ...model, message_rate: 5 });
+                      if (!model.message_rate || model.message_rate < MESSAGE_RATE_MIN_COINS) {
+                        onChange({ ...model, message_rate: MESSAGE_RATE_MIN_COINS });
                       }
                     }}
                     className="w-20 text-right"
