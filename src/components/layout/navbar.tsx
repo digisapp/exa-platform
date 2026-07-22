@@ -62,7 +62,6 @@ const BuyCoinsModal = dynamic(
 // Quick-buy popover shows impulse-topup tiers only (20→500); bigger packages
 // live in BuyCoinsModal behind "More options" alongside the first-purchase bonus UI.
 const QUICK_BUY_PACKAGES = COIN_PACKAGES.slice(0, 5);
-const POPULAR_COINS = 100;
 
 interface NavbarProps {
   user?: {
@@ -269,8 +268,9 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                     <div className="flex items-center justify-between mb-3 px-1">
                       <div>
                         <p className="text-[10px] uppercase tracking-wider text-white/40">{t.nav.availableBalance}</p>
+                        {/* No USD equivalent here: fan coins aren't redeemable and
+                            coinsToUsd is the model payout rate, not what fans paid */}
                         <p className="text-xl font-bold text-amber-300 leading-tight">{coinBalance.toLocaleString()} <span className="text-xs font-normal text-white/40">coins</span></p>
-                        <p className="text-xs text-white/40">{formatUsd(usdValue)}</p>
                       </div>
                       <Coins className="h-7 w-7 text-amber-400/40" />
                     </div>
@@ -287,9 +287,6 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                             <Coins className="h-3.5 w-3.5 text-amber-400 shrink-0" />
                             <span className="text-sm font-semibold text-white">{pack.coins.toLocaleString()}</span>
                             <span className="text-[10px] text-white/40">coins</span>
-                            {pack.coins === POPULAR_COINS && (
-                              <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Popular</span>
-                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-amber-300">{pack.priceDisplay}</span>
