@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -53,15 +52,10 @@ import { useTranslation } from "@/i18n";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
 
-// Lazy: keeps Stripe JS out of the navbar bundle until a fan opens the full modal
-const BuyCoinsModal = dynamic(
-  () => import("@/components/coins/BuyCoinsModal").then((m) => m.BuyCoinsModal),
-  { ssr: false }
-);
-
-// Quick-buy popover shows impulse-topup tiers only (20→500); bigger packages
-// live in BuyCoinsModal behind "More options" alongside the first-purchase bonus UI.
-const QUICK_BUY_PACKAGES = COIN_PACKAGES.slice(0, 5);
+// All tiers visible at once (owner call 2026-07-22: whale packs must be one
+// click away, never behind a "more options" step) — a divider before this
+// index splits the list into quick top-ups and big packs.
+const BIG_PACKS_START_INDEX = 5;
 
 interface NavbarProps {
   user?: {
@@ -98,8 +92,6 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
   const coinBalance = coinBalanceContext?.balance ?? 0;
   const { t } = useTranslation();
   const [purchasing, setPurchasing] = useState<number | null>(null);
-  const [coinPopoverOpen, setCoinPopoverOpen] = useState(false);
-  const [buyModalOpen, setBuyModalOpen] = useState(false);
 
   const handleCoinPurchase = async (coins: number) => {
     setPurchasing(coins);
@@ -250,8 +242,7 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                 </Link>
               ) : actorType === "fan" ? (
                 // Fans: coins pill → inline buy popover (no redirect to /wallet)
-                <>
-                <Popover open={coinPopoverOpen} onOpenChange={setCoinPopoverOpen}>
+                <Popover>
                   <PopoverTrigger asChild>
                     <button className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-gradient-to-r from-amber-500/15 to-orange-500/15 border border-amber-500/30 hover:border-amber-500/60 hover:from-amber-500/25 hover:to-orange-500/25 transition-all shadow-[0_0_12px_rgba(245,158,11,0.15)] hover:shadow-[0_0_20px_rgba(245,158,11,0.35)]">
                       <Coins className="h-4 w-4 text-amber-400" />
@@ -274,49 +265,41 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                       </div>
                       <Coins className="h-7 w-7 text-amber-400/40" />
                     </div>
-                    {/* Coin packages — quick-buy tiers only */}
+                    {/* Coin packages — every tier visible, big packs below the divider */}
                     <div className="space-y-1">
-                      {QUICK_BUY_PACKAGES.map((pack) => (
-                        <button
-                          key={pack.coins}
-                          onClick={() => handleCoinPurchase(pack.coins)}
-                          disabled={purchasing !== null}
-                          className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-white/8 transition-colors group disabled:opacity-60"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Coins className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                            <span className="text-sm font-semibold text-white">{pack.coins.toLocaleString()}</span>
-                            <span className="text-[10px] text-white/40">coins</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-amber-300">{pack.priceDisplay}</span>
-                            {purchasing === pack.coins ? (
-                              <Loader2 className="h-3 w-3 animate-spin text-amber-400" />
-                            ) : (
-                              <span className="text-[10px] text-white/30 group-hover:text-amber-400 transition-colors">Buy →</span>
-                            )}
-                          </div>
-                        </button>
+                      {COIN_PACKAGES.map((pack, i) => (
+                        <Fragment key={pack.coins}>
+                          {i === BIG_PACKS_START_INDEX && (
+                            <div className="flex items-center gap-2 pt-2 pb-0.5 px-1">
+                              <Gem className="h-3 w-3 text-violet-400 shrink-0" />
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Big packs</span>
+                              <div className="flex-1 h-px bg-white/10" />
+                            </div>
+                          )}
+                          <button
+                            onClick={() => handleCoinPurchase(pack.coins)}
+                            disabled={purchasing !== null}
+                            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-white/8 transition-colors group disabled:opacity-60"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Coins className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                              <span className="text-sm font-semibold text-white">{pack.coins.toLocaleString()}</span>
+                              <span className="text-[10px] text-white/40">coins</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-amber-300">{pack.priceDisplay}</span>
+                              {purchasing === pack.coins ? (
+                                <Loader2 className="h-3 w-3 animate-spin text-amber-400" />
+                              ) : (
+                                <span className="text-[10px] text-white/30 group-hover:text-amber-400 transition-colors">Buy →</span>
+                              )}
+                            </div>
+                          </button>
+                        </Fragment>
                       ))}
                     </div>
-                    {/* Larger packages + first-purchase bonus live in the full modal */}
-                    <button
-                      onClick={() => {
-                        setCoinPopoverOpen(false);
-                        setBuyModalOpen(true);
-                      }}
-                      disabled={purchasing !== null}
-                      className="w-full mt-2 pt-2 border-t border-white/10 flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white/60 hover:text-amber-300 hover:bg-white/8 transition-colors disabled:opacity-60"
-                    >
-                      <Gem className="h-3.5 w-3.5 text-violet-400" />
-                      Bigger packs · 1,000–10,000 coins →
-                    </button>
                   </PopoverContent>
                 </Popover>
-                {buyModalOpen && (
-                  <BuyCoinsModal isOpen onClose={() => setBuyModalOpen(false)} />
-                )}
-                </>
               ) : (
                 // Brands: coin balance — cyan accent to match brand nav color
                 <Link
