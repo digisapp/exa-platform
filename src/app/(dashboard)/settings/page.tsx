@@ -1398,7 +1398,7 @@ export default function ProfilePage() {
                     : "text-white/50 hover:text-white/80"
                 )}
               >
-                Spanish
+                Español
               </button>
             </div>
           </div>

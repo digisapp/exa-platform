@@ -40,11 +40,9 @@ import {
 } from "lucide-react";
 import {
   COIN_USD_RATE,
-  FIRST_CASHOUT_MIN_COINS,
   MIN_WITHDRAWAL_COINS,
   coinsToUsd,
   formatUsd,
-  minWithdrawalCoins,
 } from "@/lib/coin-config";
 import { PAYONEER_PREFERRED_COUNTRIES, DUAL_PAYOUT_COUNTRIES } from "@/lib/payoneer";
 import { cn } from "@/lib/utils";
@@ -63,7 +61,6 @@ interface PayoutsTabProps {
   coinBalance: number;
   /** Any prior COMPLETED withdrawal? false → the $10 first-cashout minimum
       applies (must mirror the RPCs' EXISTS(status='completed') branch). */
-  hasPriorCompletedWithdrawal: boolean;
   zelleInfo: string;
   zelleInput: string;
   setZelleInput: (value: string) => void;
@@ -110,7 +107,6 @@ const COUNTRY_NAMES: Record<string, string> = {
 
 export default function PayoutsTab({
   coinBalance,
-  hasPriorCompletedWithdrawal,
   zelleInfo,
   zelleInput,
   setZelleInput,
@@ -150,9 +146,8 @@ export default function PayoutsTab({
   const noMethodSetup = !zelleInfo && bankAccounts.length === 0 && !payoneerAccount;
   const [showAllMethods, setShowAllMethods] = useState(noMethodSetup);
 
-  // First cashout unlocks at 100 coins ($10); repeats at 500 ($50).
-  const isFirstCashout = !hasPriorCompletedWithdrawal;
-  const minCoins = minWithdrawalCoins(hasPriorCompletedWithdrawal);
+  // Flat $50 minimum — mirrors the withdrawal RPCs (20260722000900).
+  const minCoins = MIN_WITHDRAWAL_COINS;
 
   const hasAnyMethod = Boolean(zelleInfo) || bankAccounts.length > 0 || (payoneerAccount?.can_receive_payments === true);
   const canWithdraw = coinBalance >= minCoins && hasAnyMethod;
@@ -272,7 +267,6 @@ export default function PayoutsTab({
                     {withdrawAmount && parseInt(withdrawAmount) < minCoins && (
                       <p className="text-sm text-yellow-500">
                         Minimum {minCoins} coins ({formatUsd(coinsToUsd(minCoins))})
-                        {isFirstCashout && " — your first cashout"}
                       </p>
                     )}
                   </div>
@@ -346,7 +340,6 @@ export default function PayoutsTab({
             {coinBalance < minCoins ? (
               <p className="text-sm text-muted-foreground">
                 Earn {(minCoins - coinBalance).toLocaleString()} more coins ({formatUsd(coinsToUsd(minCoins - coinBalance))}) to reach the {formatUsd(coinsToUsd(minCoins))} minimum
-                {isFirstCashout && " — your first cashout starts at just " + formatUsd(coinsToUsd(FIRST_CASHOUT_MIN_COINS))}
               </p>
             ) : !hasAnyMethod ? (
               <p className="text-sm text-yellow-500">
@@ -355,16 +348,11 @@ export default function PayoutsTab({
             ) : activeMethodLabel ? (
               <p className="text-sm text-muted-foreground">
                 Sending to <span className="font-medium text-foreground">{activeMethodLabel}</span> ·{" "}
-                {isFirstCashout
-                  ? `First cashout from ${formatUsd(coinsToUsd(FIRST_CASHOUT_MIN_COINS))}, then ${formatUsd(coinsToUsd(MIN_WITHDRAWAL_COINS))} minimum`
-                  : `Minimum ${formatUsd(coinsToUsd(minCoins))}`}
+                Minimum {formatUsd(coinsToUsd(minCoins))}
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                {isFirstCashout
-                  ? `First cashout from ${formatUsd(coinsToUsd(FIRST_CASHOUT_MIN_COINS))}, then ${formatUsd(coinsToUsd(MIN_WITHDRAWAL_COINS))} minimum`
-                  : `Minimum ${formatUsd(coinsToUsd(minCoins))}`}{" "}
-                · Processed in 2-5 business days
+                Minimum {formatUsd(coinsToUsd(minCoins))} · Processed in 2-5 business days
               </p>
             )}
           </div>
@@ -733,10 +721,7 @@ export default function PayoutsTab({
       {/* Info footer */}
       <p className="text-xs text-muted-foreground text-center">
         1 coin = {formatUsd(COIN_USD_RATE)} ·{" "}
-        {isFirstCashout
-          ? `First cashout from ${formatUsd(FIRST_CASHOUT_MIN_COINS * COIN_USD_RATE)}, then ${formatUsd(MIN_WITHDRAWAL_COINS * COIN_USD_RATE)} minimum`
-          : `Minimum payout ${formatUsd(MIN_WITHDRAWAL_COINS * COIN_USD_RATE)}`}{" "}
-        · Processed 2-5 business days
+        Minimum payout {formatUsd(MIN_WITHDRAWAL_COINS * COIN_USD_RATE)} · Processed 2-5 business days
       </p>
     </div>
   );

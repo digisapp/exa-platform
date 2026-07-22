@@ -56,9 +56,13 @@ export function GoogleTranslate() {
 
   return (
     <>
+      {/* Kept in the DOM but visually hidden: the LanguageSwitcher globe in
+          the navbar drives this widget's combo programmatically. Don't use
+          display:none — Google won't initialize into a display:none host. */}
       <div
         id="google_translate_element"
-        className="fixed bottom-20 right-4 z-40 mb-[env(safe-area-inset-bottom)] md:bottom-4 md:z-50 md:mb-0"
+        aria-hidden="true"
+        className="fixed bottom-0 right-0 h-0 w-0 overflow-hidden opacity-0 pointer-events-none"
       />
       <style jsx global>{`
         /* Hide Google Translate top bar that pushes page down */
