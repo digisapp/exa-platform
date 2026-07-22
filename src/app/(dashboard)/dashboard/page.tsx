@@ -34,6 +34,7 @@ import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { ProfilePhotoBanner } from "@/components/dashboard/ProfilePhotoBanner";
+import { AvailabilityToggle } from "@/components/dashboard/AvailabilityToggle";
 import { CastingReadiness } from "@/components/dashboard/CastingReadiness";
 import { computeCastingReadiness } from "@/lib/casting-readiness";
 import { WelcomeBackPulse } from "@/components/dashboard/WelcomeBackPulse";
@@ -726,6 +727,11 @@ export default async function DashboardPage() {
         portfolioPhotos={portfolioPhotos}
         followerCount={followerCount || 0}
         views30d={views30d || 0}
+        identityExtra={
+          // Compact pill, not a card (dashboard declutter convention).
+          // Writes via the service-role /api/model/availability route.
+          <AvailabilityToggle initialAvailable={!!model.available_for_calls} />
+        }
       />
 
       {/* ──────────────────────────────────────────────────────

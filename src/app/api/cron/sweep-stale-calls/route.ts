@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { settleCallSession } from "@/lib/calls/settlement";
+import { notifyMissedCalls } from "@/lib/calls/missed-call-notify";
 import { logger } from "@/lib/logger";
 
 const supabase = createServiceRoleClient();
@@ -19,6 +20,8 @@ const MAX_PER_RUN = 200;
 //   2. 'ended' but unsettled calls (transfer failed at end time) → retry the
 //      idempotent transfer so the model gets paid.
 //   3. Stale 'pending' calls never answered → mark 'missed'.
+//   4. Missed-call recovery notify (email + push to the model) — notify-only,
+//      fully isolated so it can never delay or break settlement.
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
@@ -133,11 +136,23 @@ export async function GET(request: NextRequest) {
       .select("id") as { data: Array<{ id: string }> | null };
     expired = expiredRows?.length ?? 0;
 
-    if (billed || retried || unsettledRemaining) {
-      logger.info("sweep-stale-calls reconciled", { billed, retried, expired, unsettledRemaining });
+    // --- 4. Missed-call recovery notify -------------------------------------
+    // Scans recent status='missed' rows (covers BOTH miss writers: the fan
+    // client's calls/join DELETE and section 3 above) and sends the model one
+    // email + one push, deduped to one per model per 6h. Notify-only —
+    // isolated so an email/push failure never affects billing above.
+    let missedCallNotified = 0;
+    try {
+      ({ notified: missedCallNotified } = await notifyMissedCalls(supabase));
+    } catch (err) {
+      logger.error("sweep-stale-calls missed-call notify pass failed", err);
     }
 
-    return NextResponse.json({ success: true, billed, retried, expired, unsettledRemaining });
+    if (billed || retried || unsettledRemaining || missedCallNotified) {
+      logger.info("sweep-stale-calls reconciled", { billed, retried, expired, unsettledRemaining, missedCallNotified });
+    }
+
+    return NextResponse.json({ success: true, billed, retried, expired, unsettledRemaining, missedCallNotified });
   } catch (error) {
     logger.error("sweep-stale-calls cron error", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

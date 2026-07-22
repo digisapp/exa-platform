@@ -26,6 +26,10 @@ import { VideoCallButton } from "@/components/video";
 import { ArrowLeft, MoreVertical, Ban, Circle, Gift, Users, Building2, Search, Volume2, VolumeX } from "lucide-react";
 import { ChatSearch } from "./ChatSearch";
 import { cn } from "@/lib/utils";
+import {
+  isReachableForCalls,
+  GATE_CALL_CTAS_ON_REACHABILITY,
+} from "@/lib/call-availability";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { Actor, Model, Conversation } from "@/types/database";
@@ -45,7 +49,11 @@ export type ChatParticipantModel = Pick<
   | "message_rate"
   | "voice_call_rate"
   | "video_call_rate"
->;
+  | "video_is_online"
+> & {
+  /** models.available_for_calls — newer than the generated DB types */
+  available_for_calls?: boolean | null;
+};
 
 export interface OtherParticipantInfo {
   name: string;
@@ -122,10 +130,34 @@ export function ChatHeader({
     }
   };
 
-  const isOnline = !!(
-    otherInfo.lastActive &&
-    new Date().getTime() - new Date(otherInfo.lastActive).getTime() < 5 * 60 * 1000
-  );
+  // Model participants: status + call gating are driven by the SAME
+  // reachability signal /api/calls/start enforces (video_is_online OR
+  // available_for_calls) so the green dot never sits next to a call button
+  // that would 409. Fan/brand participants keep the 5-min presence window.
+  const otherIsModel = otherParticipantActorType === "model";
+  const modelReachable = otherIsModel
+    ? otherParticipantModel
+      ? isReachableForCalls(otherParticipantModel)
+      : true // no model row loaded — fail open, the server still gates
+    : true;
+  const isOnline = otherIsModel
+    ? !!otherParticipantModel && modelReachable
+    : !!(
+        otherInfo.lastActive &&
+        new Date().getTime() - new Date(otherInfo.lastActive).getTime() < 5 * 60 * 1000
+      );
+  const statusLabel = !isOnline
+    ? null
+    : otherIsModel && !otherParticipantModel?.video_is_online
+      ? "Taking calls"
+      : "Online";
+  // Only fans get gated (models can always ring their fans; the server gate
+  // is fan-only too)
+  const callsDisabled =
+    GATE_CALL_CTAS_ON_REACHABILITY &&
+    otherIsModel &&
+    currentActor.type !== "model" &&
+    !modelReachable;
 
   // The current user pays per minute only when calling a model (fan/brand →
   // model). ?? keeps an explicit 0 rate (free calls) instead of coercing it
@@ -208,15 +240,15 @@ export function ChatHeader({
               </Badge>
             )}
           </div>
-          {isOnline && otherInfo.username ? (
+          {statusLabel && otherInfo.username ? (
             <Link
               href={`/${otherInfo.username}`}
               className="text-xs font-medium text-green-500 hover:text-green-400 transition-colors"
             >
-              Online
+              {statusLabel}
             </Link>
-          ) : isOnline ? (
-            <p className="text-xs font-medium text-green-500">Online</p>
+          ) : statusLabel ? (
+            <p className="text-xs font-medium text-green-500">{statusLabel}</p>
           ) : otherInfo.username && otherInfo.username !== otherName ? (
             <Link
               href={`/${otherInfo.username}`}
@@ -247,6 +279,7 @@ export function ChatHeader({
               videoCallRate={voiceCallRate}
               callType="voice"
               onBalanceChange={onBalanceChange}
+              reachable={!callsDisabled}
             />
           </div>
           {paysToCall && (
@@ -263,6 +296,7 @@ export function ChatHeader({
             videoCallRate={videoCallRate}
             callType="video"
             onBalanceChange={onBalanceChange}
+            reachable={!callsDisabled}
           />
         </div>
 

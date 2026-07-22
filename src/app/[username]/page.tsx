@@ -37,6 +37,7 @@ import {
 } from "@/components/shows/digis-links";
 import { ViewTracker } from "@/components/profile/ViewTracker";
 import { getHeroPortrait } from "@/lib/hero-portrait";
+import { isReachableForCalls } from "@/lib/call-availability";
 import { RESERVED_PATHS } from "@/lib/reserved-usernames";
 import { AdminProfileToolbar } from "@/components/admin/AdminProfileToolbar";
 import { ProfileQRCode } from "@/components/profile/ProfileQRCode";
@@ -376,7 +377,14 @@ export default async function ModelProfilePage({ params }: Props) {
   // Display name - real names are private; models are identified by username
   const displayName = model.username;
 
-  const isOnline = !!model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000;
+  // Reachability drives BOTH the status chip and the call CTAs — the exact
+  // signal /api/calls/start enforces (video_is_online OR available_for_calls),
+  // so a green chip never sits next to a call button that would 409.
+  // video_is_online comes from the same activity heartbeat the old 5-min
+  // last_active_at window read, just with the server's 2-min expiry.
+  const callReachable = isReachableForCalls(model);
+  const isOnline = !!model.video_is_online;
+  const statusChipLabel = isOnline ? "Online" : callReachable ? "Taking calls" : null;
 
   // PORTRAIT HERO ROLLOUT — fully data-driven, no username gate.
   // Every model whose photo data qualifies gets the hero layout automatically.
@@ -612,15 +620,15 @@ export default async function ModelProfilePage({ params }: Props) {
                     regardless of how many chips/buttons/badges are in the side columns.
                     Sits below the event ticker (h-10) when one is active, otherwise top-0. */}
                 <div className={`absolute ${promoBadge ? 'top-10' : 'top-0'} inset-x-0 z-20 p-3 grid grid-cols-[1fr_auto_1fr] items-start gap-2 bg-gradient-to-b from-black/45 via-black/15 to-transparent`}>
-                  {/* Left column: online chip */}
+                  {/* Left column: online / taking-calls chip */}
                   <div className="flex flex-col items-start gap-1.5 min-w-0 justify-self-start">
-                    {isOnline && (
+                    {statusChipLabel && (
                       <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md border border-emerald-400/50 shadow-[0_0_18px_rgba(52,211,153,0.45)]">
                         <span className="relative flex h-2 w-2">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                           <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                         </span>
-                        <span className="text-emerald-300 text-[11px] font-semibold tracking-wide">Online</span>
+                        <span className="text-emerald-300 text-[11px] font-semibold tracking-wide">{statusChipLabel}</span>
                       </div>
                     )}
                   </div>
@@ -789,6 +797,7 @@ export default async function ModelProfilePage({ params }: Props) {
                     allowVideoCall={model.allow_video_call ?? true}
                     allowVoiceCall={model.allow_voice_call ?? true}
                     allowTips={model.allow_tips ?? true}
+                    callReachable={callReachable}
                   />
                   </div>
                 </div>
@@ -862,14 +871,14 @@ export default async function ModelProfilePage({ params }: Props) {
                 {displayName}
               </h1>
 
-              {/* Status Pill - online if active within last 5 minutes */}
-              {isOnline && (
+              {/* Status Pill — same reachability signal the call gate uses */}
+              {statusChipLabel && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/50 shadow-[0_0_16px_rgba(52,211,153,0.35)] mb-3">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                   </span>
-                  <span className="text-emerald-300 text-sm font-semibold">Online now</span>
+                  <span className="text-emerald-300 text-sm font-semibold">{isOnline ? "Online now" : "Taking calls"}</span>
                 </div>
               )}
             </>
@@ -987,6 +996,7 @@ export default async function ModelProfilePage({ params }: Props) {
               allowVideoCall={model.allow_video_call ?? true}
               allowVoiceCall={model.allow_voice_call ?? true}
               allowTips={model.allow_tips ?? true}
+              callReachable={callReachable}
             />
           )}
 

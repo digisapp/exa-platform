@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Camera, BarChart3, User, Globe, ChevronDown } from "lucide-react";
+import { AvailabilityToggle } from "@/components/dashboard/AvailabilityToggle";
 import type { Model } from "@/types/database";
 import {
   CALL_RATE_MAX_COINS,
@@ -28,6 +29,25 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
 
   return (
     <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Call Availability</CardTitle>
+          <CardDescription>
+            Saves instantly — fans can call you while you&apos;re on EXA either
+            way; this keeps you reachable when you&apos;re not.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {/* Writes via /api/model/availability (service-role route), NOT the
+              bulk Save button below — available_for_calls is deliberately
+              excluded from the session-client bulk save. */}
+          <AvailabilityToggle
+            initialAvailable={!!(model as any).available_for_calls}
+            variant="row"
+          />
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Pricing Rates</CardTitle>

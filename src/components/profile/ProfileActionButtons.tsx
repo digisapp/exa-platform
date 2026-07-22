@@ -33,6 +33,7 @@ import { hapticFeedback } from "@/hooks/useHapticFeedback";
 import { showTipSuccessToast } from "@/lib/tip-toast";
 import { createClient } from "@/lib/supabase/client";
 import { messageCoinCost } from "@/lib/coin-config";
+import { GATE_CALL_CTAS_ON_REACHABILITY } from "@/lib/call-availability";
 import {
   TIP_GIFTS,
   SUPER_TIP_AMOUNTS,
@@ -67,6 +68,9 @@ interface ProfileActionButtonsProps {
   allowVideoCall?: boolean;
   allowVoiceCall?: boolean;
   allowTips?: boolean;
+  /** Server-aligned reachability (video_is_online OR available_for_calls).
+      When false the call CTAs are hidden — /api/calls/start would 409 anyway. */
+  callReachable?: boolean;
 }
 
 export function ProfileActionButtons({
@@ -84,6 +88,7 @@ export function ProfileActionButtons({
   allowVideoCall = true,
   allowVoiceCall = true,
   allowTips = true,
+  callReachable = true,
 }: ProfileActionButtonsProps) {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
@@ -419,11 +424,20 @@ export function ProfileActionButtons({
     );
   }
 
-  const hasSecondaryActions = allowVideoCall || allowVoiceCall || allowTips;
-  const secondaryCount = [allowVideoCall, allowVoiceCall, allowTips].filter(Boolean).length;
+  // Call CTAs render only when the model is reachable (video_is_online OR
+  // available_for_calls, gated by GATE_CALL_CTAS_ON_REACHABILITY) — same
+  // signal /api/calls/start enforces, so no dead button that 409s. Owners
+  // always see their buttons (preview mode).
+  const gateCalls = GATE_CALL_CTAS_ON_REACHABILITY && !isOwner && !callReachable;
+  const showVideoCall = allowVideoCall && !gateCalls;
+  const showVoiceCall = allowVoiceCall && !gateCalls;
+  const callsHidden = gateCalls && (allowVideoCall || allowVoiceCall);
+
+  const hasSecondaryActions = showVideoCall || showVoiceCall || allowTips;
+  const secondaryCount = [showVideoCall, showVoiceCall, allowTips].filter(Boolean).length;
   const secondaryGrid = secondaryCount === 1 ? "grid-cols-1" : secondaryCount === 2 ? "grid-cols-2" : "grid-cols-3";
 
-  if (!allowChat && !hasSecondaryActions) return null;
+  if (!allowChat && !hasSecondaryActions && !callsHidden) return null;
 
   const isPreview = isOwner;
 
@@ -520,7 +534,7 @@ export function ProfileActionButtons({
         {/* Secondary actions — Video, Voice, Tip */}
         {hasSecondaryActions && (
           <div className={`grid ${secondaryGrid} gap-2`}>
-            {allowVideoCall && (
+            {showVideoCall && (
               <button
                 onClick={handleVideoCall}
                 disabled={startingCall !== null}
@@ -530,7 +544,7 @@ export function ProfileActionButtons({
                 Video
               </button>
             )}
-            {allowVoiceCall && (
+            {showVoiceCall && (
               <button
                 onClick={handleVoiceCall}
                 disabled={startingCall !== null}
@@ -550,6 +564,15 @@ export function ProfileActionButtons({
               </button>
             )}
           </div>
+        )}
+
+        {/* Subtle fallback when calls are allowed but the model isn't
+            reachable — the message box above stays the primary action. */}
+        {callsHidden && (
+          <p className="flex items-center justify-center gap-1.5 text-[11px] text-white/40">
+            <PhoneOff className="h-3 w-3" />
+            Not taking calls right now — send a message instead
+          </p>
         )}
       </div>
 

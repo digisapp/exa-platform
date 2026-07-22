@@ -2056,6 +2056,149 @@ export async function sendVideoCallRequestEmail({
   }
 }
 
+// Missed-call recovery: a fan rang and the model never picked up. ONE email
+// per model per 6h window (deduped via chat_nudges_sent 'missed_call' in the
+// sweep-stale-calls notify pass) — positive re-engagement, never a scold.
+// callerName is the fan's @username/display_name (fans have no real names on
+// file); the model is greeted by their own first name (own-inbox exception).
+export async function sendMissedCallEmail({
+  to,
+  modelName,
+  callerName,
+  callType = "video",
+  callRate,
+  missedAt,
+}: {
+  to: string;
+  modelName: string;
+  callerName: string;
+  callType?: "video" | "voice";
+  callRate: number;
+  missedAt?: string | Date | null;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      logger.info("Skipping missed call email - recipient is unsubscribed", { to });
+      return;
+    }
+    const resend = getResendClient();
+    const dashboardUrl = `${BASE_URL}/dashboard`;
+    const callTypeLabel = callType === "voice" ? "voice" : "video";
+    const missedAtLabel = missedAt
+      ? new Date(missedAt).toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          timeZone: "America/New_York",
+          timeZoneName: "short",
+        })
+      : null;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: `💜 ${callerName} tried to ${callTypeLabel} call you`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <p style="margin: 0; font-size: 48px;">📞</p>
+              <h1 style="margin: 10px 0 0; color: white; font-size: 24px; font-weight: bold;">
+                A fan tried to reach you!
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${escapeHtml(modelName)}! ✨
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #ffffff;">${escapeHtml(callerName)}</strong> tried to ${callTypeLabel} call you${missedAtLabel ? ` at <strong style="color: #ffffff;">${escapeHtml(missedAtLabel)}</strong>` : " just now"}, but the call rang out. Fans who call once almost always try again — be ready for the next one.
+              </p>
+
+              ${callRate > 0 ? `
+              <!-- Potential earnings -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px; text-align: center;">
+                    <p style="margin: 0 0 5px; color: #71717a; font-size: 14px;">Every minute on a call earns you</p>
+                    <p style="margin: 0; color: #ec4899; font-size: 28px; font-weight: bold;">${callRate} coins/min</p>
+                  </td>
+                </tr>
+              </table>
+              ` : ""}
+
+              <!-- Go available tip -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #1e1b4b; border-radius: 8px; border-left: 3px solid #8b5cf6;">
+                    <p style="margin: 0; color: #c4b5fd; font-size: 14px; line-height: 1.6;">
+                      💡 Flip on <strong style="color: #ffffff;">Available for calls</strong> on your dashboard and fans can ring you even when you're not on EXA — we'll ping you the moment a call comes in.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Go Available for Calls
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
 // Send email when model receives a new offer
 export async function sendOfferReceivedEmail({
   to,

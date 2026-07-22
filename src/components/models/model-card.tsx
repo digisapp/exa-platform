@@ -256,8 +256,12 @@ export const ModelCard = memo(function ModelCard({
             </div>
           )}
 
-          {/* Availability indicator - online if active within last 5 minutes */}
-          {model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000 && (
+          {/* Availability indicator — reachable (video_is_online OR the
+              available_for_calls toggle) when those fields are selected,
+              falling back to the 5-min last_active_at presence window on
+              grids that don't load them. */}
+          {(model.video_is_online || model.available_for_calls ||
+            (model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000)) && (
             <div className="absolute top-3 left-3">
               <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-black/50 backdrop-blur-sm">
                 <div className="online-indicator !w-2 !h-2" />

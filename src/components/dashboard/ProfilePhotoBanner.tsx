@@ -36,6 +36,9 @@ interface ProfilePhotoBannerProps {
   portfolioPhotos: PortfolioPhoto[];
   followerCount: number;
   views30d: number;
+  /** Compact control rendered in the identity column (e.g. the
+      "Available for calls" pill) — keeps the dashboard card count flat. */
+  identityExtra?: React.ReactNode;
 }
 
 const compactNumber = new Intl.NumberFormat("en", {
@@ -55,6 +58,7 @@ export function ProfilePhotoBanner({
   portfolioPhotos: initialPortfolio,
   followerCount,
   views30d,
+  identityExtra,
 }: ProfilePhotoBannerProps) {
   // Avatar state
   const [profilePhotoUrl, setProfilePhotoUrl] = useState(initialProfilePhoto);
@@ -291,6 +295,8 @@ export function ProfilePhotoBanner({
                 examodels.com/{username}
                 <ExternalLink className="h-3 w-3 shrink-0" />
               </Link>
+
+              {identityExtra && <div className="mt-2.5">{identityExtra}</div>}
 
               {profilePhotoUrl ? (
                 <>

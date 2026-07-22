@@ -28,6 +28,10 @@ interface VideoCallButtonProps {
   videoCallRate?: number;
   callType?: "video" | "voice";
   onBalanceChange?: (newBalance: number) => void;
+  /** Server-aligned reachability (video_is_online OR available_for_calls).
+      False disables the button with an explanatory title — /api/calls/start
+      would 409 with recipient_offline anyway. */
+  reachable?: boolean;
 }
 
 export function VideoCallButton({
@@ -42,6 +46,7 @@ export function VideoCallButton({
   videoCallRate = 5,
   callType = "video",
   onBalanceChange,
+  reachable = true,
 }: VideoCallButtonProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
@@ -151,11 +156,13 @@ export function VideoCallButton({
         size="icon"
         className="h-10 w-10 rounded-lg"
         onClick={handleButtonClick}
-        disabled={disabled || isStarting || (requiresCoins && !hasEnoughCoins)}
+        disabled={disabled || !reachable || isStarting || (requiresCoins && !hasEnoughCoins)}
         title={
-          requiresCoins && !hasEnoughCoins
-            ? `Need ${MIN_CALL_BALANCE} coins to call`
-            : callType === "voice" ? "Start voice call" : "Start video call"
+          !reachable
+            ? `${recipientName || "They"} isn't taking calls right now`
+            : requiresCoins && !hasEnoughCoins
+              ? `Need ${MIN_CALL_BALANCE} coins to call`
+              : callType === "voice" ? "Start voice call" : "Start video call"
         }
       >
         {isStarting ? (
