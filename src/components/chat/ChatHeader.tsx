@@ -167,26 +167,6 @@ export function ChatHeader({
   const voiceCallRate = otherParticipantModel?.voice_call_rate ?? 5;
   const videoCallRate = otherParticipantModel?.video_call_rate ?? 5;
 
-  const rateHint = (rate: number, kind: "voice" | "video") => (
-    <span
-      className="inline-flex items-center gap-0.5 pl-2 pr-0.5 text-[11px] font-medium text-amber-300/90 whitespace-nowrap"
-      title={
-        rate === 0
-          ? `${kind === "voice" ? "Voice" : "Video"} calls are free`
-          : `${kind === "voice" ? "Voice" : "Video"} calls cost coins per minute`
-      }
-    >
-      {rate === 0 ? (
-        "Free"
-      ) : (
-        <>
-          {rate}
-          <span className="opacity-70">/min</span>
-        </>
-      )}
-    </span>
-  );
-
   return (
     <>
       <div className="flex items-center gap-3 p-4 border-b">
@@ -259,15 +239,12 @@ export function ChatHeader({
           ) : null}
         </div>
 
-        {/* Call buttons grouped — voice is desktop-only to keep the mobile
-            header from crowding out the participant name */}
-        <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1">
-          {/* Per-minute cost hints, shown only when the current user pays to
-              call (fan/brand → model). Each button gets its own rate — voice
-              and video are priced independently. Sets expectations before the
-              tap; the exact amount is still confirmed in the call dialog. */}
-          <div className="hidden sm:flex items-center">
-            {paysToCall && rateHint(voiceCallRate, "voice")}
+        {/* Call buttons — voice is desktop-only to keep the mobile header
+            from crowding out the participant name. Per-minute rates render
+            inside each button (desktop, paying callers only); the exact
+            amount is still confirmed in the call dialog. */}
+        <div className="flex items-center gap-1.5">
+          <span className="hidden sm:inline-flex">
             <VideoCallButton
               conversationId={conversation.id}
               coinBalance={localCoinBalance}
@@ -280,11 +257,9 @@ export function ChatHeader({
               callType="voice"
               onBalanceChange={onBalanceChange}
               reachable={!callsDisabled}
+              showRate={paysToCall}
             />
-          </div>
-          {paysToCall && (
-            <span className="hidden sm:inline-flex">{rateHint(videoCallRate, "video")}</span>
-          )}
+          </span>
           <VideoCallButton
             conversationId={conversation.id}
             coinBalance={localCoinBalance}
@@ -297,6 +272,7 @@ export function ChatHeader({
             callType="video"
             onBalanceChange={onBalanceChange}
             reachable={!callsDisabled}
+            showRate={paysToCall}
           />
         </div>
 
