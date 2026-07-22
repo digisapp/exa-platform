@@ -3347,31 +3347,97 @@ export async function sendCoinBalanceReminderEmail({
   }
 }
 
+// Day-3 / day-10 profile-completion reminder for newly approved claimed
+// models — sent by /api/cron/stalled-new-models. Checklist state comes from
+// computeCastingReadiness (casting-readiness.ts) so the email never nags
+// about something she already finished. Marketing-class: suppressed for
+// marketing-unsubscribed recipients and carries an unsubscribe footer.
 export async function sendProfileCompletionReminderEmail({
   to,
-  modelName,
   username,
-  hasPhoto,
+  dayNumber = 3,
+  checklist,
 }: {
   to: string;
-  modelName: string;
   username: string;
-  hasPhoto: boolean;
+  /** Days since approval (3 or 10) — varies the subject line. */
+  dayNumber?: number;
+  checklist: {
+    profileBasics: boolean;
+    ratesSet: boolean;
+    freshContent: boolean;
+  };
 }) {
   try {
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      return { success: true, skipped: true };
+    }
+
     const resend = getResendClient();
     const dashboardUrl = `${BASE_URL}/dashboard`;
     const profileUrl = `${BASE_URL}/${username}`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
 
-    const photoMessage = hasPhoto
-      ? "We noticed your profile photo could use an upgrade! A high-quality photo helps you stand out to brands and get more bookings."
-      : "We noticed you haven't uploaded a profile photo yet! Adding one is the #1 way to get noticed by brands and fans.";
+    const subject =
+      dayNumber >= 10
+        ? `@${username}, fans are browsing — finish your EXA profile ✨`
+        : `@${username}, your EXA profile is almost ready ✨`;
+
+    const items = [
+      {
+        done: checklist.profileBasics,
+        title: "Add your photo, bio & measurements",
+        desc: "Height, bust, waist, hips — casting checks these first",
+        href: `${BASE_URL}/settings`,
+        linkLabel: "Complete profile",
+      },
+      {
+        done: checklist.ratesSet,
+        title: "Set your message & call rates",
+        desc: "Fans can't message or call you until a rate is set",
+        href: `${BASE_URL}/settings?tab=rates`,
+        linkLabel: "Set rates",
+      },
+      {
+        done: checklist.freshContent,
+        title: "Post your first photos in Studio",
+        desc: "Profiles with fresh content get seen first",
+        href: `${BASE_URL}/studio`,
+        linkLabel: "Open Studio",
+      },
+    ];
+
+    const checklistHtml = items
+      .map(
+        (item, i) => `
+                <tr>
+                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="width: 30px; vertical-align: middle;">
+                          <span style="color: ${item.done ? "#22c55e" : "#ec4899"}; font-size: 18px; font-weight: bold;">${item.done ? "✓" : `${i + 1}.`}</span>
+                        </td>
+                        <td style="vertical-align: middle;">
+                          <p style="margin: 0; color: ${item.done ? "#71717a" : "#ffffff"}; font-weight: 500;">${item.title}</p>
+                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">${
+                            item.done
+                              ? "Done — nice work!"
+                              : `${item.desc} · <a href="${item.href}" style="color: #a78bfa; text-decoration: underline;">${item.linkLabel}</a>`
+                          }</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="height: 8px;"></td></tr>`
+      )
+      .join("");
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       replyTo: REPLY_TO_EMAIL,
       to: [to],
-      subject: `${modelName}, let's make your EXA profile shine!`,
+      subject,
       html: `
 <!DOCTYPE html>
 <html>
@@ -3392,7 +3458,7 @@ export async function sendProfileCompletionReminderEmail({
                 Complete Your Profile
               </h1>
               <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
-                A few quick updates to get more bookings!
+                A few quick steps and you're fully live
               </p>
             </td>
           </tr>
@@ -3401,13 +3467,13 @@ export async function sendProfileCompletionReminderEmail({
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
-                Hey ${escapeHtml(modelName)}!
+                Hey @${escapeHtml(username)},
               </p>
               <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                ${photoMessage}
+                Your profile is live at <a href="${profileUrl}" style="color: #ec4899; text-decoration: none;">examodels.com/${escapeHtml(username)}</a> — let's make sure fans and casting see you at your best.
               </p>
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                Models with complete profiles get <strong style="color: #ec4899;">5x more views</strong> and are more likely to be featured on our homepage and get booked for gigs!
+                Complete profiles get <strong style="color: #ec4899;">seen first</strong> — in fan feeds, in Spotlight, and when we cast for upcoming shows.
               </p>
 
               <!-- Checklist -->
@@ -3416,76 +3482,7 @@ export async function sendProfileCompletionReminderEmail({
               </h2>
 
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
-                <!-- Item 1 -->
-                <tr>
-                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
-                    <table cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td style="width: 30px; vertical-align: middle;">
-                          <span style="color: #ec4899; font-size: 18px; font-weight: bold;">1.</span>
-                        </td>
-                        <td style="vertical-align: middle;">
-                          <p style="margin: 0; color: #ffffff; font-weight: 500;">Upload a stunning profile photo</p>
-                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">High-quality headshot or professional photo</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr><td style="height: 8px;"></td></tr>
-
-                <!-- Item 2 -->
-                <tr>
-                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
-                    <table cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td style="width: 30px; vertical-align: middle;">
-                          <span style="color: #ec4899; font-size: 18px; font-weight: bold;">2.</span>
-                        </td>
-                        <td style="vertical-align: middle;">
-                          <p style="margin: 0; color: #ffffff; font-weight: 500;">Add your measurements</p>
-                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">Height, bust, waist, hips - brands need these!</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr><td style="height: 8px;"></td></tr>
-
-                <!-- Item 3 -->
-                <tr>
-                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
-                    <table cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td style="width: 30px; vertical-align: middle;">
-                          <span style="color: #ec4899; font-size: 18px; font-weight: bold;">3.</span>
-                        </td>
-                        <td style="vertical-align: middle;">
-                          <p style="margin: 0; color: #ffffff; font-weight: 500;">Write a bio</p>
-                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">Tell brands about yourself and your experience</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr><td style="height: 8px;"></td></tr>
-
-                <!-- Item 4 -->
-                <tr>
-                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
-                    <table cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td style="width: 30px; vertical-align: middle;">
-                          <span style="color: #ec4899; font-size: 18px; font-weight: bold;">4.</span>
-                        </td>
-                        <td style="vertical-align: middle;">
-                          <p style="margin: 0; color: #ffffff; font-weight: 500;">Set your booking rates</p>
-                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">Let brands know your rates for photoshoots, events & more</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
+                ${checklistHtml}
               </table>
 
               <!-- CTA Button -->
@@ -3493,7 +3490,7 @@ export async function sendProfileCompletionReminderEmail({
                 <tr>
                   <td align="center">
                     <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 30px; font-weight: 600; font-size: 16px;">
-                      Complete My Profile
+                      Finish My Profile
                     </a>
                   </td>
                 </tr>
@@ -3505,17 +3502,17 @@ export async function sendProfileCompletionReminderEmail({
             </td>
           </tr>
 
-          <!-- Motivation -->
+          <!-- Pro tip -->
           <tr>
             <td style="padding: 0 30px 30px;">
               <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-radius: 12px; padding: 20px;">
                 <tr>
                   <td style="text-align: center;">
                     <p style="margin: 0 0 10px; color: #ffffff; font-size: 16px; font-weight: 600;">
-                      Did you know?
+                      Pro tip
                     </p>
                     <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.5;">
-                      Complete profiles are featured on our homepage carousel, seen by thousands of brands and fans every day!
+                      Put examodels.com/${escapeHtml(username)} in your Instagram or TikTok bio — models who bring their audience get seen first.
                     </p>
                   </td>
                 </tr>
@@ -3523,18 +3520,7 @@ export async function sendProfileCompletionReminderEmail({
             </td>
           </tr>
 
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
-              <p style="margin: 0 0 10px; color: #a1a1aa; font-size: 14px;">
-                <a href="${profileUrl}" style="color: #ec4899; text-decoration: none;">View your profile</a> |
-                <a href="https://instagram.com/examodels" style="color: #ec4899; text-decoration: none;">Follow us on Instagram</a>
-              </p>
-              <p style="margin: 0; color: #71717a; font-size: 12px;">
-                EXA Models - Where Models Shine
-              </p>
-            </td>
-          </tr>
+          ${generateEmailFooter(unsubscribeToken)}
 
         </table>
       </td>
@@ -8599,3 +8585,332 @@ export async function sendModelWeeklyDigestEmail({
   }
 }
 
+
+// "Finish your application" — sent by /api/cron/applicant-chase to pending
+// applicants who stalled on email confirmation and/or the profile photo.
+// Positive tone only (never rejection language). Max 2 sends per applicant,
+// enforced by application_nudges_sent (CHECK + UNIQUE). Notification-class
+// like the other application emails so genuinely stuck applicants still get
+// it. Bilingual EN/ES like its siblings (received / photo-request).
+export async function sendFinishApplicationEmail({
+  to,
+  applicantName,
+  language = "en",
+  missingEmailConfirm,
+  missingPhoto,
+  confirmToken,
+  isSecondNudge = false,
+}: {
+  to: string;
+  applicantName: string;
+  language?: string;
+  missingEmailConfirm: boolean;
+  missingPhoto: boolean;
+  /** model_applications.email_confirm_token — required for the confirm CTA */
+  confirmToken?: string | null;
+  isSecondNudge?: boolean;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const statusUrl = `${BASE_URL}/pending-approval`;
+    const confirmUrl =
+      missingEmailConfirm && confirmToken
+        ? `${BASE_URL}/api/auth/confirm-application?token=${confirmToken}`
+        : null;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const isSpanish = language?.startsWith("es");
+
+    const subject = isSecondNudge
+      ? isSpanish
+        ? "Guardamos tu lugar — falta un paso ✨ - EXA Models"
+        : "Still holding your spot — one step left ✨ - EXA Models"
+      : isSpanish
+        ? "Tu solicitud en EXA está casi lista ✨ - EXA Models"
+        : "Your EXA application is almost complete ✨ - EXA Models";
+
+    const headerTitle = isSpanish ? "¡Ya Casi!" : "Almost There!";
+    const headerSubtitle = isSpanish
+      ? "Completa tu solicitud para estar en vivo en EXA"
+      : "Finish your application to go live on EXA";
+    const greeting = isSpanish
+      ? `Hola ${escapeHtml(applicantName)},`
+      : `Hey ${escapeHtml(applicantName)},`;
+
+    let bodyText: string;
+    if (missingEmailConfirm && missingPhoto) {
+      bodyText = isSpanish
+        ? "Recibimos tu solicitud y nos encantaría revisarla — solo faltan dos cosas rápidas: confirma tu correo y agrega tu foto de perfil. Haz ambas y nuestro equipo se encarga del resto."
+        : "Your application is in and we'd love to review it — just two quick things left: confirm your email and add your profile photo. Do both and our team takes it from there.";
+    } else if (missingEmailConfirm) {
+      bodyText = isSpanish
+        ? "Recibimos tu solicitud y nos encantaría revisarla — solo falta una cosa: confirma tu correo. Un clic y nuestro equipo se encarga del resto."
+        : "Your application is in and we'd love to review it — one quick thing left: confirm your email address. One click and our team takes it from there.";
+    } else {
+      bodyText = isSpanish
+        ? "Tu solicitud va muy bien — lo único que falta es tu foto de perfil. Súbela y nuestro equipo hará la revisión final."
+        : "Your application is looking good — the only thing missing is your profile photo. Add it and our team will take the final look.";
+    }
+
+    const primaryCtaText = confirmUrl
+      ? isSpanish
+        ? "Confirmar Mi Correo"
+        : "Confirm My Email"
+      : isSpanish
+        ? "Agregar Mi Foto"
+        : "Add My Photo";
+    const primaryCtaUrl = confirmUrl || statusUrl;
+    const secondaryText = confirmUrl
+      ? missingPhoto
+        ? isSpanish
+          ? "Después agrega tu foto →"
+          : "Then add your photo →"
+        : isSpanish
+          ? "Ver estado de tu solicitud"
+          : "Check application status"
+      : null;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                ${headerTitle}
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                ${headerSubtitle}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                ${greeting}
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                ${bodyText}
+              </p>
+
+              <!-- Primary CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: ${secondaryText ? "16px" : "24px"};">
+                <tr>
+                  <td align="center">
+                    <a href="${primaryCtaUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      ${primaryCtaText}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              ${secondaryText ? `
+              <p style="margin: 0 0 24px; text-align: center;">
+                <a href="${statusUrl}" style="color: #a78bfa; font-size: 14px; text-decoration: underline;">
+                  ${secondaryText}
+                </a>
+              </p>
+              ` : ""}
+              <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+                ${isSpanish
+                  ? "Tu lugar sigue reservado — estamos aquí cuando estés lista."
+                  : "Your spot is still reserved — we're here whenever you're ready."}
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
+// First-weeks "getting started" digest — the weekly-digest cron's variant for
+// claimed models approved <30 days ago with zero activity to report. Instead
+// of skipping them (the old behavior), send a short checklist + one CTA so
+// the quiet first weeks still get a positive touchpoint. Same suppression
+// semantics as the other digests: marketing-class + unsubscribe footer, and
+// the cron claims the same digest_sends model-week key so a model gets
+// EITHER this OR "you were seen this week", never both.
+export async function sendModelGettingStartedDigestEmail({
+  to,
+  username,
+  checklist,
+}: {
+  to: string;
+  username: string;
+  checklist: {
+    hasPhotoAndBio: boolean;
+    hasRates: boolean;
+    hasContent: boolean;
+  };
+}) {
+  try {
+    // Digests are marketing email — respect the marketing suppression list
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+    const profileUrl = `${BASE_URL}/${username}`;
+    const dashboardUrl = `${BASE_URL}/dashboard`;
+
+    const subject = `⚡ @${username}, let's get you seen on EXA — 3 quick wins`;
+
+    const items = [
+      {
+        done: checklist.hasPhotoAndBio,
+        title: "Complete your profile",
+        desc: "Photo, bio and measurements — it's your comp card",
+      },
+      {
+        done: checklist.hasRates,
+        title: "Set your rates",
+        desc: "So fans can message and call you",
+      },
+      {
+        done: checklist.hasContent,
+        title: "Post your first content",
+        desc: "3-5 photos in Studio is the perfect start",
+      },
+    ];
+
+    const checklistHtml = items
+      .map(
+        (item, i) => `
+                <tr>
+                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="width: 30px; vertical-align: middle;">
+                          <span style="color: ${item.done ? "#22c55e" : "#ec4899"}; font-size: 18px; font-weight: bold;">${item.done ? "✓" : `${i + 1}.`}</span>
+                        </td>
+                        <td style="vertical-align: middle;">
+                          <p style="margin: 0; color: ${item.done ? "#71717a" : "#ffffff"}; font-weight: 500;">${item.title}</p>
+                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">${item.done ? "Done — nice work!" : item.desc}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="height: 8px;"></td></tr>`
+      )
+      .join("");
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                Getting Started on EXA
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Your first weeks, made easy
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey @${escapeHtml(username)},
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Your profile is live at <a href="${profileUrl}" style="color: #ec4899; text-decoration: none;">examodels.com/${escapeHtml(username)}</a> and new fans are browsing every week. Here's what gets a new profile found:
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                ${checklistHtml}
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Open My Dashboard
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Getting started digest email error", error);
+    return { success: false, error };
+  }
+}

@@ -1,6 +1,10 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
-import { sendFanWeeklyDigestEmail, sendModelWeeklyDigestEmail } from "@/lib/email";
+import {
+  sendFanWeeklyDigestEmail,
+  sendModelWeeklyDigestEmail,
+  sendModelGettingStartedDigestEmail,
+} from "@/lib/email";
 import { logger } from "@/lib/logger";
 
 // Sending 500 emails at Resend's 2/sec limit takes ~5 min plus queries
@@ -16,6 +20,14 @@ const adminClient: any = createServiceRoleClient();
 //
 // Model digest ("You were seen this week"): profile views + new fans +
 // Spotlight likes. Sent ONLY when at least one count is > 0.
+//
+// Getting-started variant: a claimed model approved <30 days ago with zero
+// activity gets a short checklist digest instead of being skipped — the old
+// zero-activity skip silently dropped exactly the new models who most need
+// contact. Same digest_sends model-week key, so a model receives EITHER
+// "you were seen" OR getting-started, never both. Suppressed when a
+// day-3/day-10 lifecycle nudge (model_lifecycle_nudges_sent) fired within
+// the last GETTING_STARTED_NUDGE_SUPPRESS_DAYS.
 //
 // Guardrails:
 // - Model audience is claimed accounts only (user_id IS NOT NULL) so the
@@ -36,6 +48,9 @@ const MAX_PAGES = 100; // hard stop at 100k rows per table sweep
 // above realistic weekly volume; they're runaway backstops, not rationing.
 const MAX_FAN_SENDS_PER_RUN = 2000;
 const MAX_MODEL_SENDS_PER_RUN = 2000;
+// Getting-started is a new-model surface — volume should be tens/week, so
+// 200 is a circuit breaker, not rationing (logged when hit).
+const MAX_GETTING_STARTED_SENDS_PER_RUN = 200;
 const SEND_BATCH_SIZE = 2; // Resend rate limit is 2 emails/second
 const SEND_BATCH_DELAY_MS = 1100;
 const FAN_SHOWCASE_MODELS = 4;
@@ -44,6 +59,19 @@ const FAN_FOLLOWED_DROPS = 3;
 // to come back — a model they follow dropped new content this week, or enough
 // brand-new models landed to be worth a browse. Thin weeks send no fan blast.
 const FAN_MIN_NEW_MODELS = 3;
+// Getting-started variant: models approved within this many days with zero
+// activity get the checklist digest instead of the empty-week skip.
+const GETTING_STARTED_WINDOW_DAYS = 30;
+// ...unless a day-3/day-10 profile reminder (stalled-new-models cron) went
+// out this recently — one lifecycle touch per few days is plenty.
+const GETTING_STARTED_NUDGE_SUPPRESS_DAYS = 4;
+const IN_CHUNK_SIZE = 200; // .in() URL-limit safety (see project_postgrest_row_and_url_limits)
+
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
 
 // ISO-8601 week key, e.g. "2026-W28"
 function isoWeekKey(d: Date): string {
@@ -105,7 +133,9 @@ export async function GET(request: NextRequest) {
         () =>
           adminClient
             .from("models")
-            .select("id, user_id, username, email, profile_photo_url, created_at, deactivated")
+            .select(
+              "id, user_id, username, email, profile_photo_url, created_at, claimed_at, deactivated, bio, message_rate, video_call_rate, voice_call_rate"
+            )
             .not("user_id", "is", null)
             .eq("is_approved", true)
             .is("deleted_at", null),
@@ -274,6 +304,13 @@ export async function GET(request: NextRequest) {
       modelsAlreadySent: 0,
       modelsSkippedCap: 0,
       modelsFailed: 0,
+      gettingStartedConsidered: 0,
+      gettingStartedSent: 0,
+      gettingStartedSuppressed: 0,
+      gettingStartedAlreadySent: 0,
+      gettingStartedSkippedRecentNudge: 0,
+      gettingStartedSkippedCap: 0,
+      gettingStartedFailed: 0,
     };
 
     type SendJob =
@@ -292,6 +329,13 @@ export async function GET(request: NextRequest) {
           profileViews: number;
           newFans: number;
           spotlightLikes: number;
+        }
+      | {
+          kind: "getting_started";
+          recipientId: string;
+          email: string;
+          username: string;
+          checklist: { hasPhotoAndBio: boolean; hasRates: boolean; hasContent: boolean };
         };
 
     const jobs: SendJob[] = [];
@@ -334,6 +378,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Zero-activity NEW models (approved <30d, anchored on
+    // COALESCE(claimed_at, created_at) — linked imports date from approval)
+    // become getting-started candidates instead of empty-week skips.
+    const gettingStartedCandidates: any[] = [];
+    const gettingStartedCutoffMs = GETTING_STARTED_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+
     for (const model of audienceModels) {
       if (alreadySentModels.has(model.id)) {
         summary.modelsAlreadySent++;
@@ -344,7 +394,12 @@ export async function GET(request: NextRequest) {
       const spotlightLikes = likesByModelId.get(model.id) || 0;
 
       if (profileViews <= 0 && newFans <= 0 && spotlightLikes <= 0) {
-        summary.modelsSkippedEmpty++;
+        const anchor = new Date(model.claimed_at || model.created_at).getTime();
+        if (now.getTime() - anchor < gettingStartedCutoffMs) {
+          gettingStartedCandidates.push(model);
+        } else {
+          summary.modelsSkippedEmpty++;
+        }
         continue;
       }
 
@@ -359,26 +414,100 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Getting-started checklist state + suppression, batched and scoped to
+    // the (small) new-model candidate subset only — never a full table scan.
+    summary.gettingStartedConsidered = gettingStartedCandidates.length;
+    if (gettingStartedCandidates.length > 0) {
+      const candidateIds = gettingStartedCandidates.map((m: any) => m.id);
+
+      // Has she ever posted anything? (any status counts as a first step)
+      const modelsWithContent = new Set<string>();
+      for (const ids of chunkArray(candidateIds, IN_CHUNK_SIZE)) {
+        const contentRows = await fetchAllRows<any>(
+          () =>
+            adminClient
+              .from("content_items")
+              .select("model_id")
+              .in("model_id", ids)
+              .order("id"),
+          "getting-started content"
+        );
+        for (const row of contentRows) modelsWithContent.add(row.model_id);
+      }
+
+      // Suppress when a day-3/day-10 lifecycle nudge just went out
+      const nudgeCutoffIso = new Date(
+        now.getTime() - GETTING_STARTED_NUDGE_SUPPRESS_DAYS * 24 * 60 * 60 * 1000
+      ).toISOString();
+      const recentlyNudged = new Set<string>();
+      for (const ids of chunkArray(candidateIds, IN_CHUNK_SIZE)) {
+        const { data: nudges, error: nudgeError } = await adminClient
+          .from("model_lifecycle_nudges_sent")
+          .select("model_id")
+          .in("model_id", ids)
+          .gte("created_at", nudgeCutoffIso);
+        if (nudgeError) throw new Error(`lifecycle nudges query failed: ${nudgeError.message}`);
+        for (const n of nudges || []) recentlyNudged.add(n.model_id);
+      }
+
+      for (const model of gettingStartedCandidates) {
+        if (recentlyNudged.has(model.id)) {
+          summary.gettingStartedSkippedRecentNudge++;
+          continue;
+        }
+        jobs.push({
+          kind: "getting_started",
+          recipientId: model.id,
+          email: model.email,
+          username: model.username,
+          checklist: {
+            hasPhotoAndBio:
+              Boolean(model.profile_photo_url) &&
+              typeof model.bio === "string" &&
+              model.bio.trim().length > 0,
+            hasRates:
+              (model.message_rate ?? 0) > 0 ||
+              (model.video_call_rate ?? 0) > 0 ||
+              (model.voice_call_rate ?? 0) > 0,
+            hasContent: modelsWithContent.has(model.id),
+          },
+        });
+      }
+    }
+
     // Per-audience caps: the two digests are capped independently so a large
     // fan queue can never starve the activity-gated model digests (the single
     // global cap did exactly that — models fell to 0). Caps are runaway
     // backstops well above realistic weekly volume, not rationing.
     const fanJobs = jobs.filter((j) => j.kind === "fan");
     const modelJobs = jobs.filter((j) => j.kind === "model");
+    const gettingStartedJobs = jobs.filter((j) => j.kind === "getting_started");
     summary.fansSkippedCap = Math.max(0, fanJobs.length - MAX_FAN_SENDS_PER_RUN);
     summary.modelsSkippedCap = Math.max(0, modelJobs.length - MAX_MODEL_SENDS_PER_RUN);
+    summary.gettingStartedSkippedCap = Math.max(
+      0,
+      gettingStartedJobs.length - MAX_GETTING_STARTED_SENDS_PER_RUN
+    );
     const cappedJobs = [
       ...fanJobs.slice(0, MAX_FAN_SENDS_PER_RUN),
       ...modelJobs.slice(0, MAX_MODEL_SENDS_PER_RUN),
+      ...gettingStartedJobs.slice(0, MAX_GETTING_STARTED_SENDS_PER_RUN),
     ];
-    if (summary.fansSkippedCap > 0 || summary.modelsSkippedCap > 0) {
+    if (
+      summary.fansSkippedCap > 0 ||
+      summary.modelsSkippedCap > 0 ||
+      summary.gettingStartedSkippedCap > 0
+    ) {
       logger.warn("Weekly digest: send cap reached", {
         fanQueued: fanJobs.length,
         modelQueued: modelJobs.length,
+        gettingStartedQueued: gettingStartedJobs.length,
         fanCap: MAX_FAN_SENDS_PER_RUN,
         modelCap: MAX_MODEL_SENDS_PER_RUN,
+        gettingStartedCap: MAX_GETTING_STARTED_SENDS_PER_RUN,
         fansSkippedCap: summary.fansSkippedCap,
         modelsSkippedCap: summary.modelsSkippedCap,
+        gettingStartedSkippedCap: summary.gettingStartedSkippedCap,
       });
     }
 
@@ -390,6 +519,7 @@ export async function GET(request: NextRequest) {
         ...summary,
         fansWouldSend: cappedJobs.filter((j) => j.kind === "fan").length,
         modelsWouldSend: cappedJobs.filter((j) => j.kind === "model").length,
+        gettingStartedWouldSend: cappedJobs.filter((j) => j.kind === "getting_started").length,
         showcase: showcaseModels.map((m) => m.username),
         sampleModelDigests: cappedJobs
           .filter((j): j is Extract<SendJob, { kind: "model" }> => j.kind === "model")
@@ -400,6 +530,13 @@ export async function GET(request: NextRequest) {
             newFans: j.newFans,
             spotlightLikes: j.spotlightLikes,
           })),
+        sampleGettingStarted: cappedJobs
+          .filter(
+            (j): j is Extract<SendJob, { kind: "getting_started" }> =>
+              j.kind === "getting_started"
+          )
+          .slice(0, 10)
+          .map((j) => ({ username: j.username, checklist: j.checklist })),
       });
     }
 
@@ -412,25 +549,31 @@ export async function GET(request: NextRequest) {
       await Promise.all(
         batch.map(async (job) => {
           const isFan = job.kind === "fan";
+          const counterPrefix =
+            job.kind === "fan" ? "fans" : job.kind === "model" ? "models" : "gettingStarted";
+          const bump = (what: "Sent" | "Suppressed" | "AlreadySent" | "Failed") => {
+            (summary as any)[`${counterPrefix}${what}`]++;
+          };
           try {
             // Claim BEFORE sending — a unique violation means another run
-            // (or a retry) already handled this recipient this week
+            // (or a retry) already handled this recipient this week.
+            // getting_started shares the model recipient_type AND the same
+            // model-week digest_key, so it is mutually exclusive with
+            // "you were seen this week" for the same model.
             const { error: claimError } = await adminClient.from("digest_sends").insert({
-              recipient_type: job.kind,
+              recipient_type: isFan ? "fan" : "model",
               recipient_id: job.recipientId,
               digest_key: isFan ? fanDigestKey : modelDigestKey,
             });
 
             if (claimError) {
               if (claimError.code === "23505") {
-                if (isFan) summary.fansAlreadySent++;
-                else summary.modelsAlreadySent++;
+                bump("AlreadySent");
               } else {
                 logger.error("Weekly digest: claim failed", claimError, {
                   recipientId: job.recipientId,
                 });
-                if (isFan) summary.fansFailed++;
-                else summary.modelsFailed++;
+                bump("Failed");
               }
               return;
             }
@@ -444,28 +587,30 @@ export async function GET(request: NextRequest) {
                     totalNewModels: newModelsThisWeek.length,
                     followedDrops: job.followedDrops,
                   })
-                : await sendModelWeeklyDigestEmail({
-                    to: job.email,
-                    username: job.username,
-                    profileViews: job.profileViews,
-                    newFans: job.newFans,
-                    spotlightLikes: job.spotlightLikes,
-                  });
+                : job.kind === "model"
+                  ? await sendModelWeeklyDigestEmail({
+                      to: job.email,
+                      username: job.username,
+                      profileViews: job.profileViews,
+                      newFans: job.newFans,
+                      spotlightLikes: job.spotlightLikes,
+                    })
+                  : await sendModelGettingStartedDigestEmail({
+                      to: job.email,
+                      username: job.username,
+                      checklist: job.checklist,
+                    });
 
             if (result.success && (result as any).skipped) {
-              if (isFan) summary.fansSuppressed++;
-              else summary.modelsSuppressed++;
+              bump("Suppressed");
             } else if (result.success) {
-              if (isFan) summary.fansSent++;
-              else summary.modelsSent++;
+              bump("Sent");
             } else {
-              if (isFan) summary.fansFailed++;
-              else summary.modelsFailed++;
+              bump("Failed");
             }
           } catch (err) {
             logger.error("Weekly digest: send failed", err, { recipientId: job.recipientId });
-            if (isFan) summary.fansFailed++;
-            else summary.modelsFailed++;
+            bump("Failed");
           }
         })
       );
