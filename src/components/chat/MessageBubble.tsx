@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo } from "react";
+import { useState, useRef, memo } from "react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { MessageReactions } from "./MessageReactions";
 import { VoiceMessagePlayer } from "./VoiceMessagePlayer";
 import type { Message } from "@/types/database";
 import { parseTipMessage } from "@/lib/tip-config";
+import { hapticFeedback } from "@/hooks/useHapticFeedback";
 
 // Match URLs in text (http/https only), strip trailing punctuation
 const URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
@@ -130,6 +131,29 @@ export const MessageBubble = memo(function MessageBubble({
   const [isEditing, setIsEditing] = useState(false);
   const [editDraft, setEditDraft] = useState("");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Touch devices get a long-press action menu instead of the hover action
+  // row (which has no hover to reveal it and looked like stray glyphs when
+  // left faintly visible). 450ms hold; any scroll movement cancels.
+  const [touchActionsOpen, setTouchActionsOpen] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suppressNextClick = useRef(false);
+
+  const startLongPress = () => {
+    if (isEditing || isDeleting) return;
+    longPressTimer.current = setTimeout(() => {
+      suppressNextClick.current = true;
+      hapticFeedback("light");
+      setTouchActionsOpen(true);
+    }, 450);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
 
   // Editing is allowed for own text messages within 15 min of send.
   const EDIT_WINDOW_MS = 15 * 60 * 1000;
@@ -364,10 +388,93 @@ export const MessageBubble = memo(function MessageBubble({
         <div className="w-9 shrink-0" />
       )}
 
-      <div className={cn("relative", isOwn ? "items-end" : "items-start")}>
-        {/* Action menu (delete + reply) */}
+      <div
+        className={cn(
+          "relative pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none]",
+          isOwn ? "items-end" : "items-start"
+        )}
+        onTouchStart={startLongPress}
+        onTouchMove={cancelLongPress}
+        onTouchEnd={cancelLongPress}
+        onTouchCancel={cancelLongPress}
+        onContextMenu={(e) => {
+          // Long-press on iOS also fires contextmenu — our menu replaces it
+          if (touchActionsOpen) e.preventDefault();
+        }}
+        onClickCapture={(e) => {
+          // Swallow the tap that ends the long-press so it doesn't open
+          // lightboxes/links underneath the action menu
+          if (suppressNextClick.current) {
+            suppressNextClick.current = false;
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+      >
+        {/* Long-press action menu (touch devices) */}
+        {touchActionsOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setTouchActionsOpen(false)}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                setTouchActionsOpen(false);
+              }}
+            />
+            <div
+              className={cn(
+                "absolute -top-12 z-50 flex items-center gap-0.5 rounded-full bg-[#120a24]/95 backdrop-blur-xl border border-violet-500/30 shadow-2xl shadow-violet-500/20 px-1.5 py-1 whitespace-nowrap",
+                isOwn ? "right-0" : "left-0"
+              )}
+            >
+              {onReply && (
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/80 active:bg-white/10"
+                  onClick={() => {
+                    setTouchActionsOpen(false);
+                    onReply();
+                  }}
+                >
+                  <Reply className="h-4 w-4" />
+                  Reply
+                </button>
+              )}
+              {canEdit && (
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/80 active:bg-white/10"
+                  onClick={() => {
+                    setTouchActionsOpen(false);
+                    startEdit();
+                  }}
+                >
+                  <Pencil className="h-4 w-4 text-cyan-400" />
+                  Edit
+                </button>
+              )}
+              {isOwn && (
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-rose-300 active:bg-rose-500/15"
+                  onClick={() => {
+                    setTouchActionsOpen(false);
+                    handleDelete();
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </button>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Action menu (delete + reply) — hover devices only; touch devices
+            use the long-press menu above */}
         <div className={cn(
-          "absolute top-0 opacity-0 group-hover:opacity-100 pointer-coarse:opacity-60 transition-opacity flex items-center gap-0.5",
+          "absolute top-0 opacity-0 group-hover:opacity-100 pointer-coarse:hidden transition-opacity flex items-center gap-0.5",
           isOwn ? "-left-20" : "-right-20",
           isDeleting && "opacity-50 pointer-events-none"
         )}>
