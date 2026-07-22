@@ -25,6 +25,7 @@ import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { formatInches } from "@/lib/measurements";
 import { CALL_RATE_MIN_COINS, MESSAGE_RATE_MIN_COINS } from "@/lib/coin-config";
+import { trackEvent } from "@/lib/analytics-client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -788,6 +789,32 @@ export default function ProfilePage() {
         .eq("id", model.id);
 
       if (error) throw error;
+
+      // North-star activation instrumentation: emit rate_set when this save
+      // actually changed a chat/call rate. savedModelStr still holds the
+      // pre-save snapshot at this point, so comparing against it keeps
+      // profile-only saves from firing. Fire-and-forget — never blocks the
+      // save (trackEvent swallows its own errors too).
+      try {
+        const prevSaved = savedModelStr ? JSON.parse(savedModelStr) : null;
+        if (
+          !prevSaved ||
+          prevSaved.video_call_rate !== updateData.video_call_rate ||
+          prevSaved.voice_call_rate !== updateData.voice_call_rate ||
+          prevSaved.message_rate !== updateData.message_rate
+        ) {
+          trackEvent("rate_set", {
+            modelId: model.id,
+            metadata: {
+              video_call_rate: updateData.video_call_rate,
+              voice_call_rate: updateData.voice_call_rate,
+              message_rate: updateData.message_rate,
+            },
+          });
+        }
+      } catch {
+        // analytics must never break the save
+      }
 
       // Refresh the dirty-state baseline so the "unsaved changes" bar clears.
       const savedSnapshot: Model = { ...model };

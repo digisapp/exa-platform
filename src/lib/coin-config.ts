@@ -97,6 +97,9 @@ export function counterpartyIdOf(tx: { metadata?: Record<string, unknown> | null
  * Every coin_transactions action that credits a MODEL for real fan/brand
  * revenue. This is the single source of truth for "earned" stats — sum rows
  * matching these actions with no amount filter (clawback reversals net out).
+ * Consumed by the Monday owner email's model-activation north star
+ * (weekly-analytics-report cron: "first $1 within 14 days of approval"), so
+ * changing this list changes that metric's definition.
  *
  * Deliberately excluded: `purchase` (fan buys), `signup_bonus` (removed
  * 2026-06-12; model rows were ledgered but never credited to balances),
