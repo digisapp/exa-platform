@@ -101,23 +101,41 @@ export async function GET(request: NextRequest) {
         .in("id", offerIds)
         .order("created_at", { ascending: false });
 
-      // Keep offers that still need a response (open + not expired) plus the
-      // model's booking history (accepted/confirmed), which would otherwise
-      // vanish the moment an offer fills up and auto-closes.
+      // Keep offers that still need a response (open + not expired), the
+      // model's booking history (accepted/confirmed), and — read-only —
+      // recently past-dated offers that never got an answer, tagged
+      // expired:true for the muted "Expired" section on /offers (neutral
+      // copy, a learning signal, never a nag). The dashboard keeps
+      // filtering past-dated pending offers out — only this list shows
+      // them, and only for EXPIRED_VISIBLE_DAYS so old ones don't pile up.
       const today = new Date().toISOString().split("T")[0];
+      const EXPIRED_VISIBLE_DAYS = 30;
+      const expiredCutoff = new Date(Date.now() - EXPIRED_VISIBLE_DAYS * 86_400_000)
+        .toISOString()
+        .split("T")[0];
       const offersWithResponse = (offers || [])
         .map((offer: any) => {
           const response = responses!.find((r: any) => r.offer_id === offer.id);
+          const myResponse = response?.status || null;
+          const unanswered = !myResponse || myResponse === "pending";
+          // Brand-cancelled offers are excluded — nothing was missed there
+          const expired =
+            unanswered &&
+            offer.status !== "cancelled" &&
+            Boolean(offer.event_date) &&
+            offer.event_date < today &&
+            offer.event_date >= expiredCutoff;
           return {
             ...offer,
-            my_response: response?.status || null,
+            my_response: myResponse,
+            expired,
           };
         })
         .filter((offer: any) => {
           const actionable =
             offer.status === "open" && (!offer.event_date || offer.event_date >= today);
           const booked = ["accepted", "confirmed"].includes(offer.my_response);
-          return actionable || booked;
+          return actionable || booked || offer.expired;
         });
 
       return NextResponse.json({ offers: offersWithResponse });

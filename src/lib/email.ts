@@ -3096,6 +3096,162 @@ export async function sendOfferReminderEmail({
   }
 }
 
+// Offer-expiry reminder — sent by /api/cron/offer-reminders (second pass) to
+// models with an UNANSWERED offer whose window is closing: dated offers
+// 24-48h before event_date, undated offers 5-6 days after they arrived.
+// ONE send per response, deduped via offer_responses.expiry_reminder_sent_at.
+// Positive respond-nudge only (never "you missed out" language) and
+// @username greeting per the model-name-privacy convention.
+export async function sendOfferExpiryReminderEmail({
+  to,
+  username,
+  offerTitle,
+  brandName,
+  eventDate,
+  eventTime,
+  location,
+  compensation,
+  offerId,
+}: {
+  to: string;
+  username: string;
+  offerTitle: string;
+  brandName: string;
+  /** Pre-formatted date string; omitted for undated offers. */
+  eventDate?: string;
+  eventTime?: string;
+  location?: string;
+  compensation?: string;
+  offerId: string;
+}) {
+  try {
+    // Notification-class like the other offer emails (received / event
+    // reminder) — this is an actionable nudge about a specific invitation.
+    if (await isEmailUnsubscribed(to, "notification")) {
+      logger.info("Skipping offer expiry reminder email - recipient is unsubscribed", { to });
+      return { success: true, skipped: true };
+    }
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+    const offerUrl = `${BASE_URL}/offers/${offerId}`;
+
+    const subject = eventDate
+      ? `⏳ Still time: ${offerTitle} — ${brandName} is waiting for your answer`
+      : `💌 ${brandName} is waiting to hear from you about ${offerTitle}`;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #09090b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #09090b; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #18181b; border-radius: 16px; overflow: hidden; border: 1px solid #27272a;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 50%, #ec4899 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">
+                An Offer Is Waiting on You ✨
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey @${escapeHtml(username)}! 👋
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #ffffff;">${escapeHtml(brandName)}</strong> sent you an offer and would love an answer${eventDate ? " — the date is coming up fast" : ""}. It only takes a tap to accept or pass.
+              </p>
+
+              <!-- Offer Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 20px;">${escapeHtml(offerTitle)}</h2>
+
+                    ${eventDate ? `
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">📅</td>
+                        <td style="color: #22d3ee; font-size: 16px; font-weight: 600;">${escapeHtml(eventDate)}${eventTime ? ` at ${escapeHtml(eventTime)}` : ""}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+
+                    ${location ? `
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">📍</td>
+                        <td style="color: #ffffff; font-size: 14px;">${escapeHtml(location)}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+
+                    ${compensation ? `
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">💰</td>
+                        <td style="color: #34d399; font-size: 16px; font-weight: 600;">${escapeHtml(compensation)}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+                ${eventDate ? "Offers close once the date passes — lock yours in while it's still open. 🚀" : "A quick yes or no keeps brands coming back with more. 🚀"}
+              </p>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${offerUrl}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #ec4899 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Review &amp; Respond
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Offer expiry reminder email error", error);
+    return { success: false, error };
+  }
+}
+
 // ============================================
 // COIN BALANCE REMINDER EMAIL
 // ============================================
@@ -8682,6 +8838,21 @@ export async function sendModelWeeklyDigestEmail({
               </p>
 
               ${statTilesHtml}
+
+              ${spotlightLikes > 0 ? `
+              <!-- Spotlight likes → thank-you blast CTA (dashboard card).
+                   Aggregate count only — likers stay anonymous. -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 25px;">
+                <tr>
+                  <td style="padding: 16px 20px; background: linear-gradient(135deg, rgba(236,72,153,0.12) 0%, rgba(139,92,246,0.08) 100%); border: 1px solid rgba(236,72,153,0.35); border-radius: 12px; text-align: center;">
+                    <p style="margin: 0; color: #f9a8d4; font-size: 15px; line-height: 1.6;">
+                      💖 ${spotlightLikes} fan${spotlightLikes === 1 ? "" : "s"} liked you in Spotlight this week —
+                      <a href="${wallUrl}" style="color: #ec4899; font-weight: 600; text-decoration: none;">say thanks with a blast</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              ` : ""}
 
               <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.6; text-align: center;">
                 Fans are looking — give them something new to find. 🚀

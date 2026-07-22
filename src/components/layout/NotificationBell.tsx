@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Bell, Coins, Heart, MessageCircle, Sparkles } from "lucide-react";
+import { Bell, Clock, Coins, Heart, MessageCircle, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatDistanceToNowStrict } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -39,9 +39,13 @@ function FeedRow({ item }: { item: FeedItem }) {
       ? `/chats/${item.conversationId}`
       : item.type === "follower" && item.actor?.username
         ? `/${item.actor.username}`
-        : isMoney
-          ? "/wallet"
-          : "/dashboard";
+        : item.type === "offer_expiring"
+          ? item.offerId
+            ? `/offers/${item.offerId}`
+            : "/offers"
+          : isMoney
+            ? "/wallet"
+            : "/dashboard";
 
   const coins = (
     <span className="text-amber-400 font-semibold">{item.amount} coins</span>
@@ -68,10 +72,12 @@ function FeedRow({ item }: { item: FeedItem }) {
             isMoney && "bg-amber-500/15 ring-1 ring-amber-500/30",
             item.type === "follower" && "bg-pink-500/15 ring-1 ring-pink-500/30",
             item.type === "message" && "bg-blue-500/15 ring-1 ring-blue-500/30",
+            item.type === "offer_expiring" && "bg-emerald-500/15 ring-1 ring-emerald-500/30",
           )}>
             {isMoney && <Coins className="h-4 w-4 text-amber-400" />}
             {item.type === "follower" && <Heart className="h-4 w-4 text-pink-400 fill-pink-400" />}
             {item.type === "message" && <MessageCircle className="h-4 w-4 text-blue-400" />}
+            {item.type === "offer_expiring" && <Clock className="h-4 w-4 text-emerald-400" />}
           </div>
         )}
       </div>
@@ -80,7 +86,9 @@ function FeedRow({ item }: { item: FeedItem }) {
       <div className="flex-1 min-w-0">
         <p className="text-[13px] text-white/80 leading-snug truncate">
           <span className="font-semibold text-white">
-            {item.actor?.name || "Someone"}
+            {item.type === "offer_expiring"
+              ? "Offer closing soon"
+              : item.actor?.name || "Someone"}
           </span>{" "}
           {item.type === "tip" && (
             <span className="text-white/60">tipped you {coins}</span>
@@ -103,10 +111,18 @@ function FeedRow({ item }: { item: FeedItem }) {
           {item.type === "message" && (
             <span className="text-white/60">sent a message</span>
           )}
+          {item.type === "offer_expiring" && (
+            <span className="text-white/60">— still time to respond</span>
+          )}
         </p>
         {item.type === "message" && item.messagePreview && (
           <p className="text-[11px] text-white/35 truncate mt-0.5">
             &ldquo;{item.messagePreview}&rdquo;
+          </p>
+        )}
+        {item.type === "offer_expiring" && item.messagePreview && (
+          <p className="text-[11px] text-white/35 truncate mt-0.5">
+            {item.messagePreview}
           </p>
         )}
       </div>

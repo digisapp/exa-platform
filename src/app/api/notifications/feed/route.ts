@@ -9,6 +9,9 @@ export type FeedItem = {
   // Money types beyond "tip" map from coin_transactions actions; the chat
   // media action 'ppv_sale' is deliberately renamed "media_unlock" here so
   // no 'ppv' string ever reaches a client payload (no-PPV copy rule).
+  // "offer_expiring" is the one type read straight from notifications rows
+  // (offer-reminders cron) — every notifications type MUST have a feed
+  // source here or the badge counts rows with nothing to show (ghost badge).
   type:
     | "tip"
     | "live_wall_tip"
@@ -16,11 +19,14 @@ export type FeedItem = {
     | "media_unlock"
     | "auction_sale"
     | "follower"
-    | "message";
+    | "message"
+    | "offer_expiring";
   actor: { name: string; avatar: string | null; type: string; username?: string | null } | null;
   amount?: number;
   messagePreview?: string;
   conversationId?: string;
+  /** offer_expiring only — deep link target */
+  offerId?: string;
   createdAt: string;
 };
 
@@ -81,6 +87,7 @@ export async function GET() {
     { data: recentFollowers },
     { data: modelParticipations },
     { count: unreadCount },
+    { data: recentNotificationRows },
   ] = await Promise.all([
     (adminClient.from("coin_transactions") as any)
       .select("id, amount, action, created_at, metadata")
@@ -102,7 +109,21 @@ export async function GET() {
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .is("read_at", null),
+    // Notification-row feed sources (currently just offer_expiring, written
+    // by the offer-reminders cron). Filtered by type in JS rather than SQL
+    // so this query never references an enum value the DB might not have
+    // yet (pre-migration an .eq() on an unknown enum literal errors).
+    (supabase.from("notifications") as any)
+      .select("id, type, message, metadata, created_at")
+      .eq("user_id", user.id)
+      .gte("created_at", sevenDaysAgo.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
+
+  const offerExpiryNotifs = (recentNotificationRows || []).filter(
+    (n: any) => n.type === "offer_expiring"
+  ).slice(0, 5);
 
   const conversationIds = (modelParticipations || []).map((p: any) => p.conversation_id);
   const lastReadMap = new Map<string, string | null>(
@@ -209,6 +230,14 @@ export async function GET() {
       messagePreview: msg.content?.slice(0, 50) + (msg.content?.length > 50 ? "..." : ""),
       conversationId: msg.conversation_id,
       createdAt: msg.created_at,
+    })),
+    ...offerExpiryNotifs.map((n: any) => ({
+      id: `notif-${n.id}`,
+      type: "offer_expiring" as const,
+      actor: null,
+      messagePreview: n.message || "An offer is waiting for your answer",
+      offerId: n.metadata?.offer_id as string | undefined,
+      createdAt: n.created_at,
     })),
   ]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

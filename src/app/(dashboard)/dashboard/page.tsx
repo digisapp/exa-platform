@@ -39,6 +39,7 @@ import { NudgeSlot } from "@/components/dashboard/NudgeSlot";
 import { PayoutSetupPrompt } from "@/components/dashboard/PayoutSetupPrompt";
 import { PushNudgeCard } from "@/components/dashboard/PushNudgeCard";
 import { MODEL_EARNING_ACTIONS, PAYOUT_NUDGE_MIN_COINS } from "@/lib/coin-config";
+import { SpotlightAdmirers } from "@/components/dashboard/SpotlightAdmirers";
 import { CastingReadiness } from "@/components/dashboard/CastingReadiness";
 import { computeCastingReadiness } from "@/lib/casting-readiness";
 import { WelcomeBackPulse } from "@/components/dashboard/WelcomeBackPulse";
@@ -147,6 +148,8 @@ export default async function DashboardPage() {
 
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
 
   const [
     { data: allBookings },
@@ -158,6 +161,8 @@ export default async function DashboardPage() {
     { data: payoneerAccount },
     castingReadiness,
     welcomeBack,
+    { count: weekSpotlightLikes },
+    { count: allTimeSpotlightLikes },
   ] = await Promise.all([
     // Get pending bookings for this model - use adminClient to bypass RLS
     (adminClient.from("bookings") as any)
@@ -205,6 +210,20 @@ export default async function DashboardPage() {
       actorId: actor.id,
       lastActiveAt: model.last_active_at ?? null,
     }),
+    // Spotlight likes, AGGREGATE ONLY (weekly + all-time) — fan-side
+    // Spotlight markets right-swipes as anonymous, so no identities ever
+    // reach this page. Service client: top_model_votes has no model-facing
+    // read path worth relying on, and resolving anything further would
+    // cross fans RLS. Same query shape as welcome-back.ts / weekly-digest.
+    (adminClient.from("top_model_votes") as any)
+      .select("id", { count: "exact", head: true })
+      .eq("model_id", model.id)
+      .eq("vote_type", "like")
+      .gte("created_at", weekAgo.toISOString()),
+    (adminClient.from("top_model_votes") as any)
+      .select("id", { count: "exact", head: true })
+      .eq("model_id", model.id)
+      .eq("vote_type", "like"),
   ]);
 
   // Filter for pending/counter bookings in JS
@@ -905,6 +924,18 @@ export default async function DashboardPage() {
       <div className="lg:hidden" data-live-wall>
         <LiveWallServer actorId={actor.id} actorType={actor.type} />
       </div>
+
+      {/* ──────────────────────────────────────────────────────
+          SPOTLIGHT ADMIRERS — aggregate-only likes card + thank-you
+          blast CTA. Informational (sits by Activity, NOT in the
+          NudgeSlot); renders nothing on a zero week (declutter).
+         ────────────────────────────────────────────────────── */}
+      {(weekSpotlightLikes || 0) > 0 && (
+        <SpotlightAdmirers
+          weekLikes={weekSpotlightLikes || 0}
+          allTimeLikes={allTimeSpotlightLikes || 0}
+        />
+      )}
 
       {/* ──────────────────────────────────────────────────────
           ACTIVITY — full-width

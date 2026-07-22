@@ -35,6 +35,8 @@ interface Offer {
   status: string;
   created_at: string;
   my_response?: string;
+  /** Past-dated, never answered — shown read-only in the Expired section */
+  expired?: boolean;
   brand?: {
     id: string;
     brands?: {
@@ -106,8 +108,12 @@ export default function OffersPage() {
     }
   };
 
-  const pendingOffers = offers.filter((o) => !o.my_response || o.my_response === "pending");
+  const pendingOffers = offers.filter(
+    (o) => (!o.my_response || o.my_response === "pending") && !o.expired
+  );
   const respondedOffers = offers.filter((o) => o.my_response && o.my_response !== "pending");
+  // Past-dated offers that never got an answer — neutral, read-only
+  const expiredOffers = offers.filter((o) => o.expired);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -183,6 +189,33 @@ export default function OffersPage() {
             </div>
           )}
 
+          {/* Expired Offers — past-dated, never answered. Muted, read-only,
+              neutral copy (no rejection tone): a quiet signal that faster
+              replies catch more bookings. */}
+          {expiredOffers.length > 0 && (
+            <div className="rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden opacity-80">
+              <header className="flex items-center justify-between p-5 border-b border-white/5">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-white/30" />
+                  <h2 className="text-base font-semibold text-white/70">Expired</h2>
+                </div>
+                <p className="text-xs text-white/40">
+                  These dates passed before a response — fresh offers land up top
+                </p>
+              </header>
+              <div className="p-3 space-y-2">
+                {expiredOffers.map((offer) => (
+                  <OfferCard
+                    key={offer.id}
+                    offer={offer}
+                    getStatusBadge={getStatusBadge}
+                    readOnly
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Empty State */}
           {offers.length === 0 && (
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-12 text-center">
@@ -210,10 +243,13 @@ function OfferCard({
   offer,
   getStatusBadge,
   priority = false,
+  readOnly = false,
 }: {
   offer: Offer;
   getStatusBadge: (response?: string) => React.ReactNode;
   priority?: boolean;
+  /** Expired section: plain card, no link, neutral badge */
+  readOnly?: boolean;
 }) {
   const brandName = offer.brand?.brands?.company_name || "Brand";
   const logoUrl = offer.brand?.brands?.logo_url;
@@ -229,15 +265,19 @@ function OfferCard({
     compensation = offer.compensation_description;
   }
 
-  return (
-    <Link
-      href={`/offers/${offer.id}`}
-      className={`group flex items-start gap-4 p-4 rounded-xl border transition-all ${
-        priority
-          ? "bg-white/[0.04] border-amber-500/15 hover:border-amber-500/40 hover:bg-amber-500/5 hover:shadow-[0_0_18px_rgba(245,158,11,0.2)]"
-          : "bg-white/[0.03] border-white/5 hover:border-white/20 hover:bg-white/[0.06]"
-      }`}
-    >
+  // Neutral, muted badge for the Expired section — deliberately not the
+  // amber "Pending" (nothing left to do) and never rejection-toned.
+  const badge = offer.expired ? (
+    <Badge variant="outline" className="text-white/40 bg-white/5 border-white/10">
+      <Clock className="h-3 w-3 mr-1" />
+      Expired
+    </Badge>
+  ) : (
+    getStatusBadge(offer.my_response)
+  );
+
+  const cardBody = (
+    <>
       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 ring-1 ring-cyan-500/30 flex items-center justify-center overflow-hidden flex-shrink-0">
         {logoUrl ? (
           <Image
@@ -257,7 +297,7 @@ function OfferCard({
             <p className="font-semibold text-white truncate group-hover:text-white">{offer.title}</p>
             <p className="text-xs text-white/60">{brandName}</p>
           </div>
-          {getStatusBadge(offer.my_response)}
+          {badge}
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs">
           {offer.event_date && (
@@ -291,7 +331,30 @@ function OfferCard({
           </p>
         )}
       </div>
-      <ArrowRight className="h-5 w-5 text-white/30 group-hover:text-pink-300 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
+      {!readOnly && (
+        <ArrowRight className="h-5 w-5 text-white/30 group-hover:text-pink-300 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
+      )}
+    </>
+  );
+
+  if (readOnly) {
+    return (
+      <div className="flex items-start gap-4 p-4 rounded-xl border bg-white/[0.02] border-white/5 opacity-70">
+        {cardBody}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={`/offers/${offer.id}`}
+      className={`group flex items-start gap-4 p-4 rounded-xl border transition-all ${
+        priority
+          ? "bg-white/[0.04] border-amber-500/15 hover:border-amber-500/40 hover:bg-amber-500/5 hover:shadow-[0_0_18px_rgba(245,158,11,0.2)]"
+          : "bg-white/[0.03] border-white/5 hover:border-white/20 hover:bg-white/[0.06]"
+      }`}
+    >
+      {cardBody}
     </Link>
   );
 }
