@@ -522,7 +522,7 @@ function VideoCallContent({
               {coinBalance} coins available
             </div>
             {/* Gifts — small named tips; taps send immediately like the coin tiles */}
-            <div className="grid grid-cols-3 gap-2 mb-2">
+            <div className="grid grid-cols-4 gap-2 mb-2">
               {TIP_GIFTS.map((gift) => {
                 const canAfford = coinBalance >= gift.amount;
                 const isLoading = tippingAmount === gift.amount;
