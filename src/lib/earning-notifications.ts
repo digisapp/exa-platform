@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
+import { sendPushToActor } from "@/lib/push";
 
 /**
  * One shared write path for "a model just earned coins" bell notifications.
@@ -75,4 +76,76 @@ export async function insertEarningNotification(
   } catch (err) {
     logger.error("Earning notification error", err, { type: params.type });
   }
+}
+
+/**
+ * Bell + web push in ONE call for "a model just earned coins" events — the
+ * single wiring point for every earnings route (tips, live-wall tips,
+ * content sales, paid-media unlocks, auction sales incl. buy-now/cron).
+ *
+ * - Bell: awaited insertEarningNotification (behavior identical to calling
+ *   it directly). `skipBell` covers live-wall tips >= 50 coins, where
+ *   tip_live_wall_message already inserts the notifications row
+ *   (20260426000002) and a second insert would double-badge — the push
+ *   still fires.
+ * - Push: fire-and-forget on the 'earnings' preference key (calls/start
+ *   pattern) — the buyer's response never waits on push-service round
+ *   trips, and a push failure never fails the money event.
+ * - `recipientActorId` is the actors.id push target. models.id IS the
+ *   actor id (models.id references actors.id), so content.model_id /
+ *   auction.model_id can be passed directly.
+ * - Claimed models only: recipientUserId null/undefined → full no-op, so
+ *   unclaimed import rows are never touched (and can't have subscriptions
+ *   anyway).
+ * - Copy rules apply to push too: @username only, no real names, no "PPV"
+ *   (model-facing says "paid photo/video"); coins + USD where natural.
+ *
+ * Node runtime only: pulls in lib/push (web-push uses Node crypto). Every
+ * route importing this module already runs on the default Node runtime —
+ * never add `export const runtime = "edge"` to one.
+ */
+export async function notifyModelEarning(
+  service: SupabaseClient<any>,
+  params: {
+    /** Recipient MODEL's auth user id (models.user_id). Null → no-op. */
+    recipientUserId: string | null | undefined;
+    /** Recipient actors.id for push (= models.id; they share values). */
+    recipientActorId: string;
+    type: EarningNotificationType;
+    title: string;
+    /** User-visible string — @username only, no real names, no "PPV". */
+    message: string;
+    amountCoins: number;
+    metadata?: Record<string, unknown>;
+    /** Push only (no bell insert) — see live-wall >= 50 note above. */
+    skipBell?: boolean;
+    /** Push payload overrides; body defaults to `message`, url to /wallet. */
+    push?: { title?: string; body?: string; url?: string; tag?: string };
+  }
+): Promise<void> {
+  if (!params.recipientUserId) return;
+
+  if (!params.skipBell) {
+    await insertEarningNotification(service, {
+      recipientUserId: params.recipientUserId,
+      type: params.type,
+      title: params.title,
+      message: params.message,
+      amountCoins: params.amountCoins,
+      metadata: params.metadata,
+    });
+  }
+
+  sendPushToActor(
+    params.recipientActorId,
+    {
+      title: params.push?.title ?? params.title,
+      body: params.push?.body ?? params.message,
+      url: params.push?.url ?? "/wallet",
+      tag: params.push?.tag,
+    },
+    "earnings"
+  ).catch((err) =>
+    logger.error("Earning push error", err, { type: params.type })
+  );
 }

@@ -21,6 +21,7 @@ import { ModelRatesTab } from "@/components/settings/ModelRatesTab";
 import { ModelCollabsTab } from "@/components/settings/ModelCollabsTab";
 import { ModelPrivacyTab } from "@/components/settings/ModelPrivacyTab";
 import { ModelFollowersTab } from "@/components/settings/ModelFollowersTab";
+import { PushNotificationSettings } from "@/components/settings/PushNotificationSettings";
 import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { formatInches } from "@/lib/measurements";
@@ -2084,6 +2085,13 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="privacy" className="space-y-6">
+          {/* Push notifications — MODEL-FACING ONLY for v1. Fan push opt-in
+              is deliberately DEFERRED: every push event today (calls,
+              messages, earnings, offers) targets models, so the fan/brand
+              settings above get no Notifications section until there's a
+              fan-facing event worth pushing. Saves independently of the
+              page's Save button (per-toggle instant persist). */}
+          <PushNotificationSettings />
           <ModelPrivacyTab
             model={model}
             onChange={setModel}

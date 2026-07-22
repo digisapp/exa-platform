@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendOfferReceivedEmail } from "@/lib/email";
+import { sendPushToActor } from "@/lib/push";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { listUserEmailsByIds } from "@/lib/auth/list-user-emails";
 import { z } from "zod";
@@ -391,6 +392,29 @@ export async function POST(request: NextRequest) {
             `Failed to send ${emailFailures}/${results.length} offer notification emails for offer ${offer.id}`
           );
         }
+
+        // Web push ('offers' toggle) alongside the emails — claimed models
+        // only; models.id IS the actor id (models.id references actors.id).
+        // Tag per offer so a duplicate send replaces instead of stacking.
+        // Awaited allSettled like the email batch (a detached batch could be
+        // cut off when the serverless function freezes); sendPushToActor
+        // never throws and per-actor prefs are enforced inside it.
+        await Promise.allSettled(
+          models
+            .filter((m: any) => m.user_id)
+            .map((m: any) =>
+              sendPushToActor(
+                m.id,
+                {
+                  title: `New offer from ${brandName}`,
+                  body: `${title}${compensationStr ? ` · ${compensationStr}` : ""} — tap to respond`,
+                  url: `/offers/${offer.id}`,
+                  tag: `offer-${offer.id}`,
+                },
+                "offers"
+              )
+            )
+        );
 
         return NextResponse.json({
           offer,

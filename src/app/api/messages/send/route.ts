@@ -6,6 +6,7 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { escapeIlike } from "@/lib/utils";
 import { sendNewMessageNotificationEmail } from "@/lib/email";
+import { sendPushToActor } from "@/lib/push";
 import { detectInPersonRequest } from "@/lib/in-person-request";
 import { logger } from "@/lib/logger";
 import {
@@ -484,6 +485,60 @@ export async function POST(request: NextRequest) {
         // Don't fail the message send if email notification fails
         logger.error("First message notification check error", emailErr);
       }
+    }
+
+    // ─── Web push to the model (fire-and-forget, calls/start pattern) ────
+    // Fan/brand → model is the paid direction (send_message_with_coins just
+    // credited the model), and models are the only push audience in v1 —
+    // fans have no opt-in surface (deferred), so we gate rather than rely
+    // on the no-subscription no-op. Unlike email (first message only) this
+    // fires on EVERY message: tag = conversation id, so a rapid burst in
+    // one conversation REPLACES the previous notification instead of
+    // stacking — that's the whole dedup story, no DB tracking needed.
+    // Per-actor 'messages' preference is enforced inside sendPushToActor.
+    if (
+      conversationId &&
+      recipient?.actors?.type === "model" &&
+      (sender.type === "fan" || sender.type === "brand")
+    ) {
+      const recipientActorId: string = recipient.actors.id;
+      const pushConversationId = conversationId;
+      (async () => {
+        let senderName = sender.type === "brand" ? "A brand" : "A fan";
+        if (sender.type === "fan") {
+          const { data: senderFan } = await adminClient
+            .from("fans")
+            .select("display_name, username")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          senderName = senderFan?.display_name || senderFan?.username || "A fan";
+        } else {
+          const { data: senderBrand } = await adminClient
+            .from("brands")
+            .select("company_name")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          senderName = senderBrand?.company_name || "A brand";
+        }
+        const mediaLabel = mediaType?.startsWith("video")
+          ? "a video"
+          : mediaType?.startsWith("audio")
+            ? "a voice note"
+            : "a photo";
+        const preview = content?.trim()
+          ? content.trim().slice(0, 90)
+          : `Sent you ${mediaLabel}`;
+        await sendPushToActor(
+          recipientActorId,
+          {
+            title: `New message from ${senderName}`,
+            body: preview,
+            url: `/chats/${pushConversationId}`,
+            tag: `chat-${pushConversationId}`,
+          },
+          "messages"
+        );
+      })().catch((err) => logger.error("Message push error", err));
     }
 
     return NextResponse.json({

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Banknote, X } from "lucide-react";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
+import { useNudgeSlot } from "@/components/dashboard/NudgeSlot";
 
 /**
  * Payout nudge v2 — "you have real money, payout isn't set up yet".
@@ -22,6 +23,10 @@ import { coinsToUsd, formatUsd } from "@/lib/coin-config";
  *
  * Dismissal: localStorage, re-eligible after 14 days (per-device by
  * design — no models column/migration for a nudge).
+ *
+ * Renders inside the dashboard's <NudgeSlot> (at most one nudge per page
+ * view); this card is FIRST in the slot, so it outranks PushNudgeCard
+ * whenever both are eligible.
  */
 
 const DISMISS_KEY = "exa_payout_nudge_dismissed_at";
@@ -36,6 +41,7 @@ interface PayoutSetupPromptProps {
 export function PayoutSetupPrompt({ coins, needsIdentity }: PayoutSetupPromptProps) {
   // Start hidden until the localStorage check runs so SSR/CSR markup match
   const [visible, setVisible] = useState(false);
+  const claim = useNudgeSlot("payout");
 
   useEffect(() => {
     try {
@@ -47,8 +53,8 @@ export function PayoutSetupPrompt({ coins, needsIdentity }: PayoutSetupPromptPro
     } catch {
       // storage unavailable → just show it
     }
-    setVisible(true);
-  }, []);
+    if (claim()) setVisible(true);
+  }, [claim]);
 
   const dismiss = () => {
     setVisible(false);

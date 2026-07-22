@@ -35,7 +35,9 @@ import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { ProfilePhotoBanner } from "@/components/dashboard/ProfilePhotoBanner";
 import { AvailabilityToggle } from "@/components/dashboard/AvailabilityToggle";
+import { NudgeSlot } from "@/components/dashboard/NudgeSlot";
 import { PayoutSetupPrompt } from "@/components/dashboard/PayoutSetupPrompt";
+import { PushNudgeCard } from "@/components/dashboard/PushNudgeCard";
 import { MODEL_EARNING_ACTIONS, PAYOUT_NUDGE_MIN_COINS } from "@/lib/coin-config";
 import { CastingReadiness } from "@/components/dashboard/CastingReadiness";
 import { computeCastingReadiness } from "@/lib/casting-readiness";
@@ -785,22 +787,38 @@ export default async function DashboardPage() {
       />
 
       {/* ──────────────────────────────────────────────────────
-          PAYOUT NUDGE v2 — single dismissible row, only when there is
-          real money (>= first-cashout minimum) AND no payout method on
-          file. Eligibility resolved here server-side; the component only
-          handles dismissal (14-day localStorage snooze). Not a repeat of
-          #73's mistake: no identity/pending states re-implemented — it
-          just points at /wallet, which owns all of that.
+          NUDGE SLOT — at most ONE of the cards inside renders per page
+          view (declutter convention: the owner deleted nudge piles
+          twice). Child order = priority: payout money beats push. Each
+          card still runs its own client checks (localStorage snooze,
+          Notification.permission) and only claims the slot when it
+          would actually show, so a snoozed payout card lets push win.
          ────────────────────────────────────────────────────── */}
-      {(model.coin_balance || 0) >= PAYOUT_NUDGE_MIN_COINS &&
-        !model.zelle_info &&
-        (bankAccountCount || 0) === 0 &&
-        !payoneerAccount?.can_receive_payments && (
-          <PayoutSetupPrompt
-            coins={model.coin_balance || 0}
-            needsIdentity={!model.identity_verified_at}
-          />
+      <NudgeSlot>
+        {/* PAYOUT NUDGE v2 — single dismissible row, only when there is
+            real money (>= first-cashout minimum) AND no payout method on
+            file. Eligibility resolved here server-side; the component only
+            handles dismissal (14-day localStorage snooze). Not a repeat of
+            #73's mistake: no identity/pending states re-implemented — it
+            just points at /wallet, which owns all of that. */}
+        {(model.coin_balance || 0) >= PAYOUT_NUDGE_MIN_COINS &&
+          !model.zelle_info &&
+          (bankAccountCount || 0) === 0 &&
+          !payoneerAccount?.can_receive_payments && (
+            <PayoutSetupPrompt
+              coins={model.coin_balance || 0}
+              needsIdentity={!model.identity_verified_at}
+            />
+          )}
+        {/* PUSH NUDGE — only for models with money on the books (earned
+            this month OR live balance — cheapest proxy for "has ever
+            earned", both already computed above). The component itself
+            requires push support + permission still undecided + not
+            snoozed before claiming the slot. */}
+        {((earningsThisMonth || 0) > 0 || (model.coin_balance || 0) > 0) && (
+          <PushNudgeCard />
         )}
+      </NudgeSlot>
 
       {/* ──────────────────────────────────────────────────────
           WELCOME BACK — only for genuinely returning models

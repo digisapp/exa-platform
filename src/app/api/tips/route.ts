@@ -3,7 +3,8 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { assertNotSuspended } from "@/lib/auth/suspension";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
-import { insertEarningNotification } from "@/lib/earning-notifications";
+import { notifyModelEarning } from "@/lib/earning-notifications";
+import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { z } from "zod";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
@@ -251,10 +252,13 @@ export async function POST(request: NextRequest) {
         }).catch((err) => logger.error("Failed to send tip email", err));
       }
 
-      // Light the bell: notifications row for claimed models only
-      // (helper no-ops when user_id is null — unclaimed imports untouched)
-      await insertEarningNotification(adminClient, {
+      // Light the bell + web push ('earnings' toggle) for claimed models
+      // only (helper no-ops when user_id is null — unclaimed imports
+      // untouched). Push deep-links into the conversation so the model can
+      // thank the tipper; recipientId IS the actor id.
+      await notifyModelEarning(adminClient, {
         recipientUserId: model?.user_id,
+        recipientActorId: recipientId,
         type: "tip_received",
         title: "💰 Tip received",
         message: `${senderName} tipped you ${result.amount} coins`,
@@ -263,6 +267,10 @@ export async function POST(request: NextRequest) {
           sender_id: sender.id,
           conversation_id: finalConversationId || null,
           gift: gift?.key || null,
+        },
+        push: {
+          body: `${senderName} tipped you ${result.amount} coins (${formatUsd(coinsToUsd(result.amount))})`,
+          url: finalConversationId ? `/chats/${finalConversationId}` : "/wallet",
         },
       });
     }
