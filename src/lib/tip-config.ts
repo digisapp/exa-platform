@@ -11,7 +11,7 @@
  * tables, no inventory.
  *
  * Tiering intent (owner direction, 2026-07-15): "Super Tip" stays the
- * premium 100+ brand; gifts exist so small tippers (10–50 coins) have a
+ * premium 100+ brand; gifts exist so small tippers (10–75 coins) have a
  * fun thing to send in PRIVATE contexts instead of tipping nothing. The
  * Live Wall keeps its own separate mechanics (1-coin micro-tip, 100+
  * public announcements) — don't wire gifts into it.
@@ -26,13 +26,38 @@ export interface TipGift {
 
 // Keys are stored in coin_transactions metadata and validated by the tips
 // API — treat as stable identifiers, never rename.
-export const TIP_GIFT_KEYS = ["rose", "coffee", "champagne"] as const;
+export const TIP_GIFT_KEYS = [
+  "rose",
+  "teddy",
+  "strawberry",
+  "icecream",
+  "coffee",
+  "cake",
+  "butterfly",
+  "disco",
+  "bouquet",
+  "champagne",
+  "diamond",
+  "crown",
+] as const;
 export type TipGiftKey = (typeof TIP_GIFT_KEYS)[number];
 
+// Two gifts per price rung (10/15/25/35/50/75) so the choice reads as
+// expression, not spend. Everything stays under 100 coins — that's Super
+// Tip territory and the tiers must not blur.
 export const TIP_GIFTS: TipGift[] = [
   { key: "rose", emoji: "🌹", label: "Rose", amount: 10 },
+  { key: "teddy", emoji: "🧸", label: "Teddy Bear", amount: 10 },
+  { key: "strawberry", emoji: "🍓", label: "Strawberry", amount: 15 },
+  { key: "icecream", emoji: "🍦", label: "Ice Cream", amount: 15 },
   { key: "coffee", emoji: "☕", label: "Coffee", amount: 25 },
+  { key: "cake", emoji: "🍰", label: "Cake", amount: 25 },
+  { key: "butterfly", emoji: "🦋", label: "Butterfly", amount: 35 },
+  { key: "disco", emoji: "🪩", label: "Disco Ball", amount: 35 },
+  { key: "bouquet", emoji: "💐", label: "Bouquet", amount: 50 },
   { key: "champagne", emoji: "🍾", label: "Champagne", amount: 50 },
+  { key: "diamond", emoji: "💎", label: "Diamond", amount: 75 },
+  { key: "crown", emoji: "👑", label: "Crown", amount: 75 },
 ];
 
 export const SUPER_TIP_AMOUNTS = [100, 250, 500, 1000];
@@ -53,14 +78,15 @@ export function giftByKey(key: string | null | undefined): TipGift | undefined {
  * live together so the formats can't drift apart.
  */
 export function formatTipMessage(senderName: string, amount: number, gift?: TipGift): string {
-  return gift
-    ? `${gift.emoji} ${senderName} sent a ${gift.label} (${amount} coins)!`
-    : `💝 ${senderName} sent a ${amount} coin tip!`;
+  if (!gift) return `💝 ${senderName} sent a ${amount} coin tip!`;
+  const article = /^[aeiou]/i.test(gift.label) ? "an" : "a";
+  return `${gift.emoji} ${senderName} sent ${article} ${gift.label} (${amount} coins)!`;
 }
 
 const TIP_MESSAGE_REGEX = /^💝\s*(.+?) sent a (\d+) coin tip!$/;
+// `an?` so pre-article-fix messages ("sent a ...") still parse.
 const GIFT_MESSAGE_REGEX = new RegExp(
-  `^(\\S+)\\s+(.+?) sent a (${TIP_GIFTS.map((g) => g.label).join("|")}) \\((\\d+) coins\\)!$`
+  `^(\\S+)\\s+(.+?) sent an? (${TIP_GIFTS.map((g) => g.label).join("|")}) \\((\\d+) coins\\)!$`
 );
 
 export interface ParsedTipMessage {
