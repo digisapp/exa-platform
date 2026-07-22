@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { batchQuery } from "@/lib/supabase/batch";
+import { batchQuery, chunk, PAGE_ROWS } from "@/lib/supabase/batch";
+import { sendBlastToConversations } from "@/lib/messages/blast-send";
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimitAsync } from "@/lib/rate-limit";
 import { assertNotSuspended } from "@/lib/auth/suspension";
@@ -39,14 +40,7 @@ const BLAST_LIMIT = { limit: 1, windowSeconds: 3600 };
 
 // Runaway backstop — weekly likers per model are realistically tiny
 const MAX_RECIPIENTS = 500;
-
-const CHUNK = 200; // .in() URL-limit safety
-
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
+// .in() URL-limit safety uses chunk()'s BATCH_SIZE default
 
 export async function POST(request: NextRequest) {
   try {
@@ -129,7 +123,7 @@ export async function POST(request: NextRequest) {
     // Claimed FAN actors only (a brand or a model could theoretically hold
     // a vote row — fans are the audience this message is written for)
     const fanActorIds: string[] = [];
-    for (const ids of chunk(voterIds, CHUNK)) {
+    for (const ids of chunk(voterIds)) {
       const { data: fanActors } = await (serviceClient.from("actors") as any)
         .select("id")
         .in("id", ids)
@@ -140,7 +134,7 @@ export async function POST(request: NextRequest) {
 
     // Live fans only (not deleted, not suspended). fans.id == actors.id.
     const eligibleFanIds: string[] = [];
-    for (const ids of chunk(fanActorIds, CHUNK)) {
+    for (const ids of chunk(fanActorIds)) {
       const { data: fans } = await (serviceClient.from("fans") as any)
         .select("id, is_suspended")
         .in("id", ids)
@@ -194,15 +188,31 @@ export async function POST(request: NextRequest) {
     // Map likers to existing conversations (one message per fan, never a
     // duplicate thread). batchQuery pages past the .in()/max_rows limits.
     // ------------------------------------------------------------------
-    const { data: participations } = await (serviceClient
-      .from("conversation_participants") as any)
-      .select("conversation_id")
-      .eq("actor_id", actor.id)
-      .limit(5000);
-
-    const modelConversationIds = (participations || []).map(
-      (p: any) => p.conversation_id as string
-    );
+    // ALL of the model's conversation ids — a .limit(5000) still silently
+    // truncates at PostgREST max_rows (1000), and any conversation missed
+    // here would get a duplicate thread created below. Paged by
+    // conversation_id (the composite-PK column that varies once actor_id is
+    // fixed) until a short page.
+    const modelConversationIds: string[] = [];
+    for (let from = 0; ; from += PAGE_ROWS) {
+      const { data: page, error: pageError } = await (serviceClient
+        .from("conversation_participants") as any)
+        .select("conversation_id")
+        .eq("actor_id", actor.id)
+        .order("conversation_id", { ascending: true })
+        .range(from, from + PAGE_ROWS - 1);
+      if (pageError) {
+        // Bail rather than proceed with a partial map — a silent partial
+        // page is exactly the duplicate-thread bug this paging prevents.
+        logger.error("Thank-blast conversation lookup failed", pageError);
+        return NextResponse.json(
+          { error: "Failed to load conversations" },
+          { status: 500 }
+        );
+      }
+      for (const p of page || []) modelConversationIds.push(p.conversation_id as string);
+      if (!page || page.length < PAGE_ROWS) break;
+    }
 
     const fanToConversation = new Map<string, string>();
     if (modelConversationIds.length > 0) {
@@ -224,84 +234,61 @@ export async function POST(request: NextRequest) {
     }
 
     // ------------------------------------------------------------------
-    // Send: existing conversation or create one (same shape as
-    // /api/messages/send's create path), then insert the free model
-    // message and bump updated_at — mirroring the blast route.
+    // Send: resolve each fan to an existing conversation or create one
+    // (same shape as /api/messages/send's create path), then hand the
+    // message inserts + updated_at bumps + unread-counter RPC to the
+    // shared blast sender (blast-send.ts) — mirroring the blast route.
     // ------------------------------------------------------------------
     const batchSize = 10;
-    let sentCount = 0;
     let failedCount = 0;
-    const sentConversationIds: string[] = [];
-    const nowIso = new Date().toISOString();
+    const conversationIds: string[] = [];
 
     for (const batch of chunk(targets, batchSize)) {
       const results = await Promise.allSettled(
         batch.map(async (fanId) => {
-          let conversationId = fanToConversation.get(fanId) || null;
+          const existingId = fanToConversation.get(fanId);
+          if (existingId) return existingId;
 
-          if (!conversationId) {
-            const { data: newConv, error: convError } = await (serviceClient
-              .from("conversations") as any)
-              .insert({ type: "direct", title: null })
-              .select()
-              .single();
-            if (convError || !newConv) throw convError || new Error("conversation create failed");
+          const { data: newConv, error: convError } = await (serviceClient
+            .from("conversations") as any)
+            .insert({ type: "direct", title: null })
+            .select()
+            .single();
+          if (convError || !newConv) throw convError || new Error("conversation create failed");
 
-            const { error: partError } = await (serviceClient
-              .from("conversation_participants") as any)
-              .insert([
-                { conversation_id: newConv.id, actor_id: actor.id },
-                { conversation_id: newConv.id, actor_id: fanId },
-              ]);
-            if (partError) {
-              await (serviceClient.from("conversations") as any).delete().eq("id", newConv.id);
-              throw partError;
-            }
-            conversationId = newConv.id;
+          const { error: partError } = await (serviceClient
+            .from("conversation_participants") as any)
+            .insert([
+              { conversation_id: newConv.id, actor_id: actor.id },
+              { conversation_id: newConv.id, actor_id: fanId },
+            ]);
+          if (partError) {
+            await (serviceClient.from("conversations") as any).delete().eq("id", newConv.id);
+            throw partError;
           }
-
-          // Free model message, exactly like the blast route's inserts
-          const { error: msgError } = await (serviceClient.from("messages") as any).insert({
-            conversation_id: conversationId,
-            sender_id: actor.id,
-            content: message,
-            is_system: false,
-          });
-          if (msgError) throw msgError;
-
-          await (serviceClient.from("conversations") as any)
-            .update({ updated_at: nowIso })
-            .eq("id", conversationId);
-
-          return conversationId as string;
+          return newConv.id as string;
         })
       );
 
       for (const result of results) {
         if (result.status === "fulfilled") {
-          sentCount++;
-          sentConversationIds.push(result.value);
+          conversationIds.push(result.value);
         } else {
           failedCount++;
         }
       }
     }
 
-    // Bump recipients' unread counters so the message actually surfaces a
-    // badge — direct inserts skip unread_count, and the SECURITY DEFINER
-    // RPC is service-role-only per the RPC lockdown convention.
-    if (sentConversationIds.length > 0) {
-      const { error: unreadError } = await (serviceClient as any).rpc(
-        "increment_unread_for_conversations",
-        {
-          p_conversation_ids: sentConversationIds,
-          p_sender_actor_id: actor.id,
-        }
-      );
-      if (unreadError) {
-        logger.error("Thank-blast unread increment failed", unreadError);
-      }
-    }
+    // Free model messages, exactly like the blast route's inserts, plus the
+    // unread-counter bump for the inserts that landed.
+    const blastResult = await sendBlastToConversations(
+      serviceClient,
+      actor.id,
+      message,
+      conversationIds
+    );
+    const sentCount = blastResult.sent;
+    failedCount += blastResult.failed;
 
     if (failedCount > 0) {
       logger.error("Thank-blast partial failure", undefined, {

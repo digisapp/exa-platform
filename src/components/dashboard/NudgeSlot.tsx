@@ -19,6 +19,11 @@ import {
 // order, so child order IS the priority order. Claims are permanent for the
 // page view — dismissing the winner never promotes the runner-up mid-view.
 //
+// Claims MUST happen synchronously in the mount effect — an awaited check
+// before claim() yields the effect back mid-flight, letting a later sibling's
+// effect claim first, which forfeits declaration-order priority. Keep every
+// pre-claim eligibility check synchronous (useNudgeSnooze below is).
+//
 // Future nudges join by rendering inside the slot and gating their
 // setVisible(true) on useNudgeSlot("their-id")().
 
@@ -43,4 +48,41 @@ export function NudgeSlot({ children }: { children: ReactNode }) {
 export function useNudgeSlot(id: string): () => boolean {
   const claim = useContext(NudgeSlotContext);
   return useCallback(() => (claim ? claim(id) : true), [claim, id]);
+}
+
+const SNOOZE_DAYS = 14;
+
+/**
+ * Shared nudge snooze: a localStorage timestamp that suppresses the card for
+ * 14 days after dismissal (per-device by design — no models column for a
+ * nudge). `snoozed()` is a synchronous function, not state, so cards can
+ * check it inside their mount effect BEFORE claiming the slot (see the
+ * declaration-order note above). Storage unavailable → never snoozed, the
+ * card just shows.
+ */
+export function useNudgeSnooze(storageKey: string): {
+  snoozed: () => boolean;
+  dismiss: () => void;
+} {
+  const snoozed = useCallback(() => {
+    try {
+      const dismissedAt = localStorage.getItem(storageKey);
+      if (!dismissedAt) return false;
+      const ageMs = Date.now() - new Date(dismissedAt).getTime();
+      return ageMs < SNOOZE_DAYS * 24 * 60 * 60 * 1000;
+    } catch {
+      // storage unavailable → just show it
+      return false;
+    }
+  }, [storageKey]);
+
+  const dismiss = useCallback(() => {
+    try {
+      localStorage.setItem(storageKey, new Date().toISOString());
+    } catch {
+      // best effort
+    }
+  }, [storageKey]);
+
+  return { snoozed, dismiss };
 }

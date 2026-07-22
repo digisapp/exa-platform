@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BellRing, Loader2, X } from "lucide-react";
-import { useNudgeSlot } from "@/components/dashboard/NudgeSlot";
+import { useNudgeSlot, useNudgeSnooze } from "@/components/dashboard/NudgeSlot";
 import { getPushSupport, subscribeToPush } from "@/lib/push-client";
 
 /**
@@ -25,36 +25,24 @@ import { getPushSupport, subscribeToPush } from "@/lib/push-client";
  */
 
 const DISMISS_KEY = "exa_push_nudge_dismissed_at";
-const REDISMISS_DAYS = 14;
 
 export function PushNudgeCard() {
   // Start hidden until the client checks run so SSR/CSR markup match
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const claim = useNudgeSlot("push");
+  const { snoozed, dismiss: snooze } = useNudgeSnooze(DISMISS_KEY);
 
   useEffect(() => {
     if (getPushSupport() !== "supported") return;
     if (Notification.permission !== "default") return;
-    try {
-      const dismissedAt = localStorage.getItem(DISMISS_KEY);
-      if (dismissedAt) {
-        const ageMs = Date.now() - new Date(dismissedAt).getTime();
-        if (ageMs < REDISMISS_DAYS * 24 * 60 * 60 * 1000) return;
-      }
-    } catch {
-      // storage unavailable → just show it
-    }
+    if (snoozed()) return;
     if (claim()) setVisible(true);
-  }, [claim]);
+  }, [claim, snoozed]);
 
   const dismiss = () => {
     setVisible(false);
-    try {
-      localStorage.setItem(DISMISS_KEY, new Date().toISOString());
-    } catch {
-      // best effort
-    }
+    snooze();
   };
 
   const enable = async () => {

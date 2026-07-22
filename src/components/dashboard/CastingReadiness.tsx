@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowRight,
@@ -37,6 +38,7 @@ export function CastingReadiness({
   items: ReadinessItem[];
   username: string;
 }) {
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [linkAttested, setLinkAttested] = useState(false);
   const [attesting, setAttesting] = useState(false);
@@ -82,6 +84,9 @@ export function CastingReadiness({
       if (!res.ok) throw new Error("attest failed");
       setLinkAttested(true);
       toast.success("Marked done — nice work getting your link out there");
+      // Reconcile with the server-computed items/copy/score (the optimistic
+      // flip below is deliberately minimal).
+      router.refresh();
     } catch {
       toast.error("Couldn't save that — try again in a moment");
     } finally {
@@ -89,24 +94,17 @@ export function CastingReadiness({
     }
   };
 
-  // Optimistic view: once attested this session, the link step reads done.
-  // Weights sum to 100 server-side, so recomputing the score locally from
-  // the same items is exact.
-  const displayItems = linkAttested
+  // Optimistic view: once attested this session, the link step reads done
+  // and the score bumps by its weight — router.refresh() above then swaps in
+  // the server-computed items/copy/score.
+  const linkItem = items.find((i) => i.key === "link_live");
+  const optimisticLinkDone = linkAttested && linkItem && !linkItem.done;
+  const displayItems = optimisticLinkDone
     ? items.map((i) =>
-        i.key === "link_live" && !i.done
-          ? {
-              ...i,
-              done: true,
-              detail:
-                "Marked done — we'll switch this to verified once fans start arriving from your link",
-            }
-          : i
+        i.key === "link_live" ? { ...i, done: true, detail: "Marked done" } : i
       )
     : items;
-  const displayScore = linkAttested
-    ? displayItems.reduce((sum, i) => sum + (i.done ? i.weight : 0), 0)
-    : score;
+  const displayScore = optimisticLinkDone ? score + linkItem.weight : score;
 
   const doneCount = displayItems.filter((i) => i.done).length;
   // Absorbed from the old GettingStartedChecklist: the amber "not visible"

@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { chunk } from "@/lib/supabase/batch";
 import { NextRequest, NextResponse } from "next/server";
 import { sendOfferReminderEmail, sendOfferExpiryReminderEmail } from "@/lib/email";
 import { sendPushToActor } from "@/lib/push";
@@ -59,20 +60,50 @@ export async function GET(request: NextRequest) {
         )
       `)
       .in("status", ["confirmed", "accepted"])
-      .is("reminder_sent_at", null);
+      .is("reminder_sent_at", null)
+      // PostgREST caps responses at 1000 rows regardless — order newest-first
+      // so if the never-reminded backlog ever exceeds the cap, the fresh
+      // (still actionable) responses are the ones scanned.
+      .order("created_at", { ascending: false })
+      .limit(1000);
 
     if (error) throw error;
 
     // Filter to events in 24-48 hour window
     // Note: Supabase returns offer as single object (not array) for FK relationships
-    const upcomingResponses = (responses || []).filter((r: any) => {
+    const upcomingResponses: any[] = [];
+    // Responses whose event_date is already in the PAST can never receive a
+    // pre-event reminder — tombstone reminder_sent_at so they stop consuming
+    // the 1000-row query budget forever (semantically a no-op: no email is
+    // ever sent for a past event). Undated offers are NOT tombstoned — they
+    // may gain a date later and become remindable.
+    const pastResponseIds: string[] = [];
+    for (const r of responses || []) {
       const offer = r.offer as Record<string, any>;
-      if (!offer?.event_date) return false;
-      // Don't remind models about events the brand cancelled
-      if (offer.status === "cancelled") return false;
+      if (!offer?.event_date) continue;
       const eventDate = new Date(offer.event_date);
-      return eventDate >= in24Hours && eventDate <= in48Hours;
-    });
+      if (eventDate < now) {
+        pastResponseIds.push(r.id);
+        continue;
+      }
+      // Don't remind models about events the brand cancelled
+      if (offer.status === "cancelled") continue;
+      if (eventDate >= in24Hours && eventDate <= in48Hours) {
+        upcomingResponses.push(r);
+      }
+    }
+
+    if (pastResponseIds.length > 0) {
+      for (const ids of chunk(pastResponseIds)) {
+        const { error: tombstoneError } = await adminClient
+          .from("offer_responses")
+          .update({ reminder_sent_at: new Date().toISOString() })
+          .in("id", ids);
+        if (tombstoneError) {
+          logger.error("Offer reminder tombstone update failed", tombstoneError);
+        }
+      }
+    }
 
     // Pass 2 runs even when pass 1 has nothing to do
     const expirySummary = await sendExpiryNudges(now, in24Hours, in48Hours);
@@ -221,28 +252,61 @@ async function sendExpiryNudges(
       `)
       .eq("status", "pending")
       .is("expiry_reminder_sent_at", null)
+      // PostgREST caps responses at 1000 rows — order newest-first so a
+      // stale never-nudged backlog can't starve fresh, still-nudgeable rows.
+      .order("created_at", { ascending: false })
       .limit(1000);
 
     if (error) throw error;
 
     const dayMs = 24 * 60 * 60 * 1000;
-    const nudgeTargets = (pendingResponses || []).filter((r: any) => {
+    const nudgeTargets: any[] = [];
+    // Responses that are PERMANENTLY ineligible for a nudge — offer no
+    // longer open, dated offer whose event already passed, or an undated
+    // offer already older than the one-shot 5-6d window (it will never
+    // re-enter it). They can never be nudged, so stamping
+    // expiry_reminder_sent_at is semantically a no-op — it just stops the
+    // dead rows from consuming the 1000-row query budget forever.
+    const tombstoneIds: string[] = [];
+    for (const r of pendingResponses || []) {
       const offer = r.offer as Record<string, any>;
+      if (!offer) continue;
       // Only offers still worth answering
-      if (!offer || offer.status !== "open") return false;
+      if (offer.status !== "open") {
+        tombstoneIds.push(r.id);
+        continue;
+      }
       if (offer.event_date) {
         // Same window + Date-comparison style as pass 1 (event_date is a
         // DATE — keep the existing comparison style to avoid off-by-one)
         const eventDate = new Date(offer.event_date);
-        return eventDate >= in24Hours && eventDate <= in48Hours;
+        if (eventDate < now) {
+          tombstoneIds.push(r.id);
+        } else if (eventDate >= in24Hours && eventDate <= in48Hours) {
+          nudgeTargets.push(r);
+        }
+        continue;
       }
       // Undated: nudge once at 5-6 days old
       const ageMs = now.getTime() - new Date(offer.created_at).getTime();
-      return (
-        ageMs >= UNDATED_NUDGE_MIN_AGE_DAYS * dayMs &&
-        ageMs < UNDATED_NUDGE_MAX_AGE_DAYS * dayMs
-      );
-    });
+      if (ageMs >= UNDATED_NUDGE_MAX_AGE_DAYS * dayMs) {
+        tombstoneIds.push(r.id); // window missed for good — never nudgeable
+      } else if (ageMs >= UNDATED_NUDGE_MIN_AGE_DAYS * dayMs) {
+        nudgeTargets.push(r);
+      }
+    }
+
+    if (tombstoneIds.length > 0) {
+      for (const ids of chunk(tombstoneIds)) {
+        const { error: tombstoneError } = await adminClient
+          .from("offer_responses")
+          .update({ expiry_reminder_sent_at: new Date().toISOString() })
+          .in("id", ids);
+        if (tombstoneError) {
+          logger.error("Offer expiry tombstone update failed", tombstoneError);
+        }
+      }
+    }
 
     if (nudgeTargets.length === 0) {
       return { sent: 0, considered: 0 };

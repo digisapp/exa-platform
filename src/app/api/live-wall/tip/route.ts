@@ -7,6 +7,7 @@ import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { notifyModelEarning } from "@/lib/earning-notifications";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
+import { LIVE_WALL_BELL_MIN_COINS } from "@/lib/tip-config";
 
 const adminClient = createServiceRoleClient();
 
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
             message: `You received a ${amount}-coin tip on the Live Wall`,
             amountCoins: amount,
             metadata: { message_id: messageId, tipper_actor_id: actor.id },
-            skipBell: amount >= 50,
+            skipBell: amount >= LIVE_WALL_BELL_MIN_COINS,
             push: {
               body: `You received a ${amount}-coin tip (${formatUsd(coinsToUsd(amount))}) on the Live Wall`,
             },

@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { chunk } from "@/lib/supabase/batch";
 import { NextRequest, NextResponse } from "next/server";
 import {
   sendFanWeeklyDigestEmail,
@@ -65,13 +66,8 @@ const GETTING_STARTED_WINDOW_DAYS = 30;
 // ...unless a day-3/day-10 profile reminder (stalled-new-models cron) went
 // out this recently — one lifecycle touch per few days is plenty.
 const GETTING_STARTED_NUDGE_SUPPRESS_DAYS = 4;
-const IN_CHUNK_SIZE = 200; // .in() URL-limit safety (see project_postgrest_row_and_url_limits)
-
-function chunkArray<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
+// .in() URL-limit safety uses chunk()'s BATCH_SIZE default (see
+// project_postgrest_row_and_url_limits)
 
 // ISO-8601 week key, e.g. "2026-W28"
 function isoWeekKey(d: Date): string {
@@ -422,7 +418,7 @@ export async function GET(request: NextRequest) {
 
       // Has she ever posted anything? (any status counts as a first step)
       const modelsWithContent = new Set<string>();
-      for (const ids of chunkArray(candidateIds, IN_CHUNK_SIZE)) {
+      for (const ids of chunk(candidateIds)) {
         const contentRows = await fetchAllRows<any>(
           () =>
             adminClient
@@ -440,7 +436,7 @@ export async function GET(request: NextRequest) {
         now.getTime() - GETTING_STARTED_NUDGE_SUPPRESS_DAYS * 24 * 60 * 60 * 1000
       ).toISOString();
       const recentlyNudged = new Set<string>();
-      for (const ids of chunkArray(candidateIds, IN_CHUNK_SIZE)) {
+      for (const ids of chunk(candidateIds)) {
         const { data: nudges, error: nudgeError } = await adminClient
           .from("model_lifecycle_nudges_sent")
           .select("model_id")

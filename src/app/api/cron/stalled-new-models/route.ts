@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { chunk } from "@/lib/supabase/batch";
 import { NextRequest, NextResponse } from "next/server";
 import { sendProfileCompletionReminderEmail } from "@/lib/email";
 import { computeCastingReadiness, READINESS_MODEL_COLUMNS } from "@/lib/casting-readiness";
@@ -52,13 +53,7 @@ const MAX_SENDS_PER_RUN = 200; // circuit breaker
 const SEND_BATCH_SIZE = 2; // Resend rate limit is 2 emails/second
 const SEND_BATCH_DELAY_MS = 1100;
 const READINESS_CONCURRENCY = 5;
-const IN_CHUNK_SIZE = 200; // .in() URL-limit safety
-
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
+// .in() URL-limit safety uses chunk()'s BATCH_SIZE default
 
 export async function GET(request: NextRequest) {
   try {
@@ -74,25 +69,49 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const oldestAnchorIso = new Date(now.getTime() - D10_MAX_DAYS * DAY_MS).toISOString();
 
-    // Recently approved claimed models. The .or() catches both anchor kinds:
-    // fresh signups via created_at, linked imports via claimed_at. The exact
-    // COALESCE windowing happens in JS below.
-    const { data: models, error: modelError } = await adminClient
-      .from("models")
-      .select(`${READINESS_MODEL_COLUMNS}, user_id, username, email, created_at, claimed_at, deactivated`)
-      .not("user_id", "is", null)
-      .eq("is_approved", true)
-      .is("deleted_at", null)
-      .or(`created_at.gte.${oldestAnchorIso},claimed_at.gte.${oldestAnchorIso}`)
-      .order("created_at", { ascending: false })
-      .limit(1000);
+    // Recently approved claimed models, one query per anchor kind: fresh
+    // signups via created_at, linked imports via claimed_at. Two queries
+    // (merged by id below) instead of one .or() — a single query can only
+    // order by ONE anchor, so under a surge the other anchor's rows are the
+    // ones truncated at the row cap (e.g. recently-claimed old imports fall
+    // off a created_at-desc ordering first). The exact COALESCE windowing
+    // happens in JS below.
+    const candidateSelect = `${READINESS_MODEL_COLUMNS}, user_id, username, email, created_at, claimed_at, deactivated`;
+    const [byCreated, byClaimed] = await Promise.all([
+      adminClient
+        .from("models")
+        .select(candidateSelect)
+        .not("user_id", "is", null)
+        .eq("is_approved", true)
+        .is("deleted_at", null)
+        .gte("created_at", oldestAnchorIso)
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      adminClient
+        .from("models")
+        .select(candidateSelect)
+        .not("user_id", "is", null)
+        .eq("is_approved", true)
+        .is("deleted_at", null)
+        .gte("claimed_at", oldestAnchorIso)
+        .order("claimed_at", { ascending: false })
+        .limit(1000),
+    ]);
 
-    if (modelError) throw modelError;
-    if ((models?.length ?? 0) >= 1000) {
+    if (byCreated.error) throw byCreated.error;
+    if (byClaimed.error) throw byClaimed.error;
+    if ((byCreated.data?.length ?? 0) >= 1000 || (byClaimed.data?.length ?? 0) >= 1000) {
       // PostgREST caps responses at 1000 rows — realistic new-model volume is
       // tens/week, so hitting this means something is very wrong upstream.
       logger.warn("Stalled new models: query hit the row limit — some models not scanned");
     }
+
+    // Union unique by id (a fresh signup claimed immediately can match both)
+    const modelById = new Map<string, any>();
+    for (const m of [...(byCreated.data || []), ...(byClaimed.data || [])]) {
+      modelById.set(m.id, m);
+    }
+    const models = [...modelById.values()];
 
     type Candidate = { model: any; nudgeKey: "profile_d3" | "profile_d10"; anchorAgeDays: number };
     const windowed: Candidate[] = [];
@@ -113,7 +132,7 @@ export async function GET(request: NextRequest) {
 
     // Prior lifecycle nudges for the windowed set (chunked .in())
     const priorByModel = new Map<string, Map<string, string>>(); // model id -> nudge_key -> created_at
-    for (const ids of chunk(windowed.map((c) => c.model.id), IN_CHUNK_SIZE)) {
+    for (const ids of chunk(windowed.map((c) => c.model.id))) {
       const { data: prior, error: priorError } = await adminClient
         .from("model_lifecycle_nudges_sent")
         .select("model_id, nudge_key, created_at")
@@ -229,6 +248,27 @@ export async function GET(request: NextRequest) {
 
       await Promise.all(
         batch.map(async (item) => {
+          // Claim-first prevents double-send races; delete-on-definite-failure
+          // prevents a transient Resend outage from permanently burning the slot.
+          const releaseClaim = async () => {
+            try {
+              const { error: releaseError } = await adminClient
+                .from("model_lifecycle_nudges_sent")
+                .delete()
+                .eq("model_id", item.model.id)
+                .eq("nudge_key", item.nudgeKey);
+              if (releaseError) {
+                logger.error("Stalled new models: claim release failed", releaseError, {
+                  modelId: item.model.id,
+                });
+              }
+            } catch (releaseErr) {
+              logger.error("Stalled new models: claim release failed", releaseErr, {
+                modelId: item.model.id,
+              });
+            }
+          };
+          let claimed = false;
           try {
             // Claim BEFORE sending — 23505 means another run got here first
             const { error: claimError } = await adminClient
@@ -246,6 +286,7 @@ export async function GET(request: NextRequest) {
               }
               return;
             }
+            claimed = true;
 
             const result = await sendProfileCompletionReminderEmail({
               to: item.model.email,
@@ -260,10 +301,12 @@ export async function GET(request: NextRequest) {
               summary.sent++;
             } else {
               summary.failed++;
+              await releaseClaim(); // definite failure — retry next run
             }
           } catch (err) {
             logger.error("Stalled new models: send failed", err, { modelId: item.model.id });
             summary.failed++;
+            if (claimed) await releaseClaim();
           }
         })
       );

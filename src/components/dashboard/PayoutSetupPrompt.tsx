@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Banknote, X } from "lucide-react";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
-import { useNudgeSlot } from "@/components/dashboard/NudgeSlot";
+import { useNudgeSlot, useNudgeSnooze } from "@/components/dashboard/NudgeSlot";
 
 /**
  * Payout nudge v2 — "you have real money, payout isn't set up yet".
@@ -30,7 +30,6 @@ import { useNudgeSlot } from "@/components/dashboard/NudgeSlot";
  */
 
 const DISMISS_KEY = "exa_payout_nudge_dismissed_at";
-const REDISMISS_DAYS = 14;
 
 interface PayoutSetupPromptProps {
   coins: number;
@@ -42,27 +41,16 @@ export function PayoutSetupPrompt({ coins, needsIdentity }: PayoutSetupPromptPro
   // Start hidden until the localStorage check runs so SSR/CSR markup match
   const [visible, setVisible] = useState(false);
   const claim = useNudgeSlot("payout");
+  const { snoozed, dismiss: snooze } = useNudgeSnooze(DISMISS_KEY);
 
   useEffect(() => {
-    try {
-      const dismissedAt = localStorage.getItem(DISMISS_KEY);
-      if (dismissedAt) {
-        const ageMs = Date.now() - new Date(dismissedAt).getTime();
-        if (ageMs < REDISMISS_DAYS * 24 * 60 * 60 * 1000) return;
-      }
-    } catch {
-      // storage unavailable → just show it
-    }
+    if (snoozed()) return;
     if (claim()) setVisible(true);
-  }, [claim]);
+  }, [claim, snoozed]);
 
   const dismiss = () => {
     setVisible(false);
-    try {
-      localStorage.setItem(DISMISS_KEY, new Date().toISOString());
-    } catch {
-      // best effort
-    }
+    snooze();
   };
 
   if (!visible) return null;

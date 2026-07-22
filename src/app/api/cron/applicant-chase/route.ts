@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { chunk } from "@/lib/supabase/batch";
 import { NextRequest, NextResponse } from "next/server";
 import { sendFinishApplicationEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
@@ -43,13 +44,8 @@ const MAX_SENDS_PER_RUN = 200; // circuit breaker
 const SEND_BATCH_SIZE = 2; // Resend rate limit is 2 emails/second
 const SEND_BATCH_DELAY_MS = 1100;
 const QUERY_LIMIT = 1000; // PostgREST max_rows — log if we ever hit it
-const IN_CHUNK_SIZE = 200; // .in() URL-limit safety (see project_postgrest_row_and_url_limits)
-
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
+// .in() URL-limit safety uses chunk()'s BATCH_SIZE default (see
+// project_postgrest_row_and_url_limits)
 
 export async function GET(request: NextRequest) {
   try {
@@ -94,7 +90,7 @@ export async function GET(request: NextRequest) {
 
     // Prior nudges for the candidate set (chunked .in() — URL-limit safety)
     const priorByApp = new Map<string, Map<string, string>>(); // app id -> nudge_type -> created_at
-    for (const ids of chunk(applications.map((a: any) => a.id), IN_CHUNK_SIZE)) {
+    for (const ids of chunk(applications.map((a: any) => a.id))) {
       const { data: prior, error: priorError } = await adminClient
         .from("application_nudges_sent")
         .select("application_id, nudge_type, created_at")
@@ -187,7 +183,7 @@ export async function GET(request: NextRequest) {
     // Applicant language: model_applications has no language column — the
     // signup flow stores it on the fans row (fan account precedes approval).
     const languageByUserId = new Map<string, string>();
-    for (const ids of chunk([...new Set(toSend.map((c) => c.application.user_id))], IN_CHUNK_SIZE)) {
+    for (const ids of chunk([...new Set(toSend.map((c) => c.application.user_id))])) {
       const { data: fanRows } = await adminClient
         .from("fans")
         .select("user_id, preferred_language")
@@ -203,6 +199,27 @@ export async function GET(request: NextRequest) {
       await Promise.all(
         batch.map(async (candidate) => {
           const app = candidate.application;
+          // Claim-first prevents double-send races; delete-on-definite-failure
+          // prevents a transient Resend outage from permanently burning the slot.
+          const releaseClaim = async () => {
+            try {
+              const { error: releaseError } = await adminClient
+                .from("application_nudges_sent")
+                .delete()
+                .eq("application_id", app.id)
+                .eq("nudge_type", candidate.nudgeType);
+              if (releaseError) {
+                logger.error("Applicant chase: claim release failed", releaseError, {
+                  applicationId: app.id,
+                });
+              }
+            } catch (releaseErr) {
+              logger.error("Applicant chase: claim release failed", releaseErr, {
+                applicationId: app.id,
+              });
+            }
+          };
+          let claimed = false;
           try {
             // Claim BEFORE sending — 23505 means another run got here first
             const { error: claimError } = await adminClient.from("application_nudges_sent").insert({
@@ -221,6 +238,7 @@ export async function GET(request: NextRequest) {
               }
               return;
             }
+            claimed = true;
 
             const result = await sendFinishApplicationEmail({
               to: app.email,
@@ -238,10 +256,12 @@ export async function GET(request: NextRequest) {
               summary.sent++;
             } else {
               summary.failed++;
+              await releaseClaim(); // definite failure — retry next run
             }
           } catch (err) {
             logger.error("Applicant chase: send failed", err, { applicationId: app.id });
             summary.failed++;
+            if (claimed) await releaseClaim();
           }
         })
       );

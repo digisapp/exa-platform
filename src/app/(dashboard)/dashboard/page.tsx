@@ -162,7 +162,6 @@ export default async function DashboardPage() {
     castingReadiness,
     welcomeBack,
     { count: weekSpotlightLikes },
-    { count: allTimeSpotlightLikes },
   ] = await Promise.all([
     // Get pending bookings for this model - use adminClient to bypass RLS
     (adminClient.from("bookings") as any)
@@ -191,15 +190,21 @@ export default async function DashboardPage() {
     sumEarningsThisMonth(adminClient, actor.id),
     // Payout-nudge eligibility: is any payout method on file?
     // (bank_accounts + payoneer_accounts queries were removed in #73 —
-    // re-added here as cheap aggregates; zelle_info rides on the model row)
-    (adminClient.from("bank_accounts") as any)
-      .select("id", { count: "exact", head: true })
-      .eq("model_id", model.id),
-    (adminClient.from("payoneer_accounts") as any)
-      .select("id, can_receive_payments")
-      .eq("model_id", model.id)
-      .limit(1)
-      .maybeSingle(),
+    // re-added here as cheap aggregates; zelle_info rides on the model row.)
+    // Only worth asking when the balance clears the nudge threshold — below
+    // it the nudge never renders, so skip both queries.
+    (model.coin_balance || 0) >= PAYOUT_NUDGE_MIN_COINS
+      ? (adminClient.from("bank_accounts") as any)
+          .select("id", { count: "exact", head: true })
+          .eq("model_id", model.id)
+      : Promise.resolve({ count: 0 }),
+    (model.coin_balance || 0) >= PAYOUT_NUDGE_MIN_COINS
+      ? (adminClient.from("payoneer_accounts") as any)
+          .select("id, can_receive_payments")
+          .eq("model_id", model.id)
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
     // Runway Ready meter — model row already loaded above, pass it through
     computeCastingReadiness(adminClient, model.id, model),
     // Welcome-back pulse — model.last_active_at is still the PREVIOUS visit
@@ -210,21 +215,29 @@ export default async function DashboardPage() {
       actorId: actor.id,
       lastActiveAt: model.last_active_at ?? null,
     }),
-    // Spotlight likes, AGGREGATE ONLY (weekly + all-time) — fan-side
-    // Spotlight markets right-swipes as anonymous, so no identities ever
-    // reach this page. Service client: top_model_votes has no model-facing
-    // read path worth relying on, and resolving anything further would
-    // cross fans RLS. Same query shape as welcome-back.ts / weekly-digest.
+    // Spotlight likes, AGGREGATE ONLY (weekly; all-time fetched below) —
+    // fan-side Spotlight markets right-swipes as anonymous, so no identities
+    // ever reach this page. Service client: top_model_votes has no
+    // model-facing read path worth relying on, and resolving anything
+    // further would cross fans RLS. Same query shape as welcome-back.ts /
+    // weekly-digest.
     (adminClient.from("top_model_votes") as any)
       .select("id", { count: "exact", head: true })
       .eq("model_id", model.id)
       .eq("vote_type", "like")
       .gte("created_at", weekAgo.toISOString()),
-    (adminClient.from("top_model_votes") as any)
+  ]);
+
+  // All-time Spotlight likes back the Admirers card, which only renders on a
+  // non-zero week — skip the full-table count for the (typical) zero week.
+  let allTimeSpotlightLikes = 0;
+  if ((weekSpotlightLikes || 0) > 0) {
+    const { count } = await (adminClient.from("top_model_votes") as any)
       .select("id", { count: "exact", head: true })
       .eq("model_id", model.id)
-      .eq("vote_type", "like"),
-  ]);
+      .eq("vote_type", "like");
+    allTimeSpotlightLikes = count || 0;
+  }
 
   // Filter for pending/counter bookings in JS
   const pendingBookings = (allBookings || []).filter(

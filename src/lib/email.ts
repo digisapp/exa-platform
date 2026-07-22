@@ -3686,9 +3686,11 @@ export async function sendProfileCompletionReminderEmail({
 
     const items = [
       {
+        // Flag = photo && bio (see stalled-new-models' checklist mapping) —
+        // the copy must only promise what the flag actually checks.
         done: checklist.profileBasics,
-        title: "Add your photo, bio & measurements",
-        desc: "Height, bust, waist, hips — casting checks these first",
+        title: "Add your photo & bio",
+        desc: "Your face and your story — the first things casting sees",
         href: `${BASE_URL}/settings`,
         linkLabel: "Complete profile",
       },

@@ -120,16 +120,22 @@ export async function computeCastingReadiness(
     modelPromise,
     // Lifetime: any upload ever satisfies "first content upload" — this is
     // an onboarding milestone, not a monthly-freshness check (2026-07-22).
+    // Public portfolio or paid content only (STATUS_OPTIONS in the studio
+    // page: private/portfolio/exclusive) — a private-only upload isn't
+    // visible to anyone, so it doesn't complete the milestone.
     (service.from("content_items") as any)
       .select("id", { count: "exact", head: true })
-      .eq("model_id", modelId),
+      .eq("model_id", modelId)
+      .in("status", ["portfolio", "exclusive"]),
     // Inbound traffic with a referrer — host matching happens in JS since
-    // page_views stores the full referrer URL
+    // page_views stores the full referrer URL. Newest-first so the 1000-row
+    // PostgREST cap scans the most recent views.
     (service.from("page_views") as any)
       .select("referrer")
       .eq("model_id", modelId)
       .not("referrer", "is", null)
       .gte("created_at", since)
+      .order("created_at", { ascending: false })
       .limit(2000),
   ]);
 

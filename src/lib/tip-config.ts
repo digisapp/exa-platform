@@ -62,6 +62,12 @@ export const TIP_GIFTS: TipGift[] = [
 
 export const SUPER_TIP_AMOUNTS = [100, 250, 500, 1000];
 
+// Live Wall bell threshold: the tip_live_wall_message RPC (migration
+// 20260426000002) inserts its own 'tip_received' bell row when
+// p_amount >= 50. This constant MUST match that in-RPC threshold — change
+// both together, or Live Wall tips double-notify (or go silent) around it.
+export const LIVE_WALL_BELL_MIN_COINS = 50;
+
 // Custom-amount floor for tip dialogs. 1-coin tips stay a Live-Wall-only
 // mechanic; the server floor on /api/tips remains 1 for that reason.
 export const MIN_CUSTOM_TIP = 10;
