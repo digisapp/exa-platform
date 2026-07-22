@@ -346,7 +346,7 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                         {user.username && actorType === "model" ? (
                           <Link
                             href={`/${user.username}`}
-                            className="text-[11px] text-pink-400 hover:text-pink-300 flex items-center gap-1 truncate"
+                            className="notranslate text-[11px] text-pink-400 hover:text-pink-300 flex items-center gap-1 truncate"
                           >
                             examodels.com/{user.username}
                             <ArrowUpRight className="h-3 w-3 shrink-0" />
@@ -354,13 +354,13 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                         ) : user.username && actorType === "brand" ? (
                           <Link
                             href={`/brand/${user.username}`}
-                            className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 truncate"
+                            className="notranslate text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 truncate"
                           >
                             examodels.com/brand/{user.username}
                             <ArrowUpRight className="h-3 w-3 shrink-0" />
                           </Link>
                         ) : user.username ? (
-                          <p className="text-[11px] text-white/50 truncate">
+                          <p className="notranslate text-[11px] text-white/50 truncate">
                             @{user.username}
                           </p>
                         ) : (

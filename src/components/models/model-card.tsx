@@ -148,7 +148,8 @@ export const ModelCard = memo(function ModelCard({
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">@{displayName}</p>
+              {/* notranslate: usernames are identifiers — Google Translate mangles them */}
+              <p className="font-medium truncate notranslate">@{displayName}</p>
             </div>
           </div>
         </div>
@@ -273,7 +274,7 @@ export const ModelCard = memo(function ModelCard({
 
           {/* Bottom Name Bar - Always Visible */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-8">
-            <h3 className="font-semibold text-white truncate">@{displayName}</h3>
+            <h3 className="font-semibold text-white truncate notranslate">@{displayName}</h3>
             {/* Key facts stay visible without hover — touch devices never see the overlay */}
             {(model.show_location && (model.city || model.state)) || (model.focus_tags && model.focus_tags.length > 0) ? (
               <div className="flex items-center gap-2 mt-1 min-w-0">
@@ -298,7 +299,7 @@ export const ModelCard = memo(function ModelCard({
           <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-white text-lg">@{displayName}</h3>
+                <h3 className="font-semibold text-white text-lg notranslate">@{displayName}</h3>
                 {model.reliability_score !== null && model.reliability_score !== undefined && (
                   <span
                     className={cn(

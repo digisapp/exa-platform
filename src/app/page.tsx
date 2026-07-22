@@ -243,7 +243,7 @@ export default async function HomePage() {
                       {auction.title}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-white/40">
-                      <span>@{auction.model?.username}</span>
+                      <span className="notranslate">@{auction.model?.username}</span>
                       {auction.bid_count > 0 && (
                         <span>· {auction.bid_count} bid{auction.bid_count !== 1 ? "s" : ""}</span>
                       )}

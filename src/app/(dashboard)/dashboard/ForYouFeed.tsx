@@ -136,7 +136,7 @@ function FeedCardActions({
           className="flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20 border border-pink-500/40 hover:border-pink-400 text-xs font-semibold text-pink-300 hover:text-pink-200 transition-all disabled:opacity-60"
         >
           <Plus className="h-3 w-3" />
-          Follow @{item.model.username}
+          Follow <span className="notranslate">@{item.model.username}</span>
         </button>
       )}
     </div>
@@ -225,7 +225,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <p className="font-semibold text-sm truncate">{modelName}</p>
+                      <p className="notranslate font-semibold text-sm truncate">{modelName}</p>
                       {item.model.is_verified && (
                         <svg className="w-3.5 h-3.5 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
