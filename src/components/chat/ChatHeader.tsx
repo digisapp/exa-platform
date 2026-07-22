@@ -221,11 +221,11 @@ export function ChatHeader({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             {otherInfo.username ? (
-              <Link href={`/${otherInfo.username}`} className="font-bold text-[15px] truncate hover:text-primary transition-colors">
+              <Link href={`/${otherInfo.username}`} className="notranslate font-bold text-[15px] truncate hover:text-primary transition-colors">
                 {otherName}
               </Link>
             ) : (
-              <h2 className="font-bold text-[15px] truncate">{otherName}</h2>
+              <h2 className="notranslate font-bold text-[15px] truncate">{otherName}</h2>
             )}
             {otherInfo.type === "fan" && (
               <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 bg-blue-500/10 text-blue-500 border-blue-500/20">
@@ -252,7 +252,7 @@ export function ChatHeader({
           ) : otherInfo.username && otherInfo.username !== otherName ? (
             <Link
               href={`/${otherInfo.username}`}
-              className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              className="notranslate text-xs text-muted-foreground hover:text-primary transition-colors"
             >
               @{otherInfo.username}
             </Link>
