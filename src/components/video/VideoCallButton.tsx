@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Video, Phone, Loader2, Coins } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { VideoRoom } from "./VideoRoom";
 import { PreCallDeviceCheck } from "./PreCallDeviceCheck";
@@ -32,6 +33,10 @@ interface VideoCallButtonProps {
       False disables the button with an explanatory title — /api/calls/start
       would 409 with recipient_offline anyway. */
   reachable?: boolean;
+  /** Fold the per-minute rate into the button as a desktop-only label
+      ("12/min" / "Free"). Only rendered when the caller pays (fan/brand →
+      model); pass paysToCall from the chat header. */
+  showRate?: boolean;
 }
 
 export function VideoCallButton({
@@ -47,6 +52,7 @@ export function VideoCallButton({
   callType = "video",
   onBalanceChange,
   reachable = true,
+  showRate = false,
 }: VideoCallButtonProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
@@ -154,7 +160,13 @@ export function VideoCallButton({
       <Button
         variant="ghost"
         size="icon"
-        className="h-10 w-10 rounded-lg"
+        className={cn(
+          "h-11 rounded-xl border transition-all active:scale-95 disabled:opacity-40 disabled:shadow-none",
+          showRate && requiresCoins ? "w-11 sm:w-auto sm:px-3 sm:gap-1.5" : "w-11",
+          callType === "video"
+            ? "text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/30 shadow-[0_0_12px_rgba(34,211,238,0.25)] hover:shadow-[0_0_18px_rgba(34,211,238,0.45)]"
+            : "text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.25)] hover:shadow-[0_0_18px_rgba(245,158,11,0.45)]"
+        )}
         onClick={handleButtonClick}
         disabled={disabled || !reachable || isStarting || (requiresCoins && !hasEnoughCoins)}
         title={
@@ -171,6 +183,18 @@ export function VideoCallButton({
           <Phone className="h-5 w-5" />
         ) : (
           <Video className="h-5 w-5" />
+        )}
+        {showRate && requiresCoins && (
+          <span className="hidden sm:inline whitespace-nowrap text-[11px] font-semibold">
+            {ratePerMinute === 0 ? (
+              "Free"
+            ) : (
+              <>
+                {ratePerMinute}
+                <span className="opacity-70">/min</span>
+              </>
+            )}
+          </span>
         )}
       </Button>
 

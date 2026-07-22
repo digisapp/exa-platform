@@ -43,7 +43,8 @@ export function EmojiPicker({ onEmojiSelect, disabled }: EmojiPickerProps) {
           size="icon"
           disabled={disabled}
           className={cn(
-            "shrink-0 text-muted-foreground hover:text-primary",
+            // Sized to match the composer row (attach/gift/send are h-12)
+            "shrink-0 h-12 w-12 rounded-2xl text-white/60 hover:text-white hover:bg-white/10 active:scale-95 transition-all",
             "hidden sm:inline-flex" // Only show on desktop
           )}
         >
