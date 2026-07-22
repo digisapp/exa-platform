@@ -306,10 +306,9 @@ export function ChatView({
     currentActor.type === "model" && otherParticipant.actor.type === "model";
   const coinCost = isModelToModel || currentActor.type === "model" || currentActor.type === "admin" ? 0 : messageCoinCost(otherParticipant.model?.message_rate);
 
-  // Can tip if the other participant is a model and we're not a model
+  // Can tip if the other participant is a model and we're not a model.
+  // The composer Gift button is the single tip entry point in chat.
   const canTip = otherParticipant.actor.type === "model" && currentActor.type !== "model";
-  // Owned here (not in ChatHeader) so both the header Gift button and the
-  // composer Gift button open the same dialog
   const [showTipDialog, setShowTipDialog] = useState(false);
 
   // --- Extracted hooks ---
@@ -759,8 +758,6 @@ export function ChatView({
         otherParticipantModel={otherParticipant.model}
         otherInfo={otherInfo}
         otherInitials={otherInitials}
-        canTip={canTip}
-        onTipClick={() => setShowTipDialog(true)}
         localCoinBalance={localCoinBalance}
         onBalanceChange={handleBalanceChange}
         soundEnabled={soundEnabled}
