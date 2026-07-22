@@ -2199,6 +2199,234 @@ export async function sendMissedCallEmail({
   }
 }
 
+// Call knock: a fan tapped Call while the model was unreachable and asked us
+// to let the model know. Present-tense urgency — the fan is (or was seconds
+// ago) sitting on the profile wanting to talk.
+export async function sendCallKnockEmail({
+  to,
+  modelName,
+  fanName,
+  callType = "video",
+  callRate,
+}: {
+  to: string;
+  modelName: string;
+  fanName: string;
+  callType?: "video" | "voice";
+  callRate: number;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      logger.info("Skipping call knock email - recipient is unsubscribed", { to });
+      return;
+    }
+    const resend = getResendClient();
+    const dashboardUrl = `${BASE_URL}/dashboard`;
+    const callTypeLabel = callType === "voice" ? "voice" : "video";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: `📞 ${fanName} is trying to call you`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <p style="margin: 0; font-size: 48px;">📞</p>
+              <h1 style="margin: 10px 0 0; color: white; font-size: 24px; font-weight: bold;">
+                A fan wants to call you right now
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${escapeHtml(modelName)}! ✨
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #ffffff;">${escapeHtml(fanName)}</strong> just tried to start a ${callTypeLabel} call with you and asked us to let you know. You weren't available, so the call never rang — but they're waiting, and the moment you go available we'll tell them you're ready.
+              </p>
+
+              ${callRate > 0 ? `
+              <!-- Potential earnings -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px; text-align: center;">
+                    <p style="margin: 0 0 5px; color: #71717a; font-size: 14px;">Every minute on a call earns you</p>
+                    <p style="margin: 0; color: #ec4899; font-size: 28px; font-weight: bold;">${callRate} coins/min</p>
+                  </td>
+                </tr>
+              </table>
+              ` : ""}
+
+              <!-- How it works -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #1e1b4b; border-radius: 8px; border-left: 3px solid #8b5cf6;">
+                    <p style="margin: 0; color: #c4b5fd; font-size: 14px; line-height: 1.6;">
+                      💡 Flip on <strong style="color: #ffffff;">Available for calls</strong> and we'll instantly ping every fan who's been trying to reach you. Fans who call are your biggest spenders — don't leave them waiting.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Go Available for Calls
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
+// The other half of the knock loop: the model a fan was waiting on just went
+// available — tell the fan while the window is open. modelUsername only:
+// fan-facing emails never carry a model's real name.
+export async function sendModelOnlineForCallsEmail({
+  to,
+  modelUsername,
+  callType = "video",
+}: {
+  to: string;
+  modelUsername: string;
+  callType?: "video" | "voice";
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      logger.info("Skipping model online email - recipient is unsubscribed", { to });
+      return;
+    }
+    const resend = getResendClient();
+    const profileUrl = `${BASE_URL}/${modelUsername}`;
+    const callTypeLabel = callType === "voice" ? "voice" : "video";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: `💜 @${modelUsername} is taking calls right now`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #10b981 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <p style="margin: 0; font-size: 48px;">🟢</p>
+              <h1 style="margin: 10px 0 0; color: white; font-size: 24px; font-weight: bold;">
+                @${escapeHtml(modelUsername)} is available!
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                You asked us to let you know — <strong style="color: #ffffff;">@${escapeHtml(modelUsername)}</strong> is now taking ${callTypeLabel} calls. Availability comes and goes, so now's your moment.
+              </p>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${profileUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Call @${escapeHtml(modelUsername)} Now
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Resend error", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Email send error", error);
+    return { success: false, error };
+  }
+}
+
 // Send email when model receives a new offer
 export async function sendOfferReceivedEmail({
   to,

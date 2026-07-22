@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { notifyCallKnockersModelOnline } from "@/lib/calls/knock-online-notify";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -42,12 +43,20 @@ export async function POST(request: NextRequest) {
     }
     const { available } = parsed.data;
 
-    // Only model actors have an availability flag
-    const { data: model } = await supabase
-      .from("models")
-      .select("id, user_id")
+    // Only model actors have an availability flag. Prior reachability state
+    // is read here too: flipping available on while otherwise unreachable is
+    // a knock-serving transition. Newer columns than the generated DB types.
+    const { data: model } = await (supabase.from("models") as any)
+      .select("id, user_id, video_is_online, available_for_calls")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; user_id: string } | null };
+      .single() as {
+        data: {
+          id: string;
+          user_id: string;
+          video_is_online: boolean | null;
+          available_for_calls: boolean | null;
+        } | null;
+      };
 
     if (!model) {
       return NextResponse.json({ error: "Model profile not found" }, { status: 404 });
@@ -62,6 +71,17 @@ export async function POST(request: NextRequest) {
       .eq("id", model.id);
 
     if (updateError) throw updateError;
+
+    if (available && !model.video_is_online && !model.available_for_calls) {
+      // Unreachable → reachable via the manual toggle — ping fans who
+      // knocked while this model was away. Awaited so serverless can't kill
+      // the send mid-flight; only runs on the actual transition.
+      try {
+        await notifyCallKnockersModelOnline(service, model.id);
+      } catch (err) {
+        logger.error("knock online-notify on availability toggle failed", err);
+      }
+    }
 
     // availability_toggled is in the /api/analytics/event allowlist; emitted
     // server-side here (service-role insert, same pattern as /api/push/subscribe).

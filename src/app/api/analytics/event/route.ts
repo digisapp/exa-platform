@@ -23,6 +23,9 @@ const ALLOWED_EVENTS = new Set([
   "payout_method_added",
   "push_subscribed",
   "availability_toggled",
+  // Emitted server-side by /api/calls/knock (fan tried to call an offline
+  // model); listed here so reporting treats it as a known event.
+  "call_knock",
 ]);
 
 export async function POST(request: NextRequest) {
