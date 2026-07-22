@@ -69,7 +69,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
     { data: myBids },
     { data: recentContent },
     { data: trendingContent },
-    { data: freeContent },
+    { data: discoverSample },
     { data: myUnlocks },
   ] = await Promise.all([
     (supabase.from("follows") as any)
@@ -143,23 +143,13 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .gt("unlock_count", 0)
       .order("unlock_count", { ascending: false })
       .limit(30),
-    // Free content pool — public portfolio + any free exclusive posts. This is the
-    // bulk of the feed: there are thousands of free portfolio items vs ~130 paid
-    // exclusives, so the feed leads with free discovery and treats paid as upsell.
-    // Only content from approved, non-deleted models (inner-join filter).
-    (supabase as any).from("content_items")
-      .select(`
-        id, title, description, media_type, preview_url, media_url,
-        coin_price, unlock_count, like_count, created_at,
-        model:models!content_items_model_id_fkey!inner(id, username, profile_photo_url, is_verified, is_approved, deleted_at, deactivated)
-      `)
-      .in("status", ["portfolio", "exclusive"])
-      .eq("coin_price", 0)
-      .eq("model.is_approved", true)
-      .is("model.deleted_at", null)
-      .not("model.deactivated", "is", true)
-      .order("created_at", { ascending: false })
-      .limit(400),
+    // Free-content discovery pool — weighted-random sample of the ENTIRE free
+    // catalog (~5k items / ~580 models), rating-tier weighted (1-2★ excluded)
+    // with a freshness boost; see migration 20260722001100. Sampling in SQL
+    // instead of a newest-N window is what makes the feed rotate: the previous
+    // newest-400 window covered only ~64 models and gained ~2 items/day, so
+    // fans saw the same pictures every visit.
+    (supabase as any).rpc("get_feed_discovery_sample", { p_limit: 300 }),
     // Fan's already-unlocked content
     (supabase as any).from("content_purchases")
       .select("item_id")
@@ -224,6 +214,25 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .filter(Boolean);
   }
 
+  // Followed models' free content via a targeted query — the discovery sample
+  // above is random, so a followed model's posts would otherwise be hit-or-miss.
+  // follows is capped at 50, safely under the .in() UUID batch guideline.
+  let followedFreeContent: any[] = [];
+  if (favoriteModels.length > 0) {
+    const { data } = await (supabase as any).from("content_items")
+      .select(`
+        id, title, description, media_type, preview_url, media_url,
+        coin_price, unlock_count, like_count, created_at,
+        model:models!content_items_model_id_fkey(id, username, profile_photo_url, is_verified, is_approved, deleted_at, deactivated)
+      `)
+      .in("model_id", favoriteModels.map((m: any) => m.id))
+      .in("status", ["portfolio", "exclusive"])
+      .eq("coin_price", 0)
+      .order("created_at", { ascending: false })
+      .limit(300);
+    followedFreeContent = data || [];
+  }
+
   const daysSinceEpoch = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
   const rotationPeriod = Math.floor(daysSinceEpoch / 3);
   const featuredModels = seededShuffle(allFeaturedModels || [], rotationPeriod).slice(0, 8);
@@ -232,8 +241,11 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   // Strategy: lead with FREE content (public portfolio photos + any free posts) so
   // the feed reads as a discovery surface, not a paywall. There are thousands of
   // free items vs ~130 paid exclusives, so free dominates and paid is interspersed
-  // as a minority upsell. Followed models come first; discovery fills the rest with
-  // a per-model cap for variety and a daily shuffle so the ordering isn't frozen.
+  // as a minority upsell. Followed models come first (newest post guaranteed +
+  // rotating catalog picks); discovery fills the rest from the SQL random sample
+  // with a per-model cap. Everything reshuffles per visit — the page is
+  // force-dynamic and all items ship in one response, so there's no consistency
+  // reason for a sticky ordering, and per-visit rotation is the whole point.
   const unlockedIds = new Set((myUnlocks || []).map((u: any) => u.item_id));
   const followedModelIds = new Set(favoriteModels.map((m: any) => m.id));
   const seenContentIds = new Set<string>();
@@ -272,11 +284,19 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
     };
   };
 
-  // Followed models first — their free + paid content, newest first, capped per model.
-  const followedItems: FeedItem[] = [];
-  const followedPerModel = new Map<string, number>();
+  // Per-visit shuffle seed. Deliberately NOT deterministic per day: the old
+  // daily seed meant every reload showed the identical feed, which fans read
+  // as "nothing new here". Server component + force-dynamic, so Math.random
+  // is safe (computed once per request, serialized to the client).
+  const visitSeed = Math.floor(Math.random() * 0x7fffffff);
+
+  // Followed models first — newest post always included, remaining slots are
+  // rotating picks from the model's recent catalog so even a quiet followed
+  // model shows different photos on every visit.
+  const FOLLOWED_ROTATION_WINDOW = 15;
+  const byFollowedModel = new Map<string, any[]>();
   const followedPool = [
-    ...(freeContent || []),
+    ...followedFreeContent,
     ...(recentContent || []),
     ...(trendingContent || []),
   ]
@@ -284,12 +304,24 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
     .sort((a: any, b: any) => (a.created_at < b.created_at ? 1 : -1));
   for (const content of followedPool) {
     if (seenContentIds.has(content.id)) continue;
-    const n = followedPerModel.get(content.model.id) || 0;
-    if (n >= MAX_PER_MODEL) continue;
     seenContentIds.add(content.id);
-    followedPerModel.set(content.model.id, n + 1);
-    followedItems.push(toFeedItem(content, true));
+    const list = byFollowedModel.get(content.model.id) || [];
+    list.push(content);
+    byFollowedModel.set(content.model.id, list);
   }
+  const followedPicks: any[] = [];
+  for (const list of byFollowedModel.values()) {
+    followedPicks.push(
+      list[0],
+      ...seededShuffle(list.slice(1, FOLLOWED_ROTATION_WINDOW), visitSeed).slice(
+        0,
+        MAX_PER_MODEL - 1
+      )
+    );
+  }
+  // Re-sort globally so models interleave instead of clumping per model.
+  followedPicks.sort((a: any, b: any) => (a.created_at < b.created_at ? 1 : -1));
+  const followedItems: FeedItem[] = followedPicks.map((c) => toFeedItem(c, true));
 
   // Discovery fill from non-followed models, capped per model for variety.
   const discoverPerModel = new Map<string, number>();
@@ -307,17 +339,10 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
     return out;
   };
 
-  // Fold the fan's actorId into the shuffle seed so each fan gets their own
-  // discover ordering — still deterministic within the day (no Math.random).
-  let fanHash = 0;
-  for (let i = 0; i < actorId.length; i++) {
-    fanHash = (fanHash * 31 + actorId.charCodeAt(i)) & 0x7fffffff;
-  }
-  const discoverSeed = (daysSinceEpoch + fanHash) & 0x7fffffff;
-
-  const freeDiscover = takeDiscover(seededShuffle(freeContent || [], discoverSeed));
+  // The SQL sample is already weighted-random-ordered — no client shuffle needed.
+  const freeDiscover = takeDiscover(discoverSample || []);
   const paidDiscover = takeDiscover(
-    seededShuffle([...(trendingContent || []), ...(recentContent || [])], discoverSeed)
+    seededShuffle([...(trendingContent || []), ...(recentContent || [])], visitSeed)
   );
 
   // Interleave: free-dominant, one paid upsell every PAID_EVERY free items.
