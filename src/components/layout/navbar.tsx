@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,6 +41,7 @@ import {
   Loader2,
   Gift,
   Briefcase,
+  Gem,
 } from "lucide-react";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
@@ -50,6 +52,17 @@ import { useUnreadCount } from "@/components/layout/UnreadCountProvider";
 import { useTranslation } from "@/i18n";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
+
+// Lazy: keeps Stripe JS out of the navbar bundle until a fan opens the full modal
+const BuyCoinsModal = dynamic(
+  () => import("@/components/coins/BuyCoinsModal").then((m) => m.BuyCoinsModal),
+  { ssr: false }
+);
+
+// Quick-buy popover shows impulse-topup tiers only (20→500); bigger packages
+// live in BuyCoinsModal behind "More options" alongside the first-purchase bonus UI.
+const QUICK_BUY_PACKAGES = COIN_PACKAGES.slice(0, 5);
+const POPULAR_COINS = 100;
 
 interface NavbarProps {
   user?: {
@@ -86,6 +99,8 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
   const coinBalance = coinBalanceContext?.balance ?? 0;
   const { t } = useTranslation();
   const [purchasing, setPurchasing] = useState<number | null>(null);
+  const [coinPopoverOpen, setCoinPopoverOpen] = useState(false);
+  const [buyModalOpen, setBuyModalOpen] = useState(false);
 
   const handleCoinPurchase = async (coins: number) => {
     setPurchasing(coins);
@@ -236,7 +251,8 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                 </Link>
               ) : actorType === "fan" ? (
                 // Fans: coins pill → inline buy popover (no redirect to /wallet)
-                <Popover>
+                <>
+                <Popover open={coinPopoverOpen} onOpenChange={setCoinPopoverOpen}>
                   <PopoverTrigger asChild>
                     <button className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-gradient-to-r from-amber-500/15 to-orange-500/15 border border-amber-500/30 hover:border-amber-500/60 hover:from-amber-500/25 hover:to-orange-500/25 transition-all shadow-[0_0_12px_rgba(245,158,11,0.15)] hover:shadow-[0_0_20px_rgba(245,158,11,0.35)]">
                       <Coins className="h-4 w-4 text-amber-400" />
@@ -258,9 +274,9 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                       </div>
                       <Coins className="h-7 w-7 text-amber-400/40" />
                     </div>
-                    {/* Coin packages */}
+                    {/* Coin packages — quick-buy tiers only */}
                     <div className="space-y-1">
-                      {COIN_PACKAGES.map((pack) => (
+                      {QUICK_BUY_PACKAGES.map((pack) => (
                         <button
                           key={pack.coins}
                           onClick={() => handleCoinPurchase(pack.coins)}
@@ -271,6 +287,9 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                             <Coins className="h-3.5 w-3.5 text-amber-400 shrink-0" />
                             <span className="text-sm font-semibold text-white">{pack.coins.toLocaleString()}</span>
                             <span className="text-[10px] text-white/40">coins</span>
+                            {pack.coins === POPULAR_COINS && (
+                              <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Popular</span>
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-amber-300">{pack.priceDisplay}</span>
@@ -283,8 +302,24 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                         </button>
                       ))}
                     </div>
+                    {/* Larger packages + first-purchase bonus live in the full modal */}
+                    <button
+                      onClick={() => {
+                        setCoinPopoverOpen(false);
+                        setBuyModalOpen(true);
+                      }}
+                      disabled={purchasing !== null}
+                      className="w-full mt-2 pt-2 border-t border-white/10 flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white/60 hover:text-amber-300 hover:bg-white/8 transition-colors disabled:opacity-60"
+                    >
+                      <Gem className="h-3.5 w-3.5 text-violet-400" />
+                      Bigger packs · 1,000–10,000 coins →
+                    </button>
                   </PopoverContent>
                 </Popover>
+                {buyModalOpen && (
+                  <BuyCoinsModal isOpen onClose={() => setBuyModalOpen(false)} />
+                )}
+                </>
               ) : (
                 // Brands: coin balance — cyan accent to match brand nav color
                 <Link
