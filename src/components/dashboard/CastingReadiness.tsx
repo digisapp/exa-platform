@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ChevronDown,
   Copy,
+  EyeOff,
   Sparkles,
 } from "lucide-react";
 import type { ReadinessItem } from "@/lib/casting-readiness";
@@ -15,10 +16,15 @@ import type { ReadinessItem } from "@/lib/casting-readiness";
 const COLLAPSE_KEY = "exa_runway_ready_collapsed";
 
 /**
- * "Runway Ready" — casting readiness meter for the model dashboard.
+ * "Runway Ready" — the model dashboard's single completion meter (it
+ * absorbed the old GettingStartedChecklist, 2026-07-22).
  * Score + checklist are computed server-side (src/lib/casting-readiness.ts)
- * and passed in as props; this component only renders and handles the
- * copy-link / collapse interactions.
+ * and passed in as props; this component renders and handles the
+ * copy-link / self-attest / collapse interactions.
+ *
+ * "I've added my link" self-attests the link_live step via
+ * POST /api/model/readiness (service-role write to models.link_attested_at —
+ * never a session-client model write) and marks it done optimistically.
  *
  * Copy constraint: upcoming shows are NOT announced — never name an event.
  */
@@ -32,6 +38,8 @@ export function CastingReadiness({
   username: string;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [linkAttested, setLinkAttested] = useState(false);
+  const [attesting, setAttesting] = useState(false);
 
   // Respect a previously chosen collapsed state (declutter convention:
   // persistent cards must be dismissible to a one-line summary).
@@ -59,7 +67,51 @@ export function CastingReadiness({
     }
   };
 
-  const doneCount = items.filter((i) => i.done).length;
+  // Self-attest fallback for the link step: persists server-side so it
+  // survives reloads and devices; real referrer traffic later supersedes
+  // it in copy ("verified" vs "marked done").
+  const attestLink = async () => {
+    if (attesting) return;
+    setAttesting(true);
+    try {
+      const res = await fetch("/api/model/readiness", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "link_attested" }),
+      });
+      if (!res.ok) throw new Error("attest failed");
+      setLinkAttested(true);
+      toast.success("Marked done — nice work getting your link out there");
+    } catch {
+      toast.error("Couldn't save that — try again in a moment");
+    } finally {
+      setAttesting(false);
+    }
+  };
+
+  // Optimistic view: once attested this session, the link step reads done.
+  // Weights sum to 100 server-side, so recomputing the score locally from
+  // the same items is exact.
+  const displayItems = linkAttested
+    ? items.map((i) =>
+        i.key === "link_live" && !i.done
+          ? {
+              ...i,
+              done: true,
+              detail:
+                "Marked done — we'll switch this to verified once fans start arriving from your link",
+            }
+          : i
+      )
+    : items;
+  const displayScore = linkAttested
+    ? displayItems.reduce((sum, i) => sum + (i.done ? i.weight : 0), 0)
+    : score;
+
+  const doneCount = displayItems.filter((i) => i.done).length;
+  // Absorbed from the old GettingStartedChecklist: the amber "not visible"
+  // warning must stay visible (even collapsed) until a profile photo exists.
+  const photoMissing = displayItems.some((i) => i.key === "photo" && !i.done);
 
   return (
     <section className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-pink-500/10 via-violet-500/10 to-transparent overflow-hidden shadow-[0_0_24px_rgba(139,92,246,0.12)]">
@@ -73,7 +125,7 @@ export function CastingReadiness({
             <h2 className="text-base font-semibold mt-1">
               Runway Ready —{" "}
               <span className="bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">
-                {score}%
+                {displayScore}%
               </span>
             </h2>
           </div>
@@ -83,7 +135,7 @@ export function CastingReadiness({
             aria-expanded={!collapsed}
           >
             <span className="font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
-              {doneCount}/{items.length}
+              {doneCount}/{displayItems.length}
             </span>
             <ChevronDown
               className={`h-4 w-4 transition-transform ${collapsed ? "" : "rotate-180"}`}
@@ -95,15 +147,30 @@ export function CastingReadiness({
         <div className="mt-3 h-1.5 rounded-full bg-white/10 overflow-hidden">
           <div
             className="h-full rounded-full bg-gradient-to-r from-pink-500 to-violet-500 shadow-[0_0_12px_rgba(236,72,153,0.6)] transition-all"
-            style={{ width: `${Math.max(score, 3)}%` }}
+            style={{ width: `${Math.max(displayScore, 3)}%` }}
           />
         </div>
+
+        {/* Blocking state — outlives collapse so an invisible model always
+            sees why (absorbed from the old GettingStartedChecklist) */}
+        {photoMissing && (
+          <Link
+            href="/settings"
+            className="mt-4 flex items-center gap-2 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-sm text-amber-300 hover:bg-amber-500/15 transition-colors"
+          >
+            <EyeOff className="h-4 w-4 shrink-0" />
+            <span>
+              You&apos;re not visible on EXA yet — add a profile photo to appear
+              on the Models page.
+            </span>
+          </Link>
+        )}
         {collapsed && <div className="h-5" />}
       </header>
 
       {!collapsed && (
         <div className="p-3 mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {items.map((item) => (
+          {displayItems.map((item) => (
             <div
               key={item.key}
               className={`flex items-start gap-3 p-3 rounded-xl border ${
@@ -131,13 +198,23 @@ export function CastingReadiness({
                   </p>
                 )}
                 {!item.done && (item.key === "link_live" || item.key === "fans_brought") && (
-                  <button
-                    onClick={copyLink}
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-pink-400 hover:text-pink-300 transition-colors"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                    Copy your link
-                  </button>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                    <button
+                      onClick={copyLink}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-pink-400 hover:text-pink-300 transition-colors"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      Copy your link
+                    </button>
+                    <button
+                      onClick={attestLink}
+                      disabled={attesting}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-400 hover:text-teal-300 transition-colors disabled:opacity-50"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      I&apos;ve added my link
+                    </button>
+                  </div>
                 )}
                 {!item.done && item.cta && (
                   <Link

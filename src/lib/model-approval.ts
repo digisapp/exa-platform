@@ -197,6 +197,11 @@ export async function approveModelApplication({
       status: "approved",
       show_location: true,
       show_social_media: true,
+      // NEW approvals default onto the /rates directory (2026-07-22).
+      // Deliberately NOT a column-default migration and NOT set on the
+      // link-existing / approve-existing paths above — existing rows keep
+      // whatever visibility they chose.
+      show_on_rates_page: true,
       coin_balance: 0,
       preferred_language: preferredLanguage,
       ...pendingProfileFields,
@@ -304,7 +309,7 @@ export async function approveModelApplication({
           await adminClient.from("messages").insert({
             conversation_id: conversationId,
             sender_id: reviewerActorId,
-            content: `Welcome to EXA, ${application.display_name || "Model"}! 🎉\n\nYour application has been approved and you're live on EXA.\n\nHere's how to get started:\n• Share your examodels.com/${modelUsername} on Instagram Bio + Story\n• Add more photos to your portfolio\n• Engage with the community 😊`,
+            content: `Welcome to EXA, ${application.display_name || "Model"}! 🎉\n\nYour application has been approved and you're live on EXA.\n\nHere's how to get started:\n• Share your examodels.com/${modelUsername} on Instagram Bio + Story\n• Set your rates so fans can message & call you: examodels.com/settings?tab=rates\n• Add more photos to your portfolio\n• Engage with the community 😊`,
             is_system: false,
           });
         }

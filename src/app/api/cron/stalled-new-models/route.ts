@@ -18,9 +18,9 @@ const adminClient: any = createServiceRoleClient();
 // (src/lib/model-approval.ts).
 //
 // Incomplete = computeCastingReadiness score < READINESS_SCORE_CUTOFF, i.e.
-// she has completed at most one of the major items (basics 25 / rates 15 /
-// fresh content 25 / link live 35). A model who finished her profile before
-// the window fires receives nothing.
+// she has completed at most two of the merged-meter items (photo 20 / bio 15 /
+// rates 20 / first content 20 / link live 25). A model who finished her
+// profile before the window fires receives nothing.
 //
 // Guardrails:
 // - Claimed models only (user_id IS NOT NULL) — the ~5k unclaimed imports
@@ -174,10 +174,13 @@ export async function GET(request: NextRequest) {
         toSend.push({
           ...candidate,
           score: readiness.score,
+          // Email checklist shape predates the merged meter: photo+bio map
+          // onto its combined "profile basics" line, first_content onto the
+          // "post your first photos" line.
           checklist: {
-            profileBasics: done("profile_basics"),
+            profileBasics: done("photo") && done("bio"),
             ratesSet: done("rates_set"),
-            freshContent: done("fresh_content"),
+            freshContent: done("first_content"),
           },
         });
       }

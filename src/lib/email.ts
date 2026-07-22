@@ -136,11 +136,13 @@ export async function sendModelApprovalEmail({
     const steps = isSpanish ? [
       { title: "Agrega Tu Foto de Perfil", desc: "No apareces en EXA hasta que tengas una — es lo que te hace visible para marcas y fans." },
       { title: "Completa Tu Perfil", desc: "Agrega tu bio, medidas y fotos de portafolio para destacar." },
+      { title: "Establece Tus Tarifas", desc: "Los fans no pueden enviarte mensajes ni llamarte hasta que fijes una tarifa — hazlo en examodels.com/settings?tab=rates." },
       { title: "Explora Gigs y Oportunidades", desc: "Encuentra trabajos de modelaje, colaboraciones con marcas y oportunidades pagadas." },
       { title: "Gana Monedas y Cobra", desc: "Recibe propinas de fans, vende contenido premium y retira tus ganancias." },
     ] : [
       { title: "Add Your Profile Photo", desc: "You won't appear on EXA until you have one — it's what makes you visible to brands and fans." },
       { title: "Complete Your Profile", desc: "Add your bio, measurements, and portfolio photos to stand out." },
+      { title: "Set Your Rates", desc: "Fans can't message or call you until a rate is set — do it at examodels.com/settings?tab=rates." },
       { title: "Browse Gigs & Opportunities", desc: "Find modeling gigs, brand collaborations, and paid opportunities." },
       { title: "Earn Coins & Get Paid", desc: "Receive tips from fans, sell premium content, and cash out your earnings." },
     ];

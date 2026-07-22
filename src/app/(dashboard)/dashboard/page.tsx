@@ -34,7 +34,6 @@ import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
 import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { ProfilePhotoBanner } from "@/components/dashboard/ProfilePhotoBanner";
-import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
 import { CastingReadiness } from "@/components/dashboard/CastingReadiness";
 import { computeCastingReadiness } from "@/lib/casting-readiness";
 import { WelcomeBackPulse } from "@/components/dashboard/WelcomeBackPulse";
@@ -610,30 +609,6 @@ export default async function DashboardPage() {
     ? `${model.first_name} ${model.last_name || ""}`.trim()
     : model.username || "Model";
 
-  const checklistSteps = [
-    {
-      key: "photo",
-      title: "Add your profile photo",
-      description: "You won't appear on EXA until you add one — it's what makes you visible to brands and fans.",
-      href: "/settings",
-      done: Boolean(model.profile_photo_url),
-    },
-    {
-      key: "profile",
-      title: "Write your bio",
-      description: "Tell brands and fans who you are and what you're looking for.",
-      href: "/settings",
-      done: Boolean(model.bio),
-    },
-    {
-      key: "portfolio",
-      title: "Upload portfolio photos",
-      description: "Your best shots power your public profile and gig applications.",
-      href: "/studio",
-      done: portfolioPhotos.length > 0,
-    },
-  ];
-
   // Priority inbox placement: an item in the inbox (offer, booking, bid) is
   // money waiting and outranks browsing gigs, so a non-empty inbox renders
   // above Gigs for You; the empty state stays tucked below.
@@ -763,7 +738,7 @@ export default async function DashboardPage() {
 
       {/* ──────────────────────────────────────────────────────
           UPCOMING TRIPS — accepted EXA Travel trips; unconfirmed
-          spots need action so this sits above the checklist
+          spots need action so this sits above the Runway Ready meter
          ────────────────────────────────────────────────────── */}
       {upcomingTrips.length > 0 && (
         <section className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-transparent overflow-hidden">
@@ -804,12 +779,8 @@ export default async function DashboardPage() {
       )}
 
       {/* ──────────────────────────────────────────────────────
-          GETTING STARTED — renders only while steps remain
-         ────────────────────────────────────────────────────── */}
-      <GettingStartedChecklist steps={checklistSteps} />
-
-      {/* ──────────────────────────────────────────────────────
-          RUNWAY READY — casting readiness meter
+          RUNWAY READY — the single onboarding/readiness meter
+          (absorbed the old GettingStartedChecklist, 2026-07-22)
          ────────────────────────────────────────────────────── */}
       <CastingReadiness
         score={castingReadiness.score}
