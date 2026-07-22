@@ -1,15 +1,24 @@
 // Coin packages configuration - safe for client and server
 export const COIN_PACKAGES = [
-  { coins: 20, price: 399, priceDisplay: "$3.99" },
-  { coins: 50, price: 999, priceDisplay: "$9.99" },
-  { coins: 100, price: 1699, priceDisplay: "$16.99" },
-  { coins: 250, price: 3999, priceDisplay: "$39.99" },
-  { coins: 500, price: 7499, priceDisplay: "$74.99" },
-  { coins: 1000, price: 14299, priceDisplay: "$142.99" },
-  { coins: 3000, price: 42999, priceDisplay: "$429.99" },
-  { coins: 5000, price: 69999, priceDisplay: "$699.99" },
-  { coins: 10000, price: 134999, priceDisplay: "$1,349.99" },
+  { coins: 20, price: 399, priceDisplay: "$3.99", label: "Starter" },
+  { coins: 50, price: 999, priceDisplay: "$9.99", label: "Basic" },
+  { coins: 100, price: 1699, priceDisplay: "$16.99", label: "Value" },
+  { coins: 250, price: 3999, priceDisplay: "$39.99", label: "Pro" },
+  { coins: 500, price: 7499, priceDisplay: "$74.99", label: "Super" },
+  { coins: 1000, price: 14299, priceDisplay: "$142.99", label: "Elite" },
+  { coins: 3000, price: 42999, priceDisplay: "$429.99", label: "Ultimate" },
+  { coins: 5000, price: 69999, priceDisplay: "$699.99", label: "Mega" },
+  { coins: 10000, price: 134999, priceDisplay: "$1,349.99", label: "Whale" },
 ] as const;
+
+/**
+ * Percent saved per coin vs the smallest (most expensive per-coin) package.
+ * Honest math off the real tier pricing — used as the big-pack purchase nudge.
+ */
+export function packageSavingsPct(pkg: CoinPackage): number {
+  const baseRate = COIN_PACKAGES[0].price / COIN_PACKAGES[0].coins;
+  return Math.round((1 - pkg.price / pkg.coins / baseRate) * 100);
+}
 
 export type CoinPackage = (typeof COIN_PACKAGES)[number];
 

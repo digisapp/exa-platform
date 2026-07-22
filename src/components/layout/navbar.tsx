@@ -50,7 +50,7 @@ import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 import { useUnreadCount } from "@/components/layout/UnreadCountProvider";
 import { useTranslation } from "@/i18n";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
-import { COIN_PACKAGES } from "@/lib/stripe-config";
+import { COIN_PACKAGES, packageSavingsPct } from "@/lib/stripe-config";
 
 // All tiers visible at once (owner call 2026-07-22: whale packs must be one
 // click away, never behind a "more options" step) — a divider before this
@@ -253,7 +253,7 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                   </PopoverTrigger>
                   <PopoverContent
                     align="end"
-                    className="w-64 p-3 bg-[#120a24]/95 backdrop-blur-xl border-violet-500/30 text-white shadow-2xl shadow-violet-500/10"
+                    className="w-72 p-3 bg-[#120a24]/95 backdrop-blur-xl border-violet-500/30 text-white shadow-2xl shadow-violet-500/10"
                   >
                     {/* Balance header */}
                     <div className="flex items-center justify-between mb-3 px-1">
@@ -267,16 +267,10 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                     </div>
                     {/* Coin packages — every tier visible, big packs below the divider */}
                     <div className="space-y-1">
-                      {COIN_PACKAGES.map((pack, i) => (
-                        <Fragment key={pack.coins}>
-                          {i === BIG_PACKS_START_INDEX && (
-                            <div className="flex items-center gap-2 pt-2 pb-0.5 px-1">
-                              <Gem className="h-3 w-3 text-violet-400 shrink-0" />
-                              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Big packs</span>
-                              <div className="flex-1 h-px bg-white/10" />
-                            </div>
-                          )}
+                      {COIN_PACKAGES.map((pack, i) =>
+                        i < BIG_PACKS_START_INDEX ? (
                           <button
+                            key={pack.coins}
                             onClick={() => handleCoinPurchase(pack.coins)}
                             disabled={purchasing !== null}
                             className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-white/8 transition-colors group disabled:opacity-60"
@@ -295,8 +289,41 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                               )}
                             </div>
                           </button>
-                        </Fragment>
-                      ))}
+                        ) : (
+                          <Fragment key={pack.coins}>
+                            {i === BIG_PACKS_START_INDEX && (
+                              <div className="flex items-center gap-2 pt-2 pb-0.5 px-1">
+                                <Gem className="h-3 w-3 text-violet-400 shrink-0" />
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-violet-300/70">Big packs</span>
+                                <div className="flex-1 h-px bg-violet-500/20" />
+                              </div>
+                            )}
+                            {/* Big packs: two-line premium rows — tier name feeds the ego,
+                                savings % (real math off tier pricing) justifies the spend */}
+                            <button
+                              onClick={() => handleCoinPurchase(pack.coins)}
+                              disabled={purchasing !== null}
+                              className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg bg-violet-500/10 border border-violet-500/20 hover:bg-violet-500/20 hover:border-violet-500/40 transition-colors group disabled:opacity-60"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Gem className="h-3.5 w-3.5 text-violet-400 shrink-0" />
+                                <div className="text-left">
+                                  <p className="text-sm font-semibold text-white leading-tight">{pack.coins.toLocaleString()} <span className="text-[10px] font-normal text-white/40">coins</span></p>
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-violet-300 leading-tight">{pack.label}</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs font-bold text-amber-300 leading-tight">{pack.priceDisplay}</p>
+                                {purchasing === pack.coins ? (
+                                  <Loader2 className="h-3 w-3 animate-spin text-amber-400 ml-auto mt-0.5" />
+                                ) : (
+                                  <p className="text-[9px] font-semibold text-emerald-400 leading-tight">Save {packageSavingsPct(pack)}%</p>
+                                )}
+                              </div>
+                            </button>
+                          </Fragment>
+                        )
+                      )}
                     </div>
                   </PopoverContent>
                 </Popover>

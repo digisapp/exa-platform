@@ -22,8 +22,6 @@ interface BuyCoinsModalProps {
   onSuccess?: () => void;
 }
 
-const PACKAGE_LABELS = ["Starter", "Basic", "Value", "Pro", "Super", "Elite", "Ultimate", "Mega", "Whale"];
-
 export function BuyCoinsModal({ isOpen, onClose, onSuccess }: BuyCoinsModalProps) {
   const balanceCtx = useCoinBalanceOptional();
   // First-purchase promo: never-purchased fans get +25% bonus (granted by the
@@ -204,7 +202,7 @@ export function BuyCoinsModal({ isOpen, onClose, onSuccess }: BuyCoinsModalProps
                       <div className="flex items-center gap-2 mb-2">
                         <Coins className="h-4 w-4 text-yellow-500 shrink-0" />
                         <span className="text-xs text-muted-foreground font-medium">
-                          {PACKAGE_LABELS[index]}
+                          {pkg.label}
                         </span>
                       </div>
                       <p className="text-2xl font-bold leading-none">
