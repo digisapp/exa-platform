@@ -44,6 +44,8 @@ export const en = {
     liveBids: "Live Bids",
     getCoins: "Get Coins",
     notifications: "Notifications",
+    language: "Language",
+    autoTranslated: "Auto-translated",
   },
 
   // Dashboard

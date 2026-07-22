@@ -6,12 +6,9 @@ import {
   formatUsd,
   formatCoins,
   messageCoinCost,
-  minWithdrawalCoins,
   COIN_USD_RATE,
   MIN_WITHDRAWAL_COINS,
   MIN_WITHDRAWAL_USD,
-  FIRST_CASHOUT_MIN_COINS,
-  FIRST_CASHOUT_MIN_USD,
   PAYOUT_NUDGE_MIN_COINS,
   DEFAULT_MESSAGE_COST,
   CONTENT_UNLOCK_MIN_COINS,
@@ -147,24 +144,9 @@ describe("constants", () => {
   // These mirror hard-coded values in migration 20260722000801 (the
   // withdrawal_requests CHECK constraint + both withdrawal RPCs) — if a
   // test here fails after an edit, the DB gates must change in lockstep.
-  it("FIRST_CASHOUT_MIN_COINS is 100 ($10)", () => {
-    expect(FIRST_CASHOUT_MIN_COINS).toBe(100);
-    expect(FIRST_CASHOUT_MIN_USD).toBe(FIRST_CASHOUT_MIN_COINS * COIN_USD_RATE);
-    expect(FIRST_CASHOUT_MIN_USD).toBeCloseTo(10);
-  });
 
   it("payout nudge gate matches the first-cashout minimum", () => {
-    expect(PAYOUT_NUDGE_MIN_COINS).toBe(FIRST_CASHOUT_MIN_COINS);
-  });
-});
-
-describe("minWithdrawalCoins", () => {
-  it("first-ever cashout unlocks at 100 coins", () => {
-    expect(minWithdrawalCoins(false)).toBe(FIRST_CASHOUT_MIN_COINS);
-  });
-
-  it("repeat cashouts stay at the 500-coin minimum", () => {
-    expect(minWithdrawalCoins(true)).toBe(MIN_WITHDRAWAL_COINS);
+    expect(PAYOUT_NUDGE_MIN_COINS).toBe(100);
   });
 });
 

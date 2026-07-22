@@ -46,6 +46,8 @@ export const es: Dictionary = {
     liveBids: "Subastas",
     getCoins: "Obtener Monedas",
     notifications: "Notificaciones",
+    language: "Idioma",
+    autoTranslated: "Traducción automática",
   },
 
   // Dashboard

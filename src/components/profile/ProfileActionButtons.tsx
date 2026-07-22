@@ -635,13 +635,6 @@ export function ProfileActionButtons({
           </div>
         )}
 
-        {/* Offline hint — the buttons still work, they just knock instead */}
-        {callsOffline && (showVideoCall || showVoiceCall) && (
-          <p className="flex items-center justify-center gap-1.5 text-[11px] text-white/40">
-            <Moon className="h-3 w-3" />
-            {firstName} is offline — tap a call button and we&apos;ll let them know
-          </p>
-        )}
       </div>
 
       {/* Video Call Confirmation */}

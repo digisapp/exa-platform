@@ -13,8 +13,9 @@ import { useNudgeSlot, useNudgeSnooze } from "@/components/dashboard/NudgeSlot";
  * the wallet's IdentityVerificationBanner + PayoutsTab. v2 is deliberately
  * NOT a re-implementation of either: it's a single dismissible pointer row
  * that only exists when both are true —
- *   1. coin_balance >= PAYOUT_NUDGE_MIN_COINS (100 = the first-cashout
- *      minimum, so it appears exactly when cashing out becomes possible),
+ *   1. coin_balance >= PAYOUT_NUDGE_MIN_COINS (100 — deliberately below
+ *      the $50 payout minimum so method + ID verification are on file
+ *      before the model can actually withdraw),
  *   2. NO payout method on file (zelle_info null AND no bank_accounts row
  *      AND no completed Payoneer).
  * Both conditions are resolved SERVER-SIDE in the dashboard RSC — this

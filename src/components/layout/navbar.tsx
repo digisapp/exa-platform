@@ -42,6 +42,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { NotificationBell } from "@/components/layout/NotificationBell";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
@@ -205,6 +206,14 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
 
         {/* Right side */}
         <div className="flex items-center gap-2 md:gap-3">
+          {/* Language globe — always visible logged-out (the discovery case);
+              md+ only when logged in, where the bar is already tight on
+              phones and Settings carries the same toggle. Admin is EN-only. */}
+          {actorType !== "admin" && (
+            <div className={cn(user && "hidden md:block")}>
+              <LanguageSwitcher />
+            </div>
+          )}
           {user ? (
             <>
               {/* ───────── Wallet / Earnings pill ───────── */}
