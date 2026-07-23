@@ -33,13 +33,29 @@ describe("COIN_PACKAGES", () => {
     }
   });
 
-  it("has expected package sizes", () => {
+  it("has expected package sizes (mirrors digis-app ladder)", () => {
     const coinValues = COIN_PACKAGES.map((p) => p.coins);
-    expect(coinValues).toEqual([20, 50, 100, 250, 500, 1000, 3000, 5000, 10000]);
+    expect(coinValues).toEqual([25, 55, 150, 325, 700, 1450, 3000, 10000]);
   });
 
-  it("has 9 packages", () => {
-    expect(COIN_PACKAGES).toHaveLength(9);
+  it("has 8 packages", () => {
+    expect(COIN_PACKAGES).toHaveLength(8);
+  });
+
+  it("per-coin price strictly decreases up the ladder (no pack dominated by a smaller one)", () => {
+    for (let i = 1; i < COIN_PACKAGES.length; i++) {
+      const prev = COIN_PACKAGES[i - 1].price / COIN_PACKAGES[i - 1].coins;
+      const curr = COIN_PACKAGES[i].price / COIN_PACKAGES[i].coins;
+      expect(curr).toBeLessThan(prev);
+    }
+  });
+
+  it("every pack clears a 20% margin after Stripe fees (coins cost $0.10 payout)", () => {
+    for (const pkg of COIN_PACKAGES) {
+      const stripeFee = pkg.price * 0.029 + 30;
+      const netMargin = (pkg.price - pkg.coins * 10 - stripeFee) / pkg.price;
+      expect(netMargin).toBeGreaterThanOrEqual(0.2);
+    }
   });
 });
 

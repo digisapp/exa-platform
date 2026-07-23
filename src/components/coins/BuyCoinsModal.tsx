@@ -7,14 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Coins, ArrowLeft, CheckCircle, Loader2, Sparkles } from "lucide-react";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
-import { firstPurchaseBonusCoins } from "@/lib/coin-config";
 import { cn } from "@/lib/utils";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
-import {
-  useFirstPurchaseEligibility,
-  FirstPurchaseBonusBanner,
-  FirstPurchaseBonusChip,
-} from "@/components/coins/FirstPurchaseBonus";
 
 interface BuyCoinsModalProps {
   isOpen: boolean;
@@ -24,9 +18,6 @@ interface BuyCoinsModalProps {
 
 export function BuyCoinsModal({ isOpen, onClose, onSuccess }: BuyCoinsModalProps) {
   const balanceCtx = useCoinBalanceOptional();
-  // First-purchase promo: never-purchased fans get +25% bonus (granted by the
-  // Stripe webhook; this only drives the promo UI)
-  const firstPurchaseEligible = useFirstPurchaseEligibility();
   const [selectedCoins, setSelectedCoins] = useState<number | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -125,11 +116,6 @@ export function BuyCoinsModal({ isOpen, onClose, onSuccess }: BuyCoinsModalProps
               </div>
               <h3 className="text-xl font-bold mb-1">Payment Successful!</h3>
               <p className="text-muted-foreground text-sm">Your coins have been added to your wallet.</p>
-              {firstPurchaseEligible && selectedPkg && (
-                <p className="mt-2 text-sm font-medium bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">
-                  +{firstPurchaseBonusCoins(selectedPkg.coins).toLocaleString()} first-purchase bonus coins included!
-                </p>
-              )}
             </div>
 
           ) : clientSecret ? (
@@ -168,34 +154,36 @@ export function BuyCoinsModal({ isOpen, onClose, onSuccess }: BuyCoinsModalProps
           ) : (
             /* Package picker */
             <>
-              {firstPurchaseEligible && <FirstPurchaseBonusBanner />}
               <div className="grid grid-cols-2 gap-3">
                 {COIN_PACKAGES.map((pkg, index) => {
-                  const isBestValue = index === COIN_PACKAGES.length - 1;
-                  const isPopular = index === 2; // 100 coins
+                  // Labels are EXA's own; badges are generic marketing markers
+                  // (never digis tier names). "Best Deal" is honest — the top
+                  // pack has the lowest per-coin price in the ladder.
+                  const isBestDeal = index === COIN_PACKAGES.length - 1;
+                  const isPopular = index === 2; // 150 coins
                   return (
                     <button
                       key={pkg.coins}
                       onClick={() => handleSelectPackage(pkg.coins)}
                       className={cn(
                         "relative text-left p-4 rounded-xl border-2 transition-all hover:border-pink-500/50 hover:shadow-md active:scale-[0.98]",
-                        isBestValue
+                        isBestDeal
                           ? "border-violet-500/60 bg-violet-500/5"
                           : "border-border hover:bg-muted/30"
                       )}
                     >
-                      {(isBestValue || isPopular) && (
+                      {(isBestDeal || isPopular) && (
                         <div className="absolute -top-2.5 right-3">
                           <Badge
                             variant="secondary"
                             className={cn(
                               "text-[10px] px-2 py-0",
-                              isBestValue
+                              isBestDeal
                                 ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0"
                                 : "bg-pink-500 text-white border-0"
                             )}
                           >
-                            {isBestValue ? "Best Value" : "Popular"}
+                            {isBestDeal ? "Best Deal" : "Popular"}
                           </Badge>
                         </div>
                       )}
@@ -208,15 +196,7 @@ export function BuyCoinsModal({ isOpen, onClose, onSuccess }: BuyCoinsModalProps
                       <p className="text-2xl font-bold leading-none">
                         {pkg.coins.toLocaleString()}
                       </p>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        coins
-                        {firstPurchaseEligible && (
-                          <>
-                            {" "}
-                            <FirstPurchaseBonusChip coins={pkg.coins} />
-                          </>
-                        )}
-                      </p>
+                      <p className="text-xs text-muted-foreground mb-3">coins</p>
                       <p className="text-base font-semibold text-pink-500">{pkg.priceDisplay}</p>
                     </button>
                   );

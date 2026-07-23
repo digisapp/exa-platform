@@ -8,17 +8,9 @@ import { Coins, Sparkles, Loader2, Check, Zap, Crown, Star } from "lucide-react"
 import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import {
-  useFirstPurchaseEligibility,
-  FirstPurchaseBonusBanner,
-  FirstPurchaseBonusChip,
-} from "@/components/coins/FirstPurchaseBonus";
 
 export default function BuyCoinsPage() {
   const [loading, setLoading] = useState<number | null>(null);
-  // First-purchase promo: never-purchased fans get +25% bonus (granted by the
-  // Stripe webhook; this only drives the promo UI)
-  const firstPurchaseEligible = useFirstPurchaseEligibility();
 
   const handlePurchase = async (coins: number) => {
     setLoading(coins);
@@ -56,21 +48,6 @@ export default function BuyCoinsPage() {
     }
   };
 
-  const getPackageLabel = (index: number) => {
-    switch (index) {
-      case 0: return "Starter";
-      case 1: return "Basic";
-      case 2: return "Value";
-      case 3: return "Pro";
-      case 4: return "Super";
-      case 5: return "Elite";
-      case 6: return "Ultimate";
-      case 7: return "Mega";
-      case 8: return "Whale";
-      default: return "";
-    }
-  };
-
   const calculatePerCoin = (price: number, coins: number) => {
     return ((price / 100) / coins).toFixed(2);
   };
@@ -86,29 +63,28 @@ export default function BuyCoinsPage() {
         <p className="text-muted-foreground max-w-lg mx-auto">
           Use coins to message models, unlock exclusive content, and connect with talent on EXA.
         </p>
-        {firstPurchaseEligible && (
-          <FirstPurchaseBonusBanner className="mt-4 max-w-md mx-auto" />
-        )}
       </div>
 
       {/* Coin Packages Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {COIN_PACKAGES.map((pack, index) => {
-          const isBestValue = index === COIN_PACKAGES.length - 1;
+          // "Best Deal" is honest — the top pack has the lowest per-coin
+          // price in the ladder.
+          const isBestDeal = index === COIN_PACKAGES.length - 1;
 
           return (
             <Card
               key={pack.coins}
               className={cn(
                 "relative overflow-hidden transition-all hover:shadow-lg hover:border-pink-500/50",
-                isBestValue && "border-violet-500 ring-2 ring-violet-500/20"
+                isBestDeal && "border-violet-500 ring-2 ring-violet-500/20"
               )}
             >
               {/* Badge */}
-              {isBestValue && (
+              {isBestDeal && (
                 <div className="absolute top-3 right-3">
                   <Badge variant="secondary" className="bg-gradient-to-r from-violet-500 to-purple-500">
-                    Best Value
+                    Best Deal
                   </Badge>
                 </div>
               )}
@@ -116,7 +92,7 @@ export default function BuyCoinsPage() {
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
                   {getPackageIcon(index)}
-                  <span className="text-sm font-medium">{getPackageLabel(index)}</span>
+                  <span className="text-sm font-medium">{pack.label}</span>
                 </div>
                 <CardTitle className="text-3xl font-bold">
                   {pack.coins.toLocaleString()}
@@ -124,12 +100,6 @@ export default function BuyCoinsPage() {
                 </CardTitle>
                 <CardDescription>
                   ${calculatePerCoin(pack.price, pack.coins)} per coin
-                  {firstPurchaseEligible && (
-                    <>
-                      {" · "}
-                      <FirstPurchaseBonusChip coins={pack.coins} />
-                    </>
-                  )}
                 </CardDescription>
               </CardHeader>
 

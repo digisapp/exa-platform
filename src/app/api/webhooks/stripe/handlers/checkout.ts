@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
 import { BrandTier } from "@/lib/stripe-config";
 import { TICKET_CONFIG } from "@/lib/ticket-config";
-import { centsToCoins, firstPurchaseBonusCoins, FIRST_PURCHASE_BONUS_PCT } from "@/lib/coin-config";
+import { centsToCoins } from "@/lib/coin-config";
 import { sendTicketPurchaseConfirmationEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
 
@@ -134,109 +134,9 @@ export async function handleCheckoutSessionCompleted(
     return { error: result?.error || "Failed to credit coins", status: 500 };
   }
 
-  // First-purchase bonus runs on BOTH the fresh and the duplicate path: if a
-  // prior delivery credited the purchase but died before the bonus landed, the
-  // retry's duplicate path still reaches this and the bonus's own idempotency
-  // key makes re-runs safe.
-  const bonusError = await grantFirstPurchaseBonusIfEligible(session, supabaseAdmin, actorId, coins);
-  if (bonusError) return bonusError; // 5xx → Stripe retries; every step above is idempotent
-
   if (result.duplicate) {
     logger.info("Duplicate webhook ignored - coins already credited for session", { sessionId: session.id });
     return { duplicate: true };
-  }
-}
-
-/**
- * One-time fan-activation promo: a fan's FIRST coin purchase earns
- * +FIRST_PURCHASE_BONUS_PCT bonus coins (floor, min 5), credited server-side
- * right after the purchase credit.
- *
- * "First" = no prior 'purchase' rows in coin_transactions besides this
- * session's own credit (which add_coins just inserted with idempotency_key =
- * session.id, so it is excluded by key). fans.total_coins_purchased is NOT
- * usable for this: the 5-arg add_coins the webhook calls (20260509000003)
- * never bumps it — only the original 00003 definition did, and
- * 20260207000007 dropped that — so the column has been stale since 2026-02.
- * The ledger is the source of truth.
- *
- * Idempotency / race safety: the grant's idempotency key is keyed on the
- * ACTOR (`first_purchase_bonus:{actor_id}`), so the unique index on
- * coin_transactions.idempotency_key guarantees at most one bonus per fan
- * ever — webhook redeliveries AND two concurrent "first" checkouts both
- * collapse to a single grant at the DB level.
- *
- * Refunds: disputes.ts#reverseCoinPurchase claws the bonus back (found via
- * metadata.stripe_payment_intent) whenever the originating purchase is
- * refunded or a chargeback is lost. The actor-keyed idempotency row survives
- * the clawback, so a refunded first purchase does NOT re-arm the promo.
- *
- * Returns an error result (→ webhook 5xx → Stripe retry) on transient
- * failures, undefined when done or not eligible.
- */
-async function grantFirstPurchaseBonusIfEligible(
-  session: Stripe.Checkout.Session,
-  supabaseAdmin: SupabaseClient,
-  actorId: string,
-  purchasedCoins: number
-): Promise<{ error: string; status: number } | undefined> {
-  // Fans only — brands buy coins through the same flow but don't get the promo.
-  const { data: actor, error: actorError } = await supabaseAdmin
-    .from("actors")
-    .select("type")
-    .eq("id", actorId)
-    .single();
-  if (actorError) {
-    logger.error("First-purchase bonus: actor lookup failed", actorError, { actorId });
-    return { error: "Failed to check first-purchase bonus eligibility", status: 500 };
-  }
-  if (actor?.type !== "fan") return;
-
-  // Any 'purchase' row other than this session's own credit means not-first.
-  // Compare keys in JS rather than .neq(): legacy purchase rows can have a
-  // NULL idempotency_key, and SQL `<>` would silently drop those.
-  const { data: purchaseRows, error: priorError } = await supabaseAdmin
-    .from("coin_transactions")
-    .select("id, idempotency_key")
-    .eq("actor_id", actorId)
-    .eq("action", "purchase")
-    .limit(5);
-  if (priorError) {
-    logger.error("First-purchase bonus: prior-purchase check failed", priorError, { actorId });
-    return { error: "Failed to check first-purchase bonus eligibility", status: 500 };
-  }
-  const hasPriorPurchase = (purchaseRows || []).some(
-    (row: { idempotency_key: string | null }) => row.idempotency_key !== session.id
-  );
-  if (hasPriorPurchase) return;
-
-  const bonusCoins = firstPurchaseBonusCoins(purchasedCoins);
-  const { data: bonusResult, error: bonusError } = await (supabaseAdmin as any).rpc("add_coins", {
-    p_actor_id: actorId,
-    p_amount: bonusCoins,
-    p_action: "first_purchase_bonus",
-    p_metadata: {
-      stripe_session_id: session.id,
-      stripe_payment_intent: typeof session.payment_intent === "string" ? session.payment_intent : null,
-      base_purchase_coins: purchasedCoins,
-      bonus_pct: FIRST_PURCHASE_BONUS_PCT,
-    },
-    // Actor-keyed: at most one first-purchase bonus per fan, ever.
-    p_idempotency_key: `first_purchase_bonus:${actorId}`,
-  });
-  if (bonusError) {
-    logger.error("First-purchase bonus: grant RPC failed", bonusError, { actorId, bonusCoins });
-    return { error: "Failed to grant first-purchase bonus", status: 500 };
-  }
-  const bonus = bonusResult as { success: boolean; duplicate?: boolean; error?: string };
-  if (!bonus?.success) {
-    logger.error("First-purchase bonus: grant RPC rejected", undefined, { reason: bonus?.error, actorId });
-    return { error: bonus?.error || "Failed to grant first-purchase bonus", status: 500 };
-  }
-  if (bonus.duplicate) {
-    logger.info("First-purchase bonus already granted, skipping", { actorId, sessionId: session.id });
-  } else {
-    logger.info("First-purchase bonus granted", { actorId, bonusCoins, sessionId: session.id });
   }
 }
 

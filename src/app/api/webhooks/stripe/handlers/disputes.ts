@@ -90,14 +90,13 @@ async function reverseCoinPurchase(
     true // fan may go into debt for coins already spent
   );
 
-  // If this purchase triggered the one-time first-purchase bonus (granted in
-  // checkout.ts with metadata.stripe_payment_intent = this pi), the bonus only
-  // exists because of this purchase — claw it back too. allowNegative=true,
-  // matching the purchase clawback rather than the 10-coin ticket promo's
-  // clamp: the bonus scales to 25% of the largest pack (2,500 coins), so
-  // letting a refunder keep spent-bonus value would make refund abuse
-  // profitable. The actor-keyed grant idempotency row survives this clawback,
-  // so a refunded first purchase does NOT re-arm the promo for later buys.
+  // If this purchase triggered the one-time first-purchase bonus (promo
+  // RETIRED 2026-07-23; grants were made by checkout.ts with
+  // metadata.stripe_payment_intent = this pi), the bonus only exists because
+  // of this purchase — claw it back too. This path must outlive the promo:
+  // historical grants remain refundable. allowNegative=true, matching the
+  // purchase clawback: bonuses ran up to 25% of the largest pack, so letting
+  // a refunder keep spent-bonus value would make refund abuse profitable.
   const { data: bonusTx } = await supabaseAdmin
     .from("coin_transactions")
     .select("id, actor_id, amount")

@@ -1,14 +1,23 @@
 // Coin packages configuration - safe for client and server
+//
+// COINS + PRICES MIRROR digis-app `src/lib/stripe/constants.ts` COIN_PACKAGES
+// — the two platforms sell coins at identical coin/price points. Change the
+// numbers in BOTH repos or not at all. Labels are EXA's original menu voice
+// (Nathan, 2026-07-23: keep the names the EXA menu always had), each mapped
+// to its nearest new size — "Mega" retired with the old 5,000-coin size, and
+// the old "Starter" became "Mini" so no label is shared with digis (only
+// "Elite" appears on both platforms, at different sizes — accepted). Margins
+// step 50% → 23% up the ladder against the $0.10/coin payout rate; every
+// pack must clear a ≥20% margin floor AFTER Stripe fees.
 export const COIN_PACKAGES = [
-  { coins: 20, price: 399, priceDisplay: "$3.99", label: "Starter" },
-  { coins: 50, price: 999, priceDisplay: "$9.99", label: "Basic" },
-  { coins: 100, price: 1699, priceDisplay: "$16.99", label: "Value" },
-  { coins: 250, price: 3999, priceDisplay: "$39.99", label: "Pro" },
-  { coins: 500, price: 7499, priceDisplay: "$74.99", label: "Super" },
-  { coins: 1000, price: 14299, priceDisplay: "$142.99", label: "Elite" },
-  { coins: 3000, price: 42999, priceDisplay: "$429.99", label: "Ultimate" },
-  { coins: 5000, price: 69999, priceDisplay: "$699.99", label: "Mega" },
-  { coins: 10000, price: 134999, priceDisplay: "$1,349.99", label: "Whale" },
+  { coins: 25, price: 499, priceDisplay: "$4.99", label: "Mini" },
+  { coins: 55, price: 999, priceDisplay: "$9.99", label: "Basic" },
+  { coins: 150, price: 2499, priceDisplay: "$24.99", label: "Value" },
+  { coins: 325, price: 4999, priceDisplay: "$49.99", label: "Pro" },
+  { coins: 700, price: 9999, priceDisplay: "$99.99", label: "Super" },
+  { coins: 1450, price: 19999, priceDisplay: "$199.99", label: "Elite" },
+  { coins: 3000, price: 39999, priceDisplay: "$399.99", label: "Ultimate" },
+  { coins: 10000, price: 129999, priceDisplay: "$1,299.99", label: "Whale" },
 ] as const;
 
 /**
