@@ -56,7 +56,7 @@ export default async function DashboardLayout({
     // Fans use actor.id as their id
     const { data } = await supabase
       .from("fans")
-      .select("display_name, username, avatar_url, coin_balance, is_suspended")
+      .select("display_name, username, avatar_url, coin_balance, is_suspended, lifetime_spend_coins")
       .eq("id", actor.id)
       .single() as { data: any };
     profileData = data;
@@ -209,6 +209,7 @@ export default async function DashboardLayout({
           unreadCount={unreadCount}
           notificationCount={notificationCount}
           bellCount={bellCount}
+          fanLifetimeSpend={actor?.type === "fan" ? profileData?.lifetime_spend_coins ?? 0 : 0}
         />
         {actor?.type === "fan" && profileData?.is_suspended && <SuspensionBanner />}
         <DashboardClientWrapper actorId={actor?.id || null} actorType={actor?.type || null}>
