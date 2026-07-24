@@ -156,13 +156,15 @@ export default function AdminGigsPage() {
 
   async function loadGigs() {
     setLoading(true);
-    // Travel trips (type = "travel") are managed exclusively in /admin/travel —
-    // its form knows travel-specific fields, and publishing here would fire the
-    // all-models announcement blast.
+    // Travel trips (type = "travel") are managed exclusively in /admin/travel
+    // and tour stops (type = "tour") in /admin/tour — their forms know the
+    // type-specific fields, and publishing here would fire the all-models
+    // announcement blast.
     const { data, error } = await (supabase
       .from("gigs") as any)
       .select("*")
       .neq("type", "travel")
+      .neq("type", "tour")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) {
