@@ -448,7 +448,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
               Browse all <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+          <div className="flex gap-4 overflow-x-auto pb-1 pt-2 -mt-2 scrollbar-hide -mx-1 px-1">
             {featuredModels.slice(0, 10).map((model: any) => (
               <Link
                 key={model.id}
@@ -488,7 +488,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
             <Heart className="h-5 w-5 text-pink-400 fill-pink-400" />
             Your Favorites
           </h3>
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+          <div className="flex gap-4 overflow-x-auto pb-2 pt-2 -mt-2 scrollbar-hide -mx-4 px-4">
             {favoriteModels.map((model: any) => (
               <Link
                 key={model.id}
@@ -549,7 +549,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
               Browse shows <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+          <div className="flex gap-4 overflow-x-auto pb-2 pt-2 -mt-2 scrollbar-hide -mx-4 px-4">
             {fanShows.map((p: any) => {
               const event = p.events;
               if (!event) return null;
