@@ -178,7 +178,7 @@ export default async function ChatPage({ params }: PageProps) {
         // Fans use actor.id as their id (use admin client to bypass RLS)
         const { data } = await adminClient
           .from("fans")
-          .select("id, username, display_name, avatar_url, last_active_at")
+          .select("id, username, display_name, avatar_url, last_active_at, lifetime_spend_coins")
           .eq("id", otherActorId)
           .maybeSingle() as { data: ChatParticipantFan | null };
         otherFan = data;

@@ -3859,6 +3859,7 @@ export type Database = {
           id: string
           is_suspended: boolean | null
           last_active_at: string | null
+          lifetime_spend_coins: number
           phone: string | null
           preferred_language: string | null
           purged_at: string | null
@@ -3885,6 +3886,7 @@ export type Database = {
           id?: string
           is_suspended?: boolean | null
           last_active_at?: string | null
+          lifetime_spend_coins?: number
           phone?: string | null
           preferred_language?: string | null
           purged_at?: string | null
@@ -3911,6 +3913,7 @@ export type Database = {
           id?: string
           is_suspended?: boolean | null
           last_active_at?: string | null
+          lifetime_spend_coins?: number
           phone?: string | null
           preferred_language?: string | null
           purged_at?: string | null

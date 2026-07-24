@@ -25,7 +25,7 @@ import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
  */
 export type ChatParticipantFan = Pick<
   Fan,
-  "id" | "username" | "display_name" | "avatar_url" | "last_active_at"
+  "id" | "username" | "display_name" | "avatar_url" | "last_active_at" | "lifetime_spend_coins"
 >;
 
 interface Participant {
@@ -255,6 +255,7 @@ export function ChatView({
         username: model.username,
         type: "model" as const,
         lastActive: model.last_active_at,
+        lifetimeSpendCoins: null,
       };
     }
 
@@ -268,6 +269,7 @@ export function ChatView({
         // fans.last_active_at fresh, and the header applies the same 5-minute
         // "Online" heuristic it uses for models.
         lastActive: fan.last_active_at ?? null,
+        lifetimeSpendCoins: fan.lifetime_spend_coins ?? null,
       };
     }
 
@@ -278,6 +280,7 @@ export function ChatView({
         username: null,
         type: "brand" as const,
         lastActive: null,
+        lifetimeSpendCoins: null,
       };
     }
 
@@ -287,6 +290,7 @@ export function ChatView({
       username: null,
       type: actor.type as "fan" | "brand" | "model",
       lastActive: null,
+      lifetimeSpendCoins: null,
     };
   }, [otherParticipant]);
 

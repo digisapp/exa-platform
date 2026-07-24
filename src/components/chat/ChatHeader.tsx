@@ -32,6 +32,8 @@ import {
 } from "@/lib/call-availability";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { VipBadge } from "@/components/vip/VipBadge";
+import { vipTierOf } from "@/lib/vip-config";
 import type { Actor, Model, Conversation } from "@/types/database";
 
 /**
@@ -61,6 +63,8 @@ export interface OtherParticipantInfo {
   username: string | null;
   type: "fan" | "brand" | "model";
   lastActive: string | null;
+  /** fans.lifetime_spend_coins — drives the VIP badge; null for non-fans. */
+  lifetimeSpendCoins: number | null;
 }
 
 interface ChatHeaderProps {
@@ -203,11 +207,16 @@ export function ChatHeader({
             ) : (
               <h2 className="notranslate font-bold text-[15px] truncate">{otherName}</h2>
             )}
+            {/* VIP fans get their earned tier instead of the generic Fan chip */}
             {otherInfo.type === "fan" && (
-              <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 bg-blue-500/10 text-blue-500 border-blue-500/20">
-                <Users className="h-3 w-3 mr-1" />
-                Fan
-              </Badge>
+              vipTierOf(otherInfo.lifetimeSpendCoins) ? (
+                <VipBadge lifetimeSpendCoins={otherInfo.lifetimeSpendCoins} size="sm" />
+              ) : (
+                <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 bg-blue-500/10 text-blue-500 border-blue-500/20">
+                  <Users className="h-3 w-3 mr-1" />
+                  Fan
+                </Badge>
+              )
             )}
             {otherInfo.type === "brand" && (
               <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 bg-amber-500/10 text-amber-500 border-amber-500/20">

@@ -107,7 +107,7 @@ export async function fetchConversationList(
     batchQuery<any>(fanActorIds, async (batch, from, to) =>
       (adminClient as any)
         .from("fans")
-        .select("id, display_name, username, avatar_url")
+        .select("id, display_name, username, avatar_url, lifetime_spend_coins")
         .in("id", batch)
         .order("id", { ascending: true })
         .range(from, to)

@@ -19,6 +19,7 @@ import { MessageCircle, Search, MessageSquare, Sparkles, Building2, Pin, Archive
 import { format, isToday, isYesterday, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { modelDisplayName } from "@/lib/model-display";
+import { VipBadge } from "@/components/vip/VipBadge";
 import { toast } from "sonner";
 import { SwipeableConversationItem } from "./SwipeableConversationItem";
 
@@ -47,6 +48,7 @@ interface Conversation {
       display_name: string | null;
       username: string | null;
       avatar_url: string | null;
+      lifetime_spend_coins?: number | null;
     } | null;
     brand: {
       company_name: string | null;
@@ -244,6 +246,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
         avatarUrl: participant.model.profile_photo_url,
         username: participant.model.username,
         type: "model",
+        lifetimeSpendCoins: null,
       };
     }
     if (participant?.type === "fan") {
@@ -252,6 +255,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
         avatarUrl: participant.fan?.avatar_url || null,
         username: participant.fan?.username || null,
         type: "fan",
+        lifetimeSpendCoins: participant.fan?.lifetime_spend_coins ?? null,
       };
     }
     if (participant?.type === "brand") {
@@ -260,6 +264,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
         avatarUrl: participant.brand?.logo_url || null,
         username: null,
         type: "brand",
+        lifetimeSpendCoins: null,
       };
     }
     if (participant?.type === "admin") {
@@ -268,6 +273,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
         avatarUrl: null,
         username: null,
         type: "admin",
+        lifetimeSpendCoins: null,
       };
     }
     return {
@@ -275,6 +281,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
       avatarUrl: null,
       username: null,
       type: "unknown",
+      lifetimeSpendCoins: null,
     };
   };
 
@@ -447,7 +454,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
         <div className={cn("space-y-2", compact && "space-y-1 px-2")}>
           {filteredConversations.map((conv) => {
             const participant = conv.otherParticipants[0];
-            const { displayName, avatarUrl, type } = getParticipantInfo(participant);
+            const { displayName, avatarUrl, type, lifetimeSpendCoins } = getParticipantInfo(participant);
             const convUnread = conv.unread_count || 0;
             const isUnread = convUnread > 0;
             const isSelected = conv.conversation_id === selectedId;
@@ -503,6 +510,9 @@ export function ConversationList({ conversations: initialConversations, actorTyp
                         )}>
                           {displayName}
                         </p>
+                        {type === "fan" && (
+                          <VipBadge lifetimeSpendCoins={lifetimeSpendCoins} />
+                        )}
                         {type === "admin" && (
                           <Sparkles className="h-3.5 w-3.5 text-violet-500 flex-shrink-0" />
                         )}

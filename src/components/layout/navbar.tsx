@@ -51,6 +51,7 @@ import { useUnreadCount } from "@/components/layout/UnreadCountProvider";
 import { useTranslation } from "@/i18n";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { COIN_PACKAGES, packageSavingsPct } from "@/lib/stripe-config";
+import { VipBadge } from "@/components/vip/VipBadge";
 
 // All tiers visible at once (owner call 2026-07-22: whale packs must be one
 // click away, never behind a "more options" step) — a divider before this
@@ -69,6 +70,8 @@ interface NavbarProps {
   unreadCount?: number;
   notificationCount?: number;
   bellCount?: number;
+  /** fans.lifetime_spend_coins — fan's own VIP badge in the coin popover */
+  fanLifetimeSpend?: number;
 }
 
 const publicLinks: { href: string; label: string; icon: any }[] = [];
@@ -85,7 +88,7 @@ const DROPDOWN_GLASS_CLASS =
 const DROPDOWN_ITEM_CLASS =
   "cursor-pointer rounded-lg px-2.5 py-2 text-sm text-white/80 focus:bg-white/10 focus:text-white data-[highlighted]:bg-white/10 data-[highlighted]:text-white";
 
-export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, notificationCount = 0, bellCount = 0 }: NavbarProps) {
+export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, notificationCount = 0, bellCount = 0, fanLifetimeSpend = 0 }: NavbarProps) {
   const pathname = usePathname();
   const unreadCount = useUnreadCount(unreadCountProp);
   const coinBalanceContext = useCoinBalanceOptional();
@@ -258,7 +261,11 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                     {/* Balance header */}
                     <div className="flex items-center justify-between mb-3 px-1">
                       <div>
-                        <p className="text-[10px] uppercase tracking-wider text-white/40">{t.nav.availableBalance}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-[10px] uppercase tracking-wider text-white/40">{t.nav.availableBalance}</p>
+                          {/* Fan's own earned status — tier only, never amounts */}
+                          <VipBadge lifetimeSpendCoins={fanLifetimeSpend} />
+                        </div>
                         {/* No USD equivalent here: fan coins aren't redeemable and
                             coinsToUsd is the model payout rate, not what fans paid */}
                         <p className="text-xl font-bold text-amber-300 leading-tight">{coinBalance.toLocaleString()} <span className="text-xs font-normal text-white/40">coins</span></p>
