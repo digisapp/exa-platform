@@ -26,6 +26,7 @@ import {
   Camera,
   Star,
   Mic2,
+  ArrowRight,
   Clock,
   PartyPopper,
   Sparkles,
@@ -297,6 +298,18 @@ export default async function GigsPage() {
 
           {typeTabs.map((tab) => (
             <TabsContent key={tab.value} value={tab.value} className="space-y-6">
+              {tab.value === "tour" && (
+                <Link
+                  href="/tour"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-fuchsia-500/20 bg-gradient-to-r from-fuchsia-500/10 to-violet-500/5 px-4 py-3 hover:border-fuchsia-500/40 transition-colors"
+                >
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <Mic2 className="h-4 w-4 text-fuchsia-400" />
+                    See the full tour schedule — including upcoming dates
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-fuchsia-400 shrink-0" />
+                </Link>
+              )}
               <GigGrid gigs={tab.gigs} />
             </TabsContent>
           ))}

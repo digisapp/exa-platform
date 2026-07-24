@@ -649,6 +649,11 @@ export default async function HomePage() {
                 </p>
                 <ul className="space-y-2 text-sm">
                   <li>
+                    <Link href="/tour" className="text-white/70 hover:text-pink-300 transition-colors">
+                      Tour Dates
+                    </Link>
+                  </li>
+                  <li>
                     <Link href="/shows" className="text-white/70 hover:text-pink-300 transition-colors">
                       Shows
                     </Link>

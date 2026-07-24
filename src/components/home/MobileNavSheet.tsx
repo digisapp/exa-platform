@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, Play, Sparkles, Ticket, Tv, Users } from "lucide-react";
+import { Menu, Mic2, Play, Sparkles, Ticket, Tv, Users } from "lucide-react";
 import {
   Sheet,
   SheetClose,
@@ -21,6 +21,7 @@ interface MobileNavSheetProps {
 const NAV_LINKS = [
   { href: "/models", label: "Models", icon: Users },
   { href: "/gigs", label: "Gigs", icon: Sparkles },
+  { href: "/tour", label: "Tour Dates", icon: Mic2 },
   { href: "/shows", label: "Shows", icon: Ticket },
   { href: "/tv", label: "EXA TV", icon: Tv },
 ];

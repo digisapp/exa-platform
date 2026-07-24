@@ -58,6 +58,11 @@ export function Footer() {
                   Open Gigs
                 </Link>
               </li>
+              <li>
+                <Link href="/tour" className="text-muted-foreground hover:text-primary transition-colors">
+                  Tour Dates
+                </Link>
+              </li>
             </ul>
           </div>
 
