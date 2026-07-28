@@ -694,22 +694,22 @@ export default async function DashboardPage() {
     : model.username || "Model";
 
   // Priority inbox placement: an item in the inbox (offer, booking, bid) is
-  // money waiting and outranks browsing gigs, so a non-empty inbox renders
-  // above Gigs for You; the empty state stays tucked below.
+  // money waiting and outranks browsing gigs, so it renders above Gigs for
+  // You. Only rendered when non-empty (see the guard at the call site) — an
+  // empty inbox is hidden entirely, not shown as a hollow shell, so the
+  // section below always assumes at least one item.
   const priorityInboxSection = (
     <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
       <header className="flex items-center justify-between p-5 border-b border-white/5">
         <div className="flex items-center gap-2">
           <Flame className="h-5 w-5 text-rose-400" />
           <h2 className="text-base font-semibold">Priority inbox</h2>
-          {inboxItems.length > 0 && (
-            <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
-              {inboxItems.length}
-            </span>
-          )}
+          <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+            {inboxItems.length}
+          </span>
         </div>
-        {/* Auction actions live here only once the model has auctions —
-            for everyone else the empty state below carries the CTA */}
+        {/* Auction management links surface here only once the model is
+            actually running auctions */}
         {(modelAuctions?.length || 0) > 0 && (
           <div className="flex items-center gap-3">
             <Link href="/bids/manage" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
@@ -722,21 +722,7 @@ export default async function DashboardPage() {
         )}
       </header>
       <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-        {inboxItems.length === 0 ? (
-          <div className="col-span-full flex flex-wrap items-center justify-center gap-x-2 gap-y-1 py-4 px-3 text-center">
-            <Sparkles className="h-4 w-4 text-white/30 shrink-0" />
-            <p className="text-sm text-white/60">
-              All caught up — new offers, bookings, and auction bids will appear here.
-            </p>
-            <Link
-              href="/bids/new"
-              className="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1 shrink-0"
-            >
-              <Plus className="h-3.5 w-3.5" /> Create an EXA Bid for fans to bid on
-            </Link>
-          </div>
-        ) : (
-          inboxItems.map((item) => {
+        {inboxItems.map((item) => {
             const tagMap = { offer: "Offer", booking: "Booking", auction: "Auction" } as const;
             const iconMap = {
               offer: <DollarSign className="h-5 w-5 text-emerald-400" />,
@@ -783,8 +769,7 @@ export default async function DashboardPage() {
                 <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-white/80 group-hover:translate-x-0.5 transition-all shrink-0" />
               </Link>
             );
-          })
-        )}
+        })}
       </div>
     </section>
   );
@@ -913,7 +898,9 @@ export default async function DashboardPage() {
       />
 
       {/* ──────────────────────────────────────────────────────
-          PRIORITY INBOX — promoted above gigs when it has items
+          PRIORITY INBOX — only rendered when there's money waiting
+          (offer, booking, or auction bid). When empty it's hidden
+          entirely rather than shown as a hollow shell.
          ────────────────────────────────────────────────────── */}
       {inboxItems.length > 0 && priorityInboxSection}
 
@@ -927,11 +914,6 @@ export default async function DashboardPage() {
           isApproved={model.is_approved}
         />
       </section>
-
-      {/* ──────────────────────────────────────────────────────
-          PRIORITY INBOX — empty state sits here, below gigs
-         ────────────────────────────────────────────────────── */}
-      {inboxItems.length === 0 && priorityInboxSection}
 
       {/* Mobile-only: EXA Live Wall appears here after gigs */}
       <div className="lg:hidden" data-live-wall>

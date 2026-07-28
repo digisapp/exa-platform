@@ -213,6 +213,7 @@ export function ProfilePhotoBanner({
               {/* Portrait (hero) — opens portfolio picker */}
               <button
                 onClick={() => setPickerOpen(true)}
+                title="Portrait — the large photo on your public profile"
                 className="relative group block w-28 h-[144px] sm:w-32 sm:h-[164px] rounded-xl overflow-hidden bg-gradient-to-br from-[#1a0033] to-[#2d1b69] ring-1 ring-white/10 hover:ring-pink-500/50 transition-all"
               >
                 {heroPhotoUrl ? (
@@ -234,8 +235,16 @@ export function ProfilePhotoBanner({
                 <span className="absolute top-1.5 right-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[10px] font-medium text-white">
                   <Camera className="h-3 w-3" /> Edit
                 </span>
-                <div className="absolute inset-0 bg-black/50 hidden sm:flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Hover explains what this photo is for — desktop only, so
+                    the identity column stays free of permanent legend copy. */}
+                <div className="absolute inset-0 bg-black/65 hidden sm:flex flex-col items-center justify-center gap-1 px-2 text-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Camera className="h-4 w-4 text-white" />
+                  <span className="text-[11px] font-semibold text-white leading-tight">
+                    Portrait
+                  </span>
+                  <span className="text-[10px] text-white/70 leading-tight">
+                    Your public profile
+                  </span>
                 </div>
               </button>
 
@@ -250,6 +259,7 @@ export function ProfilePhotoBanner({
               <button
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={uploadingAvatar}
+                title="Avatar — shown in chats, search & model cards"
                 className="absolute -bottom-3 -right-6 group rounded-full shadow-[0_0_20px_rgba(236,72,153,0.35)]"
               >
                 {profilePhotoUrl ? (
@@ -265,6 +275,15 @@ export function ProfilePhotoBanner({
                     {initials}
                   </div>
                 )}
+                {/* Matching hover label (desktop only — see portrait above) */}
+                <span className="absolute inset-0 rounded-full bg-black/65 hidden sm:flex flex-col items-center justify-center text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-[11px] font-semibold text-white leading-tight">
+                    Avatar
+                  </span>
+                  <span className="text-[9px] text-white/70 leading-tight">
+                    Chats &amp; search
+                  </span>
+                </span>
                 {/* Always-visible camera badge */}
                 <span
                   className={cn(
@@ -337,18 +356,9 @@ export function ProfilePhotoBanner({
                       </Link>
                     )}
                   </div>
-
-                  {/* What each photo is for */}
-                  <div className="mt-2.5 space-y-0.5 text-[11px] leading-relaxed text-white/45">
-                    <p>
-                      <span className="font-medium text-white/70">Portrait</span> — the
-                      large photo on your public profile
-                    </p>
-                    <p>
-                      <span className="font-medium text-white/70">Avatar</span> — shown
-                      in chats, search &amp; model cards
-                    </p>
-                  </div>
+                  {/* What each photo is for lives on the images themselves
+                      (hover overlay + title), not as permanent legend copy
+                      under the name — it's learned once. */}
                 </>
               ) : (
                 <>

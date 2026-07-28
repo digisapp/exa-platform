@@ -290,10 +290,16 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   // is safe (computed once per request, serialized to the client).
   const visitSeed = Math.floor(Math.random() * 0x7fffffff);
 
-  // Followed models first — newest post always included, remaining slots are
-  // rotating picks from the model's recent catalog so even a quiet followed
-  // model shows different photos on every visit.
-  const FOLLOWED_ROTATION_WINDOW = 15;
+  // Followed models: rotating picks from each model's catalog. Deliberately NOT
+  // "newest post always pinned, then globally sorted by created_at" — followed
+  // rosters are quiet (a 10-follow fan's newest posts are weeks old), so that
+  // rule pinned the identical newest-per-model photo to the top on every visit,
+  // and the first page is only 8 cards. Only genuinely NEW posts earn a pinned
+  // top slot now; the back catalog rotates and interleaves with discovery.
+  const FOLLOWED_ROTATION_WINDOW = 30;
+  const FRESH_FOLLOWED_MS = 14 * 24 * 60 * 60 * 1000;
+  const freshCutoff = Date.now() - FRESH_FOLLOWED_MS;
+  const isFresh = (c: any) => new Date(c.created_at).getTime() >= freshCutoff;
   const byFollowedModel = new Map<string, any[]>();
   const followedPool = [
     ...followedFreeContent,
@@ -309,19 +315,30 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
     list.push(content);
     byFollowedModel.set(content.model.id, list);
   }
-  const followedPicks: any[] = [];
+  const freshPicks: any[] = [];
+  const catalogPicks: any[] = [];
   for (const list of byFollowedModel.values()) {
-    followedPicks.push(
-      list[0],
-      ...seededShuffle(list.slice(1, FOLLOWED_ROTATION_WINDOW), visitSeed).slice(
-        0,
-        MAX_PER_MODEL - 1
-      )
-    );
+    const fresh = list.filter(isFresh).slice(0, MAX_PER_MODEL);
+    freshPicks.push(...fresh);
+    const slots = MAX_PER_MODEL - fresh.length;
+    if (slots > 0) {
+      catalogPicks.push(
+        ...seededShuffle(
+          list.filter((c: any) => !isFresh(c)).slice(0, FOLLOWED_ROTATION_WINDOW),
+          visitSeed
+        ).slice(0, slots)
+      );
+    }
   }
-  // Re-sort globally so models interleave instead of clumping per model.
-  followedPicks.sort((a: any, b: any) => (a.created_at < b.created_at ? 1 : -1));
-  const followedItems: FeedItem[] = followedPicks.map((c) => toFeedItem(c, true));
+  // Genuinely new posts lead the feed, newest first — that's the one case where
+  // a stable top slot is what the fan actually wants.
+  freshPicks.sort((a: any, b: any) => (a.created_at < b.created_at ? 1 : -1));
+  const freshFollowedItems: FeedItem[] = freshPicks.map((c) => toFeedItem(c, true));
+  // Back-catalog picks stay shuffled (no created_at re-sort — that would re-pin
+  // the same oldest-to-newest order every visit) and interleave below.
+  const catalogFollowedItems: FeedItem[] = seededShuffle(catalogPicks, visitSeed).map(
+    (c) => toFeedItem(c, true)
+  );
 
   // Discovery fill from non-followed models, capped per model for variety.
   const discoverPerModel = new Map<string, number>();
@@ -356,7 +373,22 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   }
   while (pi < paidDiscover.length) discoverItems.push(paidDiscover[pi++]);
 
-  const sortedFeed: FeedItem[] = [...followedItems, ...discoverItems].slice(0, FEED_CAP);
+  // Interleave back-catalog followed picks with discovery instead of stacking
+  // all followed items first. A 10-follow fan produced ~24 followed cards, which
+  // filled the first 24 of 40 slots — so the 8-card first page was 100% followed
+  // and the per-visit discovery rotation was never visible without paging.
+  const FOLLOWED_EVERY = 3; // one followed card per N cards in the interleaved tail
+  const tail: FeedItem[] = [];
+  let ti = 0;
+  let di = 0;
+  while (ti < catalogFollowedItems.length || di < discoverItems.length) {
+    const wantFollowed = tail.length % FOLLOWED_EVERY === 0;
+    if (wantFollowed && ti < catalogFollowedItems.length) tail.push(catalogFollowedItems[ti++]);
+    else if (di < discoverItems.length) tail.push(discoverItems[di++]);
+    else tail.push(catalogFollowedItems[ti++]);
+  }
+
+  const sortedFeed: FeedItem[] = [...freshFollowedItems, ...tail].slice(0, FEED_CAP);
 
   // Hydrate the fan's hearts (RLS: actors read their own likes)
   if (sortedFeed.length > 0) {

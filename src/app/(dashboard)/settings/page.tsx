@@ -110,8 +110,8 @@ export default function ProfilePage() {
   const [logoToCrop, setLogoToCrop] = useState<string | null>(null);
   const [followers, setFollowers] = useState<any[]>([]);
   const [followersLoading, setFollowersLoading] = useState(false);
+  const [followersError, setFollowersError] = useState(false);
   const [pageViews, setPageViews] = useState<number>(0);
-  const [followerCount, setFollowerCount] = useState<number>(0);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -381,17 +381,14 @@ export default function ProfilePage() {
             checkDigisUsername(modelData.digis_username);
           }
 
-          // Fetch page views count and follower count in parallel
-          const [{ count: viewCount }, { count: fCount }] = await Promise.all([
-            (supabase.from("page_views") as any)
-              .select("*", { count: "exact", head: true })
-              .eq("model_username", modelData.username),
-            (supabase.from("follows") as any)
-              .select("*", { count: "exact", head: true })
-              .eq("following_id", actorData.id),
-          ]);
+          // Follower count is derived from the enriched /api/model/followers
+          // list (loaded lazily with the tab) so the header can never disagree
+          // with the body — a raw follows count includes orphaned rows whose
+          // follower actor no longer resolves.
+          const { count: viewCount } = await (supabase.from("page_views") as any)
+            .select("*", { count: "exact", head: true })
+            .eq("model_username", modelData.username);
           setPageViews(viewCount || 0);
-          setFollowerCount(fCount || 0);
         }
       } else if (actorData.type === "fan") {
         // Try to find fan by user_id first, then by actor id
@@ -464,6 +461,7 @@ export default function ProfilePage() {
   const loadFollowers = async () => {
     if (!actor || followersLoading || followers.length > 0) return;
     setFollowersLoading(true);
+    setFollowersError(false);
 
     try {
       // Follower details live behind RLS (other users' actors/fans rows are
@@ -473,6 +471,7 @@ export default function ProfilePage() {
       const data = await res.json();
       setFollowers(data.followers || []);
     } catch {
+      setFollowersError(true);
       toast.error("Failed to load followers");
     } finally {
       setFollowersLoading(false);
@@ -2076,7 +2075,8 @@ export default function ProfilePage() {
           <ModelFollowersTab
             followers={followers}
             followersLoading={followersLoading}
-            followerCount={followerCount}
+            followersError={followersError}
+            onRetry={loadFollowers}
           />
         </TabsContent>
 
