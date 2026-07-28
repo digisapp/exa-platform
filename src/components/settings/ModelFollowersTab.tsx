@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, MessageCircle, Loader2, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, MessageCircle, Loader2, Search, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 const FOLLOWERS_PER_PAGE = 20;
@@ -32,10 +32,11 @@ const getTypeColor = (type: string) => {
 interface ModelFollowersTabProps {
   followers: any[];
   followersLoading: boolean;
-  followerCount: number;
+  followersError?: boolean;
+  onRetry?: () => void;
 }
 
-export function ModelFollowersTab({ followers, followersLoading, followerCount }: ModelFollowersTabProps) {
+export function ModelFollowersTab({ followers, followersLoading, followersError, onRetry }: ModelFollowersTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
 
@@ -58,13 +59,31 @@ export function ModelFollowersTab({ followers, followersLoading, followerCount }
           Your Fans
         </CardTitle>
         <CardDescription>
-          {followerCount} {followerCount === 1 ? "person is a fan" : "people are fans"} of you
+          {/* Count is derived from the same resolved list the body renders, so
+              the header can never contradict it (no orphaned-follow overcount). */}
+          {followersLoading
+            ? "Loading your fans…"
+            : followersError
+              ? "Couldn't load your fans"
+              : `${followers.length} ${followers.length === 1 ? "person is a fan" : "people are fans"} of you`}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {followersLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : followersError ? (
+          <div className="text-center py-12">
+            <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Couldn&apos;t load your fans</h3>
+            <p className="text-muted-foreground mb-4">Something went wrong. Try again in a moment.</p>
+            {onRetry && (
+              <Button variant="outline" size="sm" onClick={onRetry}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            )}
           </div>
         ) : followers.length > 0 ? (
           <div className="space-y-3">

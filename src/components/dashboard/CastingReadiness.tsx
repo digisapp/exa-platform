@@ -10,7 +10,6 @@ import {
   ChevronDown,
   Copy,
   EyeOff,
-  Sparkles,
 } from "lucide-react";
 import type { ReadinessItem } from "@/lib/casting-readiness";
 
@@ -116,11 +115,7 @@ export function CastingReadiness({
       <header className="p-5 pb-0">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-violet-300/80 flex items-center gap-1.5">
-              <Sparkles className="h-3 w-3" />
-              Casting considers your EXA presence
-            </p>
-            <h2 className="text-base font-semibold mt-1">
+            <h2 className="text-base font-semibold">
               Runway Ready —{" "}
               <span className="bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">
                 {displayScore}%

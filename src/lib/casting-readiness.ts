@@ -5,8 +5,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * complete her EXA presence looks to casting.
  *
  * This is the SINGLE dashboard completion meter (2026-07-22 overhaul): it
- * absorbed the old GettingStartedChecklist's jobs — photo, bio, rates,
- * first content upload, share-your-link — so the dashboard never shows two
+ * absorbed the old GettingStartedChecklist's jobs — photo, rates, first
+ * content upload, share-your-link — so the dashboard never shows two
  * competing progress bars.
  *
  * Copy constraint: upcoming shows are NOT announced yet. Never name a
@@ -75,12 +75,11 @@ export interface CastingReadiness {
 
 /** The model columns this computation reads. */
 export const READINESS_MODEL_COLUMNS =
-  "id, profile_photo_url, bio, message_rate, video_call_rate, voice_call_rate, link_attested_at";
+  "id, profile_photo_url, message_rate, video_call_rate, voice_call_rate, link_attested_at";
 
 interface ReadinessModelRow {
   id: string;
   profile_photo_url: string | null;
-  bio: string | null;
   message_rate: number | null;
   video_call_rate: number | null;
   voice_call_rate: number | null;
@@ -141,19 +140,16 @@ export async function computeCastingReadiness(
 
   const model = (modelData || {}) as Partial<ReadinessModelRow>;
 
-  // ── photo (20): gates visibility on /models ──
+  // ── photo (25): gates visibility on /models ──
   const hasPhoto = Boolean(model.profile_photo_url);
 
-  // ── bio (15) ──
-  const bioDone = typeof model.bio === "string" && model.bio.trim().length > 0;
-
-  // ── rates_set (20) ──
+  // ── rates_set (25) ──
   const ratesDone =
     (model.message_rate ?? 0) > 0 ||
     (model.video_call_rate ?? 0) > 0 ||
     (model.voice_call_rate ?? 0) > 0;
 
-  // ── first_content (20): lifetime milestone ──
+  // ── first_content (25): lifetime milestone ──
   const firstContentDone = (contentCount ?? 0) > 0;
 
   // ── link_live (25, the star): verified by real inbound traffic, OR
@@ -165,7 +161,7 @@ export async function computeCastingReadiness(
   const linkAttested = Boolean(model.link_attested_at);
   const linkLiveDone = linkVerified || linkAttested;
 
-  // Five model-facing items only (owner decision 2026-07-12 stands):
+  // Four model-facing items only (owner decision 2026-07-12 stands):
   // verification is an EXA-team call, not a model todo, and referred-fan
   // counts are admin-only signals (countReferredFans below) — neither
   // belongs on the model's list.
@@ -173,7 +169,7 @@ export async function computeCastingReadiness(
     {
       key: "photo",
       label: "Profile photo",
-      weight: 20,
+      weight: 25,
       done: hasPhoto,
       detail: hasPhoto
         ? "You're visible on EXA"
@@ -181,19 +177,9 @@ export async function computeCastingReadiness(
       cta: hasPhoto ? undefined : { label: "Add photo", href: "/settings" },
     },
     {
-      key: "bio",
-      label: "Bio written",
-      weight: 15,
-      done: bioDone,
-      detail: bioDone
-        ? "Your bio is on file"
-        : "Tell brands and fans who you are and what you're looking for",
-      cta: bioDone ? undefined : { label: "Write bio", href: "/settings" },
-    },
-    {
       key: "rates_set",
       label: "Rates set",
-      weight: 20,
+      weight: 25,
       done: ratesDone,
       detail: ratesDone
         ? "Fans can message and call you"
@@ -203,7 +189,7 @@ export async function computeCastingReadiness(
     {
       key: "first_content",
       label: "First content upload",
-      weight: 20,
+      weight: 25,
       done: firstContentDone,
       detail: firstContentDone
         ? "Your content is live in Studio"
@@ -216,10 +202,10 @@ export async function computeCastingReadiness(
       weight: 25,
       done: linkLiveDone,
       detail: linkVerified
-        ? `Verified — your audience is finding you: ${socialVisits} visit${socialVisits === 1 ? "" : "s"} from your socials this month`
+        ? `Your audience is finding you — ${socialVisits} visit${socialVisits === 1 ? "" : "s"} from your socials this month`
         : linkAttested
           ? "Marked done — we'll switch this to verified once fans start arriving from your link"
-          : "Add examodels.com/USERNAME to your Instagram or TikTok bio — models who bring their audience get seen first",
+          : "Post your examodels.com/USERNAME link to social media so your audience can find you",
     },
   ];
 
