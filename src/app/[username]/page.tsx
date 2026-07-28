@@ -57,6 +57,7 @@ function formatFollowers(n: number): string {
 
 interface Props {
   params: Promise<{ username: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -111,12 +112,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ModelProfilePage({ params }: Props) {
+export default async function ModelProfilePage({ params, searchParams }: Props) {
   const { username } = await params;
 
   if (RESERVED_PATHS.includes(username.toLowerCase())) {
     notFound();
   }
+
+  // Studio share links deep-link into a content tab (?tab=photos|videos|exclusive)
+  // and optionally a specific item (?content=<id>). "exclusive" is the
+  // user-facing name for the paid tab.
+  const sp = (await searchParams) ?? {};
+  const rawTab = typeof sp.tab === 'string' ? sp.tab : undefined;
+  const initialContentTab =
+    rawTab === 'photos' || rawTab === 'videos'
+      ? rawTab
+      : rawTab === 'exclusive'
+        ? ('ppv' as const)
+        : undefined;
+  const highlightContentId = typeof sp.content === 'string' ? sp.content : undefined;
 
   const supabase = await createClient();
 
@@ -1048,6 +1062,8 @@ export default async function ModelProfilePage({ params }: Props) {
             modelId={model.id}
             coinBalance={coinBalance}
             isOwner={isOwner}
+            initialTab={initialContentTab}
+            highlightContentId={highlightContentId}
           />
 
           {/* View Rates & Book Button */}

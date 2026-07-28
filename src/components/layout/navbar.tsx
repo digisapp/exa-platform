@@ -39,7 +39,7 @@ import {
   ArrowUpRight,
   Loader2,
   Gift,
-  Briefcase,
+  Clapperboard,
   Gem,
 } from "lucide-react";
 import { NotificationBell } from "@/components/layout/NotificationBell";
@@ -118,7 +118,9 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
   // Offers is low-frequency (~unused) and lives in the avatar dropdown instead.
   const translatedModelLinks = [
     { href: "/dashboard", label: t.nav.home, icon: Home },
-    { href: "/gigs", label: t.nav.gigs, icon: Briefcase },
+    // Clapperboard, not Briefcase: gigs are castings/shoots — office luggage
+    // is off-brand for the roster (Camera is taken by Comp Card above).
+    { href: "/gigs", label: t.nav.gigs, icon: Clapperboard },
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
     { href: "/studio", label: t.nav.studio, icon: Images },
   ];

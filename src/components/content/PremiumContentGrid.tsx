@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 import { PremiumContentCard } from "./PremiumContentCard";
 import { Lock, Loader2 } from "lucide-react";
 
@@ -19,16 +20,38 @@ interface PremiumContentGridProps {
   modelId: string;
   initialCoinBalance: number;
   isOwner?: boolean;
+  /** Deep-linked content_items.id — scrolled to and briefly ring-highlighted */
+  highlightId?: string;
 }
 
 export function PremiumContentGrid({
   modelId,
   initialCoinBalance,
   isOwner = false,
+  highlightId,
 }: PremiumContentGridProps) {
   const [content, setContent] = useState<PremiumContent[]>([]);
   const [coinBalance, setCoinBalance] = useState(initialCoinBalance);
   const [loading, setLoading] = useState(true);
+  const [highlighted, setHighlighted] = useState<string | null>(null);
+  const highlightRef = useRef<HTMLDivElement>(null);
+
+  // Once content is in, scroll the linked card into view and pulse a ring on
+  // it so the visitor knows which item the share link pointed at.
+  useEffect(() => {
+    if (loading || !highlightId) return;
+    if (!content.some((c) => c.id === highlightId)) return;
+    setHighlighted(highlightId);
+    const scrollT = setTimeout(
+      () => highlightRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      100,
+    );
+    const clearT = setTimeout(() => setHighlighted(null), 3500);
+    return () => {
+      clearTimeout(scrollT);
+      clearTimeout(clearT);
+    };
+  }, [loading, highlightId, content]);
 
   useEffect(() => {
     async function fetchContent() {
@@ -85,13 +108,21 @@ export function PremiumContentGrid({
       {videos.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {videos.map((item) => (
-            <PremiumContentCard
+            <div
               key={item.id}
-              content={item}
-              coinBalance={coinBalance}
-              onUnlock={handleUnlock}
-              isOwner={isOwner}
-            />
+              ref={item.id === highlighted ? highlightRef : undefined}
+              className={cn(
+                "rounded-xl transition-shadow duration-500",
+                item.id === highlighted && "ring-2 ring-pink-500 shadow-[0_0_24px_rgba(236,72,153,0.5)]",
+              )}
+            >
+              <PremiumContentCard
+                content={item}
+                coinBalance={coinBalance}
+                onUnlock={handleUnlock}
+                isOwner={isOwner}
+              />
+            </div>
           ))}
         </div>
       )}
@@ -100,13 +131,21 @@ export function PremiumContentGrid({
       {photos.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {photos.map((item) => (
-            <PremiumContentCard
+            <div
               key={item.id}
-              content={item}
-              coinBalance={coinBalance}
-              onUnlock={handleUnlock}
-              isOwner={isOwner}
-            />
+              ref={item.id === highlighted ? highlightRef : undefined}
+              className={cn(
+                "rounded-xl transition-shadow duration-500",
+                item.id === highlighted && "ring-2 ring-pink-500 shadow-[0_0_24px_rgba(236,72,153,0.5)]",
+              )}
+            >
+              <PremiumContentCard
+                content={item}
+                coinBalance={coinBalance}
+                onUnlock={handleUnlock}
+                isOwner={isOwner}
+              />
+            </div>
           ))}
         </div>
       )}

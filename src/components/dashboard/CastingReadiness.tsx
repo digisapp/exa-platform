@@ -190,11 +190,15 @@ export function CastingReadiness({
                     {item.detail}
                   </p>
                 )}
+                {/* Real buttons, not text links (2026-07-28): zero of 1,401
+                    models ever clicked the attest action as a bare link, so
+                    the meter's last 25% was unreachable in practice for
+                    models whose social traffic hasn't arrived yet. */}
                 {!item.done && (item.key === "link_live" || item.key === "fans_brought") && (
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
                     <button
                       onClick={copyLink}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-pink-400 hover:text-pink-300 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:from-pink-600 hover:to-violet-600 active:scale-95 transition-all"
                     >
                       <Copy className="h-3.5 w-3.5" />
                       Copy your link
@@ -202,7 +206,7 @@ export function CastingReadiness({
                     <button
                       onClick={attestLink}
                       disabled={attesting}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-400 hover:text-teal-300 transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-teal-400/40 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 active:scale-95 transition-all disabled:opacity-50"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       I&apos;ve added my link

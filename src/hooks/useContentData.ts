@@ -28,6 +28,18 @@ export interface ContentItem {
   updated_at: string;
 }
 
+// Slim rows returned by the stats RPC — revenue is what fans actually paid
+// (from content_purchases), not current price × unlocks.
+export interface TopItem {
+  id: string;
+  title: string | null;
+  media_type: 'image' | 'video';
+  coin_price: number;
+  unlock_count: number;
+  preview_url: string | null;
+  revenue: number;
+}
+
 export interface ContentStats {
   total_items: number;
   portfolio_count: number;
@@ -35,7 +47,9 @@ export interface ContentStats {
   private_count: number;
   total_unlocks: number;
   total_revenue: number;
-  top_items: ContentItem[];
+  revenue_30d?: number;
+  unlocks_30d?: number;
+  top_items: TopItem[];
   sets_count: number;
   scheduled_count: number;
 }
@@ -88,6 +102,8 @@ function buildItemsQueryString(filters: ContentFilters): string {
 export function useContentData() {
   // --- state ---------------------------------------------------------------
   const [items, setItems] = useState<ContentItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [stats, setStats] = useState<ContentStats | null>(null);
   const [loading, setLoading] = useState(true);
   // Items load through the filter effect, separately from stats — track the
@@ -110,12 +126,35 @@ export function useContentData() {
       if (!res.ok) throw new Error('Failed to fetch items');
       const data = await res.json();
       setItems(data.items || []);
+      setTotal(data.total ?? (data.items || []).length);
     } catch {
       toast.error('Failed to load content items');
     } finally {
       setItemsLoaded(true);
     }
   }, [filters]);
+
+  // The API caps a page at 500 rows; fetch the next page and append so large
+  // libraries aren't silently truncated at the first page.
+  const loadMore = useCallback(async () => {
+    setLoadingMore(true);
+    try {
+      const qs = buildItemsQueryString(filters);
+      const sep = qs ? '&' : '?';
+      const res = await fetch(`/api/content-hub/items${qs}${sep}offset=${items.length}`);
+      if (!res.ok) throw new Error('Failed to fetch items');
+      const data = await res.json();
+      setItems((prev) => {
+        const seen = new Set(prev.map((i) => i.id));
+        return [...prev, ...(data.items || []).filter((i: ContentItem) => !seen.has(i.id))];
+      });
+      setTotal(data.total ?? total);
+    } catch {
+      toast.error('Failed to load more items');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [filters, items.length, total]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -336,8 +375,10 @@ export function useContentData() {
   return {
     // state
     items,
+    total,
     stats,
     loading: loading || !itemsLoaded,
+    loadingMore,
     filters,
     selectedIds,
 
@@ -345,6 +386,7 @@ export function useContentData() {
     fetchItems,
     fetchStats,
     refreshAll,
+    loadMore,
 
     // mutations
     createItem,
