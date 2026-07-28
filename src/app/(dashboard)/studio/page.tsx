@@ -72,6 +72,7 @@ import {
   Eye,
   ChevronDown,
   TrendingUp,
+  Share2,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -111,12 +112,15 @@ const STATUS_OPTIONS = [
 export default function ContentPage() {
   const {
     items,
+    total,
     stats,
     loading,
+    loadingMore,
     filters,
     selectedIds,
     fetchItems,
     fetchStats,
+    loadMore,
     updateItem,
     deleteItem,
     bulkAction,
@@ -173,6 +177,32 @@ export default function ContentPage() {
     [setFilter],
   );
 
+  // Copy (or natively share) a fan-facing deep link to this item on the
+  // model's profile. Private items have no fan-facing URL, so no share.
+  const shareItem = useCallback(
+    async (item: ContentItem) => {
+      if (!modelUsername || item.status === 'private') return;
+      const tab =
+        item.status === 'exclusive' ? 'exclusive' : item.media_type === 'video' ? 'videos' : 'photos';
+      const url = `${window.location.origin}/${modelUsername}?tab=${tab}&content=${item.id}`;
+      if (navigator.share) {
+        try {
+          await navigator.share({ url });
+          return;
+        } catch {
+          // fall through to clipboard (share sheet dismissed or unavailable)
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success('Link copied — share it anywhere');
+      } catch {
+        toast.error('Could not copy the link');
+      }
+    },
+    [modelUsername],
+  );
+
   return (
     <div className="min-h-dvh bg-background">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -194,6 +224,13 @@ export default function ContentPage() {
               <p className="text-xs md:text-sm text-white/60 mt-1">
                 Upload, manage, and monetize your content.
               </p>
+              {(stats?.total_revenue ?? 0) > 0 && (
+                <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
+                  <Coins className="h-3.5 w-3.5" />
+                  {stats!.total_revenue.toLocaleString()} coins earned · $
+                  {(stats!.total_revenue * 0.1).toFixed(2)}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2">
               {modelUsername && (
@@ -319,6 +356,9 @@ export default function ContentPage() {
             <TabsContent value="all">
               <AllTab
                 items={items}
+                total={total}
+                loadingMore={loadingMore}
+                onLoadMore={loadMore}
                 filters={filters}
                 onClearFilters={() => {
                   resetFilters();
@@ -332,6 +372,7 @@ export default function ContentPage() {
                 bulkAction={bulkAction}
                 onEditItem={setEditItem}
                 onDeleteItem={setDeleteConfirmItem}
+                onShareItem={shareItem}
                 onUpload={() => setUploadOpen(true)}
                 onBulkPrice={() => setBulkPriceOpen(true)}
                 onBulkPPV={() => setBulkPpvOpen(true)}
@@ -358,6 +399,7 @@ export default function ContentPage() {
             if (!open) setEditItem(null);
           }}
           updateItem={updateItem}
+          onShare={() => shareItem(editItem)}
           onRequestDelete={() => {
             setDeleteConfirmItem(editItem);
             setEditItem(null);
@@ -456,6 +498,9 @@ export default function ContentPage() {
 
 function AllTab({
   items,
+  total,
+  loadingMore,
+  onLoadMore,
   filters,
   onClearFilters,
   selectedIds,
@@ -466,12 +511,16 @@ function AllTab({
   bulkAction,
   onEditItem,
   onDeleteItem,
+  onShareItem,
   onUpload,
   onBulkPrice,
   onBulkPPV,
   onBulkDelete,
 }: {
   items: ContentItem[];
+  total: number;
+  loadingMore: boolean;
+  onLoadMore: () => void;
   filters: { status: string | null; media_type: string | null; search: string; sort: string; order: string };
   onClearFilters: () => void;
   selectedIds: Set<string>;
@@ -482,6 +531,7 @@ function AllTab({
   bulkAction: (action: string, params?: Record<string, unknown>) => Promise<void>;
   onEditItem: (item: ContentItem) => void;
   onDeleteItem: (item: ContentItem) => void;
+  onShareItem: (item: ContentItem) => void;
   onUpload: () => void;
   onBulkPrice: () => void;
   onBulkPPV: () => void;
@@ -546,7 +596,9 @@ function AllTab({
           <Button variant="ghost" size="sm" onClick={hasSelection ? clearSelection : selectAll}>
             {hasSelection ? 'Deselect All' : 'Select All'}
           </Button>
-          <span className="text-xs text-muted-foreground">{items.length} items</span>
+          <span className="text-xs text-muted-foreground">
+            {items.length < total ? `${items.length} of ${total} items` : `${items.length} item${items.length === 1 ? '' : 's'}`}
+          </span>
         </div>
       )}
 
@@ -586,18 +638,29 @@ function AllTab({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {items.map((item) => (
-            <ContentItemCard
-              key={item.id}
-              item={item}
-              selected={isSelected(item.id)}
-              onToggleSelect={() => toggleSelect(item.id)}
-              onEdit={() => onEditItem(item)}
-              onDelete={() => onDeleteItem(item)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {items.map((item) => (
+              <ContentItemCard
+                key={item.id}
+                item={item}
+                selected={isSelected(item.id)}
+                onToggleSelect={() => toggleSelect(item.id)}
+                onEdit={() => onEditItem(item)}
+                onDelete={() => onDeleteItem(item)}
+                onShare={() => onShareItem(item)}
+              />
+            ))}
+          </div>
+          {items.length < total && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" onClick={onLoadMore} disabled={loadingMore}>
+                {loadingMore && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Load more ({total - items.length} remaining)
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -613,12 +676,14 @@ function ContentItemCard({
   onToggleSelect,
   onEdit,
   onDelete,
+  onShare,
 }: {
   item: ContentItem;
   selected: boolean;
   onToggleSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onShare: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -708,6 +773,14 @@ function ContentItemCard({
         )}
       </div>
 
+      {/* Video marker — bottom right (hover-to-play is the only other tell,
+          and touch devices never hover) */}
+      {item.media_type === 'video' && (
+        <span className="absolute bottom-2 right-2 z-10 rounded-full bg-black/60 p-1.5 backdrop-blur-sm">
+          <Video className="h-3 w-3 text-white" />
+        </span>
+      )}
+
       {/* Unlock count + hearts — bottom left */}
       {((item.status === 'exclusive' && item.unlock_count > 0) || item.like_count > 0) && (
         <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1">
@@ -744,6 +817,20 @@ function ContentItemCard({
         >
           <Pencil className="h-4 w-4" />
         </Button>
+        {item.status !== 'private' && (
+          <Button
+            size="icon"
+            variant="secondary"
+            className="h-9 w-9"
+            aria-label="Share link"
+            onClick={(e) => {
+              e.stopPropagation();
+              onShare();
+            }}
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+        )}
         <Button
           size="icon"
           variant="secondary"
@@ -769,12 +856,14 @@ function ItemEditDialog({
   open,
   onOpenChange,
   updateItem,
+  onShare,
   onRequestDelete,
 }: {
   item: ContentItem;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   updateItem: (id: string, data: Partial<ContentItem>) => Promise<ContentItem | null>;
+  onShare: () => void;
   onRequestDelete: () => void;
 }) {
   const [title, setTitle] = useState(item.title || '');
@@ -902,15 +991,20 @@ function ItemEditDialog({
             </div>
           )}
 
-          {/* Actions */}
+          {/* Actions — share works off the saved status; a not-yet-saved flip
+              to Private would leave a dead link on socials */}
           <div className="flex gap-2 pt-2">
             <Button onClick={handleSave} disabled={saving} className="flex-1">
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>
-            <Button variant="destructive" onClick={onRequestDelete}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+            {item.status !== 'private' && (
+              <Button variant="outline" size="icon" aria-label="Share link" onClick={onShare}>
+                <Share2 className="h-4 w-4" />
+              </Button>
+            )}
+            <Button variant="destructive" size="icon" aria-label="Delete" onClick={onRequestDelete}>
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -957,15 +1051,18 @@ function StatsTab({
           <p className="mt-1 text-2xl md:text-3xl font-bold text-white">{stats.total_unlocks.toLocaleString()}</p>
           <p className="text-[11px] text-pink-300/80">across all items</p>
         </div>
+        <div className="relative overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-4 hover:border-violet-500/50 transition-all">
+          <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">Last 30 days</p>
+          <p className="mt-1 text-2xl md:text-3xl font-bold text-white">{(stats.revenue_30d ?? 0).toLocaleString()}</p>
+          <p className="text-[11px] text-violet-300/80">
+            {stats.unlocks_30d ?? 0} unlock{(stats.unlocks_30d ?? 0) === 1 ? '' : 's'} · $
+            {((stats.revenue_30d ?? 0) * 0.1).toFixed(2)}
+          </p>
+        </div>
         <div className="relative overflow-hidden rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 p-4 hover:border-cyan-500/50 transition-all">
           <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">Total items</p>
           <p className="mt-1 text-2xl md:text-3xl font-bold text-white">{stats.total_items.toLocaleString()}</p>
           <p className="text-[11px] text-cyan-300/80">in your studio</p>
-        </div>
-        <div className="relative overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-4 hover:border-violet-500/50 transition-all">
-          <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">Paid items</p>
-          <p className="mt-1 text-2xl md:text-3xl font-bold text-white">{stats.exclusive_count.toLocaleString()}</p>
-          <p className="text-[11px] text-violet-300/80">premium</p>
         </div>
       </div>
 
@@ -988,9 +1085,18 @@ function StatsTab({
           ) : (
             <div className="space-y-2">
               {stats.top_items.map((topItem, idx) => {
+                // Thumbnail: the signed URL from the loaded grid when present,
+                // else the public teaser preview the RPC now returns.
                 const fullItem = items.find((i) => i.id === topItem.id);
-                const mediaUrl = fullItem ? getMediaUrl(fullItem.media_url) : null;
-                const revenue = (topItem.coin_price || 0) * (topItem.unlock_count || 0);
+                const mediaUrl = fullItem
+                  ? getMediaUrl(fullItem.media_url)
+                  : topItem.preview_url
+                    ? getMediaUrl(topItem.preview_url)
+                    : null;
+                // Actual coins fans paid (from the ledger); older cached
+                // payloads without it fall back to the price × unlocks estimate.
+                const revenue =
+                  topItem.revenue ?? (topItem.coin_price || 0) * (topItem.unlock_count || 0);
 
                 return (
                   <div
@@ -1214,6 +1320,7 @@ function UploadDialog({
   const [visibility, setVisibility] = useState<'private' | 'portfolio' | 'exclusive'>('private');
   const [coinPrice, setCoinPrice] = useState(CONTENT_UNLOCK_DEFAULT_COINS);
   const [finishing, setFinishing] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraImageRef = useRef<HTMLInputElement>(null);
   const cameraVideoRef = useRef<HTMLInputElement>(null);
@@ -1537,11 +1644,24 @@ function UploadDialog({
           {/* File picker area */}
           {files.length === 0 ? (
             <div
-              className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/50"
+              className={cn(
+                'flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/50',
+                dragOver && 'border-pink-500 bg-pink-500/10',
+              )}
               onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                handleFiles(e.dataTransfer.files);
+              }}
             >
               <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
-              <p className="text-sm font-medium">Tap to select photos &amp; videos</p>
+              <p className="text-sm font-medium">Tap to select or drop photos &amp; videos</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Up to {MAX_FILES} at a time · Images up to 50MB · Videos up to 500MB
               </p>
@@ -1808,6 +1928,11 @@ function BulkPriceDialog({
   description?: string;
 }) {
   const [price, setPrice] = useState(CONTENT_UNLOCK_DEFAULT_COINS);
+
+  // Fresh default each time — the previous batch's price shouldn't leak in
+  useEffect(() => {
+    if (open) setPrice(CONTENT_UNLOCK_DEFAULT_COINS);
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

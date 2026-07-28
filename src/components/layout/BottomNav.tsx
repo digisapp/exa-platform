@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home, MessageCircle, Users, Images, Megaphone, Heart, Briefcase } from "lucide-react";
+import { Home, MessageCircle, Users, Images, Megaphone, Heart, Clapperboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n";
 import { useUnreadCount } from "@/components/layout/UnreadCountProvider";
@@ -147,7 +147,7 @@ export function BottomNav({ user, actorType, unreadCount: unreadCountProp = 0, n
         {/* 4th slot: Gigs (model) | Favorites (fan) | Campaigns (brand) */}
         {actorType === "model" ? (
           <NavItem href="/gigs" active={isActive("/gigs")}>
-            <Briefcase className={cn("h-5 w-5 transition-[color,transform]", isActive("/gigs") && "scale-110 text-cyan-400")} />
+            <Clapperboard className={cn("h-5 w-5 transition-[color,transform]", isActive("/gigs") && "scale-110 text-cyan-400")} />
             <span className="text-[10px] font-medium">{t.nav.gigs}</span>
           </NavItem>
         ) : actorType === "fan" ? (

@@ -386,7 +386,9 @@ export function ProfilePhotoBanner({
         </div>
       </section>
 
-      {/* ── Avatar cropper (reuses existing ImageCropper) ── */}
+      {/* ── Avatar cropper (reuses existing ImageCropper). The description
+          is the touch-device stand-in for the desktop hover label — mobile
+          has no hover, so the context rides on the action itself. ── */}
       {imageToCrop && (
         <ImageCropper
           open={cropperOpen}
@@ -395,6 +397,8 @@ export function ProfilePhotoBanner({
           onCropComplete={handleCropComplete}
           aspectRatio={1}
           circularCrop
+          title="Crop your avatar"
+          description="Shown in chats, search results & model cards across EXA."
         />
       )}
 

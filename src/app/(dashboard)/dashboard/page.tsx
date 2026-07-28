@@ -162,6 +162,7 @@ export default async function DashboardPage() {
     castingReadiness,
     welcomeBack,
     { count: weekSpotlightLikes },
+    { count: recentKnocks },
   ] = await Promise.all([
     // Get pending bookings for this model - use adminClient to bypass RLS
     (adminClient.from("bookings") as any)
@@ -226,6 +227,12 @@ export default async function DashboardPage() {
       .eq("model_id", model.id)
       .eq("vote_type", "like")
       .gte("created_at", weekAgo.toISOString()),
+    // Knocks in the last 14 days — drives the demand-triggered
+    // "Available for calls" pill (see identityExtra below).
+    (adminClient.from("call_knocks") as any)
+      .select("id", { count: "exact", head: true })
+      .eq("model_id", model.id)
+      .gte("created_at", new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()),
   ]);
 
   // All-time Spotlight likes back the Admirers card, which only renders on a
@@ -797,9 +804,19 @@ export default async function DashboardPage() {
         views30d={views30d || 0}
         earningsThisMonth={earningsThisMonth || 0}
         identityExtra={
-          // Compact pill, not a card (dashboard declutter convention).
-          // Writes via the service-role /api/model/availability route.
-          <AvailabilityToggle initialAvailable={!!model.available_for_calls} />
+          // Demand-triggered (2026-07-28): the pill only occupies the
+          // identity header when it has something to say — availability is
+          // already on (needs an off switch) or a fan knocked in the last
+          // 14 days (the moment worth converting). Permanent placement had
+          // converted 4 of 1,401 models; the toggle stays reachable at
+          // Settings → Rates for everyone else. Writes via the
+          // service-role /api/model/availability route.
+          model.available_for_calls || (recentKnocks || 0) > 0 ? (
+            <AvailabilityToggle
+              initialAvailable={!!model.available_for_calls}
+              recentKnocks={recentKnocks || 0}
+            />
+          ) : undefined
         }
       />
 
@@ -905,25 +922,12 @@ export default async function DashboardPage() {
       {inboxItems.length > 0 && priorityInboxSection}
 
       {/* ──────────────────────────────────────────────────────
-          GIGS FOR YOU — full-width, prominent placement
-         ────────────────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
-        <GigsFeed
-          gigs={gigs || []}
-          modelApplications={modelApplications || []}
-          isApproved={model.is_approved}
-        />
-      </section>
-
-      {/* Mobile-only: EXA Live Wall appears here after gigs */}
-      <div className="lg:hidden" data-live-wall>
-        <LiveWallServer actorId={actor.id} actorType={actor.type} />
-      </div>
-
-      {/* ──────────────────────────────────────────────────────
           SPOTLIGHT ADMIRERS — aggregate-only likes card + thank-you
-          blast CTA. Informational (sits by Activity, NOT in the
-          NudgeSlot); renders nothing on a zero week (declutter).
+          blast CTA. Promoted above gigs (2026-07-28): Spotlight likes
+          are the platform's highest-frequency positive signal (~415
+          models/month), so on a quiet marketplace week this is often
+          the only good news the page has. Still renders nothing on a
+          zero week (declutter).
          ────────────────────────────────────────────────────── */}
       {(weekSpotlightLikes || 0) > 0 && (
         <SpotlightAdmirers
@@ -931,6 +935,30 @@ export default async function DashboardPage() {
           allTimeLikes={allTimeSpotlightLikes || 0}
         />
       )}
+
+      {/* ──────────────────────────────────────────────────────
+          GIGS FOR YOU — full-width when there ARE open gigs. With
+          zero open gigs this hero was the loudest element on the page
+          telling every model "nothing here" every visit — same
+          hollow-shell treatment as the Priority inbox above.
+         ────────────────────────────────────────────────────── */}
+      {(gigs?.length || 0) > 0 && (
+        <section className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
+          <GigsFeed
+            gigs={gigs || []}
+            modelApplications={modelApplications || []}
+            isApproved={model.is_approved}
+          />
+        </section>
+      )}
+
+      {/* Mobile-only: EXA Live Wall appears here after gigs. Kept even
+          on quiet weeks: the wall self-collapses to a one-line gig
+          teaser after 7 quiet days and gig heartbeats revive it, so it
+          manages its own footprint. */}
+      <div className="lg:hidden" data-live-wall>
+        <LiveWallServer actorId={actor.id} actorType={actor.type} />
+      </div>
 
       {/* ──────────────────────────────────────────────────────
           ACTIVITY — full-width

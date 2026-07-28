@@ -146,6 +146,10 @@ interface ProfileContentTabsProps {
   modelId: string;
   coinBalance: number;
   isOwner: boolean;
+  /** Deep-link target tab from ?tab= (Studio share links) */
+  initialTab?: "photos" | "videos" | "ppv";
+  /** content_items.id from ?content= — scrolls to / opens that item */
+  highlightContentId?: string;
 }
 
 export function ProfileContentTabs({
@@ -155,8 +159,12 @@ export function ProfileContentTabs({
   modelId,
   coinBalance,
   isOwner,
+  initialTab,
+  highlightContentId,
 }: ProfileContentTabsProps) {
-  const [activeTab, setActiveTab] = useState<"photos" | "videos" | "ppv">("photos");
+  const [activeTab, setActiveTab] = useState<"photos" | "videos" | "ppv">(
+    initialTab && (initialTab !== "ppv" || premiumContentCount > 0) ? initialTab : "photos",
+  );
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MediaAsset | null>(null);
   const [selectedType, setSelectedType] = useState<"photo" | "video">("photo");
@@ -213,6 +221,25 @@ export function ProfileContentTabs({
     setIsClosing(false);
     preloadAdjacentImages(idx, list, type);
   };
+
+  // Deep link (?tab= / ?content=): scroll the content section into view once
+  // the page has painted, and pop the lightbox for a linked photo/video.
+  // Linked paid items are handled inside PremiumContentGrid.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!initialTab && !highlightContentId) return;
+    const t = setTimeout(() => {
+      rootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (highlightContentId && activeTab !== "ppv") {
+        const list = activeTab === "photos" ? photos : videos;
+        const item = list.find((i) => i.id === highlightContentId);
+        if (item) openLightbox(item, activeTab === "photos" ? "photo" : "video");
+      }
+    }, 400);
+    return () => clearTimeout(t);
+    // Deliberately mount-only: deep links describe the arrival state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const closeLightbox = useCallback(() => {
     setIsClosing(true);
@@ -352,7 +379,7 @@ export function ProfileContentTabs({
   const hasVideos = videos && videos.length > 0;
 
   return (
-    <div className="mt-6">
+    <div className="mt-6 scroll-mt-20" ref={rootRef}>
       {/* Tabs */}
       <div className="flex justify-center gap-1 mb-4">
         <button
@@ -579,6 +606,7 @@ export function ProfileContentTabs({
             modelId={modelId}
             initialCoinBalance={coinBalance}
             isOwner={isOwner}
+            highlightId={highlightContentId}
           />
         </div>
       )}

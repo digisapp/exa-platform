@@ -9,6 +9,10 @@ interface AvailabilityToggleProps {
   initialAvailable: boolean;
   /** Compact pill (dashboard identity header) vs full row (settings) */
   variant?: "pill" | "row";
+  /** Knocks (fans who tried to call while unreachable) in the last 14
+      days. When > 0 and availability is off, the pill leads with the
+      missed demand instead of the generic label. */
+  recentKnocks?: number;
 }
 
 // "Available for calls" switch. Writes ONLY via /api/model/availability
@@ -17,6 +21,7 @@ interface AvailabilityToggleProps {
 export function AvailabilityToggle({
   initialAvailable,
   variant = "pill",
+  recentKnocks = 0,
 }: AvailabilityToggleProps) {
   const [available, setAvailable] = useState(initialAvailable);
   const [saving, setSaving] = useState(false);
@@ -109,6 +114,11 @@ export function AvailabilityToggle({
     );
   }
 
+  // Missed-demand framing: a fan knocked recently and availability is
+  // off — lead with that instead of the generic label. Once flipped on,
+  // the label reverts (the demand is no longer being missed).
+  const showDemand = !available && recentKnocks > 0;
+
   return (
     <button
       type="button"
@@ -118,13 +128,17 @@ export function AvailabilityToggle({
       title={
         available
           ? "Fans can call you even when you're off EXA"
-          : "Turn on so fans can call you even when you're off EXA"
+          : showDemand
+            ? `${recentKnocks} fan${recentKnocks === 1 ? "" : "s"} tried to call you in the last 2 weeks — turn on to catch the next one`
+            : "Turn on so fans can call you even when you're off EXA"
       }
       className={cn(
         "inline-flex items-center gap-2 px-2.5 py-1 rounded-full border text-[11px] font-semibold transition-all active:scale-95 disabled:opacity-70",
         available
           ? "border-emerald-400/50 bg-emerald-500/15 text-emerald-300 shadow-[0_0_14px_rgba(52,211,153,0.3)]"
-          : "border-white/15 bg-white/5 text-white/55 hover:border-emerald-400/40 hover:text-white/80"
+          : showDemand
+            ? "border-amber-400/50 bg-amber-500/15 text-amber-300 shadow-[0_0_14px_rgba(251,191,36,0.25)] hover:border-emerald-400/40"
+            : "border-white/15 bg-white/5 text-white/55 hover:border-emerald-400/40 hover:text-white/80"
       )}
     >
       {saving ? (
@@ -132,7 +146,9 @@ export function AvailabilityToggle({
       ) : (
         <PhoneCall className="h-3 w-3" />
       )}
-      Available for calls
+      {showDemand
+        ? `${recentKnocks} fan${recentKnocks === 1 ? "" : "s"} tried to call you`
+        : "Available for calls"}
       {knob}
     </button>
   );

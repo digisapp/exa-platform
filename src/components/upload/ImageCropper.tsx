@@ -20,6 +20,11 @@ interface ImageCropperProps {
   onCropComplete: (croppedBlob: Blob) => void;
   aspectRatio?: number;
   circularCrop?: boolean;
+  /** Dialog title (defaults to the generic "Crop Profile Picture") */
+  title?: string;
+  /** Optional context line under the title — the mobile stand-in for
+      hover explanations (e.g. where this photo will appear). */
+  description?: string;
 }
 
 function centerAspectCrop(
@@ -49,6 +54,8 @@ export function ImageCropper({
   onCropComplete,
   aspectRatio = 1,
   circularCrop = true,
+  title = "Crop Profile Picture",
+  description,
 }: ImageCropperProps) {
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<Crop>();
@@ -128,7 +135,10 @@ export function ImageCropper({
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Crop Profile Picture</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
+          {description && (
+            <p className="text-sm text-muted-foreground">{description}</p>
+          )}
         </DialogHeader>
 
         <div className="flex justify-center py-4">
