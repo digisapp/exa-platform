@@ -223,6 +223,9 @@ export function ConversationList({ conversations: initialConversations, actorTyp
     // has its media_url stripped server-side (so it can't leak from the inbox),
     // but we still want to show a "Sent a photo/video" label.
     if (message.media_type) {
+      if (message.media_type === "image/sticker") {
+        return "Sent a sticker";
+      }
       if (message.media_type.startsWith("image/")) {
         return "Sent a photo";
       }
@@ -543,7 +546,9 @@ export function ConversationList({ conversations: initialConversations, actorTyp
                         <Gift className="h-3 w-3 text-amber-400 flex-shrink-0" />
                       )}
                       {!conv.lastMessage?.is_system && conv.lastMessage?.media_type && !conv.lastMessage?.content && (
-                        conv.lastMessage.media_type?.startsWith("image/") ? (
+                        conv.lastMessage.media_type === "image/sticker" ? (
+                          <Sparkles className="h-3 w-3 text-pink-400 flex-shrink-0" />
+                        ) : conv.lastMessage.media_type?.startsWith("image/") ? (
                           <Camera className="h-3 w-3 text-pink-500 flex-shrink-0" />
                         ) : conv.lastMessage.media_type?.startsWith("video/") ? (
                           <Video className="h-3 w-3 text-blue-500 flex-shrink-0" />

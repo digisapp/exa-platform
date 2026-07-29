@@ -96,6 +96,19 @@ export async function POST(request: NextRequest) {
     const { conversationId: providedConversationId, targetModelUsername, content, mediaUrl, mediaType, mediaPrice, replyToId } = validationResult.data;
     let conversationId = providedConversationId || null;
 
+    // EXA stickers: pin sticker-typed media to the public stickers bucket so
+    // arbitrary image URLs can't be dressed up in borderless sticker rendering,
+    // and keep them free — the paid paths are tips and priced media.
+    if (mediaType === "image/sticker") {
+      const stickerUrlPrefix = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/stickers/`;
+      if (!mediaUrl || !mediaUrl.startsWith(stickerUrlPrefix)) {
+        return NextResponse.json({ error: "Invalid sticker" }, { status: 400 });
+      }
+      if (mediaPrice) {
+        return NextResponse.json({ error: "Stickers cannot be priced" }, { status: 400 });
+      }
+    }
+
     // Get sender's actor info
     const { data: sender } = await supabase
       .from("actors")
@@ -520,11 +533,13 @@ export async function POST(request: NextRequest) {
             .maybeSingle();
           senderName = senderBrand?.company_name || "A brand";
         }
-        const mediaLabel = mediaType?.startsWith("video")
-          ? "a video"
-          : mediaType?.startsWith("audio")
-            ? "a voice note"
-            : "a photo";
+        const mediaLabel = mediaType === "image/sticker"
+          ? "a sticker"
+          : mediaType?.startsWith("video")
+            ? "a video"
+            : mediaType?.startsWith("audio")
+              ? "a voice note"
+              : "a photo";
         const preview = content?.trim()
           ? content.trim().slice(0, 90)
           : `Sent you ${mediaLabel}`;
