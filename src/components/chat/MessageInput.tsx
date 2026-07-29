@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Coins, X, Video, Mic, Camera, Lock, Reply, Gift } from "lucide-react";
+import { Send, Loader2, Coins, X, Video, Mic, Camera, Lock, Reply, Gift, Sticker as StickerIcon } from "lucide-react";
+import { StickerPicker, type PickedSticker } from "@/components/live-wall/StickerPicker";
 import type { Message } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -87,8 +89,42 @@ export function MessageInput({
   const [mediaPrice, setMediaPrice] = useState<number | null>(null);
   const [showPriceInput, setShowPriceInput] = useState(false);
   const [virtualFirstWarningOpen, setVirtualFirstWarningOpen] = useState(false);
+  const [showStickers, setShowStickers] = useState(false);
+  const [stickerPos, setStickerPos] = useState<{ left: number; bottom: number; width: number; maxHeight: number } | null>(null);
+  const stickerBtnRef = useRef<HTMLButtonElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const draftKey = conversationId ? `${DRAFT_PREFIX}${conversationId}` : null;
+
+  const isStickerAttachment = attachedMedia?.type === "image/sticker";
+
+  // Sticker picker is portal-anchored above its trigger (same pattern as the
+  // Live Wall composer) so it escapes the composer's stacking context.
+  const computeStickerPos = useCallback(() => {
+    const btn = stickerBtnRef.current;
+    if (typeof window === "undefined" || !btn) return null;
+    const r = btn.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const width = Math.min(340, vw - 16);
+    let left = r.left + r.width / 2 - width / 2;
+    left = Math.max(8, Math.min(left, vw - width - 8));
+    return {
+      left,
+      bottom: window.innerHeight - r.top + 8,
+      width,
+      maxHeight: Math.max(120, r.top - 16),
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!showStickers) {
+      setStickerPos(null);
+      return;
+    }
+    const update = () => setStickerPos(computeStickerPos());
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [showStickers, computeStickerPos]);
 
   // Auto-grow fallback: iOS Safari doesn't support CSS `field-sizing`, which
   // the shared Textarea relies on. Cap matches the existing max-h-32 (128px).
@@ -381,6 +417,14 @@ export function MessageInput({
     await uploadFile(file, "audio");
   };
 
+  const handleStickerSelect = (s: PickedSticker) => {
+    // Stickers are free EXA-library attachments: public URL, never priced.
+    setAttachedMedia({ url: s.url, type: "image/sticker", previewUrl: s.url });
+    setMediaPrice(null);
+    setShowPriceInput(false);
+    setShowStickers(false);
+  };
+
   const handleLibrarySelect = (item: { url: string; type: "photo" | "video"; coinPrice?: number }) => {
     setAttachedMedia({
       url: item.url,
@@ -445,7 +489,12 @@ export function MessageInput({
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-pink-300">Replying</p>
             <p className="text-sm text-white/70 truncate">
-              {replyingTo.content || (replyingTo.media_url ? "Photo/Video" : "Message")}
+              {replyingTo.content ||
+                (replyingTo.media_type === "image/sticker"
+                  ? "Sticker"
+                  : replyingTo.media_url
+                    ? "Photo/Video"
+                    : "Message")}
             </p>
           </div>
           <Button
@@ -479,6 +528,17 @@ export function MessageInput({
                   <Mic className="h-5 w-5 text-amber-500" />
                 </div>
                 <span className="text-sm text-muted-foreground">Voice message</span>
+              </div>
+            ) : isStickerAttachment ? (
+              <div className="relative p-1">
+                <Image
+                  src={attachedMedia.url}
+                  alt="Sticker"
+                  width={96}
+                  height={96}
+                  className="h-24 w-24 object-contain"
+                  unoptimized
+                />
               </div>
             ) : (
               <div className="relative">
@@ -526,8 +586,8 @@ export function MessageInput({
         </div>
       )}
 
-      {/* PPV price toggle for models with media attached */}
-      {isModel && attachedMedia && !attachedMedia.type.startsWith("audio") && (
+      {/* PPV price toggle for models with media attached (stickers are never priced) */}
+      {isModel && attachedMedia && !attachedMedia.type.startsWith("audio") && !isStickerAttachment && (
         <div className="mb-3 flex items-center gap-2">
           <button
             onClick={() => {
@@ -598,6 +658,40 @@ export function MessageInput({
           >
             <Gift className="h-5 w-5" />
           </button>
+        )}
+
+        {/* EXA sticker picker */}
+        <button
+          type="button"
+          ref={stickerBtnRef}
+          onClick={() => setShowStickers((prev) => !prev)}
+          disabled={disabled || sending || uploading}
+          title="EXA stickers"
+          aria-label="EXA stickers"
+          className={cn(
+            "shrink-0 h-12 w-12 flex items-center justify-center rounded-2xl active:scale-95 transition-all disabled:opacity-40",
+            showStickers
+              ? "text-pink-300 bg-pink-500/10"
+              : "text-white/60 hover:text-pink-200 hover:bg-pink-500/10"
+          )}
+        >
+          <StickerIcon className="h-5 w-5" />
+        </button>
+        {showStickers && stickerPos && createPortal(
+          <StickerPicker
+            onSelect={handleStickerSelect}
+            onClose={() => setShowStickers(false)}
+            triggerRef={stickerBtnRef}
+            style={{
+              position: "fixed",
+              left: stickerPos.left,
+              bottom: stickerPos.bottom,
+              width: stickerPos.width,
+              maxHeight: stickerPos.maxHeight,
+              zIndex: 60,
+            }}
+          />,
+          document.body
         )}
 
         {/* Emoji picker (desktop only) */}

@@ -558,7 +558,9 @@ export const MessageBubble = memo(function MessageBubble({
                 isOwn ? "text-white/75" : "text-white/60"
               )}>
                 {repliedMessage.content
-                  || (repliedMessage.media_type?.startsWith("image") ? "Photo" : "Media")}
+                  || (repliedMessage.media_type === "image/sticker"
+                    ? "Sticker"
+                    : repliedMessage.media_type?.startsWith("image") ? "Photo" : "Media")}
               </p>
             </div>
           )}
@@ -672,6 +674,18 @@ export const MessageBubble = memo(function MessageBubble({
                     </Button>
                   </div>
                 </div>
+              ) : message.media_type === "image/sticker" ? (
+                /* EXA sticker: transparent art floats on the chat background —
+                   no ring/rounding/lightbox. Plain img keeps animated WebP
+                   animating (next/image optimization would freeze it). */
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={message.media_url!}
+                  alt="Sticker"
+                  loading="lazy"
+                  decoding="async"
+                  className="w-40 h-40 object-contain drop-shadow-[0_0_18px_rgba(236,72,153,0.25)]"
+                />
               ) : message.media_type?.startsWith("image/") ? (
                 <>
                   <Image
