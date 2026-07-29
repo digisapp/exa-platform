@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, BellRing, BellOff, ShieldAlert } from "lucide-react";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { trackEvent } from "@/lib/analytics-client";
 import {
   getPushDeviceState,
   isIos,
@@ -43,10 +44,12 @@ export function PushOptIn({ onSubscribed }: { onSubscribed?: () => void }) {
     const result = await subscribeToPush();
     setBusy(false);
     if (result.ok) {
+      trackEvent("push_subscribed", { metadata: { source: "settings" } });
       setState("subscribed");
       onSubscribed?.();
       toast.success("Push notifications are on for this device");
     } else if (result.reason === "denied") {
+      trackEvent("push_denied", { metadata: { source: "settings" } });
       setState("denied");
     } else {
       toast.error("Couldn't enable push notifications — please try again");
