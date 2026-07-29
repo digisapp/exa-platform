@@ -104,7 +104,7 @@ export function MessageInput({
     if (typeof window === "undefined" || !btn) return null;
     const r = btn.getBoundingClientRect();
     const vw = window.innerWidth;
-    const width = Math.min(340, vw - 16);
+    const width = Math.min(420, vw - 16);
     let left = r.left + r.width / 2 - width / 2;
     left = Math.max(8, Math.min(left, vw - width - 8));
     return {
