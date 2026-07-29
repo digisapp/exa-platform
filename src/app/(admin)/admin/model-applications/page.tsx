@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { FixApplicationEmailButton } from "@/components/admin/FixApplicationEmailButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -492,6 +493,20 @@ export default function AdminModelApplicationsPage() {
                 )}
               </Button>
 
+              {primary === "resend_confirm" && (
+                <FixApplicationEmailButton
+                  applicationId={current.id}
+                  currentEmail={current.email}
+                  size="lg"
+                  onSuccess={(newEmail) => {
+                    // She stays pending + unconfirmed until she clicks the new
+                    // link — just reflect the corrected address on her card
+                    setApps((prev) =>
+                      prev.map((a) => (a.id === current.id ? { ...a, email: newEmail } : a))
+                    );
+                  }}
+                />
+              )}
               {primary === "resend_confirm" && (
                 <Button
                   size="lg"

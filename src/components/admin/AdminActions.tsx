@@ -34,6 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FixApplicationEmailButton } from "@/components/admin/FixApplicationEmailButton";
 
 interface AdminActionProps {
   id: string;
@@ -45,9 +46,11 @@ interface AdminActionProps {
   photoRequestedAt?: string | null;
   /** model_application only: applicant confirmed email ownership (gates Approve/Request photo vs Resend confirm) */
   emailConfirmed?: boolean;
+  /** model_application only: email on file — enables the Fix email action for unconfirmed applicants */
+  email?: string;
 }
 
-export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoRequestedAt, emailConfirmed }: AdminActionProps) {
+export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoRequestedAt, emailConfirmed, email }: AdminActionProps) {
   const [loading, setLoading] = useState<"approve" | "reject" | "delete" | "request_photo" | "resend_confirm" | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const router = useRouter();
@@ -239,23 +242,36 @@ export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoReque
         {type === "model_application" && emailConfirmed === false ? (
           // Unconfirmed email → both Approve and Request photo would 400 (the
           // confirm link proves email ownership before an account is created
-          // under it). The real action is re-sending that link.
-          <Button
-            size="sm"
-            className="bg-amber-500 hover:bg-amber-600 text-black"
-            onClick={handleResendConfirmation}
-            disabled={loading !== null}
-            title="Re-sends the application-received email with its confirm link; approval unlocks once she clicks it"
-          >
-            {loading === "resend_confirm" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <Mail className="h-4 w-4 mr-1" />
-                Resend confirm email
-              </>
+          // under it). The real action is re-sending that link — or fixing a
+          // mistyped address, where resending would just hit the wrong inbox.
+          <>
+            {email && (
+              <FixApplicationEmailButton
+                applicationId={id}
+                currentEmail={email}
+                onSuccess={() => {
+                  onSuccess?.();
+                  router.refresh();
+                }}
+              />
             )}
-          </Button>
+            <Button
+              size="sm"
+              className="bg-amber-500 hover:bg-amber-600 text-black"
+              onClick={handleResendConfirmation}
+              disabled={loading !== null}
+              title="Re-sends the application-received email with its confirm link; approval unlocks once she clicks it"
+            >
+              {loading === "resend_confirm" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Mail className="h-4 w-4 mr-1" />
+                  Resend confirm email
+                </>
+              )}
+            </Button>
+          </>
         ) : type === "model_application" && hasPhoto === false ? (
           // No photo → approval would 400; the real action is requesting one.
           // The upload returns her to the queue, where Approve becomes available.
