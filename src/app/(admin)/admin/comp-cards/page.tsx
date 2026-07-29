@@ -51,6 +51,7 @@ export default function AdminCompCardsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<StarFilter>("all");
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -82,7 +83,7 @@ export default function AdminCompCardsPage() {
     (m) => filter === "all" || m.admin_rating === Number(filter)
   );
 
-  const handleDownload = async (m: CardModel) => {
+  const handleDownload = async (m: CardModel): Promise<boolean> => {
     setDownloading(m.id);
     try {
       const res = await fetch(cardUrl(m, 2));
@@ -96,12 +97,29 @@ export default function AdminCompCardsPage() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+      return true;
     } catch (err) {
       console.error("Download error:", err);
-      toast.error("Download failed — long-press the image to save instead");
+      toast.error(`Download failed for ${m.username}`);
+      return false;
     } finally {
       setDownloading(null);
     }
+  };
+
+  const handleDownloadAll = async () => {
+    // Sequential (flyers-page pattern): each card is an edge render, and iOS
+    // batches the saves into one "Download multiple files?" prompt.
+    setBulkProgress({ done: 0, total: visible.length });
+    let failed = 0;
+    for (let i = 0; i < visible.length; i++) {
+      if (!(await handleDownload(visible[i]))) failed++;
+      setBulkProgress({ done: i + 1, total: visible.length });
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    setBulkProgress(null);
+    if (failed > 0) toast.error(`${failed} card${failed > 1 ? "s" : ""} failed to download`);
+    else toast.success(`Downloaded ${visible.length} cards`);
   };
 
   const handleCopyCaption = async (m: CardModel) => {
@@ -145,6 +163,23 @@ export default function AdminCompCardsPage() {
           ))}
           <Button variant="outline" size="sm" onClick={load} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleDownloadAll}
+            disabled={loading || bulkProgress !== null || visible.length === 0}
+          >
+            {bulkProgress ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                {bulkProgress.done}/{bulkProgress.total}
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-1" />
+                Download All ({visible.length})
+              </>
+            )}
           </Button>
         </div>
       </div>
