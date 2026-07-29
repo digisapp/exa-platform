@@ -844,14 +844,14 @@ export default async function DashboardPage() {
               needsIdentity={!model.identity_verified_at}
             />
           )}
-        {/* PUSH NUDGE — only for models with money on the books (earned
-            this month OR live balance — cheapest proxy for "has ever
-            earned", both already computed above). The component itself
-            requires push support + permission still undecided + not
-            snoozed before claiming the slot. */}
-        {((earningsThisMonth || 0) > 0 || (model.coin_balance || 0) > 0) && (
-          <PushNudgeCard />
-        )}
+        {/* PUSH NUDGE — every model, from their FIRST dashboard visit
+            (launch prep: the post-approval welcome moment converts best;
+            the old money-on-the-books gate meant new models never saw
+            it). The component still requires push support + permission
+            undecided + not snoozed before claiming the slot, and shows
+            Add-to-Home-Screen steps in iOS Safari tabs instead of a
+            dead permission button. */}
+        <PushNudgeCard modelId={model.id} />
       </NudgeSlot>
 
       {/* ──────────────────────────────────────────────────────

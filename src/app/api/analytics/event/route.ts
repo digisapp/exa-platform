@@ -22,6 +22,12 @@ const ALLOWED_EVENTS = new Set([
   "rate_set",
   "payout_method_added",
   "push_subscribed",
+  // Push opt-in funnel (2026-07-29): push_nudge_shown fires on dashboard
+  // nudge impression (metadata.mode: "push" | "a2hs"); push_denied when the
+  // permission prompt is refused. Opt-in rate = push_subscribed (metadata
+  // .source: "dashboard_nudge" | "settings") / push_nudge_shown.
+  "push_nudge_shown",
+  "push_denied",
   "availability_toggled",
   // Emitted server-side by /api/calls/knock (fan tried to call an offline
   // model); listed here so reporting treats it as a known event.
