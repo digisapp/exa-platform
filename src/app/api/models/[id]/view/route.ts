@@ -18,6 +18,16 @@ export async function POST(
       return NextResponse.json({ error: "Model ID required" }, { status: 400 });
     }
 
+    // Client-computed entry-point flag (see lib/signup-referrer.ts); body is
+    // optional so older cached clients that POST without one keep working.
+    let isLanding = false;
+    try {
+      const body = await request.json();
+      isLanding = body?.landing === true;
+    } catch {
+      // no/invalid body — not a landing
+    }
+
     const supabase = await createClient();
 
     // Get current user (if logged in)
@@ -66,6 +76,7 @@ export async function POST(
         ip_address: anonIp,
         referrer: request.headers.get("referer")?.slice(0, 500) ?? null,
         user_agent: request.headers.get("user-agent")?.slice(0, 500) ?? null,
+        is_landing: isLanding,
       }),
     ]);
 

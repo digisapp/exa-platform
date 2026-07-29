@@ -57,7 +57,7 @@ export async function GET() {
     const userToActor = new Map(actors.map((a: any) => [a.user_id, a.id]));
     const actorIds = actors.map((a: any) => a.id);
 
-    const [paidData, picsData, vidsData, followData, earningsData, referralData] = await Promise.all([
+    const [paidData, picsData, vidsData, followData, earningsData, referralData, landingData] = await Promise.all([
       batchQuery<any>(modelIds, async (batch, from, to) =>
         (adminClient as any).from("content_items").select("model_id").in("model_id", batch).eq("status", "exclusive").order("id", { ascending: true }).range(from, to)
       ),
@@ -83,7 +83,11 @@ export async function GET() {
           )
         : Promise.resolve([]),
       batchQuery<any>(modelIds, async (batch, from, to) =>
-        adminClient.from("fans").select("referred_by_model_id").in("referred_by_model_id", batch).order("id", { ascending: true }).range(from, to)
+        adminClient.from("fans").select("referred_by_model_id, lifetime_spend_coins").in("referred_by_model_id", batch).order("id", { ascending: true }).range(from, to)
+      ),
+      // Entry-point landings ≈ bio-link taps (is_landing data starts 2026-07-29)
+      batchQuery<any>(modelIds, async (batch, from, to) =>
+        (adminClient as any).from("profile_views").select("model_id").in("model_id", batch).eq("is_landing", true).order("id", { ascending: true }).range(from, to)
       ),
     ]);
 
@@ -97,6 +101,16 @@ export async function GET() {
     const vidsMap = countBy(vidsData, "model_id");
     const followMap = countBy(followData, "following_id");
     const referralMap = countBy(referralData, "referred_by_model_id");
+    const landingMap = countBy(landingData, "model_id");
+    // Coins spent (lifetime, trigger-maintained — same source as fan VIP tiers)
+    // by the fans each model referred: does her traffic turn into revenue?
+    const referredSpendMap = new Map<string, number>();
+    referralData.forEach((f: any) => {
+      referredSpendMap.set(
+        f.referred_by_model_id,
+        (referredSpendMap.get(f.referred_by_model_id) || 0) + (f.lifetime_spend_coins || 0)
+      );
+    });
     const earningsMap = new Map<string, number>();
     earningsData.forEach((tx: any) => {
       earningsMap.set(tx.actor_id, (earningsMap.get(tx.actor_id) || 0) + tx.amount);
@@ -116,6 +130,8 @@ export async function GET() {
         favorites: actorId ? (followMap.get(actorId as string) || 0) : 0,
         earned: actorId ? (earningsMap.get(actorId as string) || 0) : 0,
         referrals: referralMap.get(m.id) || 0,
+        landings: landingMap.get(m.id) || 0,
+        referredSpend: referredSpendMap.get(m.id) || 0,
       };
     });
 
@@ -143,6 +159,8 @@ export async function GET() {
           favorites: top("favorites"),
           earned: top("earned"),
           referrals: top("referrals"),
+          landings: top("landings"),
+          referredSpend: top("referredSpend"),
         },
         modelCount: models.length,
       },
