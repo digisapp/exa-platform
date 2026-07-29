@@ -26,6 +26,7 @@ import {
   Mail,
   ListOrdered,
   Ticket,
+  IdCard,
   Image as ImageIcon,
   Wand2,
   Share2,
@@ -129,6 +130,7 @@ export default async function AdminPage() {
     { href: "/admin/shows", label: "Show Lineups", icon: ListOrdered, color: "pink", featured: true },
     { href: "/admin/ai-studio", label: "AI Studio", icon: Wand2, color: "violet", featured: true },
     { href: "/admin/flyers", label: "Model Flyers", icon: ImageIcon, color: "rose", featured: true },
+    { href: "/admin/comp-cards", label: "Comp Card Covers", icon: IdCard, color: "pink", featured: true },
     { href: "/admin/events", label: "Events & Tickets", icon: Ticket, color: "pink", featured: true },
     {
       href: "/admin/brands",
