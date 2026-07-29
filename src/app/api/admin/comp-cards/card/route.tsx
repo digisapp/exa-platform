@@ -111,11 +111,11 @@ export async function GET(request: NextRequest) {
 
         {/* ── Username ── */}
         <div style={{
-          position: "absolute", bottom: px(150), left: 0, width: "100%",
+          position: "absolute", bottom: px(158), left: 0, width: "100%",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <div style={{
-            fontSize: px(displayName.length > 14 ? 58 : 72),
+            fontSize: px(displayName.length > 12 ? 82 : 104),
             fontWeight: 900,
             color: "#FFFFFF",
             textTransform: "uppercase",
