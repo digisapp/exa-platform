@@ -151,7 +151,10 @@ export function StickerPicker({ onSelect, onClose, style, triggerRef }: Props) {
       </div>
 
       {/* Grid */}
-      <div className="max-h-[280px] min-h-0 flex-1 overflow-y-auto p-2">
+      {/* The parent's fixed-position maxHeight still clamps on short
+          viewports; this cap just keeps the popup reasonable on tall ones.
+          280px showed ~2.5 rows — far too cramped for a 128-sticker library. */}
+      <div className="max-h-[520px] min-h-0 flex-1 overflow-y-auto p-2">
         {loading ? (
           <div className="py-12 text-center text-white/40">
             <Loader2 className="h-5 w-5 animate-spin inline" />
@@ -164,7 +167,7 @@ export function StickerPicker({ onSelect, onClose, style, triggerRef }: Props) {
               : "No matches."}
           </div>
         ) : (
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">
             {filtered.map((s) => (
               <button
                 key={s.id}

@@ -81,7 +81,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
     if (!showEmojis && !showStickers) return;
     const update = () => {
       if (showEmojis) setEmojiPos(computePopupPos(emojiBtnRef.current, 320));
-      if (showStickers) setStickerPos(computePopupPos(stickerBtnRef.current, 340));
+      if (showStickers) setStickerPos(computePopupPos(stickerBtnRef.current, 420));
     };
     update();
     // rAF-coalesced + passive: computePopupPos reads layout
