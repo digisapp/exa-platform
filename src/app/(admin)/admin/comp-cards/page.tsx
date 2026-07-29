@@ -27,6 +27,7 @@ import { toast } from "sonner";
 interface CardModel {
   id: string;
   username: string | null;
+  first_name: string | null;
   profile_photo_url: string | null;
   admin_rating: number | null;
   instagram_name: string | null;
@@ -38,6 +39,8 @@ function cardUrl(m: CardModel, scale: number) {
   const params = new URLSearchParams({
     photo: m.profile_photo_url || "",
     username: m.username || "",
+    // First name only on the public-facing card (owner call); username fallback
+    name: m.first_name?.trim() || m.username || "",
     scale: String(scale),
   });
   return `/api/admin/comp-cards/card?${params.toString()}`;
@@ -54,7 +57,7 @@ export default function AdminCompCardsPage() {
     try {
       const supabase = createClient();
       const { data, error } = await (supabase.from("models") as any)
-        .select("id, username, profile_photo_url, admin_rating, instagram_name")
+        .select("id, username, first_name, profile_photo_url, admin_rating, instagram_name")
         .in("admin_rating", [4, 5])
         .is("deleted_at", null)
         .not("profile_photo_url", "is", null)
