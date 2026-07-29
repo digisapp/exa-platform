@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { recordProfileVisit } from "@/lib/signup-referrer";
 
 interface ViewTrackerProps {
   modelId: string;
@@ -14,13 +15,9 @@ export function ViewTracker({ modelId }: ViewTrackerProps) {
     if (tracked.current) return;
     tracked.current = true;
 
-    // Save this model as the referrer for signup tracking
-    // This persists until they sign up or clear storage
-    try {
-      localStorage.setItem("signup_referrer_model_id", modelId);
-    } catch {
-      // localStorage might be unavailable
-    }
+    // Save this model as the signup referrer (entry-point precedence — a
+    // bio-link landing isn't overwritten by later internal browsing).
+    const { landing } = recordProfileVisit(modelId);
 
     // Check sessionStorage to avoid counting multiple views in the same session
     const viewedKey = `viewed_${modelId}`;
@@ -35,6 +32,8 @@ export function ViewTracker({ modelId }: ViewTrackerProps) {
     // Track the view
     fetch(`/api/models/${modelId}/view`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ landing }),
     }).then(() => {
       sessionStorage.setItem(viewedKey, now.toString());
     }).catch(() => {

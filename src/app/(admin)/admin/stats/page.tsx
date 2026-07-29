@@ -11,12 +11,14 @@ import {
   Eye,
   Heart,
   Image as ImageIcon,
+  Link2,
   Loader2,
   Lock,
   RefreshCw,
   Trophy,
   Users,
   Video,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -45,6 +47,10 @@ const BOARDS: {
   { key: "pics", title: "Top Pics", icon: ImageIcon, accent: "text-emerald-400" },
   { key: "vids", title: "Top Vids", icon: Video, accent: "text-violet-400" },
   { key: "referrals", title: "Top Referrals", icon: Users, accent: "text-blue-400" },
+  // Entry-point profile landings ≈ bio-link taps; data starts 2026-07-29
+  { key: "landings", title: "Bio-Link Landings", icon: Link2, accent: "text-cyan-400" },
+  // Lifetime coins spent by the fans each model referred (admin-only — never surface to models)
+  { key: "referredSpend", title: "Referred Fan Spend", icon: Wallet, accent: "text-orange-400", format: (v) => `${v.toLocaleString()} coins`, sub: (v) => `$${(v * 0.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}` },
 ];
 
 const RANK_STYLES: Record<number, string> = {

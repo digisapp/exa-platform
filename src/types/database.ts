@@ -7324,6 +7324,7 @@ export type Database = {
         Row: {
           id: string
           ip_address: string | null
+          is_landing: boolean
           model_id: string
           referrer: string | null
           user_agent: string | null
@@ -7334,6 +7335,7 @@ export type Database = {
         Insert: {
           id?: string
           ip_address?: string | null
+          is_landing?: boolean
           model_id: string
           referrer?: string | null
           user_agent?: string | null
@@ -7344,6 +7346,7 @@ export type Database = {
         Update: {
           id?: string
           ip_address?: string | null
+          is_landing?: boolean
           model_id?: string
           referrer?: string | null
           user_agent?: string | null
