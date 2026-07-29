@@ -18,6 +18,10 @@ export async function GET(request: NextRequest) {
 
   const photoUrl = sp.get("photo") || "";
   const username = (sp.get("username") || "").toLowerCase();
+  // Display name: model's first name (owner call 2026-07-29 — first name ONLY,
+  // last names never appear since these get posted publicly). Falls back to
+  // username when no first name is on file.
+  const displayName = sp.get("name") || username;
   if (!photoUrl || !username) {
     return new Response("photo and username required", { status: 400 });
   }
@@ -41,7 +45,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   // exa-models-logo-white.png is 3392x496 (~6.84:1)
-  const logoW = 330;
+  const logoW = 480;
   const logoH = Math.round(logoW * (496 / 3392));
   const logoUrl = new URL("/exa-models-logo-white.png", request.nextUrl.origin).toString();
 
@@ -111,7 +115,7 @@ export async function GET(request: NextRequest) {
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <div style={{
-            fontSize: px(username.length > 14 ? 58 : 72),
+            fontSize: px(displayName.length > 14 ? 58 : 72),
             fontWeight: 900,
             color: "#FFFFFF",
             textTransform: "uppercase",
@@ -119,7 +123,7 @@ export async function GET(request: NextRequest) {
             display: "flex",
             textShadow: `${px(2)} ${px(3)} ${px(14)} rgba(0,0,0,0.7)`,
           }}>
-            {username}
+            {displayName}
           </div>
         </div>
 
