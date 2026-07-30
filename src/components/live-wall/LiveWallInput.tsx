@@ -52,7 +52,6 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
   // especially on a short wall or when opening upward past the top edge. Anchor
   // each popup above its trigger button, clamped to the viewport.
   type PopupPos = { left: number; bottom: number; width: number; maxHeight: number };
-  const [stickerPos, setStickerPos] = useState<PopupPos | null>(null);
   const [emojiPos, setEmojiPos] = useState<PopupPos | null>(null);
 
   const computePopupPos = useCallback(
@@ -77,11 +76,9 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
     // Drop stale coordinates on close so reopening after a scroll doesn't
     // flash the popup at its old position for a frame.
     if (!showEmojis) setEmojiPos(null);
-    if (!showStickers) setStickerPos(null);
-    if (!showEmojis && !showStickers) return;
+    if (!showEmojis) return;
     const update = () => {
-      if (showEmojis) setEmojiPos(computePopupPos(emojiBtnRef.current, 320));
-      if (showStickers) setStickerPos(computePopupPos(stickerBtnRef.current, 420));
+      setEmojiPos(computePopupPos(emojiBtnRef.current, 320));
     };
     update();
     // rAF-coalesced + passive: computePopupPos reads layout
@@ -101,7 +98,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
       window.removeEventListener("scroll", onScroll, { capture: true });
       window.removeEventListener("resize", onScroll);
     };
-  }, [showEmojis, showStickers, computePopupPos]);
+  }, [showEmojis, computePopupPos]);
 
   // Close the (portaled) emoji picker on outside click
   useEffect(() => {
@@ -311,19 +308,10 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
             <Sparkles className="h-4 w-4" />
           </button>
         )}
-        {showStickers && stickerPos && createPortal(
+        {showStickers && createPortal(
           <StickerPicker
             onSelect={handleStickerSelect}
             onClose={() => setShowStickers(false)}
-            triggerRef={stickerBtnRef}
-            style={{
-              position: "fixed",
-              left: stickerPos.left,
-              bottom: stickerPos.bottom,
-              width: stickerPos.width,
-              maxHeight: stickerPos.maxHeight,
-              zIndex: 60,
-            }}
           />,
           document.body
         )}

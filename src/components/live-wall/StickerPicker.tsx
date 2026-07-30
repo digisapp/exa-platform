@@ -25,11 +25,6 @@ interface Sticker {
 interface Props {
   onSelect: (sticker: PickedSticker) => void;
   onClose: () => void;
-  /** Positioning supplied by the parent (portal-anchored, fixed). */
-  style?: React.CSSProperties;
-  /** Trigger button — excluded from the outside-click check so its own
-      click toggles the picker closed instead of mousedown-close → click-reopen. */
-  triggerRef?: React.RefObject<HTMLElement | null>;
 }
 
 const CATEGORIES = [
@@ -44,7 +39,7 @@ const CATEGORIES = [
   { id: "effects", label: "FX" },
 ];
 
-export function StickerPicker({ onSelect, onClose, style, triggerRef }: Props) {
+export function StickerPicker({ onSelect, onClose }: Props) {
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -66,24 +61,14 @@ export function StickerPicker({ onSelect, onClose, style, triggerRef }: Props) {
     };
   }, []);
 
-  // Close on outside click
+  // Close on Escape (the backdrop handles outside clicks)
   useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        containerRef.current && !containerRef.current.contains(target) &&
-        !(triggerRef?.current && triggerRef.current.contains(target))
-      ) {
-        onClose();
-      }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
     };
-    // Defer one tick so the opening click doesn't immediately close
-    const t = setTimeout(() => document.addEventListener("mousedown", onDocClick), 0);
-    return () => {
-      clearTimeout(t);
-      document.removeEventListener("mousedown", onDocClick);
-    };
-  }, [onClose, triggerRef]);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -113,11 +98,15 @@ export function StickerPicker({ onSelect, onClose, style, triggerRef }: Props) {
   };
 
   return (
-    <div
-      ref={containerRef}
-      style={style}
-      className="max-w-[calc(100vw-16px)] flex flex-col rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl overflow-hidden"
-    >
+    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-2 sm:p-4">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div
+        ref={containerRef}
+        className="relative w-full max-w-[440px] h-[min(600px,80vh)] flex flex-col rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl overflow-hidden"
+      >
       {/* Header: search */}
       <div className="shrink-0 p-2.5 border-b border-white/10">
         <div className="relative">
@@ -151,10 +140,7 @@ export function StickerPicker({ onSelect, onClose, style, triggerRef }: Props) {
       </div>
 
       {/* Grid */}
-      {/* The parent's fixed-position maxHeight still clamps on short
-          viewports; this cap just keeps the popup reasonable on tall ones.
-          280px showed ~2.5 rows — far too cramped for a 128-sticker library. */}
-      <div className="max-h-[520px] min-h-0 flex-1 overflow-y-auto p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto p-2">
         {loading ? (
           <div className="py-12 text-center text-white/40">
             <Loader2 className="h-5 w-5 animate-spin inline" />
@@ -193,6 +179,7 @@ export function StickerPicker({ onSelect, onClose, style, triggerRef }: Props) {
       <div className="shrink-0 px-3 py-1.5 border-t border-white/10 text-[10px] text-white/30 flex items-center gap-1">
         <Sparkles className="h-3 w-3 text-pink-400/60" />
         EXA original stickers
+      </div>
       </div>
     </div>
   );
