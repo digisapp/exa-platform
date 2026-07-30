@@ -20,3 +20,23 @@ and are idempotent (skip by name / existing model_id).
 Categories must match the picker tabs in
 `src/components/live-wall/StickerPicker.tsx`: `reactions`, `celebrations`,
 `love`, `fire`, `miami`, `models`, `effects`.
+
+## v2 juice pass (2026-07-30)
+
+- `bgremove.swift` — Apple Vision foreground segmentation → transparent PNG.
+  Compile once: `swiftc -O bgremove.swift -o bgremove` (macOS 14+). The same
+  engine as Photos' "lift subject"; no model downloads.
+- `diecut-lib.js` — die-cut compositor: cutout → trim → white ~10px rim +
+  tinted glow on a 512 transparent canvas, plus the EXA wordmark / Digis
+  @username-pill overlays.
+- `regen-words-v2.js` — renders the v2 typography set for BOTH platforms
+  (EXA: Archivo Black, -8° skew, 80s chrome gradients + extrusion; Digis:
+  Titan One bubble letters + puffy extrusion + white die-cut) into `v2/`
+  with a manifest.
+- `apply-v2.js [words|faces|all]` — uploads v2 renders and swaps the DB rows
+  by sticker name (old storage objects are kept so already-sent messages
+  keep rendering). `faces` re-cuts every model/creator sticker through
+  Vision from the source photo.
+
+Fonts: Archivo Black + Titan One (both OFL) must be in `~/Library/Fonts`
+(quarantine cleared — `xattr -c`) for sharp/CoreText to see them.
