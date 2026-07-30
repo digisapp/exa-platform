@@ -1,19 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { logger } from "@/lib/logger";
 import { isContentMediaPath } from "@/lib/content-media";
-
-async function isAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
+import { withAuth } from "@/lib/auth/with-auth";
 
 /**
  * POST /api/admin/models/[id]/images
@@ -23,31 +13,9 @@ async function isAdmin(supabase: any, userId: string) {
  * avatar   — sets profile_photo_url to the content item's media_url
  * portrait — sets is_primary=true on the content item (drives the hero portrait)
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: modelId } = await params;
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rateLimitResponse = await checkEndpointRateLimit(
-      request,
-      "general",
-      user.id
-    );
-    if (rateLimitResponse) return rateLimitResponse;
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const POST = withAuth<{ id: string }>(
+  async ({ request, params, user, supabase }) => {
+    const { id: modelId } = params;
 
     const body = await request.json();
     const { type, contentItemId, clear } = body as {
@@ -210,11 +178,6 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true, url: item.media_url });
-  } catch (error) {
-    logger.error("[Admin Images] Route error", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

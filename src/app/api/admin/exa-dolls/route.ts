@@ -1,32 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { escapeIlike } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 
-async function isAdmin(supabase: ReturnType<typeof createServiceRoleClient>, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
 // GET: List models with their Exa Doll status
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+export const GET = withAuth(
+  async ({ request }) => {
     const admin = createServiceRoleClient();
-    if (!(await isAdmin(admin, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
@@ -83,8 +64,6 @@ export async function GET(request: NextRequest) {
       page,
       pageSize,
     });
-  } catch (error) {
-    logger.error("[ExaDolls] GET error", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);

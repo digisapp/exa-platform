@@ -1,38 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { withAuth } from "@/lib/auth/with-auth";
 
-async function isAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: modelId } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Rate limit
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
+export const DELETE = withAuth<{ id: string }>(
+  async ({ params, user, supabase }) => {
+    const { id: modelId } = params;
 
     // Get the model's data first (for audit logging)
     const { data: model, error: modelError } = await supabase
@@ -96,9 +69,6 @@ export async function DELETE(
       success: true,
       message: "Model deleted successfully"
     });
-  } catch (error: unknown) {
-    console.error("Delete model error:", error);
-    const message = error instanceof Error ? error.message : "Failed to delete model";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

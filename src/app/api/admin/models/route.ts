@@ -1,37 +1,17 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { escapeIlike } from "@/lib/utils";
 import { MODEL_EARNING_ACTIONS } from "@/lib/coin-config";
 import { batchQuery, fetchPaged } from "@/lib/supabase/batch";
+import { withAuth } from "@/lib/auth/with-auth";
 
 // Admin client for efficient RPC calls
 const getAdminClient = () => createServiceRoleClient();
 
-async function isAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
 const MAX_COMPUTED_SORT_MODELS = 10000; // Cap for computed field sorting
 
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+export const GET = withAuth(
+  async ({ request, supabase }) => {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "50");
@@ -552,9 +532,6 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to fetch models";
-    console.error("Admin models error:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);

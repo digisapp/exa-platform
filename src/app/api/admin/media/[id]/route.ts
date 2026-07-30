@@ -1,37 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 
-async function isAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Rate limit
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
-
+export const PATCH = withAuth<{ id: string }>(
+  async ({ request, params, supabase }) => {
+    const { id } = params;
     const body = await request.json();
     const { status } = body;
 
@@ -51,8 +23,6 @@ export async function PATCH(
     if (error) throw error;
 
     return NextResponse.json({ success: true });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to update media professional";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

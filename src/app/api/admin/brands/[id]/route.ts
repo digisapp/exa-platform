@@ -1,41 +1,15 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { withAuth } from "@/lib/auth/with-auth";
 import { sendBrandApprovalEmail } from "@/lib/email";
 import { z } from "zod";
 
 const brandPatchSchema = z.object({ is_verified: z.boolean() }).strict();
 
-async function isAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const PATCH = withAuth<{ id: string }>(
+  async ({ request, params }) => {
+    const { id } = params;
 
     const body = await request.json();
     const parsed = brandPatchSchema.safeParse(body);
@@ -81,31 +55,13 @@ export async function PATCH(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to update brand";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const DELETE = withAuth<{ id: string }>(
+  async ({ params, user, supabase }) => {
+    const { id } = params;
 
     // Use service role client to bypass RLS for brand deletes
     const adminClient = createServiceRoleClient();
@@ -127,8 +83,6 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to delete brand";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

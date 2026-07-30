@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import {
   generateExaDollPrompt,
   generateExaDollBase,
@@ -11,34 +11,12 @@ import {
 } from "@/lib/exa-dolls";
 import { logger } from "@/lib/logger";
 
-async function isAdmin(supabase: ReturnType<typeof createServiceRoleClient>, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
 // POST: Generate Exa Doll for a specific model
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ modelId: string }> }
-) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+export const POST = withAuth<{ modelId: string }>(
+  async ({ request, params }) => {
     const admin = createServiceRoleClient();
-    if (!(await isAdmin(admin, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
-    const { modelId } = await params;
+    const { modelId } = params;
 
     // Fetch model data
     const { data: model, error: fetchError } = await admin
@@ -119,31 +97,16 @@ export async function POST(
       baseImageUrl: baseResult.baseImageUrl,
       modelId,
     });
-  } catch (error) {
-    logger.error("[ExaDolls] POST error", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);
 
 // GET: Check face swap status and finalize
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ modelId: string }> }
-) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+export const GET = withAuth<{ modelId: string }>(
+  async ({ request, params }) => {
     const admin = createServiceRoleClient();
-    if (!(await isAdmin(admin, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
-    const { modelId } = await params;
+    const { modelId } = params;
     const { searchParams } = new URL(request.url);
     const predictionId = searchParams.get("predictionId");
 
@@ -176,31 +139,16 @@ export async function GET(
     }
 
     return NextResponse.json({ status: "processing" });
-  } catch (error) {
-    logger.error("[ExaDolls] GET error", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);
 
 // PATCH: Update skin tone or regenerate prompt
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ modelId: string }> }
-) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+export const PATCH = withAuth<{ modelId: string }>(
+  async ({ request, params }) => {
     const admin = createServiceRoleClient();
-    if (!(await isAdmin(admin, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
-    const { modelId } = await params;
+    const { modelId } = params;
     const body = await request.json();
 
     const updates: Record<string, string | null> = {};
@@ -220,11 +168,9 @@ export async function PATCH(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    logger.error("[ExaDolls] PATCH error", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);
 
 /**
  * Download image from external URL and save to Supabase storage

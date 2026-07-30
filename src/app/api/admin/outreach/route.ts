@@ -1,8 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { withAuth } from "@/lib/auth/with-auth";
 import { escapeIlike } from "@/lib/utils";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 const PAGE_SIZE = 50;
 
@@ -15,29 +14,8 @@ const VALID_CATEGORIES = [
 ];
 const VALID_TYPES = ["outreach", "sponsor"];
 
-async function isAdmin(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+export const GET = withAuth(
+  async ({ request }) => {
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const search = searchParams.get("search") || "";
@@ -96,9 +74,6 @@ export async function GET(request: NextRequest) {
         converted: convertedCount || 0,
       },
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("Admin outreach list error:", message);
-    return NextResponse.json({ error: "Failed to load outreach contacts" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

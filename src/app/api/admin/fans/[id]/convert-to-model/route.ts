@@ -1,34 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
-
-async function isAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
+import { withAuth } from "@/lib/auth/with-auth";
 
 // POST - Convert fan to model
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: fanId } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const POST = withAuth<{ id: string }>(
+  async ({ params, user, supabase }) => {
+    const { id: fanId } = params;
 
     const adminClient = createServiceRoleClient();
 
@@ -95,9 +73,6 @@ export async function POST(
       message: "Fan converted to model successfully",
       username,
     });
-  } catch (error: unknown) {
-    console.error("Convert to model error:", error);
-    const message = error instanceof Error ? error.message : "Failed to convert to model";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);

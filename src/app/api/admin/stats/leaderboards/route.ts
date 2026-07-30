@@ -1,33 +1,14 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { MODEL_EARNING_ACTIONS } from "@/lib/coin-config";
 import { batchQuery, fetchPaged } from "@/lib/supabase/batch";
 
 const MAX_MODELS = 10000;
 const TOP_N = 30;
 
-async function isAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
-export async function GET() {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+export const GET = withAuth(
+  async () => {
     const adminClient = createServiceRoleClient();
 
     // All claimed, active models (same population as /admin/models)
@@ -171,9 +152,6 @@ export async function GET() {
         },
       }
     );
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to load leaderboards";
-    console.error("Admin leaderboards error:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);

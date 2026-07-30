@@ -1,7 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
-import { NextRequest, NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const VALID_STATUSES = ["new", "contacted", "responded", "interested", "not_interested", "converted", "do_not_contact"] as const;
@@ -14,32 +13,9 @@ const patchSchema = z.object({
   message: "At least one field is required",
 });
 
-async function isAdmin(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const PATCH = withAuth<{ id: string }>(
+  async ({ request, params }) => {
+    const { id } = params;
 
     let body;
     try {
@@ -72,30 +48,13 @@ export async function PATCH(
     if (error) throw new Error(error.message);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("Admin outreach update error:", message);
-    return NextResponse.json({ error: "Failed to update contact" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const DELETE = withAuth<{ id: string }>(
+  async ({ params }) => {
+    const { id } = params;
 
     const adminClient = createServiceRoleClient();
     const { error } = await adminClient
@@ -106,9 +65,6 @@ export async function DELETE(
     if (error) throw new Error(error.message);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("Admin outreach delete error:", message);
-    return NextResponse.json({ error: "Failed to delete contact" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

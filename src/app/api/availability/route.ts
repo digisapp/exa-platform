@@ -1,16 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { withAuth } from "@/lib/auth/with-auth";
 import { logger } from "@/lib/logger";
-
-async function isAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
 
 // GET - Fetch available slots (public)
 export async function GET(request: NextRequest) {
@@ -65,23 +57,8 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - Create new slot(s) (admin only)
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Rate limit
-    const rateLimitResponse2 = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse2) return rateLimitResponse2;
-
+export const POST = withAuth(
+  async ({ request, supabase }) => {
     const body = await request.json();
     const { slots } = body;
 
@@ -129,33 +106,13 @@ export async function POST(request: NextRequest) {
       slots: data,
       message: `Created ${data.length} slot(s)`,
     });
-  } catch (error) {
-    logger.error("Create slots error", error);
-    return NextResponse.json(
-      { error: "Failed to create slots" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);
 
 // DELETE - Remove slot(s) (admin only)
-export async function DELETE(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Rate limit
-    const rateLimitResponse3 = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse3) return rateLimitResponse3;
-
+export const DELETE = withAuth(
+  async ({ request, supabase }) => {
     const { searchParams } = new URL(request.url);
     const slotId = searchParams.get("id");
     const date = searchParams.get("date");
@@ -189,14 +146,9 @@ export async function DELETE(request: NextRequest) {
       success: true,
       message: slotId ? "Slot deleted" : `Slots for ${date} deleted`,
     });
-  } catch (error) {
-    logger.error("Delete slots error", error);
-    return NextResponse.json(
-      { error: "Failed to delete slots" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);
 
 // Helper to add minutes to time string
 function addMinutes(time: string, minutes: number): string {
