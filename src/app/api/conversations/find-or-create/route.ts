@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { escapeIlike } from "@/lib/utils";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { assertNotSuspended } from "@/lib/auth/suspension";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -52,6 +53,11 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Suspended/deleted fans can't open threads (message sends are already
+    // gated; this closes the empty-thread entry point too).
+    const blocked = await assertNotSuspended(actor.id);
+    if (blocked) return blocked;
 
     // Look up model by username (case-insensitive)
     const { data: targetModel, error: modelError } = await supabase
