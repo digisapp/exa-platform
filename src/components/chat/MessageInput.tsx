@@ -90,41 +90,11 @@ export function MessageInput({
   const [showPriceInput, setShowPriceInput] = useState(false);
   const [virtualFirstWarningOpen, setVirtualFirstWarningOpen] = useState(false);
   const [showStickers, setShowStickers] = useState(false);
-  const [stickerPos, setStickerPos] = useState<{ left: number; bottom: number; width: number; maxHeight: number } | null>(null);
   const stickerBtnRef = useRef<HTMLButtonElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const draftKey = conversationId ? `${DRAFT_PREFIX}${conversationId}` : null;
 
   const isStickerAttachment = attachedMedia?.type === "image/sticker";
-
-  // Sticker picker is portal-anchored above its trigger (same pattern as the
-  // Live Wall composer) so it escapes the composer's stacking context.
-  const computeStickerPos = useCallback(() => {
-    const btn = stickerBtnRef.current;
-    if (typeof window === "undefined" || !btn) return null;
-    const r = btn.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const width = Math.min(420, vw - 16);
-    let left = r.left + r.width / 2 - width / 2;
-    left = Math.max(8, Math.min(left, vw - width - 8));
-    return {
-      left,
-      bottom: window.innerHeight - r.top + 8,
-      width,
-      maxHeight: Math.max(120, r.top - 16),
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!showStickers) {
-      setStickerPos(null);
-      return;
-    }
-    const update = () => setStickerPos(computeStickerPos());
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, [showStickers, computeStickerPos]);
 
   // Auto-grow fallback: iOS Safari doesn't support CSS `field-sizing`, which
   // the shared Textarea relies on. Cap matches the existing max-h-32 (128px).
@@ -677,19 +647,10 @@ export function MessageInput({
         >
           <StickerIcon className="h-5 w-5" />
         </button>
-        {showStickers && stickerPos && createPortal(
+        {showStickers && createPortal(
           <StickerPicker
             onSelect={handleStickerSelect}
             onClose={() => setShowStickers(false)}
-            triggerRef={stickerBtnRef}
-            style={{
-              position: "fixed",
-              left: stickerPos.left,
-              bottom: stickerPos.bottom,
-              width: stickerPos.width,
-              maxHeight: stickerPos.maxHeight,
-              zIndex: 60,
-            }}
           />,
           document.body
         )}
