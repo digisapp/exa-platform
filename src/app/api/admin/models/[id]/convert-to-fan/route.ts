@@ -1,33 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
+import { withAuth } from "@/lib/auth/with-auth";
 
-async function isAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: modelId } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const POST = withAuth<{ id: string }>(
+  async ({ params, user, supabase }) => {
+    const { id: modelId } = params;
 
     // Fetch just enough for the 404 check and the audit log — the actual
     // conversion is a single atomic RPC below.
@@ -89,9 +67,6 @@ export async function POST(
       success: true,
       message: "Model converted to fan successfully"
     });
-  } catch (error: unknown) {
-    console.error("Convert to fan error:", error);
-    const message = error instanceof Error ? error.message : "Failed to convert model to fan";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);

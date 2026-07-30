@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
+import { withAuth } from "@/lib/auth/with-auth";
 import { z } from "zod";
 
 const mergeSchema = z.object({
@@ -11,25 +11,9 @@ const mergeSchema = z.object({
 
 const adminClient = createServiceRoleClient();
 
-async function isAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
 // GET - Compare two models for merge preview
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user || !(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+export const GET = withAuth(
+  async ({ request }) => {
     const { searchParams } = new URL(request.url);
     const keepUsername = searchParams.get("keep");
     const deleteUsername = searchParams.get("delete");
@@ -125,22 +109,13 @@ export async function GET(request: NextRequest) {
         ? "Both accounts have logins - will need to pick which auth to keep"
         : null,
     });
-  } catch (error) {
-    console.error("Merge preview error:", error);
-    return NextResponse.json({ error: "Failed to preview merge" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);
 
 // POST - Execute the merge
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user || !(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+export const POST = withAuth(
+  async ({ request, user, supabase }) => {
     const body = await request.json();
     const parsed = mergeSchema.safeParse(body);
     if (!parsed.success) {
@@ -288,11 +263,6 @@ export async function POST(request: NextRequest) {
       keptModel: keepUsername,
       deletedModel: deleteUsername,
     });
-  } catch (error: any) {
-    console.error("Merge error:", error);
-    return NextResponse.json({
-      error: "Failed to merge models",
-      details: error?.message
-    }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);

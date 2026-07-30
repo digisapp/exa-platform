@@ -1,10 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { processImage, isProcessableImage } from "@/lib/image-processing";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { logger } from "@/lib/logger";
+import { withAuth } from "@/lib/auth/with-auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -12,34 +11,9 @@ export const maxDuration = 60;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
-async function isAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: modelId } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const POST = withAuth<{ id: string }>(
+  async ({ request, params, user, supabase }) => {
+    const { id: modelId } = params;
 
     // Verify model exists
     const adminDb = createServiceRoleClient();
@@ -177,11 +151,6 @@ export async function POST(
       width: finalWidth,
       height: finalHeight,
     });
-  } catch (error) {
-    logger.error("[Admin Photo] Route error", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

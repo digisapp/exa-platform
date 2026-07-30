@@ -1,36 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
-
-async function isAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
+import { withAuth } from "@/lib/auth/with-auth";
 
 // GET - Admin dashboard for SwimCrown
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!(await isAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
-
+export const GET = withAuth(
+  async () => {
     const adminClient = createServiceRoleClient();
 
     // Get current competition (latest year)
@@ -104,11 +78,6 @@ export async function GET(request: NextRequest) {
       },
       contestants: formattedContestants,
     });
-  } catch (error) {
-    console.error("Admin SwimCrown GET error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch SwimCrown data" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);
