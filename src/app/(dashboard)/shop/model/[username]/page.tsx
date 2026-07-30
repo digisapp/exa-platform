@@ -18,6 +18,7 @@ import {
   Sparkles,
   ExternalLink,
 } from "lucide-react";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 
 
 interface Product {
@@ -99,10 +100,6 @@ export default function ModelStorefrontPage() {
 
     fetchModelShop();
   }, [username, router]);
-
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
-  };
 
   const formatDiscount = (discount: { type: string; value: number } | null) => {
     if (!discount) return null;
@@ -329,8 +326,6 @@ function ProductCard({
   product: Product;
   affiliateCode: string | null;
 }) {
-  const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
-
   return (
     <Link href={`/shop/products/${product.id}${affiliateCode ? `?ref=${affiliateCode}` : ""}`}>
       <Card className="group overflow-hidden hover:border-pink-500/50 transition-all hover:shadow-lg hover:shadow-pink-500/10">

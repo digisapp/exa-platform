@@ -5,20 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { Bell, Clock, Coins, Heart, MessageCircle, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { formatDistanceToNowStrict } from "date-fns";
 import { cn } from "@/lib/utils";
+import { timeAgo } from "@/lib/date";
 import type { FeedItem } from "@/app/api/notifications/feed/route";
 
 interface Props {
   initialUnreadCount?: number;
-}
-
-function timeAgo(date: string) {
-  try {
-    return formatDistanceToNowStrict(new Date(date), { addSuffix: true });
-  } catch {
-    return "";
-  }
 }
 
 // Every money row (earned coins) routes to /wallet and renders the amber

@@ -32,6 +32,7 @@ import {
   Cell,
 } from "recharts";
 import { createClient } from "@/lib/supabase/client";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 
 interface RevenueDay {
   date: string;
@@ -78,8 +79,6 @@ export default function AdminShopAnalyticsPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("30");
-
-  const formatPrice = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const fetchAnalytics = useCallback(async () => {
     const supabase = createClient();

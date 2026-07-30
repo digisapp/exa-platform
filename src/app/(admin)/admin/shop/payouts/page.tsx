@@ -29,6 +29,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 import { toast } from "sonner";
 
 interface BrandOwed {
@@ -73,8 +74,6 @@ export default function AdminShopPayoutsPage() {
   const [saving, setSaving] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("paypal");
   const [paymentReference, setPaymentReference] = useState("");
-
-  const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("en-US", {

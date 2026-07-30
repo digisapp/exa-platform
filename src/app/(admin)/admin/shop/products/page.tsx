@@ -37,6 +37,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 import { toast } from "sonner";
 
 interface Product {
@@ -339,8 +340,6 @@ export default function AdminShopProductsPage() {
     setVariantForm({ sku: "", size: "", color: "", color_hex: "", stock_quantity: 0, price_override: "" });
     setVariantDialogOpen(true);
   };
-
-  const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
   const getTotalStock = (variants: Variant[] = []) => {
     return variants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0);

@@ -16,6 +16,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 
 interface ShopStats {
   brands: { total: number; active: number };
@@ -93,10 +94,6 @@ export default function AdminShopPage() {
 
     fetchStats();
   }, []);
-
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
-  };
 
   if (loading) {
     return (

@@ -25,6 +25,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 
 interface CartItem {
   id: string;
@@ -149,10 +150,6 @@ export default function CartPage() {
   const handleCheckout = () => {
     if (!cart?.items?.length) return;
     router.push("/shop/checkout");
-  };
-
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
   };
 
   if (loading) {

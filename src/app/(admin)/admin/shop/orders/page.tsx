@@ -31,6 +31,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 import { toast } from "sonner";
 
 interface OrderItem {
@@ -163,8 +164,6 @@ export default function AdminShopOrdersPage() {
       toast.error("Failed to update item");
     }
   };
-
-  const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {

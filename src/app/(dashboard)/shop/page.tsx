@@ -23,6 +23,7 @@ import {
   Tag,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 
 interface Brand {
   id: string;
@@ -148,10 +149,6 @@ export default function ShopPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     updateFilter("q", searchQuery);
-  };
-
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
   };
 
   return (

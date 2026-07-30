@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { FormFieldError } from "@/components/ui/form-field-error";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 
 interface CartItem {
   id: string;
@@ -161,10 +162,6 @@ export default function CheckoutPage() {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
   };
 
   if (loading) {

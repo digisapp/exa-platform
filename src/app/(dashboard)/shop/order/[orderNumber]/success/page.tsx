@@ -16,6 +16,7 @@ import {
   Mail,
   MapPin,
 } from "lucide-react";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 
 interface OrderItem {
   id: string;
@@ -84,10 +85,6 @@ export default function OrderSuccessPage() {
 
     fetchOrder();
   }, [orderNumber]);
-
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
-  };
 
   if (loading) {
     return (

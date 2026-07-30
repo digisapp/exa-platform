@@ -15,6 +15,7 @@ import {
   Clock,
   ExternalLink,
 } from "lucide-react";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 
 interface OrderItem {
   productName: string;
@@ -58,10 +59,6 @@ export default function OrdersPage() {
 
     fetchOrders();
   }, []);
-
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
-  };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
