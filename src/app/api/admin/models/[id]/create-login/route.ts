@@ -1,7 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import type { User } from "@supabase/supabase-js";
 
 import crypto from "crypto";
@@ -11,34 +10,9 @@ function generatePassword(): string {
   return crypto.randomBytes(18).toString("base64url");
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Rate limit
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
+export const POST = withAuth<{ id: string }>(
+  async ({ params, supabase }) => {
+    const { id } = params;
 
     // Get model
     const { data: model } = await supabase
@@ -183,11 +157,6 @@ export async function POST(
       email: model.email,
       message: "Login created. Password has been set — share it securely with the model.",
     });
-  } catch (error) {
-    console.error("Create login error:", error);
-    return NextResponse.json(
-      { error: "Failed to create login" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

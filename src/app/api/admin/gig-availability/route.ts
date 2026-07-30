@@ -1,20 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 
 // GET /api/admin/gig-availability?gig_id=X
 // Returns all confirmed models + their available dates for a gig
-export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { data: actor } = await (supabase.from("actors") as any)
-    .select("type")
-    .eq("user_id", user.id)
-    .single();
-  if (!actor || actor.type !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
+export const GET = withAuth(async ({ request }) => {
   const gig_id = request.nextUrl.searchParams.get("gig_id");
   if (!gig_id) return NextResponse.json({ error: "gig_id required" }, { status: 400 });
 
@@ -62,22 +52,12 @@ export async function GET(request: NextRequest) {
   }));
 
   return NextResponse.json({ models: result, total: result.length, responded: respondedIds.size });
-}
+}, { requireType: "admin" });
 
 // POST /api/admin/gig-availability
 // Admin override: toggle a single (gig, model, date) availability cell.
 // Body: { gig_id, model_id, date, available }
-export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { data: actor } = await (supabase.from("actors") as any)
-    .select("type")
-    .eq("user_id", user.id)
-    .single();
-  if (!actor || actor.type !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
+export const POST = withAuth(async ({ request }) => {
   const body = await request.json().catch(() => null);
   const gig_id: string | undefined = body?.gig_id;
   const model_id: string | undefined = body?.model_id;
@@ -110,4 +90,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ ok: true });
-}
+}, { requireType: "admin" });

@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { withAuth } from "@/lib/auth/with-auth";
 import { submitVideoGeneration, getVideoStatus, downloadImage } from "@/lib/xai-image";
 import { z } from "zod";
 
@@ -30,72 +29,96 @@ const saveSchema = z.object({
  * POST /api/admin/ai-studio/video
  * Submit video generation or check status
  */
-export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { data: actor } = await (supabase.from("actors") as any)
-    .select("type")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!actor || actor.type !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const rateLimited = await checkEndpointRateLimit(request, "uploads", user.id);
-  if (rateLimited) return rateLimited;
-
-  let body: any;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  // Save an existing media URL to storage
-  if (body.save_url) {
-    const parsed = saveSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
-    }
-
+export const POST = withAuth(
+  async ({ request }) => {
+    let body: any;
     try {
-      const admin = createServiceRoleClient();
-      const { buffer, contentType } = await downloadImage(parsed.data.save_url);
-      const isVideoContent = contentType.includes("video") || parsed.data.save_url.includes(".mp4");
-      const ext = isVideoContent ? "mp4" : "png";
-      const storagePath = `ai-studio/${isVideoContent ? "video" : "img"}-${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await admin.storage
-        .from("portfolio")
-        .upload(storagePath, buffer, {
-          contentType: isVideoContent ? "video/mp4" : contentType,
-          cacheControl: "31536000",
-          upsert: true,
-        });
-
-      if (uploadError) throw new Error(uploadError.message);
-
-      const {
-        data: { publicUrl },
-      } = admin.storage.from("portfolio").getPublicUrl(storagePath);
-
-      return NextResponse.json({ saved_url: `${publicUrl}?v=${Date.now()}` });
-    } catch (error: any) {
-      return NextResponse.json({ error: error.message || "Save failed" }, { status: 500 });
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
-  }
 
-  // Check if this is a status poll or a new generation
-  if (body.request_id) {
-    // Status polling
-    const parsed = statusSchema.safeParse(body);
+    // Save an existing media URL to storage
+    if (body.save_url) {
+      const parsed = saveSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+      }
+
+      try {
+        const admin = createServiceRoleClient();
+        const { buffer, contentType } = await downloadImage(parsed.data.save_url);
+        const isVideoContent = contentType.includes("video") || parsed.data.save_url.includes(".mp4");
+        const ext = isVideoContent ? "mp4" : "png";
+        const storagePath = `ai-studio/${isVideoContent ? "video" : "img"}-${Date.now()}.${ext}`;
+
+        const { error: uploadError } = await admin.storage
+          .from("portfolio")
+          .upload(storagePath, buffer, {
+            contentType: isVideoContent ? "video/mp4" : contentType,
+            cacheControl: "31536000",
+            upsert: true,
+          });
+
+        if (uploadError) throw new Error(uploadError.message);
+
+        const {
+          data: { publicUrl },
+        } = admin.storage.from("portfolio").getPublicUrl(storagePath);
+
+        return NextResponse.json({ saved_url: `${publicUrl}?v=${Date.now()}` });
+      } catch (error: any) {
+        return NextResponse.json({ error: error.message || "Save failed" }, { status: 500 });
+      }
+    }
+
+    // Check if this is a status poll or a new generation
+    if (body.request_id) {
+      // Status polling
+      const parsed = statusSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+          { status: 400 }
+        );
+      }
+
+      try {
+        const status = await getVideoStatus(parsed.data.request_id);
+
+        // If done and save requested, save to storage
+        if (status.status === "done" && status.video?.url && parsed.data.save_to_storage) {
+          try {
+            const admin = createServiceRoleClient();
+            const { buffer, contentType } = await downloadImage(status.video.url);
+            const storagePath = `ai-studio/video-${Date.now()}.mp4`;
+
+            const { error: uploadError } = await admin.storage
+              .from("portfolio")
+              .upload(storagePath, buffer, { contentType: contentType || "video/mp4", cacheControl: "31536000", upsert: true });
+
+            if (!uploadError) {
+              const {
+                data: { publicUrl },
+              } = admin.storage.from("portfolio").getPublicUrl(storagePath);
+              return NextResponse.json({
+                ...status,
+                saved_url: `${publicUrl}?v=${Date.now()}`,
+              });
+            }
+          } catch (err) {
+            console.error("Failed to save video to storage:", err);
+          }
+        }
+
+        return NextResponse.json(status);
+      } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+    }
+
+    // New video generation
+    const parsed = videoSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
@@ -104,61 +127,20 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const status = await getVideoStatus(parsed.data.request_id);
+      const requestId = await submitVideoGeneration({
+        prompt: parsed.data.prompt,
+        duration: parsed.data.duration,
+        aspect_ratio: parsed.data.aspect_ratio,
+        resolution: parsed.data.resolution,
+        image_url: parsed.data.image_url,
+      });
 
-      // If done and save requested, save to storage
-      if (status.status === "done" && status.video?.url && parsed.data.save_to_storage) {
-        try {
-          const admin = createServiceRoleClient();
-          const { buffer, contentType } = await downloadImage(status.video.url);
-          const storagePath = `ai-studio/video-${Date.now()}.mp4`;
-
-          const { error: uploadError } = await admin.storage
-            .from("portfolio")
-            .upload(storagePath, buffer, { contentType: contentType || "video/mp4", cacheControl: "31536000", upsert: true });
-
-          if (!uploadError) {
-            const {
-              data: { publicUrl },
-            } = admin.storage.from("portfolio").getPublicUrl(storagePath);
-            return NextResponse.json({
-              ...status,
-              saved_url: `${publicUrl}?v=${Date.now()}`,
-            });
-          }
-        } catch (err) {
-          console.error("Failed to save video to storage:", err);
-        }
-      }
-
-      return NextResponse.json(status);
+      return NextResponse.json({ request_id: requestId });
     } catch (error: any) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      const message = error?.message || "Video generation failed";
+      const status = message.includes("429") ? 429 : 500;
+      return NextResponse.json({ error: message }, { status });
     }
-  }
-
-  // New video generation
-  const parsed = videoSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
-      { status: 400 }
-    );
-  }
-
-  try {
-    const requestId = await submitVideoGeneration({
-      prompt: parsed.data.prompt,
-      duration: parsed.data.duration,
-      aspect_ratio: parsed.data.aspect_ratio,
-      resolution: parsed.data.resolution,
-      image_url: parsed.data.image_url,
-    });
-
-    return NextResponse.json({ request_id: requestId });
-  } catch (error: any) {
-    const message = error?.message || "Video generation failed";
-    const status = message.includes("429") ? 429 : 500;
-    return NextResponse.json({ error: message }, { status });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "uploads" }
+);

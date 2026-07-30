@@ -1,40 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { escapeIlike } from "@/lib/utils";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { withAuth } from "@/lib/auth/with-auth";
 
 // Admin client for bypassing RLS
 const adminClient = createServiceRoleClient();
 
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-
-    // Auth check - must be admin
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if user is admin
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("type")
-      .eq("user_id", user.id)
-      .single();
-
-    if (actor?.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Rate limit
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
-
+export const GET = withAuth(
+  async ({ request }) => {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get("action");
 
@@ -370,8 +343,6 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-  } catch (error) {
-    console.error("Admin messages API error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

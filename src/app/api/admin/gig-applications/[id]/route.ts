@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { sendGigApplicationAcceptedEmail, sendGigWaitlistedEmail } from "@/lib/email";
 import { postLiveWallSystemMessage } from "@/lib/live-wall-system";
@@ -122,30 +122,10 @@ async function promoteFromWaitlist(adminClient: SupabaseClient, gigId: string, e
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withAuth<{ id: string }>(
+  async ({ request, params, user, supabase }) => {
   try {
-    const { id } = await params;
-    const supabase = await createClient();
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const { id } = params;
 
     const body = await request.json();
     let { status } = body;
@@ -353,6 +333,8 @@ export async function PATCH(
       },
     });
   } catch (error: unknown) {
+    // Keep the specific error message in the response (the wrapper's generic
+    // 500 would hide it from the admin UI).
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Gig application update error:", errorMessage, error);
     return NextResponse.json(
@@ -360,4 +342,6 @@ export async function PATCH(
       { status: 500 }
     );
   }
-}
+  },
+  { requireType: "admin" }
+);

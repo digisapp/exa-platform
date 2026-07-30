@@ -1,40 +1,14 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
-async function verifyAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
 // DELETE - Revoke an assignment
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string; assignmentId: string }> }
-) {
-  try {
-    const { id: itemId, assignmentId } = await params;
-    const supabase = await createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rateLimitResult = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResult) return rateLimitResult;
-
-    if (!(await verifyAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const DELETE = withAuth<{ id: string; assignmentId: string }>(
+  async ({ params }) => {
+    const { id: itemId, assignmentId } = params;
 
     // Verify assignment exists and belongs to this item
     const { data: assignment } = await adminClient.from("content_assignments" as any)
@@ -57,8 +31,6 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    logger.error("Revoke assignment error", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

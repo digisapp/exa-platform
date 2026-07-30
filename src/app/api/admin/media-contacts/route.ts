@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -29,29 +29,9 @@ const contactSchema = z.object({
   last_contacted_at: z.string().datetime().optional().nullable(),
 });
 
-async function getAdminClient() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Unauthorized", status: 401 };
-
-  const { data: actor } = await (supabase as any)
-    .from("actors")
-    .select("type")
-    .eq("user_id", user.id)
-    .single() as { data: { type: string } | null };
-
-  if (!actor || actor.type !== "admin") return { error: "Forbidden", status: 403 };
-
-  return { adminClient: createServiceRoleClient() };
-}
-
 // GET - list all media contacts with optional search/filter
-export async function GET(request: NextRequest) {
-  const auth = await getAdminClient();
-  if ("error" in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
-  }
-  const { adminClient } = auth;
+export const GET = withAuth(async ({ request }) => {
+  const adminClient = createServiceRoleClient();
 
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") || "";
@@ -80,15 +60,11 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ contacts: data || [] });
-}
+}, { requireType: "admin" });
 
 // POST - create a new media contact
-export async function POST(request: NextRequest) {
-  const auth = await getAdminClient();
-  if ("error" in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
-  }
-  const { adminClient } = auth;
+export const POST = withAuth(async ({ request }) => {
+  const adminClient = createServiceRoleClient();
 
   const body = await request.json();
   const parsed = contactSchema.safeParse(body);
@@ -117,15 +93,11 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ contact: data });
-}
+}, { requireType: "admin" });
 
 // PATCH - update a media contact
-export async function PATCH(request: NextRequest) {
-  const auth = await getAdminClient();
-  if ("error" in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
-  }
-  const { adminClient } = auth;
+export const PATCH = withAuth(async ({ request }) => {
+  const adminClient = createServiceRoleClient();
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
@@ -154,15 +126,11 @@ export async function PATCH(request: NextRequest) {
   }
 
   return NextResponse.json({ contact: data });
-}
+}, { requireType: "admin" });
 
 // DELETE - delete a media contact
-export async function DELETE(request: NextRequest) {
-  const auth = await getAdminClient();
-  if ("error" in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
-  }
-  const { adminClient } = auth;
+export const DELETE = withAuth(async ({ request }) => {
+  const adminClient = createServiceRoleClient();
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
@@ -180,4 +148,4 @@ export async function DELETE(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true });
-}
+}, { requireType: "admin" });

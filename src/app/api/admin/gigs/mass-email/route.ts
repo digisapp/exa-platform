@@ -1,36 +1,14 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { sendScheduleCallEmail } from "@/lib/email";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
 
-async function checkAdmin(supabase: any) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("id, type")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!actor || actor.type !== "admin") return null;
-  return user;
-}
-
 // GET - Fetch recipients list (for client-side batching)
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const user = await checkAdmin(supabase);
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+export const GET = withAuth(
+  async ({ request }) => {
     const { searchParams } = new URL(request.url);
     const gigId = searchParams.get("gigId");
     const recipientFilter = searchParams.get("recipientFilter");
@@ -93,24 +71,13 @@ export async function GET(request: NextRequest) {
         title: gig.title,
       },
     });
-  } catch (error) {
-    console.error("Mass email GET error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch recipients" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin" }
+);
 
 // POST - Send a batch of emails (called repeatedly by client)
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const user = await checkAdmin(supabase);
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+export const POST = withAuth(
+  async ({ request }) => {
     const body = await request.json();
     const { recipients, gig, template } = body;
 
@@ -199,11 +166,6 @@ export async function POST(request: NextRequest) {
       batchSize: batch.length,
       failedDetails: failedDetails.length > 0 ? failedDetails : undefined,
     });
-  } catch (error) {
-    console.error("Mass email POST error:", error);
-    return NextResponse.json(
-      { error: "Failed to send batch" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin" }
+);

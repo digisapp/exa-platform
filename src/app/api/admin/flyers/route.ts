@@ -1,90 +1,62 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { withAuth } from "@/lib/auth/with-auth";
 
 /**
  * GET /api/admin/flyers?event_id=xxx
  * List all generated flyers for an event
  */
-export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+export const GET = withAuth(
+  async ({ request }) => {
+    const eventId = request.nextUrl.searchParams.get("event_id");
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const admin = createServiceRoleClient();
 
-  const { data: actor } = await (supabase.from("actors") as any)
-    .select("type")
-    .eq("user_id", user.id)
-    .single();
+    let query = (admin.from("flyers" as any) as any)
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (!actor || actor.type !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+    if (eventId) {
+      query = query.eq("event_id", eventId);
+    }
 
-  const eventId = request.nextUrl.searchParams.get("event_id");
+    const { data, error } = await query;
 
-  const admin = createServiceRoleClient();
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-  let query = (admin.from("flyers" as any) as any)
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (eventId) {
-    query = query.eq("event_id", eventId);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ flyers: data || [] });
-}
+    return NextResponse.json({ flyers: data || [] });
+  },
+  { requireType: "admin" }
+);
 
 /**
  * DELETE /api/admin/flyers?id=xxx
  * Delete a specific flyer
  */
-export async function DELETE(request: NextRequest) {
-  const supabase = await createClient();
+export const DELETE = withAuth(
+  async ({ request }) => {
+    const flyerId = request.nextUrl.searchParams.get("id");
+    if (!flyerId) {
+      return NextResponse.json({ error: "id required" }, { status: 400 });
+    }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const admin = createServiceRoleClient();
 
-  const { data: actor } = await (supabase.from("actors") as any)
-    .select("type")
-    .eq("user_id", user.id)
-    .single();
+    // Get the flyer to find storage path
+    const { data: flyer } = await (admin.from("flyers" as any) as any)
+      .select("storage_path")
+      .eq("id", flyerId)
+      .single();
 
-  if (!actor || actor.type !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+    if (flyer?.storage_path) {
+      await admin.storage.from("portfolio").remove([flyer.storage_path]);
+    }
 
-  const flyerId = request.nextUrl.searchParams.get("id");
-  if (!flyerId) {
-    return NextResponse.json({ error: "id required" }, { status: 400 });
-  }
+    await (admin.from("flyers" as any) as any).delete().eq("id", flyerId);
 
-  const admin = createServiceRoleClient();
-
-  // Get the flyer to find storage path
-  const { data: flyer } = await (admin.from("flyers" as any) as any)
-    .select("storage_path")
-    .eq("id", flyerId)
-    .single();
-
-  if (flyer?.storage_path) {
-    await admin.storage.from("portfolio").remove([flyer.storage_path]);
-  }
-
-  await (admin.from("flyers" as any) as any).delete().eq("id", flyerId);
-
-  return NextResponse.json({ success: true });
-}
+    return NextResponse.json({ success: true });
+  },
+  { requireType: "admin" }
+);

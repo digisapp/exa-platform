@@ -1,30 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 
-async function checkAdmin(supabase: any) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("id, type")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!actor || actor.type !== "admin") return null;
-  return user;
-}
-
-export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const user = await checkAdmin(supabase);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async ({ request }) => {
   const body = await request.json().catch(() => ({}));
   const userIds: unknown = body?.userIds;
   if (!Array.isArray(userIds) || userIds.length === 0) {
@@ -54,4 +32,4 @@ export async function POST(request: NextRequest) {
     }
   }
   return NextResponse.json({ dobs });
-}
+}, { requireType: "admin" });

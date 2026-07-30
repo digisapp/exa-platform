@@ -1,34 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { sendPhotoRequestEmail } from "@/lib/email";
 import { approveModelApplication } from "@/lib/model-approval";
+import { withAuth } from "@/lib/auth/with-auth";
 
 // Update model application status (approve/reject/request_photo)
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const PATCH = withAuth<{ id: string }>(
+  async ({ request, params, actor, supabase }) => {
+    const { id } = params;
 
     const body = await request.json();
     const { status } = body;
@@ -165,40 +144,14 @@ export async function PATCH(
       success: true,
       status,
     });
-  } catch (error) {
-    console.error("Model application update error:", error);
-    return NextResponse.json(
-      { error: "Failed to update application" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin" }
+);
 
 // Delete model application (for spam)
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const DELETE = withAuth<{ id: string }>(
+  async ({ params }) => {
+    const { id } = params;
 
     // Use service role client to bypass RLS for delete
     const adminClient = createServiceRoleClient();
@@ -226,11 +179,6 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Model application delete error:", error);
-    return NextResponse.json(
-      { error: "Failed to delete application" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin" }
+);

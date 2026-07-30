@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { withAuth } from "@/lib/auth/with-auth";
 
 export const runtime = "nodejs";
 
@@ -16,86 +16,64 @@ const ALLOWED_TYPES: Record<string, string> = {
  * Body: { contentType: string }
  * Returns: { signedUrl, storagePath, publicUrl }
  */
-export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+export const POST = withAuth(
+  async ({ request }) => {
+    const { contentType } = await request.json();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!contentType || !ALLOWED_TYPES[contentType]) {
+      return NextResponse.json({ error: "Only PNG, WebP, and GIF files allowed" }, { status: 400 });
+    }
 
-  const { data: actor } = await (supabase.from("actors") as any)
-    .select("type")
-    .eq("user_id", user.id)
-    .single();
+    const admin = createServiceRoleClient();
+    const ext = ALLOWED_TYPES[contentType];
+    const storagePath = `flyers/overlays/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-  if (!actor || actor.type !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+    const { data: signedData, error: signError } = await admin.storage
+      .from("portfolio")
+      .createSignedUploadUrl(storagePath);
 
-  const { contentType } = await request.json();
+    if (signError || !signedData) {
+      return NextResponse.json({ error: signError?.message || "Failed to create upload URL" }, { status: 500 });
+    }
 
-  if (!contentType || !ALLOWED_TYPES[contentType]) {
-    return NextResponse.json({ error: "Only PNG, WebP, and GIF files allowed" }, { status: 400 });
-  }
+    const { data: { publicUrl } } = admin.storage
+      .from("portfolio")
+      .getPublicUrl(storagePath);
 
-  const admin = createServiceRoleClient();
-  const ext = ALLOWED_TYPES[contentType];
-  const storagePath = `flyers/overlays/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
-  const { data: signedData, error: signError } = await admin.storage
-    .from("portfolio")
-    .createSignedUploadUrl(storagePath);
-
-  if (signError || !signedData) {
-    return NextResponse.json({ error: signError?.message || "Failed to create upload URL" }, { status: 500 });
-  }
-
-  const { data: { publicUrl } } = admin.storage
-    .from("portfolio")
-    .getPublicUrl(storagePath);
-
-  return NextResponse.json({
-    signedUrl: signedData.signedUrl,
-    token: signedData.token,
-    storagePath,
-    publicUrl,
-  });
-}
+    return NextResponse.json({
+      signedUrl: signedData.signedUrl,
+      token: signedData.token,
+      storagePath,
+      publicUrl,
+    });
+  },
+  { requireType: "admin" }
+);
 
 /**
  * DELETE /api/admin/flyers/overlay
  * Removes an overlay image from Supabase Storage.
  * Body: { storagePath: string }
  */
-export async function DELETE(request: NextRequest) {
-  const supabase = await createClient();
+export const DELETE = withAuth(
+  async ({ request }) => {
+    const { storagePath } = await request.json();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!storagePath || typeof storagePath !== "string" || !storagePath.startsWith("flyers/overlays/")) {
+      return NextResponse.json({ error: "Invalid storage path" }, { status: 400 });
+    }
 
-  const { data: actor } = await (supabase.from("actors") as any)
-    .select("type")
-    .eq("user_id", user.id)
-    .single();
+    const admin = createServiceRoleClient();
 
-  if (!actor || actor.type !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+    const { error } = await admin.storage
+      .from("portfolio")
+      .remove([storagePath]);
 
-  const { storagePath } = await request.json();
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-  if (!storagePath || typeof storagePath !== "string" || !storagePath.startsWith("flyers/overlays/")) {
-    return NextResponse.json({ error: "Invalid storage path" }, { status: 400 });
-  }
-
-  const admin = createServiceRoleClient();
-
-  const { error } = await admin.storage
-    .from("portfolio")
-    .remove([storagePath]);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true });
-}
+    return NextResponse.json({ success: true });
+  },
+  { requireType: "admin" }
+);

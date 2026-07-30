@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { logger } from "@/lib/logger";
 
 /**
@@ -8,27 +8,8 @@ import { logger } from "@/lib/logger";
  * Fix models who have logins (user_id) but aren't approved
  * This is a one-time fix for models created before the bug was fixed
  */
-export async function POST() {
-  try {
-    const supabase = await createClient();
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+export const POST = withAuth(
+  async () => {
     // Use admin client to bypass RLS
     const adminClient = createServiceRoleClient();
 
@@ -76,40 +57,16 @@ export async function POST() {
         email: m.email,
       })),
     });
-  } catch (error) {
-    logger.error("Fix stuck models error", error);
-    return NextResponse.json(
-      { error: "Failed to fix stuck models" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin" }
+);
 
 /**
  * GET /api/admin/fix-stuck-models
  * Check how many models are stuck (without fixing them)
  */
-export async function GET() {
-  try {
-    const supabase = await createClient();
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+export const GET = withAuth(
+  async () => {
     // Use admin client to bypass RLS
     const adminClient = createServiceRoleClient();
 
@@ -135,11 +92,6 @@ export async function GET() {
         is_approved: m.is_approved,
       })) || [],
     });
-  } catch (error) {
-    logger.error("Check stuck models error", error);
-    return NextResponse.json(
-      { error: "Failed to check stuck models" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin" }
+);

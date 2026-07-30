@@ -1,8 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { sendMiamiSwimWeekProfileReminderEmail } from "@/lib/email";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { withAuth } from "@/lib/auth/with-auth";
 
 const adminClient = createServiceRoleClient();
 
@@ -10,29 +9,8 @@ const adminClient = createServiceRoleClient();
 // Supports two modes:
 // 1. { mswApplicants: true } - Send to MSW academy applicants without profile photos
 // 2. Default - Send to all approved models without profile photos
-export async function POST(request: NextRequest) {
-  try {
-    // Verify admin auth
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Rate limit
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
-
+export const POST = withAuth(
+  async ({ request }) => {
     // Get optional parameters from body
     let dryRun = false;
     let limit = 1000;
@@ -143,14 +121,9 @@ export async function POST(request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
       sentTo: dryRun ? sentTo : undefined,
     });
-  } catch (error) {
-    console.error("Send profile reminder error:", error);
-    return NextResponse.json(
-      { error: "Failed to send profile reminders" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);
 
 interface AcademyApplicant {
   id: string;

@@ -1,28 +1,11 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { logger } from "@/lib/logger";
 
 // POST /api/admin/restart-auctions - Restart all ended auctions that received no bids
-export async function POST() {
-  try {
-    // Auth check - admin only
-    const userSupabase = await createClient();
-    const { data: { user } } = await userSupabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: actor } = await (userSupabase as any)
-      .from("actors")
-      .select("type")
-      .eq("user_id", user.id)
-      .single();
-
-    if (actor?.type !== "admin") {
-      return NextResponse.json({ error: "Admin only" }, { status: 403 });
-    }
-
+export const POST = withAuth(
+  async () => {
     const supabase: any = createServiceRoleClient();
 
     // Step 1: End any active auctions that have expired (status still 'active' but ends_at passed)
@@ -88,8 +71,6 @@ export async function POST() {
       restarted,
       restartedAuctions,
     });
-  } catch (error) {
-    logger.error("Restart auctions error", error);
-    return NextResponse.json({ error: "Failed to restart auctions" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);
