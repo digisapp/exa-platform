@@ -1,28 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+export const POST = withAuth(
+  async ({ request }) => {
     const { gigId } = await request.json();
 
     if (!gigId) {
@@ -107,8 +88,6 @@ export async function POST(request: NextRequest) {
       total: modelIds.length,
       badge: badge.name,
     });
-  } catch (error) {
-    console.error("Sync badges error:", error);
-    return NextResponse.json({ error: "Failed to sync badges" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);

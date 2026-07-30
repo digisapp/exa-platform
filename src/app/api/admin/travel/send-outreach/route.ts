@@ -1,35 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { sendTravelPartnershipEmail } from "@/lib/email";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { withAuth } from "@/lib/auth/with-auth";
 import { z } from "zod";
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(
+  async ({ request, user, supabase }) => {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("type")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Rate limit
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
-
     const travelOutreachSchema = z.object({
       contacts: z.array(z.object({
         id: z.string(),
@@ -124,4 +100,6 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : "Failed to send emails";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

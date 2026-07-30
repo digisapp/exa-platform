@@ -1,25 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
-import { logger } from "@/lib/logger";
+import { withAuth } from "@/lib/auth/with-auth";
 
-export async function GET() {
-  try {
-    // Verify admin
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("type")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+export const GET = withAuth(
+  async () => {
     const service: any = createServiceRoleClient();
     const { data: leads, error } = await service
       .from("comp_card_leads")
@@ -29,8 +13,6 @@ export async function GET() {
     if (error) throw error;
 
     return NextResponse.json({ leads: leads || [] });
-  } catch (error) {
-    logger.error("Comp card leads fetch error", error);
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);

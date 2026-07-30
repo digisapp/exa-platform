@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { sendNewGigAnnouncementEmail } from "@/lib/email";
 import { postLiveWallSystemMessage } from "@/lib/live-wall-system";
 import { format } from "date-fns";
@@ -10,27 +10,8 @@ import { format } from "date-fns";
 export const maxDuration = 300;
 
 // Announce a new gig to all models with profile pictures
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+export const POST = withAuth(
+  async ({ request }) => {
     const body = await request.json();
     const { gigId, force } = body;
 
@@ -191,11 +172,6 @@ export async function POST(request: NextRequest) {
       totalModels: models.length,
       ...(failedEmails.length > 0 && { failedEmails: failedEmails.slice(0, 20) }) // Include first 20 failed emails for debugging
     });
-  } catch (error) {
-    console.error("Announce gig error:", error);
-    return NextResponse.json(
-      { error: "Failed to announce gig" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin" }
+);

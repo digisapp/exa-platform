@@ -1,7 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -12,31 +11,9 @@ const createLibraryItemSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
 });
 
-async function verifyAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
 // POST - Create a new library item
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rateLimitResult = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResult) return rateLimitResult;
-
-    if (!(await verifyAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+export const POST = withAuth(
+  async ({ request, user }) => {
     const body = await request.json();
     const parsed = createLibraryItemSchema.safeParse(body);
     if (!parsed.success) {
@@ -60,30 +37,15 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ item }, { status: 201 });
-  } catch (error) {
-    logger.error("Create library item error", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);
 
 // GET - List library items with enrichment
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
+export const GET = withAuth(
+  async ({ request }) => {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rateLimitResult = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResult) return rateLimitResult;
-
-    if (!(await verifyAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
     let query = adminClient.from("content_library" as any)
       .select("id, title, description, uploaded_by, created_at, updated_at")
@@ -138,8 +100,6 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({ items: enriched });
-  } catch (error) {
-    logger.error("Fetch library items error", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

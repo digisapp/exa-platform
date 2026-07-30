@@ -1,82 +1,70 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 
 const PAGE_SIZE = 25;
 
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+export const GET = withAuth(
+  async ({ request }) => {
+    try {
+      const { searchParams } = new URL(request.url);
+      const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+      const search = searchParams.get("search") || "";
+      const tierFilter = searchParams.get("tier") || "all";
+      const verifiedFilter = searchParams.get("verified") || "all";
 
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      const adminClient = createServiceRoleClient();
 
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("type")
-      .eq("user_id", user.id)
-      .single() as { data: { type: string } | null };
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
 
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      // Build the query — select * to avoid missing-column errors
+      let query = adminClient
+        .from("brands")
+        .select("*", { count: "exact" });
+
+      if (search) {
+        query = query.or(
+          `company_name.ilike.%${search}%,email.ilike.%${search}%,contact_name.ilike.%${search}%`
+        ) as typeof query;
+      }
+
+      if (tierFilter !== "all") {
+        query = query.eq("subscription_tier", tierFilter) as typeof query;
+      }
+
+      if (verifiedFilter === "verified") {
+        query = query.eq("is_verified", true) as typeof query;
+      } else if (verifiedFilter === "unverified") {
+        query = query.eq("is_verified", false) as typeof query;
+      }
+
+      const [
+        { data: brands, count, error },
+        { count: verifiedTotal },
+        { count: unverifiedTotal },
+      ] = await Promise.all([
+        query.order("created_at", { ascending: false }).range(from, to),
+        adminClient.from("brands").select("id", { count: "exact", head: true }).eq("is_verified", true),
+        adminClient.from("brands").select("id", { count: "exact", head: true }).eq("is_verified", false),
+      ]);
+
+      if (error) {
+        console.error("Supabase query error:", JSON.stringify(error));
+        throw new Error(error.message || JSON.stringify(error));
+      }
+
+      return NextResponse.json({
+        brands: brands || [],
+        total: count || 0,
+        verifiedTotal: verifiedTotal || 0,
+        unverifiedTotal: unverifiedTotal || 0,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Admin brands list error:", message);
+      return NextResponse.json({ error: message }, { status: 500 });
     }
-
-    const { searchParams } = new URL(request.url);
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-    const search = searchParams.get("search") || "";
-    const tierFilter = searchParams.get("tier") || "all";
-    const verifiedFilter = searchParams.get("verified") || "all";
-
-    const adminClient = createServiceRoleClient();
-
-    const from = (page - 1) * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
-
-    // Build the query — select * to avoid missing-column errors
-    let query = adminClient
-      .from("brands")
-      .select("*", { count: "exact" });
-
-    if (search) {
-      query = query.or(
-        `company_name.ilike.%${search}%,email.ilike.%${search}%,contact_name.ilike.%${search}%`
-      ) as typeof query;
-    }
-
-    if (tierFilter !== "all") {
-      query = query.eq("subscription_tier", tierFilter) as typeof query;
-    }
-
-    if (verifiedFilter === "verified") {
-      query = query.eq("is_verified", true) as typeof query;
-    } else if (verifiedFilter === "unverified") {
-      query = query.eq("is_verified", false) as typeof query;
-    }
-
-    const [
-      { data: brands, count, error },
-      { count: verifiedTotal },
-      { count: unverifiedTotal },
-    ] = await Promise.all([
-      query.order("created_at", { ascending: false }).range(from, to),
-      adminClient.from("brands").select("id", { count: "exact", head: true }).eq("is_verified", true),
-      adminClient.from("brands").select("id", { count: "exact", head: true }).eq("is_verified", false),
-    ]);
-
-    if (error) {
-      console.error("Supabase query error:", JSON.stringify(error));
-      throw new Error(error.message || JSON.stringify(error));
-    }
-
-    return NextResponse.json({
-      brands: brands || [],
-      total: count || 0,
-      verifiedTotal: verifiedTotal || 0,
-      unverifiedTotal: unverifiedTotal || 0,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("Admin brands list error:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);

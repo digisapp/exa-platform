@@ -1,32 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-
-    // Check if user is admin
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("type")
-      .eq("user_id", user.id)
-      .single() as { data: { type: string } | null };
-
-    if (actor?.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Rate limit
-    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResponse) return rateLimitResponse;
-
+export const GET = withAuth(
+  async ({ request, supabase }) => {
     // Get date range from query params
     const searchParams = request.nextUrl.searchParams;
     const days = parseInt(searchParams.get("days") || "7");
@@ -103,8 +80,6 @@ export async function GET(request: NextRequest) {
       countryVisitors: countryVisitorsResult.data || [],
       signupsByCountry: signupsByCountryResult.data || [],
     });
-  } catch (error) {
-    console.error("Analytics API error:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

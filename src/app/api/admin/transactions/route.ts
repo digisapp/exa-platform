@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 
 interface TransactionRow {
   id: string;
@@ -10,28 +10,8 @@ interface TransactionRow {
   created_at: string;
 }
 
-export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-
-  // Auth check
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Admin check
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("id, type")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!actor || actor.type !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
+export const GET = withAuth(
+  async ({ request, supabase }) => {
   const { searchParams } = request.nextUrl;
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
   const pageSize = Math.min(Math.max(1, parseInt(searchParams.get("pageSize") || "20")), 100);
@@ -202,4 +182,6 @@ export async function GET(request: NextRequest) {
     page,
     pageSize,
   });
-}
+  },
+  { requireType: "admin" }
+);

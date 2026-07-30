@@ -1,40 +1,14 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
-async function verifyAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
 // DELETE - Remove a file from a library item
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string; fileId: string }> }
-) {
-  try {
-    const { id: itemId, fileId } = await params;
-    const supabase = await createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rateLimitResult = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResult) return rateLimitResult;
-
-    if (!(await verifyAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const DELETE = withAuth<{ id: string; fileId: string }>(
+  async ({ params }) => {
+    const { id: itemId, fileId } = params;
 
     // Get file record
     const { data: file } = await adminClient.from("content_library_files" as any)
@@ -67,8 +41,6 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    logger.error("Delete library file error", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

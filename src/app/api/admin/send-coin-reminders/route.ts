@@ -1,31 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { sendCoinBalanceReminderEmail } from "@/lib/email";
+import { withAuth } from "@/lib/auth/with-auth";
 
 const MINIMUM_COIN_BALANCE = 500; // $50 USD minimum (500 coins * $0.10)
 
-export async function POST() {
-  try {
-    const supabase = await createClient();
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+export const POST = withAuth(
+  async () => {
     // Use service role client to bypass RLS
     const adminClient = createServiceRoleClient();
 
@@ -109,34 +90,13 @@ export async function POST() {
       skipped: skipped.length > 0 ? skipped : undefined,
       errors: errors.length > 0 ? errors : undefined,
     });
-  } catch (error) {
-    console.error("Send coin reminders error:", error);
-    return NextResponse.json({ error: "Failed to send reminders" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);
 
 // GET endpoint to preview which models would receive the email
-export async function GET() {
-  try {
-    const supabase = await createClient();
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
+export const GET = withAuth(
+  async () => {
     // Use service role client to bypass RLS
     const adminClient = createServiceRoleClient();
 
@@ -184,8 +144,6 @@ export async function GET() {
       totalCoins,
       totalUSD: `$${(totalCoins * 0.10).toFixed(2)}`,
     });
-  } catch (error) {
-    console.error("Get coin reminder preview error:", error);
-    return NextResponse.json({ error: "Failed to get preview" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);

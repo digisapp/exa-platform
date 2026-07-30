@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { sendModelApplicationReceivedEmail } from "@/lib/email";
+import { withAuth } from "@/lib/auth/with-auth";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -15,30 +15,9 @@ const bodySchema = z.object({
 // rotates the confirm token (invalidating any link sent to the old address),
 // then sends a fresh confirm email to the corrected one. Approval stays gated
 // on her clicking that link, so email ownership remains proven.
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const POST = withAuth<{ id: string }>(
+  async ({ request, params }) => {
+    const { id } = params;
 
     const parsed = bodySchema.safeParse(await request.json());
     if (!parsed.success) {
@@ -132,11 +111,6 @@ export async function POST(
     }
 
     return NextResponse.json({ success: true, email: newEmail });
-  } catch (error) {
-    console.error("Admin application email update error:", error);
-    return NextResponse.json(
-      { error: "Failed to update email" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin" }
+);

@@ -1,10 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { sendPayoutProcessedEmail } from "@/lib/email";
 import { z } from "zod";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { withAuth } from "@/lib/auth/with-auth";
 
 const adminClient = createServiceRoleClient();
 
@@ -13,33 +12,9 @@ const payoutSchema = z.object({
   notes: z.string().optional(),
 });
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
-  if (rateLimitResponse) return rateLimitResponse;
-
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-
-    // Check auth
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if admin
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const PATCH = withAuth<{ id: string }>(
+  async ({ request, params, user, actor, supabase }) => {
+    const { id } = params;
 
     const body = await request.json();
     const parsed = payoutSchema.safeParse(body);
@@ -194,11 +169,6 @@ export async function PATCH(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Payout update error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "financial" }
+);

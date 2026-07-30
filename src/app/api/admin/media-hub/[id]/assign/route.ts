@@ -1,7 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
-import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -12,35 +11,10 @@ const assignSchema = z.object({
   notes: z.string().max(2000).optional().nullable(),
 });
 
-async function verifyAdmin(supabase: any, userId: string) {
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("type")
-    .eq("user_id", userId)
-    .single();
-  return actor?.type === "admin";
-}
-
 // POST - Assign library item to brands or models
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: itemId } = await params;
-    const supabase = await createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rateLimitResult = await checkEndpointRateLimit(request, "general", user.id);
-    if (rateLimitResult) return rateLimitResult;
-
-    if (!(await verifyAdmin(supabase, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const POST = withAuth<{ id: string }>(
+  async ({ request, params, user }) => {
+    const { id: itemId } = params;
 
     // Verify item exists
     const { data: item } = await adminClient.from("content_library" as any)
@@ -96,8 +70,6 @@ export async function POST(
     }
 
     return NextResponse.json({ assignments: assignments || [], count: recipientIds.length });
-  } catch (error) {
-    logger.error("Assign content error", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin", rateLimit: "general" }
+);

@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
 
@@ -15,25 +15,8 @@ const uploadSchema = z.object({
   contentType: z.enum(ALLOWED_TYPES),
 });
 
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: actor } = (await supabase
-      .from("actors")
-      .select("type")
-      .eq("user_id", user.id)
-      .single()) as { data: { type: string } | null };
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-    }
-
+export const POST = withAuth(
+  async ({ request }) => {
     let raw;
     try {
       raw = await request.json();
@@ -70,8 +53,6 @@ export async function POST(request: NextRequest) {
     } = supabaseAdmin.storage.from("gigs").getPublicUrl(path);
 
     return NextResponse.json({ signedUrl: data.signedUrl, token: data.token, path, publicUrl });
-  } catch (error) {
-    logger.error("Trip cover upload error", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+  },
+  { requireType: "admin" }
+);

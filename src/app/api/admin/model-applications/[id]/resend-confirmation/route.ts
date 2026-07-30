@@ -1,37 +1,16 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { sendModelApplicationReceivedEmail } from "@/lib/email";
+import { withAuth } from "@/lib/auth/with-auth";
 
 // Admin-triggered re-send of the application-received email (with its confirm
 // link). The applicant-facing resend (/api/auth/resend-application-confirmation)
 // only works for the signed-in applicant on her pending page — this is the
 // admin's way to nudge an applicant whose original email landed in spam,
 // since approval is blocked until email_confirmed_at is set.
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Admin check
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+export const POST = withAuth<{ id: string }>(
+  async ({ params }) => {
+    const { id } = params;
 
     const adminClient = createServiceRoleClient();
     const { data: application } = await (adminClient
@@ -76,11 +55,6 @@ export async function POST(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Admin resend application confirmation error:", error);
-    return NextResponse.json(
-      { error: "Failed to resend confirmation" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin" }
+);

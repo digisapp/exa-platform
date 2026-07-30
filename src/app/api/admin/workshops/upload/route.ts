@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/auth/with-auth";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
 
@@ -18,43 +18,10 @@ const uploadSchema = z.object({
   contentType: z.enum(ALLOWED_TYPES),
 });
 
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withAuth(
+  async ({ request }) => {
     // Create admin client for storage operations (bypasses RLS)
     const supabaseAdmin = createServiceRoleClient();
-
-    const supabase = await createClient();
-
-    // Auth check
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError) {
-      logger.error("Workshop upload: Auth error", authError);
-      return NextResponse.json({ error: "Auth error" }, { status: 401 });
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Verify admin
-    const { data: actor, error: actorError } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null; error: any };
-
-    if (actorError) {
-      logger.error("Workshop upload: Actor query error", actorError);
-      return NextResponse.json({ error: "Failed to verify user" }, { status: 500 });
-    }
-
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-    }
 
     let raw;
     try {
@@ -103,11 +70,6 @@ export async function POST(request: NextRequest) {
       path,
       publicUrl,
     });
-  } catch (error) {
-    logger.error("Workshop upload error", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { requireType: "admin" }
+);
