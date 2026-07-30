@@ -32,6 +32,7 @@ import {
   Eye,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 import { toast } from "sonner";
 
 interface AffiliateCode {
@@ -161,8 +162,6 @@ export default function AdminShopAffiliatesPage() {
     setDetailsDialogOpen(true);
     fetchEarnings(affiliate.model.id);
   };
-
-  const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {

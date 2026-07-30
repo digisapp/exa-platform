@@ -166,6 +166,11 @@ export function formatUsd(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
+/** Format a cents amount as dollars: 123456 -> "$1,234.56". */
+export function formatCents(cents: number): string {
+  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export function formatCoins(coins: number): string {
   return coins.toLocaleString();
 }

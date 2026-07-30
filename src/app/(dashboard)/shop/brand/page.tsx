@@ -16,6 +16,7 @@ import {
   ArrowRight,
   Loader2,
 } from "lucide-react";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 
 interface BrandStats {
   brand: {
@@ -70,10 +71,6 @@ export default function BrandPortalPage() {
 
     fetchStats();
   }, []);
-
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
-  };
 
   if (loading) {
     return (

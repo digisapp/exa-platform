@@ -26,6 +26,7 @@ import {
   Heart,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 
 interface ProductVariant {
   id: string;
@@ -183,10 +184,6 @@ export default function ProductDetailPage() {
     } finally {
       setAddingToCart(false);
     }
-  };
-
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
   };
 
   if (loading) {

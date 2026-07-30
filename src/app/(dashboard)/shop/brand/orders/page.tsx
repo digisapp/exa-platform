@@ -31,6 +31,7 @@ import {
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 
 interface OrderItem {
   id: string;
@@ -159,10 +160,6 @@ export default function BrandOrdersPage() {
     } catch {
       toast.error("Failed to update");
     }
-  };
-
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
   };
 
   const formatDate = (dateStr: string) => {

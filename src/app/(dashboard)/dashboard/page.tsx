@@ -39,6 +39,7 @@ import { NudgeSlot } from "@/components/dashboard/NudgeSlot";
 import { PayoutSetupPrompt } from "@/components/dashboard/PayoutSetupPrompt";
 import { PushNudgeCard } from "@/components/dashboard/PushNudgeCard";
 import { MODEL_EARNING_ACTIONS, PAYOUT_NUDGE_MIN_COINS } from "@/lib/coin-config";
+import { timeAgoCompact } from "@/lib/date";
 import { SpotlightAdmirers } from "@/components/dashboard/SpotlightAdmirers";
 import { CastingReadiness } from "@/components/dashboard/CastingReadiness";
 import { computeCastingReadiness } from "@/lib/casting-readiness";
@@ -75,23 +76,6 @@ async function sumEarningsThisMonth(admin: any, actorId: string): Promise<number
     if (data.length < PAGE) break;
   }
   return total;
-}
-
-// Helper function to format relative time
-function getTimeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export default async function DashboardPage() {
@@ -987,7 +971,7 @@ export default async function DashboardPage() {
             </div>
           ) : (
             activityFeed.slice(0, 6).map((item) => {
-              const timeAgo = getTimeAgo(item.createdAt);
+              const timeAgo = timeAgoCompact(item.createdAt);
               const href =
                 item.type === "message" && item.conversationId
                   ? `/chats/${item.conversationId}`

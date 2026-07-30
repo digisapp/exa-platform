@@ -18,6 +18,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatCents as formatPrice } from "@/lib/coin-config";
 
 interface AffiliateCode {
   id: string;
@@ -125,10 +126,6 @@ export default function AffiliateDashboardPage() {
     setCopied(true);
     toast.success("Link copied!");
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
   };
 
   const formatDate = (dateStr: string) => {
