@@ -1802,34 +1802,48 @@ export default function ProfilePage() {
                     <Loader2 className="h-3 w-3 animate-spin" /> Checking Digis…
                   </p>
                 )}
-                {digisStatus === "found" && (
-                  <p className="text-xs text-green-500">
-                    ✓ Linked to {model.digis_username} on Digis
-                  </p>
+                {digisStatus === "found" ? (
+                  // Linked: compact confirmation — no pitch, no signup link.
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-green-500/10 border border-green-500/30 px-3 py-2">
+                    <p className="text-xs text-green-400">
+                      ✓ Linked to <span className="font-semibold">@{model.digis_username}</span> — your featured Digis button is live on your profile
+                    </p>
+                    <a
+                      href={`https://digis.cc/${model.digis_username}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-green-400/80 hover:text-green-300 whitespace-nowrap inline-flex items-center gap-1"
+                    >
+                      View <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                ) : (
+                  <>
+                    {digisStatus === "not_found" && (
+                      <p className="text-xs text-amber-500">
+                        We couldn&apos;t find &ldquo;{model.digis_username}&rdquo; on Digis — double-check the spelling. You can still save.
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Digis is where you{" "}
+                      <span className="text-pink-400 font-semibold">monetize your fans</span> — live
+                      streams, paid chats, exclusive content, and EXA fashion shows. Enter your
+                      Digis.cc username (no @) and a featured Digis button appears on your profile.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      New to Digis?{" "}
+                      <a
+                        href="https://digis.cc"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-pink-400 hover:text-pink-300 underline underline-offset-2"
+                      >
+                        Create your free creator account
+                      </a>{" "}
+                      — it takes a minute.
+                    </p>
+                  </>
                 )}
-                {digisStatus === "not_found" && (
-                  <p className="text-xs text-amber-500">
-                    We couldn&apos;t find &ldquo;{model.digis_username}&rdquo; on Digis — double-check the spelling. You can still save.
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Your Digis.cc username (no @). Digis is where you{" "}
-                  <span className="text-pink-400 font-semibold">monetize your fans</span> — live
-                  streams, paid chats, exclusive content, and EXA fashion shows. Add your username
-                  and a featured Digis button appears on your EXA profile.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  New to Digis?{" "}
-                  <a
-                    href="https://digis.cc"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-pink-400 hover:text-pink-300 underline underline-offset-2"
-                  >
-                    Create your free creator account
-                  </a>{" "}
-                  — it takes a minute.
-                </p>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
