@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
+import { modelSeoDescriptor } from "@/lib/profile-seo";
 import { FloatingOrbs } from "@/components/ui/floating-orbs";
 import {
   MapPin,
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { data: model } = await supabase
     .from("models")
-    .select("username, bio, profile_photo_url, is_approved")
+    .select("username, bio, profile_photo_url, is_approved, city, state, show_location, focus_tags")
     .eq("username", username)
     .single() as { data: any };
 
@@ -46,13 +47,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const displayName = model.username;
+  const descriptor = modelSeoDescriptor(model);
+  const description = `Rates and booking for ${displayName} — ${descriptor} on EXA Models. Photoshoots, promo events, brand collaborations, and more.`;
 
   return {
-    title: `${displayName} - Rates & Booking | EXA Models`,
-    description: `View ${displayName}'s rates and book for photoshoots, events, and more.`,
+    title: `@${displayName} — Rates & Booking`,
+    description,
+    alternates: {
+      canonical: `https://www.examodels.com/${displayName}/rates`,
+    },
     openGraph: {
-      title: `${displayName} - Rates & Booking | EXA Models`,
-      description: `View ${displayName}'s rates and book for photoshoots, events, and more.`,
+      title: `${displayName} — Rates & Booking | EXA Models`,
+      description,
       images: model.profile_photo_url ? [model.profile_photo_url] : [],
     },
   };

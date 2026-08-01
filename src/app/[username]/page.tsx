@@ -39,6 +39,7 @@ import { ViewTracker } from "@/components/profile/ViewTracker";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 import { isReachableForCalls } from "@/lib/call-availability";
 import { RESERVED_PATHS } from "@/lib/reserved-usernames";
+import { modelSeoTitle, modelSeoDescription, modelSeoTags } from "@/lib/profile-seo";
 import { AdminProfileToolbar } from "@/components/admin/AdminProfileToolbar";
 import { ProfileQRCode } from "@/components/profile/ProfileQRCode";
 import { FavoriteButton } from "@/components/profile/FavoriteButton";
@@ -72,7 +73,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Get model without is_approved filter (the page handles access control)
   const { data: model } = await supabase
     .from("models")
-    .select("username, bio, profile_photo_url, is_approved")
+    .select("username, bio, profile_photo_url, is_approved, city, state, show_location, focus_tags")
     .eq("username", username)
     .single() as { data: any };
 
@@ -87,10 +88,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const displayName = model.username;
   const profileUrl = `https://www.examodels.com/${model.username}`;
-  const description = model.bio || `Book ${displayName} for photoshoots, events, and brand collaborations on EXA Models - the premier model booking platform.`;
+  const description = modelSeoDescription(model);
 
   return {
-    title: `@${model.username}`,
+    title: modelSeoTitle(model),
     description,
     alternates: {
       canonical: profileUrl,
@@ -459,10 +460,17 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
     "@context": "https://schema.org",
     "@type": "Person",
     name: displayName,
+    alternateName: `@${model.username}`,
     url: `https://www.examodels.com/${model.username}`,
     image: profilePhotoUrl || undefined,
-    description: model.bio || `Professional model available for bookings on EXA Models`,
+    description: modelSeoDescription(model),
     jobTitle: "Model",
+    affiliation: {
+      "@type": "Organization",
+      name: "EXA Models",
+      url: "https://www.examodels.com",
+    },
+    ...(modelSeoTags(model).length && { knowsAbout: modelSeoTags(model) }),
     ...(model.show_location && model.city && model.state && {
       address: {
         "@type": "PostalAddress",
