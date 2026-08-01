@@ -32,7 +32,8 @@ interface ModelCardProps {
   isLoggedIn?: boolean;
   isFavorited?: boolean;
   isOwner?: boolean;
-  onAuthRequired?: () => void;
+  /** Logged-out heart click — receives the model so the gate can personalize. */
+  onAuthRequired?: (model: any) => void;
   onFavoriteChange?: (modelId: string, isFavorited: boolean) => void;
   priority?: boolean;
 }
@@ -80,7 +81,7 @@ export const ModelCard = memo(function ModelCard({
     e.stopPropagation();
 
     if (!isLoggedIn) {
-      onAuthRequired?.();
+      onAuthRequired?.(model);
       return;
     }
 

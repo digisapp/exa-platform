@@ -19,6 +19,9 @@ const BOT_PATTERNS = /bot|crawler|spider|googlebot|bingbot|slurp|duckduckbot|bai
 // (only user_id is auto-attached from the session below).
 const ALLOWED_EVENTS = new Set([
   "social_gate_click",
+  // Logged-out heart click on a /models card opened the personalized
+  // follow gate; conversions carry signup_source="follow_gate".
+  "follow_gate_click",
   "rate_set",
   "payout_method_added",
   "push_subscribed",

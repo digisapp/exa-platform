@@ -32,6 +32,10 @@ interface FanSignupDialogProps {
   /** Which gate triggered this signup (e.g. "social_gate") — stored in auth
       user_metadata as signup_source for conversion measurement. */
   source?: string;
+  /** Follow this model immediately after the account exists — completes the
+      intent that triggered the gate (e.g. a heart click on /models) so the
+      visitor lands signed-up AND following, not signed-up and lost. */
+  followModelId?: string | null;
 }
 
 export function FanSignupDialog({
@@ -42,6 +46,7 @@ export function FanSignupDialog({
   modelPhotoUrl,
   prompt,
   source,
+  followModelId,
 }: FanSignupDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -171,6 +176,21 @@ export function FanSignupDialog({
           ageAttested: ageConfirmed,
         }),
       });
+
+      // Step 5: Apply the follow that prompted this signup, before the reload
+      // so the heart renders filled when the page comes back. Best-effort —
+      // a failure here must never strand a freshly created account.
+      if (followModelId) {
+        try {
+          await fetch("/api/favorites", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ modelId: followModelId }),
+          });
+        } catch {
+          // follow is retryable by clicking the heart again
+        }
+      }
 
       toast.success("Welcome to EXA!");
       // Deliver on the promise that prompted the signup (e.g. "Sign Up to

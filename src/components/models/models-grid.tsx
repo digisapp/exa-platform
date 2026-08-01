@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { ModelCard } from "./model-card";
-import { AuthRequiredDialog } from "@/components/auth/AuthRequiredDialog";
+import { FollowGateDialog } from "@/components/auth/FollowGateDialog";
+import { trackEvent } from "@/lib/analytics-client";
 
 interface ModelsGridProps {
   models: any[];
@@ -24,6 +25,7 @@ function ModelCardSkeleton() {
 export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType, currentModelId }: ModelsGridProps) {
   const searchParams = useSearchParams();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [gateModel, setGateModel] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const paramsRef = useRef(searchParams.toString());
 
@@ -41,8 +43,12 @@ export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType, cu
     setIsLoading(false);
   }, [models]);
 
-  const handleAuthRequired = useCallback(() => {
+  const handleAuthRequired = useCallback((model: any) => {
+    setGateModel(model);
     setShowAuthDialog(true);
+    // Funnel: gate impressions vs. signups with signup_source="follow_gate"
+    // — same pair as the profile social gate (social_gate_click).
+    trackEvent("follow_gate_click", { modelId: model.id });
   }, []);
 
   const favoriteSet = useMemo(() => new Set(favoriteModelIds), [favoriteModelIds]);
@@ -83,11 +89,10 @@ export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType, cu
         </div>
       )}
 
-      <AuthRequiredDialog
+      <FollowGateDialog
         open={showAuthDialog}
         onOpenChange={setShowAuthDialog}
-        title="Sign in to follow"
-        description="Create an account or sign in to follow models."
+        model={gateModel}
       />
     </>
   );
