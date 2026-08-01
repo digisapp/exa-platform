@@ -694,6 +694,12 @@ export default function ProfilePage() {
       const updateData: any = {
         first_name: model.first_name,
         last_name: model.last_name,
+        // Opt-in PUBLIC name; empty/whitespace saves as NULL (= @username only).
+        // DB check constraint caps at 50 chars, trim keeps it from tripping on
+        // padded input.
+        display_name: (model as any).display_name?.trim()
+          ? (model as any).display_name.trim().slice(0, 50)
+          : null,
         bio: model.bio,
         city: toTitleCase(model.city),
         state: model.state,
@@ -1563,6 +1569,38 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground -mt-2">
+                Your first and last name are private — only EXA admins see them.
+              </p>
+
+              {/* Public display name — the ONLY place a real-looking name becomes
+                  public. Deliberately separate from first/last name (admin-only PII):
+                  the model types it in herself, opt-in, with clear public/searchable
+                  copy. Blank = profile stays @username-only (the default). */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="display_name">Public Display Name <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                  {(model.first_name || model.last_name) && !(model as any).display_name && (
+                    <button
+                      type="button"
+                      onClick={() => setModel({ ...model, display_name: [model.first_name, model.last_name].filter(Boolean).join(" ").slice(0, 50) } as any)}
+                      className="text-xs text-pink-400 hover:text-pink-300 transition-colors"
+                    >
+                      Use my name
+                    </button>
+                  )}
+                </div>
+                <Input
+                  id="display_name"
+                  value={(model as any).display_name || ""}
+                  maxLength={50}
+                  onChange={(e) => setModel({ ...model, display_name: e.target.value } as any)}
+                  placeholder="e.g. your professional or stage name"
+                />
+                <p className="text-xs text-muted-foreground">
+                  ⚠️ This name appears on your profile. Leave blank to be known only as @{model.username}
+                </p>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="bio">{t.settings.bio}</Label>
                 <Textarea
@@ -1764,34 +1802,48 @@ export default function ProfilePage() {
                     <Loader2 className="h-3 w-3 animate-spin" /> Checking Digis…
                   </p>
                 )}
-                {digisStatus === "found" && (
-                  <p className="text-xs text-green-500">
-                    ✓ Linked to {model.digis_username} on Digis
-                  </p>
+                {digisStatus === "found" ? (
+                  // Linked: compact confirmation — no pitch, no signup link.
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-green-500/10 border border-green-500/30 px-3 py-2">
+                    <p className="text-xs text-green-400">
+                      ✓ Linked to <span className="font-semibold">@{model.digis_username}</span> — your featured Digis button is live on your profile
+                    </p>
+                    <a
+                      href={`https://digis.cc/${model.digis_username}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-green-400/80 hover:text-green-300 whitespace-nowrap inline-flex items-center gap-1"
+                    >
+                      View <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                ) : (
+                  <>
+                    {digisStatus === "not_found" && (
+                      <p className="text-xs text-amber-500">
+                        We couldn&apos;t find &ldquo;{model.digis_username}&rdquo; on Digis — double-check the spelling. You can still save.
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Digis is where you{" "}
+                      <span className="text-pink-400 font-semibold">monetize your fans</span> — live
+                      streams, paid chats, exclusive content, and EXA fashion shows. Enter your
+                      Digis.cc username (no @) and a featured Digis button appears on your profile.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      New to Digis?{" "}
+                      <a
+                        href="https://digis.cc"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-pink-400 hover:text-pink-300 underline underline-offset-2"
+                      >
+                        Create your free creator account
+                      </a>{" "}
+                      — it takes a minute.
+                    </p>
+                  </>
                 )}
-                {digisStatus === "not_found" && (
-                  <p className="text-xs text-amber-500">
-                    We couldn&apos;t find &ldquo;{model.digis_username}&rdquo; on Digis — double-check the spelling. You can still save.
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Your Digis.cc username (no @). Digis is where you{" "}
-                  <span className="text-pink-400 font-semibold">monetize your fans</span> — live
-                  streams, paid chats, exclusive content, and EXA fashion shows. Add your username
-                  and a featured Digis button appears on your EXA profile.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  New to Digis?{" "}
-                  <a
-                    href="https://digis.cc"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-pink-400 hover:text-pink-300 underline underline-offset-2"
-                  >
-                    Create your free creator account
-                  </a>{" "}
-                  — it takes a minute.
-                </p>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">

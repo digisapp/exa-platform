@@ -5857,6 +5857,7 @@ export type Database = {
           deleted_at: string | null
           deleted_reason: string | null
           digis_username: string | null
+          display_name: string | null
           dob: string | null
           dress_size: string | null
           email: string
@@ -5986,6 +5987,7 @@ export type Database = {
           deleted_at?: string | null
           deleted_reason?: string | null
           digis_username?: string | null
+          display_name?: string | null
           dob?: string | null
           dress_size?: string | null
           email: string
@@ -6114,6 +6116,7 @@ export type Database = {
           deleted_at?: string | null
           deleted_reason?: string | null
           digis_username?: string | null
+          display_name?: string | null
           dob?: string | null
           dress_size?: string | null
           email?: string
