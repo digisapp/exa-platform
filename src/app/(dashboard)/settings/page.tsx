@@ -694,6 +694,12 @@ export default function ProfilePage() {
       const updateData: any = {
         first_name: model.first_name,
         last_name: model.last_name,
+        // Opt-in PUBLIC name; empty/whitespace saves as NULL (= @username only).
+        // DB check constraint caps at 50 chars, trim keeps it from tripping on
+        // padded input.
+        display_name: (model as any).display_name?.trim()
+          ? (model as any).display_name.trim().slice(0, 50)
+          : null,
         bio: model.bio,
         city: toTitleCase(model.city),
         state: model.state,
@@ -1562,6 +1568,38 @@ export default function ProfilePage() {
                     onChange={(e) => setModel({ ...model, last_name: e.target.value })}
                   />
                 </div>
+              </div>
+              <p className="text-xs text-muted-foreground -mt-2">
+                Your first and last name are private — only EXA admins see them.
+              </p>
+
+              {/* Public display name — the ONLY place a real-looking name becomes
+                  public. Deliberately separate from first/last name (admin-only PII):
+                  the model types it in herself, opt-in, with clear public/searchable
+                  copy. Blank = profile stays @username-only (the default). */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="display_name">Public Display Name <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                  {(model.first_name || model.last_name) && !(model as any).display_name && (
+                    <button
+                      type="button"
+                      onClick={() => setModel({ ...model, display_name: [model.first_name, model.last_name].filter(Boolean).join(" ").slice(0, 50) } as any)}
+                      className="text-xs text-pink-400 hover:text-pink-300 transition-colors"
+                    >
+                      Use my name
+                    </button>
+                  )}
+                </div>
+                <Input
+                  id="display_name"
+                  value={(model as any).display_name || ""}
+                  maxLength={50}
+                  onChange={(e) => setModel({ ...model, display_name: e.target.value } as any)}
+                  placeholder="e.g. your professional or stage name"
+                />
+                <p className="text-xs text-muted-foreground">
+                  ⚠️ This name is <span className="font-semibold text-foreground">public</span> — it appears on your profile and in Google search results, so fans can find you by name. Leave blank to be known only as @{model.username}.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="bio">{t.settings.bio}</Label>

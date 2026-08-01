@@ -39,7 +39,7 @@ import { ViewTracker } from "@/components/profile/ViewTracker";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 import { isReachableForCalls } from "@/lib/call-availability";
 import { RESERVED_PATHS } from "@/lib/reserved-usernames";
-import { modelSeoTitle, modelSeoDescription, modelSeoTags } from "@/lib/profile-seo";
+import { modelSeoTitle, modelSeoDescription, modelSeoTags, modelPublicName } from "@/lib/profile-seo";
 import { AdminProfileToolbar } from "@/components/admin/AdminProfileToolbar";
 import { ProfileQRCode } from "@/components/profile/ProfileQRCode";
 import { FavoriteButton } from "@/components/profile/FavoriteButton";
@@ -73,7 +73,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Get model without is_approved filter (the page handles access control)
   const { data: model } = await supabase
     .from("models")
-    .select("username, bio, profile_photo_url, is_approved, city, state, show_location, focus_tags")
+    .select("username, display_name, bio, profile_photo_url, is_approved, city, state, show_location, focus_tags")
     .eq("username", username)
     .single() as { data: any };
 
@@ -86,7 +86,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Profile Preview | EXA Models" };
   }
 
-  const displayName = model.username;
+  const displayName = modelPublicName(model);
   const profileUrl = `https://www.examodels.com/${model.username}`;
   const description = modelSeoDescription(model);
 
@@ -389,8 +389,10 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
     isModelFavorited = !!followRow;
   }
 
-  // Display name - real names are private; models are identified by username
-  const displayName = model.username;
+  // Public name: the model's opt-in display_name (typed in by her in Settings,
+  // never the admin-only legal-name columns) or @username when unset.
+  const displayName = modelPublicName(model);
+  const hasDisplayName = displayName !== model.username;
 
   // Reachability drives BOTH the status chip and the call CTAs — the exact
   // signal /api/calls/start enforces (video_is_online OR available_for_calls),
@@ -723,6 +725,11 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
                   <h1 className="notranslate text-3xl md:text-5xl font-bold text-white tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)] leading-[1.05]">
                     {displayName}
                   </h1>
+                  {hasDisplayName && (
+                    <p className="notranslate mt-0.5 text-sm font-medium text-white/70 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
+                      @{model.username}
+                    </p>
+                  )}
 
                   {/* Location */}
                   {model.show_location && (model.city || model.state) && (
@@ -894,9 +901,12 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
               </div>
 
               {/* Name */}
-              <h1 className="notranslate text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
+              <h1 className={`notranslate text-4xl md:text-5xl font-bold text-white tracking-tight ${hasDisplayName ? "mb-0.5" : "mb-2"}`}>
                 {displayName}
               </h1>
+              {hasDisplayName && (
+                <p className="notranslate text-sm font-medium text-white/60 mb-2">@{model.username}</p>
+              )}
 
               {/* Status Pill — same reachability signal the call gate uses */}
               {statusChipLabel && (
