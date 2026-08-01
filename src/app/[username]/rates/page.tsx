@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
-import { modelSeoDescriptor } from "@/lib/profile-seo";
+import { modelSeoDescriptor, modelPublicName } from "@/lib/profile-seo";
 import { FloatingOrbs } from "@/components/ui/floating-orbs";
 import {
   MapPin,
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { data: model } = await supabase
     .from("models")
-    .select("username, bio, profile_photo_url, is_approved, city, state, show_location, focus_tags")
+    .select("username, display_name, bio, profile_photo_url, is_approved, city, state, show_location, focus_tags")
     .eq("username", username)
     .single() as { data: any };
 
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Rates Preview | EXA Models" };
   }
 
-  const displayName = model.username;
+  const displayName = modelPublicName(model);
   const descriptor = modelSeoDescriptor(model);
   const description = `Rates and booking for ${displayName} — ${descriptor} on EXA Models. Photoshoots, promo events, brand collaborations, and more.`;
 
@@ -75,7 +75,7 @@ export default async function ModelRatesPage({ params }: Props) {
   const { data: model } = await supabase
     .from("models")
     .select(`
-      id, user_id, username, bio, profile_photo_url, is_approved, last_active_at,
+      id, user_id, username, display_name, bio, profile_photo_url, is_approved, last_active_at,
       show_location, city, state, focus_tags,
       photoshoot_hourly_rate, photoshoot_half_day_rate, photoshoot_full_day_rate,
       promo_hourly_rate, brand_ambassador_daily_rate, private_event_hourly_rate,
@@ -138,7 +138,7 @@ export default async function ModelRatesPage({ params }: Props) {
     id: p.id, photo_url: resolveMediaUrl(p.media_url), url: resolveMediaUrl(p.media_url), asset_type: "portfolio", title: p.title, created_at: p.created_at,
   }));
 
-  const displayName = model.username;
+  const displayName = modelPublicName(model);
 
   return (
     <div className="min-h-dvh relative">

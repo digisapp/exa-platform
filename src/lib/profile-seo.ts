@@ -27,11 +27,22 @@ const FOCUS_LABELS: Record<string, string> = {
 
 export interface ModelSeoFields {
   username: string;
+  display_name?: string | null;
   bio?: string | null;
   city?: string | null;
   state?: string | null;
   show_location?: boolean | null;
   focus_tags?: string[] | null;
+}
+
+/**
+ * The name a profile is publicly known by: the model's opt-in display name
+ * when set, otherwise their @username. display_name is typed in by the model
+ * herself in Settings (never auto-filled from the admin-only legal-name
+ * columns) with copy stating it becomes public and searchable.
+ */
+export function modelPublicName(model: ModelSeoFields): string {
+  return model.display_name?.trim() || model.username;
 }
 
 export function modelSeoLocation(model: ModelSeoFields): string | null {
@@ -58,15 +69,17 @@ export function modelSeoDescriptor(model: ModelSeoFields): string {
 /** Page title (root layout template appends "| EXA Models"). */
 export function modelSeoTitle(model: ModelSeoFields): string {
   const descriptor = modelSeoDescriptor(model);
-  return descriptor === "Model"
-    ? `@${model.username}`
-    : `@${model.username} — ${descriptor}`;
+  const name = modelPublicName(model);
+  // With an opt-in display name the title leads with it so the page can rank
+  // for real-name searches: "Kaitlin Williams (@kaitlin) — Fashion Model in…"
+  const handle = name === model.username ? `@${model.username}` : `${name} (@${model.username})`;
+  return descriptor === "Model" ? handle : `${handle} — ${descriptor}`;
 }
 
 export function modelSeoDescription(model: ModelSeoFields): string {
   if (model.bio) return model.bio;
 
-  const name = model.username;
+  const name = modelPublicName(model);
   const tags = modelSeoTags(model);
   const location = modelSeoLocation(model);
   const intro = tags.length
