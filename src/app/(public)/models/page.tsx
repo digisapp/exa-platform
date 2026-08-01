@@ -345,14 +345,17 @@ export default async function ModelsPage({
           )}
 
           {/* Booking funnel: the roster link is shared with casting directors
-              and brands — tell them up front the talent is bookable without
-              an account, before they've picked anyone. General inquiry (no
-              preselected model); the per-model Book chip lives on profiles
-              (cards deliberately have no Book button — a small pill inside a
-              full-card Link was a mis-tap trap on touch). */}
-          <div className="mt-5 max-w-2xl">
-            <BookModelButton model={null} source="explore_header" variant="strip" />
-          </div>
+              and brands — a muted one-liner tells them the talent is bookable
+              without an account. Anon-only: logged-in fans browse here daily
+              and don't need it (a full banner was rejected as wasted space);
+              the per-model Book chip lives on profiles. Cards deliberately
+              have no Book button — a small pill inside a full-card Link was
+              a mis-tap trap on touch. */}
+          {!user && (
+            <div className="mt-3">
+              <BookModelButton model={null} source="explore_header" variant="link" />
+            </div>
+          )}
         </div>
 
         {/* Trending This Week — EXA Spotlight weekly leaders */}
