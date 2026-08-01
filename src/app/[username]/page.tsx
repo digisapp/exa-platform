@@ -30,6 +30,7 @@ import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 import { BioExpand } from "@/components/model/BioExpand";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
+import { BookModelButton } from "@/components/booking/BookModelButton";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 import {
   DigisHeroProfileButton,
@@ -442,6 +443,17 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
     (heroSource.source === "profile" || heroSource.source === "portfolio-high-res");
   const heroPhotoUrl = heroSource?.url ?? profilePhotoUrl;
 
+  // Agency booking CTA — team-mediated inquiry, shown to everyone (fans,
+  // brands, logged-out clients) except the model herself. Low-rated (≤2★)
+  // models are suppressed, same admin brand-image gate as deck/trending;
+  // rating_tier itself stays server-side, only this boolean reaches the UI.
+  const bookable = !isOwner && ((model.rating_tier ?? 3) >= 3);
+  const bookableModel = {
+    id: model.id,
+    username: model.username,
+    profile_photo_url: model.profile_photo_url,
+  };
+
   // Social media links (with follower counts for brand discovery)
   const socialLinks = [
     { platform: "instagram", username: model.instagram_name, followers: model.instagram_followers as number | null, url: model.instagram_name ? `https://www.instagram.com/${model.instagram_name.replace(/^@/, '')}` : (model.instagram_url?.includes("instagram.com") ? model.instagram_url : null) },
@@ -812,6 +824,13 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
                     </div>
                   )}
 
+                  {/* Agency booking CTA — leads go to the EXA team, not the model */}
+                  {bookable && (
+                    <div className="mt-3">
+                      <BookModelButton model={bookableModel} source="profile" />
+                    </div>
+                  )}
+
                   {/* Action buttons (chat input + video/voice/tip grid)
                       Negative bottom margin cancels the component's built-in mb-6
                       so the dock sits flush against the content area below. */}
@@ -1013,6 +1032,13 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
               {model.digis_username && (
                 <DigisIconProfileButton modelUsername={model.username} />
               )}
+            </div>
+          )}
+
+          {/* Agency booking CTA — leads go to the EXA team, not the model */}
+          {!useHeroLayout && bookable && (
+            <div className="mb-4">
+              <BookModelButton model={bookableModel} source="profile" />
             </div>
           )}
 

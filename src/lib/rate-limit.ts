@@ -255,6 +255,10 @@ export const EndpointLimits = {
 
   // Lookups that fetch an external site (e.g. Digis username check) - 20 per minute
   externalLookup: { limit: 20, windowSeconds: 60 },
+
+  // Public no-account lead forms (booking inquiries) — each submission fans
+  // out two emails, so this stays far below `general`
+  leads: { limit: 5, windowSeconds: 60 },
 } as const;
 
 export type EndpointType = keyof typeof EndpointLimits;

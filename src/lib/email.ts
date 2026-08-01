@@ -9558,3 +9558,218 @@ export async function sendMediaBlastEmail({
     return { success: false, error };
   }
 }
+
+// ============================================================
+// Booking inquiries (public "Book" flow on /models + profiles)
+// ============================================================
+
+const BOOKING_INQUIRY_TYPE_LABELS: Record<string, string> = {
+  photoshoot: "Photoshoot",
+  runway: "Runway / Fashion Show",
+  event: "Event / Appearance",
+  campaign: "Brand Campaign",
+  content: "Content Creation",
+  other: "Other",
+};
+
+const BOOKING_BUDGET_LABELS: Record<string, string> = {
+  under_1k: "Under $1,000",
+  "1k_5k": "$1,000 – $5,000",
+  "5k_15k": "$5,000 – $15,000",
+  "15k_plus": "$15,000+",
+  discuss: "Prefer to discuss",
+};
+
+export interface BookingInquiryEmailInput {
+  name: string;
+  email: string;
+  phone?: string | null;
+  company?: string | null;
+  modelUsername?: string | null;
+  inquiryType: string;
+  eventDate?: string | null;
+  location?: string | null;
+  budgetRange?: string | null;
+  details?: string | null;
+  source?: string | null;
+}
+
+/** Internal lead notification to the team inbox. Reply-to is the inquirer so
+    the team can answer straight from email — no dashboard required. Internal
+    mail: no unsubscribe/suppression machinery on purpose (same call as the
+    weekly analytics report). */
+export async function sendBookingInquiryTeamEmail(inquiry: BookingInquiryEmailInput) {
+  try {
+    const resend = getResendClient();
+    const who = inquiry.modelUsername ? `@${inquiry.modelUsername}` : "General";
+    const typeLabel = BOOKING_INQUIRY_TYPE_LABELS[inquiry.inquiryType] || inquiry.inquiryType;
+    const budgetLabel = inquiry.budgetRange ? BOOKING_BUDGET_LABELS[inquiry.budgetRange] : null;
+
+    const rows: [string, string | null | undefined][] = [
+      ["Model", inquiry.modelUsername ? `@${inquiry.modelUsername}` : "General inquiry (no specific model)"],
+      ["Type", typeLabel],
+      ["Name", inquiry.name],
+      ["Email", inquiry.email],
+      ["Phone", inquiry.phone],
+      ["Company", inquiry.company],
+      ["Date", inquiry.eventDate],
+      ["Location", inquiry.location],
+      ["Budget", budgetLabel],
+      ["Source", inquiry.source],
+    ];
+
+    const rowsHtml = rows
+      .filter(([, v]) => v)
+      .map(
+        ([label, v]) => `
+              <tr>
+                <td style="padding: 8px 12px; color: #a1a1aa; font-size: 14px; white-space: nowrap; vertical-align: top;">${label}</td>
+                <td style="padding: 8px 12px; color: #ffffff; font-size: 14px;">${escapeHtml(String(v))}</td>
+              </tr>`
+      )
+      .join("");
+
+    const detailsHtml = inquiry.details
+      ? `
+              <tr>
+                <td style="padding: 8px 12px; color: #a1a1aa; font-size: 14px; vertical-align: top;">Details</td>
+                <td style="padding: 8px 12px; color: #ffffff; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(inquiry.details)}</td>
+              </tr>`
+      : "";
+
+    const modelLink = inquiry.modelUsername
+      ? `<p style="margin: 20px 0 0; font-size: 14px;"><a href="https://www.examodels.com/${escapeHtml(inquiry.modelUsername)}" style="color: #ec4899;">View ${escapeHtml(`@${inquiry.modelUsername}`)}'s profile</a> · <a href="https://www.examodels.com/admin/booking-inquiries" style="color: #8b5cf6;">Open inquiry dashboard</a></p>`
+      : `<p style="margin: 20px 0 0; font-size: 14px;"><a href="https://www.examodels.com/admin/booking-inquiries" style="color: #8b5cf6;">Open inquiry dashboard</a></p>`;
+
+    const subjectBits = [typeLabel, budgetLabel, inquiry.location].filter(Boolean).join(", ");
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: inquiry.email,
+      to: ["team@examodels.com"],
+      subject: `New booking inquiry — ${who}${subjectBits ? ` (${subjectBits})` : ""}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">New Booking Inquiry</h1>
+              <p style="margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 15px;">${escapeHtml(who)}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #111111; border-radius: 12px;">
+                ${rowsHtml}
+                ${detailsHtml}
+              </table>
+              ${modelLink}
+              <p style="margin: 16px 0 0; color: #71717a; font-size: 13px;">Hit reply to answer ${escapeHtml(inquiry.name)} directly.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Booking inquiry team email error", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Booking inquiry team email error", error);
+    return { success: false, error };
+  }
+}
+
+/** Confirmation to the inquirer. Transactional receipt for an action they
+    just took — sent regardless of marketing unsubscribe state. */
+export async function sendBookingInquiryConfirmationEmail(inquiry: BookingInquiryEmailInput) {
+  try {
+    const resend = getResendClient();
+    const safeName = escapeHtml(inquiry.name.split(" ")[0] || inquiry.name);
+    const aboutLine = inquiry.modelUsername
+      ? `your inquiry about <strong style="color: #ffffff;">@${escapeHtml(inquiry.modelUsername)}</strong>`
+      : "your booking inquiry";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [inquiry.email],
+      subject: "We got your inquiry — EXA Models",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">Inquiry Received</h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">Our team is on it</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">Hey ${safeName},</p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Thanks for reaching out — we received ${aboutLine} and our booking team will get back to you within 24 hours.
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                In the meantime, feel free to keep browsing the roster — you can send inquiries for as many models as you like.
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                <tr>
+                  <td align="center">
+                    <a href="https://www.examodels.com/models" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 18px;">
+                      Browse Models
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 30px 30px; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 13px;">EXA Models · <a href="https://www.examodels.com" style="color: #71717a;">examodels.com</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      logger.error("Booking inquiry confirmation email error", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    logger.error("Booking inquiry confirmation email error", error);
+    return { success: false, error };
+  }
+}

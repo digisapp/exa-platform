@@ -22,6 +22,10 @@ const ALLOWED_EVENTS = new Set([
   // Logged-out heart click on a /models card opened the personalized
   // follow gate; conversions carry signup_source="follow_gate".
   "follow_gate_click",
+  // "Book" CTA opened the booking inquiry dialog (metadata.source:
+  // "card" | "profile" | "explore_header"); submissions land in
+  // booking_inquiries, so open→submit is the funnel pair.
+  "book_inquiry_open",
   "rate_set",
   "payout_method_added",
   "push_subscribed",
