@@ -57,7 +57,8 @@ export default async function ModelsPage({
   const supabase = await createClient();
 
   // Anonymous visitors browse the grid read-only: cards link to (already
-  // public) profiles, while follow/favorite clicks open AuthRequiredDialog.
+  // public) profiles, while follow/favorite clicks open the personalized
+  // FollowGateDialog (inline signup + auto-follow of the clicked model).
   // Same activation-over-gating call as /gigs — show value, gate the action.
   const { data: { user } } = await supabase.auth.getUser();
 
