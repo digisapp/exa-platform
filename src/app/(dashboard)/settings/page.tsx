@@ -1598,7 +1598,7 @@ export default function ProfilePage() {
                   placeholder="e.g. your professional or stage name"
                 />
                 <p className="text-xs text-muted-foreground">
-                  ⚠️ This name is <span className="font-semibold text-foreground">public</span> — it appears on your profile. Leave blank to be known only as @{model.username}.
+                  ⚠️ This name appears on your profile. Leave blank to be known only as @{model.username}
                 </p>
               </div>
               <div className="space-y-2">
