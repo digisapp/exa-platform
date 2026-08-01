@@ -5,22 +5,32 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { FollowGateDialog } from "@/components/auth/FollowGateDialog";
+import { trackEvent } from "@/lib/analytics-client";
 
 interface FavoriteButtonProps {
   modelId: string;
   initialFavorited: boolean;
   isLoggedIn: boolean;
+  /** For the logged-out follow gate — keeps the profile heart consistent
+      with the /models grid hearts (personalized dialog, inline signup,
+      auto-follow) instead of bouncing to /signin. */
+  modelUsername: string;
+  modelPhotoUrl: string | null;
 }
 
-export function FavoriteButton({ modelId, initialFavorited, isLoggedIn }: FavoriteButtonProps) {
+export function FavoriteButton({ modelId, initialFavorited, isLoggedIn, modelUsername, modelPhotoUrl }: FavoriteButtonProps) {
   const router = useRouter();
   const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const [loading, setLoading] = useState(false);
   const [bouncing, setBouncing] = useState(false);
+  const [showGate, setShowGate] = useState(false);
 
   const handleFavorite = async () => {
     if (!isLoggedIn) {
-      router.push("/signin");
+      setShowGate(true);
+      // Same funnel pair as the grid hearts (signup_source="follow_gate")
+      trackEvent("follow_gate_click", { modelId });
       return;
     }
 
@@ -89,6 +99,11 @@ export function FavoriteButton({ modelId, initialFavorited, isLoggedIn }: Favori
       >
         {label}
       </div>
+      <FollowGateDialog
+        open={showGate}
+        onOpenChange={setShowGate}
+        model={{ id: modelId, username: modelUsername, profile_photo_url: modelPhotoUrl }}
+      />
     </div>
   );
 }

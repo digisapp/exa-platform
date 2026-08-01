@@ -574,6 +574,8 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
                   modelId={model.id}
                   initialFavorited={isModelFavorited}
                   isLoggedIn={!!user}
+                  modelUsername={model.username}
+                  modelPhotoUrl={model.profile_photo_url}
                 />
               )}
               <ShareButton title={displayName} />
@@ -708,6 +710,8 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
                             modelId={model.id}
                             initialFavorited={isModelFavorited}
                             isLoggedIn={!!user}
+                            modelUsername={model.username}
+                            modelPhotoUrl={model.profile_photo_url}
                           />
                         </div>
                       )}
