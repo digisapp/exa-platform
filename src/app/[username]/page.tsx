@@ -567,6 +567,8 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
                   />
                 </>
               )}
+              {/* Agency booking chip — leads go to the EXA team, not the model */}
+              {bookable && <BookModelButton model={bookableModel} source="profile" variant="chip" />}
               {!isOwner && !isBrand && !isAdmin && (
                 <FavoriteButton
                   modelId={model.id}
@@ -696,6 +698,10 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
                           </div>
                         </>
                       )}
+                      {/* Agency booking chip — leads go to the EXA team, not the model */}
+                      {bookable && (
+                        <BookModelButton model={bookableModel} source="profile" variant="chip" />
+                      )}
                       {!isOwner && !isBrand && !isAdmin && (
                         <div className="rounded-full bg-black/45 backdrop-blur-md border border-white/15 shadow-[0_4px_12px_rgba(0,0,0,0.35)]">
                           <FavoriteButton
@@ -821,13 +827,6 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
                       {model.digis_username && (
                         <DigisHeroProfileButton modelUsername={model.username} />
                       )}
-                    </div>
-                  )}
-
-                  {/* Agency booking CTA — leads go to the EXA team, not the model */}
-                  {bookable && (
-                    <div className="mt-3">
-                      <BookModelButton model={bookableModel} source="profile" />
                     </div>
                   )}
 
@@ -1032,13 +1031,6 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
               {model.digis_username && (
                 <DigisIconProfileButton modelUsername={model.username} />
               )}
-            </div>
-          )}
-
-          {/* Agency booking CTA — leads go to the EXA team, not the model */}
-          {!useHeroLayout && bookable && (
-            <div className="mb-4">
-              <BookModelButton model={bookableModel} source="profile" />
             </div>
           )}
 

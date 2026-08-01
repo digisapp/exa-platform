@@ -26,14 +26,11 @@ export const metadata: Metadata = {
 // Cache model list for 2 minutes - balance between freshness and performance
 export const revalidate = 120;
 
-// Only select fields needed for model cards. rating_tier is fetched ONLY to
-// compute the server-side `bookable` flag — it is stripped before the model
-// object is serialized to the client (admin ratings must never be exposed).
+// Only select fields needed for model cards
 const MODEL_CARD_FIELDS = `
   id, username, profile_photo_url, is_verified, is_featured,
   last_active_at, reliability_score, show_location, city, state, height,
-  show_measurements, instagram_followers, tiktok_followers, focus_tags,
-  rating_tier
+  show_measurements, instagram_followers, tiktok_followers, focus_tags
 `;
 
 interface SearchParams {
@@ -244,15 +241,7 @@ export default async function ModelsPage({
         ...featuredRow.map((f) => f.id).filter(Boolean),
       ])
     : new Set<string>();
-  // Strip the admin rating before the client sees the object; the card only
-  // gets `bookable` — the same ≤2★ suppression the deck and trending use, so
-  // the shared roster link never generates inquiries for low-rated models.
-  const gridModels = (models || [])
-    .filter((m: any) => !highlightedIds.has(m.id))
-    .map(({ rating_tier, ...m }: any) => ({
-      ...m,
-      bookable: (rating_tier ?? 3) >= 3,
-    }));
+  const gridModels = (models || []).filter((m: any) => !highlightedIds.has(m.id));
 
   // Now run actor-dependent queries in parallel
   let favoriteModelIds: string[] = [];
@@ -358,7 +347,9 @@ export default async function ModelsPage({
           {/* Booking funnel: the roster link is shared with casting directors
               and brands — tell them up front the talent is bookable without
               an account, before they've picked anyone. General inquiry (no
-              preselected model); per-model Book pills live on the cards. */}
+              preselected model); the per-model Book chip lives on profiles
+              (cards deliberately have no Book button — a small pill inside a
+              full-card Link was a mis-tap trap on touch). */}
           <div className="mt-5 max-w-2xl">
             <BookModelButton model={null} source="explore_header" variant="strip" />
           </div>
@@ -432,7 +423,6 @@ export default async function ModelsPage({
             favoriteModelIds={favoriteModelIds}
             actorType={actorType}
             currentModelId={actorType === "model" ? actor?.id : undefined}
-            showBook
           />
 
           {/* Pagination — uses Next.js Link for client-side navigation */}
