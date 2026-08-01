@@ -2,25 +2,25 @@
 
 import { useState } from "react";
 import { CalendarCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   BookingInquiryDialog,
   type BookableModel,
 } from "@/components/booking/BookingInquiryDialog";
 import { trackEvent } from "@/lib/analytics-client";
 
-// Self-contained "Book" CTA: button + inquiry dialog in one. Used on model
-// profiles (model set) and the /models explore header (model null → general
-// talent inquiry). Shown to everyone, logged-in or not — booking is
-// team-mediated agency business, orthogonal to fan monetization.
+// Self-contained "Book" CTA: button + inquiry dialog in one. "chip" sits in
+// the profile's top-right action cluster next to the heart; "strip" is the
+// /models explore-header banner (model null → general talent inquiry).
+// Shown to everyone, logged-in or not — booking is team-mediated agency
+// business, orthogonal to fan monetization.
 
 interface BookModelButtonProps {
   model: BookableModel | null;
   source: "profile" | "explore_header";
-  variant?: "button" | "strip";
+  variant?: "chip" | "strip";
 }
 
-export function BookModelButton({ model, source, variant = "button" }: BookModelButtonProps) {
+export function BookModelButton({ model, source, variant = "chip" }: BookModelButtonProps) {
   const [open, setOpen] = useState(false);
 
   const handleOpen = () => {
@@ -57,13 +57,15 @@ export function BookModelButton({ model, source, variant = "button" }: BookModel
           </span>
         </button>
       ) : (
-        <Button
+        <button
+          type="button"
           onClick={handleOpen}
-          className="w-full h-11 exa-gradient-button"
+          aria-label={model ? `Book ${model.username}` : "Book EXA talent"}
+          className="h-9 px-3.5 rounded-full flex items-center gap-1.5 text-xs font-semibold text-white bg-gradient-to-r from-pink-500 to-violet-500 shadow-[0_0_14px_rgba(236,72,153,0.45)] transition-all hover:scale-105 active:scale-95"
         >
-          <CalendarCheck className="h-4 w-4 mr-2" />
-          Book {model ? `@${model.username}` : "EXA Talent"}
-        </Button>
+          <CalendarCheck className="h-3.5 w-3.5" />
+          Book
+        </button>
       )}
       <BookingInquiryDialog
         open={open}
