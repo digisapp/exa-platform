@@ -9,15 +9,16 @@ import {
 import { trackEvent } from "@/lib/analytics-client";
 
 // Self-contained "Book" CTA: button + inquiry dialog in one. "chip" sits in
-// the profile's top-right action cluster next to the heart; "strip" is the
-// /models explore-header banner (model null → general talent inquiry).
-// Shown to everyone, logged-in or not — booking is team-mediated agency
-// business, orthogonal to fan monetization.
+// the profile's top-right action cluster next to the heart; "link" is the
+// muted one-liner under the /models header (model null → general talent
+// inquiry, anon visitors only — fans don't need it and a banner was too
+// heavy). Booking is team-mediated agency business, orthogonal to fan
+// monetization.
 
 interface BookModelButtonProps {
   model: BookableModel | null;
   source: "profile" | "explore_header";
-  variant?: "chip" | "strip";
+  variant?: "chip" | "link";
 }
 
 export function BookModelButton({ model, source, variant = "chip" }: BookModelButtonProps) {
@@ -33,27 +34,16 @@ export function BookModelButton({ model, source, variant = "chip" }: BookModelBu
 
   return (
     <>
-      {variant === "strip" ? (
+      {variant === "link" ? (
         <button
           type="button"
           onClick={handleOpen}
-          className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-pink-500/15 to-violet-500/15 border border-pink-400/30 transition-all hover:from-pink-500/25 hover:to-violet-500/25 hover:border-pink-400/50 hover:shadow-[0_0_18px_rgba(236,72,153,0.35)] text-left"
+          className="group inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors text-left"
         >
-          <span className="flex items-center gap-3 min-w-0">
-            <span className="p-2 rounded-xl bg-gradient-to-br from-pink-500/25 to-violet-500/25 ring-1 ring-pink-400/40 shrink-0">
-              <CalendarCheck className="h-[18px] w-[18px] text-pink-300" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold text-white truncate">
-                Booking talent for a shoot or event?
-              </span>
-              <span className="block text-xs text-white/60 truncate">
-                Send an inquiry — our team replies within 24 hours. No account needed.
-              </span>
-            </span>
-          </span>
-          <span className="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white">
-            Inquire
+          <CalendarCheck className="h-3.5 w-3.5 text-pink-400/80 shrink-0" />
+          <span>Booking talent for a shoot or event?</span>
+          <span className="text-pink-400 font-medium group-hover:underline whitespace-nowrap">
+            Send an inquiry
           </span>
         </button>
       ) : (
