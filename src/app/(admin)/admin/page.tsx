@@ -33,6 +33,7 @@ import {
   ShieldCheck,
   Crown,
   Trophy,
+  CalendarCheck,
 } from "lucide-react";
 
 type Color =
@@ -96,6 +97,8 @@ export default async function AdminPage() {
   const { count: pendingBrands } = await (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("is_verified", false);
   const { count: pendingCalls } = await (supabase.from("call_requests") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
   const { count: pendingVerifications } = await (supabase.from("model_verifications") as any).select("*", { count: "exact", head: true }).eq("status", "pending_review");
+  // booking_inquiries is newer than the generated DB types
+  const { count: newBookingInquiries } = await (supabase as any).from("booking_inquiries").select("*", { count: "exact", head: true }).eq("status", "new");
 
   const { data: modelBalances } = await (supabase.from("models") as any).select("coin_balance").is("deleted_at", null) as { data: { coin_balance: number }[] | null };
   const { data: fanBalances } = await (supabase.from("fans") as any).select("coin_balance").is("deleted_at", null) as { data: { coin_balance: number }[] | null };
@@ -119,6 +122,14 @@ export default async function AdminPage() {
       icon: ShieldCheck,
       color: "emerald",
       subtitle: (pendingVerifications || 0) > 0 ? `${pendingVerifications} to review` : undefined,
+    },
+    {
+      href: "/admin/booking-inquiries",
+      label: "Booking Inquiries",
+      icon: CalendarCheck,
+      color: "teal",
+      featured: true,
+      subtitle: (newBookingInquiries || 0) > 0 ? `${newBookingInquiries} new` : undefined,
     },
     { href: "/admin/rosters", label: "Client Rosters", icon: Share2, color: "cyan" },
     { href: "/admin/traffic", label: "Traffic", icon: BarChart3, color: "blue" },

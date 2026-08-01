@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { ModelCard } from "./model-card";
 import { FollowGateDialog } from "@/components/auth/FollowGateDialog";
+import { BookingInquiryDialog } from "@/components/booking/BookingInquiryDialog";
 import { trackEvent } from "@/lib/analytics-client";
 
 interface ModelsGridProps {
@@ -12,6 +13,9 @@ interface ModelsGridProps {
   favoriteModelIds: string[];
   actorType?: "model" | "fan" | "brand" | "admin" | null;
   currentModelId?: string;
+  /** Enable the per-card "Book" pill. Only /models passes this — its server
+      component maps rating_tier into model.bookable, which the card checks. */
+  showBook?: boolean;
 }
 
 function ModelCardSkeleton() {
@@ -22,10 +26,12 @@ function ModelCardSkeleton() {
   );
 }
 
-export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType, currentModelId }: ModelsGridProps) {
+export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType, currentModelId, showBook = false }: ModelsGridProps) {
   const searchParams = useSearchParams();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [gateModel, setGateModel] = useState<any>(null);
+  const [bookModel, setBookModel] = useState<any>(null);
+  const [showBookDialog, setShowBookDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const paramsRef = useRef(searchParams.toString());
 
@@ -49,6 +55,12 @@ export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType, cu
     // Funnel: gate impressions vs. signups with signup_source="follow_gate"
     // — same pair as the profile social gate (social_gate_click).
     trackEvent("follow_gate_click", { modelId: model.id });
+  }, []);
+
+  const handleBook = useCallback((model: any) => {
+    setBookModel(model);
+    setShowBookDialog(true);
+    trackEvent("book_inquiry_open", { modelId: model.id, metadata: { source: "card" } });
   }, []);
 
   const favoriteSet = useMemo(() => new Set(favoriteModelIds), [favoriteModelIds]);
@@ -76,6 +88,8 @@ export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType, cu
             isFavorited={favoriteSet.has(model.id)}
             isOwner={!!currentModelId && model.id === currentModelId}
             onAuthRequired={handleAuthRequired}
+            showBook={showBook}
+            onBook={handleBook}
             priority={index < 10}
           />
         ))}
@@ -93,6 +107,14 @@ export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType, cu
         open={showAuthDialog}
         onOpenChange={setShowAuthDialog}
         model={gateModel}
+      />
+
+      {/* One dialog instance for the whole grid — cards just report clicks */}
+      <BookingInquiryDialog
+        open={showBookDialog}
+        onOpenChange={setShowBookDialog}
+        model={bookModel}
+        source="card"
       />
     </>
   );

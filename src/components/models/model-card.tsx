@@ -35,6 +35,10 @@ interface ModelCardProps {
   /** Logged-out heart click — receives the model so the gate can personalize. */
   onAuthRequired?: (model: any) => void;
   onFavoriteChange?: (modelId: string, isFavorited: boolean) => void;
+  /** Show the "Book" pill (agency inquiry, no account needed). Only enabled
+      on /models, where the server also maps rating_tier to model.bookable. */
+  showBook?: boolean;
+  onBook?: (model: any) => void;
   priority?: boolean;
 }
 
@@ -48,6 +52,8 @@ export const ModelCard = memo(function ModelCard({
   isOwner = false,
   onAuthRequired,
   onFavoriteChange,
+  showBook = false,
+  onBook,
   priority = false,
 }: ModelCardProps) {
   const router = useRouter();
@@ -275,25 +281,46 @@ export const ModelCard = memo(function ModelCard({
 
           {/* Bottom Name Bar - Always Visible */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-8">
-            <h3 className="font-semibold text-white truncate notranslate">@{displayName}</h3>
-            {/* Key facts stay visible without hover — touch devices never see the overlay */}
-            {(model.show_location && (model.city || model.state)) || (model.focus_tags && model.focus_tags.length > 0) ? (
-              <div className="flex items-center gap-2 mt-1 min-w-0">
-                {model.show_location && (model.city || model.state) && (
-                  <span className="flex items-center gap-1 text-xs text-white/70 truncate">
-                    <MapPin className="h-3 w-3 text-[#FF69B4] shrink-0" />
-                    <span className="truncate">
-                      {model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}
-                    </span>
-                  </span>
-                )}
-                {model.focus_tags && model.focus_tags.length > 0 && (
-                  <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-white/10 text-white/80 border border-white/15">
-                    {focusLabels[model.focus_tags[0]] || model.focus_tags[0]}
-                  </span>
-                )}
+            <div className="flex items-end justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-white truncate notranslate">@{displayName}</h3>
+                {/* Key facts stay visible without hover — touch devices never see the overlay */}
+                {(model.show_location && (model.city || model.state)) || (model.focus_tags && model.focus_tags.length > 0) ? (
+                  <div className="flex items-center gap-2 mt-1 min-w-0">
+                    {model.show_location && (model.city || model.state) && (
+                      <span className="flex items-center gap-1 text-xs text-white/70 truncate">
+                        <MapPin className="h-3 w-3 text-[#FF69B4] shrink-0" />
+                        <span className="truncate">
+                          {model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}
+                        </span>
+                      </span>
+                    )}
+                    {model.focus_tags && model.focus_tags.length > 0 && (
+                      <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-white/10 text-white/80 border border-white/15">
+                        {focusLabels[model.focus_tags[0]] || model.focus_tags[0]}
+                      </span>
+                    )}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+              {/* Agency booking inquiry — team-mediated, so it shows for
+                  everyone (logged-in or not) except low-rated models
+                  (bookable=false) and the model herself. z-10 + click-stop
+                  because the whole card is a Link. */}
+              {showBook && !isOwner && model.bookable !== false && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onBook?.(model);
+                  }}
+                  className="relative z-10 shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-[0_0_12px_rgba(236,72,153,0.4)] transition-transform hover:scale-105 active:scale-95"
+                  aria-label={`Book ${displayName}`}
+                >
+                  Book
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Hover Overlay with Details */}

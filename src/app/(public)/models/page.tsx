@@ -10,6 +10,7 @@ import { ModelFilters } from "@/components/models/model-filters";
 import { ModelCard } from "@/components/models/model-card";
 import { ModelsGrid } from "@/components/models/models-grid";
 import { BrandPaywallWrapper } from "@/components/brands/BrandPaywallWrapper";
+import { BookModelButton } from "@/components/booking/BookModelButton";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { sanitizeOrFilterTerm } from "@/lib/utils";
 
@@ -25,11 +26,14 @@ export const metadata: Metadata = {
 // Cache model list for 2 minutes - balance between freshness and performance
 export const revalidate = 120;
 
-// Only select fields needed for model cards
+// Only select fields needed for model cards. rating_tier is fetched ONLY to
+// compute the server-side `bookable` flag — it is stripped before the model
+// object is serialized to the client (admin ratings must never be exposed).
 const MODEL_CARD_FIELDS = `
   id, username, profile_photo_url, is_verified, is_featured,
   last_active_at, reliability_score, show_location, city, state, height,
-  show_measurements, instagram_followers, tiktok_followers, focus_tags
+  show_measurements, instagram_followers, tiktok_followers, focus_tags,
+  rating_tier
 `;
 
 interface SearchParams {
@@ -240,7 +244,15 @@ export default async function ModelsPage({
         ...featuredRow.map((f) => f.id).filter(Boolean),
       ])
     : new Set<string>();
-  const gridModels = (models || []).filter((m: any) => !highlightedIds.has(m.id));
+  // Strip the admin rating before the client sees the object; the card only
+  // gets `bookable` — the same ≤2★ suppression the deck and trending use, so
+  // the shared roster link never generates inquiries for low-rated models.
+  const gridModels = (models || [])
+    .filter((m: any) => !highlightedIds.has(m.id))
+    .map(({ rating_tier, ...m }: any) => ({
+      ...m,
+      bookable: (rating_tier ?? 3) >= 3,
+    }));
 
   // Now run actor-dependent queries in parallel
   let favoriteModelIds: string[] = [];
@@ -342,6 +354,14 @@ export default async function ModelsPage({
               </p>
             )
           )}
+
+          {/* Booking funnel: the roster link is shared with casting directors
+              and brands — tell them up front the talent is bookable without
+              an account, before they've picked anyone. General inquiry (no
+              preselected model); per-model Book pills live on the cards. */}
+          <div className="mt-5 max-w-2xl">
+            <BookModelButton model={null} source="explore_header" variant="strip" />
+          </div>
         </div>
 
         {/* Trending This Week — EXA Spotlight weekly leaders */}
@@ -412,6 +432,7 @@ export default async function ModelsPage({
             favoriteModelIds={favoriteModelIds}
             actorType={actorType}
             currentModelId={actorType === "model" ? actor?.id : undefined}
+            showBook
           />
 
           {/* Pagination — uses Next.js Link for client-side navigation */}
