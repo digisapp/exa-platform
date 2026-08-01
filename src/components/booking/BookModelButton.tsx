@@ -61,9 +61,11 @@ export function BookModelButton({ model, source, variant = "chip" }: BookModelBu
           type="button"
           onClick={handleOpen}
           aria-label={model ? `Book ${model.username}` : "Book EXA talent"}
-          className="h-9 px-3.5 rounded-full flex items-center gap-1.5 text-xs font-semibold text-white bg-gradient-to-r from-pink-500 to-violet-500 shadow-[0_0_14px_rgba(236,72,153,0.45)] transition-all hover:scale-105 active:scale-95"
+          // h-7 matches the FavoriteButton / ShareButton bubbles it sits
+          // beside in the profile header — anything taller reads oversized.
+          className="h-7 px-3 rounded-full flex items-center gap-1 text-[11px] font-semibold text-white bg-gradient-to-r from-pink-500 to-violet-500 shadow-[0_0_12px_rgba(236,72,153,0.45)] transition-all hover:scale-105 active:scale-95"
         >
-          <CalendarCheck className="h-3.5 w-3.5" />
+          <CalendarCheck className="h-3 w-3" />
           Book
         </button>
       )}
