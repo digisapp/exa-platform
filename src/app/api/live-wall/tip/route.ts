@@ -6,6 +6,7 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { notifyModelEarning } from "@/lib/earning-notifications";
+import { maybeCelebrateGoalCompletion } from "@/lib/goal-celebration";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { LIVE_WALL_BELL_MIN_COINS } from "@/lib/tip-config";
 
@@ -133,6 +134,9 @@ export async function POST(request: NextRequest) {
               body: `You received a ${amount}-coin tip (${formatUsd(coinsToUsd(amount))}) on the Live Wall`,
             },
           });
+          // Ledger trigger counted this tip toward any active goal — fire
+          // the one-time celebration if it crossed the line.
+          await maybeCelebrateGoalCompletion(adminClient, wallMessage.actor_id);
         }
       }
     } catch (notifyError) {

@@ -4,6 +4,7 @@ import { assertNotSuspended } from "@/lib/auth/suspension";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
 import { notifyModelEarning } from "@/lib/earning-notifications";
+import { maybeCelebrateGoalCompletion } from "@/lib/goal-celebration";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { z } from "zod";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -273,6 +274,10 @@ export async function POST(request: NextRequest) {
           url: finalConversationId ? `/chats/${finalConversationId}` : "/wallet",
         },
       });
+
+      // The ledger trigger already counted this tip toward any active goal —
+      // fire the one-time celebration if it crossed the line.
+      await maybeCelebrateGoalCompletion(adminClient, recipientId);
     }
 
     return NextResponse.json({

@@ -44,6 +44,7 @@ import { SpotlightAdmirers } from "@/components/dashboard/SpotlightAdmirers";
 import { CastingReadiness } from "@/components/dashboard/CastingReadiness";
 import { computeCastingReadiness } from "@/lib/casting-readiness";
 import { WelcomeBackPulse } from "@/components/dashboard/WelcomeBackPulse";
+import { ModelGoalCard } from "@/components/dashboard/ModelGoalCard";
 import { computeWelcomeBackPulse } from "@/lib/welcome-back";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 
@@ -765,6 +766,14 @@ export default async function DashboardPage() {
     </section>
   );
 
+  // Latest tip goal — drives the dashboard goal card (create/track/deliver)
+  const { data: latestGoal } = await (adminClient.from("model_goals") as any)
+    .select("id, reward_text, target_coins, progress_coins, status, completed_at, created_at")
+    .eq("model_actor_id", actor.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* ══════════════════════════════════════════════════════
@@ -845,6 +854,12 @@ export default async function DashboardPage() {
       {welcomeBack && (
         <WelcomeBackPulse username={model.username || ""} data={welcomeBack} />
       )}
+
+      {/* ──────────────────────────────────────────────────────
+          TIP GOAL — public communal target on the profile; the card
+          handles create / track / deliver-the-reward states
+         ────────────────────────────────────────────────────── */}
+      <ModelGoalCard initialGoal={latestGoal ?? null} username={model.username || ""} />
 
       {/* ──────────────────────────────────────────────────────
           UPCOMING TRIPS — accepted EXA Travel trips; unconfirmed

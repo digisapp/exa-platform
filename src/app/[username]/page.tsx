@@ -30,6 +30,7 @@ import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 import { BioExpand } from "@/components/model/BioExpand";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
+import { ModelGoalMeter } from "@/components/profile/ModelGoalMeter";
 import { BookModelButton } from "@/components/booking/BookModelButton";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 import {
@@ -388,6 +389,30 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
       .eq("following_id", modelActorId)
       .maybeSingle();
     isModelFavorited = !!followRow;
+  }
+
+  // Active tip goal (or one completed in the last 72h — the celebration
+  // lingers on the profile, then the meter disappears until the next goal).
+  // Public read: model_goals grants anon SELECT; only the model's own public
+  // target renders, never contributor data.
+  let modelGoal: any = null;
+  if (modelActorId) {
+    const { data: goalRow } = await (supabase.from("model_goals") as any)
+      .select("id, reward_text, target_coins, progress_coins, status, completed_at, created_at")
+      .eq("model_actor_id", modelActorId)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (
+      goalRow &&
+      (goalRow.status === "active" ||
+        (goalRow.status === "completed" &&
+          goalRow.completed_at &&
+          Date.now() - new Date(goalRow.completed_at).getTime() < 72 * 3600_000))
+    ) {
+      modelGoal = goalRow;
+    }
   }
 
   // Public name: the model's opt-in display_name (typed in by her in Settings,
@@ -1057,6 +1082,12 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
               allowTips={model.allow_tips ?? true}
               callReachable={callReachable}
             />
+          )}
+
+          {/* Tip goal meter — the model's public communal target; live-updates
+              as tips land. Renders in both layouts. */}
+          {modelGoal && (
+            <ModelGoalMeter goal={modelGoal} modelName={displayName} isOwner={isOwner} />
           )}
 
           {/* Runway Badges trophy wall intentionally not rendered — took up too much
