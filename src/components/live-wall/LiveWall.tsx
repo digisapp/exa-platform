@@ -34,11 +34,16 @@ import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
 import { ModelSignupDialog } from "@/components/auth/ModelSignupDialog";
 import { LiveWallTipPicker } from "./LiveWallTipPicker";
 import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
+import { vipTierByKey, type VipTierKey } from "@/lib/vip-config";
 
 interface CurrentUser {
   actorId: string;
   actorType: string;
   coinBalance: number;
+  /** Fan VIP tier, server-resolved in LiveWallServer — drives arrival announcements. */
+  vipTierKey?: VipTierKey | null;
+  /** Wall-facing name (@username preferred), only used for the arrival toast. */
+  displayName?: string | null;
 }
 
 interface Props {
@@ -104,6 +109,10 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
   // subscribe ("binding mismatch"), killing live posts/tips for everyone.
   const channelIdRef = useRef(`live-wall-${useId()}`);
   const isAtBottomRef = useRef(true);
+  // Presence bookkeeping for VIP arrival announcements: joins fired before
+  // the first presence sync are the room's existing members, not arrivals.
+  const presenceSyncedRef = useRef(false);
+  const vipArrivalShownRef = useRef(new Map<string, number>());
   const audioCtxRef = useRef<AudioContext | null>(null);
   const audioInitRef = useRef(false);
   const messagesRef = useRef(messages);
@@ -330,14 +339,41 @@ export function LiveWall({ initialMessages, currentUser, compact = false, startC
       )
       // Presence for online count
       .on("presence", { event: "sync" }, () => {
+        presenceSyncedRef.current = true;
         const state = channel.presenceState();
         setOnlineCount(Object.keys(state).length);
+      })
+      // VIP arrival announcement — the whole room sees a top supporter walk
+      // in. Tier comes from presence payloads tracked with a server-resolved
+      // value (LiveWallServer), and initial-sync joins are skipped so only
+      // genuine arrivals announce. Display-only recognition; never amounts.
+      .on("presence", { event: "join" }, ({ key, newPresences }) => {
+        if (!presenceSyncedRef.current) return;
+        if (key === currentUser?.actorId) return;
+        for (const p of newPresences as Array<{ vip_tier?: string; display_name?: string }>) {
+          const tier = vipTierByKey(p.vip_tier);
+          if (!tier) continue;
+          const lastShown = vipArrivalShownRef.current.get(key);
+          const now = Date.now();
+          if (lastShown && now - lastShown < 10 * 60_000) continue;
+          vipArrivalShownRef.current.set(key, now);
+          toast(`${tier.emoji} ${tier.label} supporter in the house`, {
+            description: `${p.display_name || "A top supporter"} just arrived`,
+            duration: 6000,
+          });
+        }
       })
       .subscribe(async (status) => {
         setIsConnected(status === "SUBSCRIBED");
         if (status === "SUBSCRIBED") {
           await channel.track({
             actor_type: currentUser?.actorType || "viewer",
+            ...(currentUser?.vipTierKey
+              ? {
+                  vip_tier: currentUser.vipTierKey,
+                  display_name: currentUser.displayName || undefined,
+                }
+              : {}),
           });
         }
       });

@@ -30,6 +30,8 @@ export interface VipTier {
   badgeClass: string;
   /** Tailwind text color for the gem icon. */
   iconClass: string;
+  /** Emoji for text-only surfaces (toasts, push bodies, announcements). */
+  emoji: string;
 }
 
 /** Ordered highest → lowest so the first match wins. */
@@ -40,6 +42,7 @@ export const VIP_TIERS: readonly VipTier[] = [
     minSpend: 5000,
     badgeClass: "bg-cyan-500/15 border-cyan-400/40 text-cyan-300",
     iconClass: "text-cyan-300",
+    emoji: "💎",
   },
   {
     key: "star",
@@ -47,6 +50,7 @@ export const VIP_TIERS: readonly VipTier[] = [
     minSpend: 500,
     badgeClass: "bg-pink-500/15 border-pink-400/40 text-pink-300",
     iconClass: "text-pink-300",
+    emoji: "🌟",
   },
   {
     key: "vip",
@@ -54,6 +58,7 @@ export const VIP_TIERS: readonly VipTier[] = [
     minSpend: 100,
     badgeClass: "bg-violet-500/15 border-violet-400/40 text-violet-300",
     iconClass: "text-violet-300",
+    emoji: "✨",
   },
 ] as const;
 
@@ -61,4 +66,10 @@ export const VIP_TIERS: readonly VipTier[] = [
 export function vipTierOf(lifetimeSpendCoins: number | null | undefined): VipTier | null {
   if (!lifetimeSpendCoins || lifetimeSpendCoins <= 0) return null;
   return VIP_TIERS.find((t) => lifetimeSpendCoins >= t.minSpend) ?? null;
+}
+
+/** Tier for a stored key (e.g. live_wall_messages.vip_tier), or null. */
+export function vipTierByKey(key: string | null | undefined): VipTier | null {
+  if (!key) return null;
+  return VIP_TIERS.find((t) => t.key === key) ?? null;
 }

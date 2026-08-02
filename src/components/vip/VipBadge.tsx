@@ -1,24 +1,16 @@
 import { Gem } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { vipTierOf } from "@/lib/vip-config";
+import { vipTierOf, type VipTier } from "@/lib/vip-config";
 
-interface VipBadgeProps {
-  /** fans.lifetime_spend_coins — badge renders null below the VIP floor. */
-  lifetimeSpendCoins: number | null | undefined;
+interface VipTierBadgeProps {
+  tier: VipTier;
   /** xs: inbox rows / inline next to names; sm: chat header, popover header */
   size?: "xs" | "sm";
   className?: string;
 }
 
-/**
- * Fan VIP tier pill (VIP / Star / Diamond). Shows earned status only —
- * never spend amounts. Renders nothing for fans below the VIP floor, so
- * it can be dropped inline next to any fan name without a guard.
- */
-export function VipBadge({ lifetimeSpendCoins, size = "xs", className }: VipBadgeProps) {
-  const tier = vipTierOf(lifetimeSpendCoins);
-  if (!tier) return null;
-
+/** Tier pill for an already-resolved tier. */
+function VipTierBadge({ tier, size = "xs", className }: VipTierBadgeProps) {
   return (
     <span
       className={cn(
@@ -32,4 +24,23 @@ export function VipBadge({ lifetimeSpendCoins, size = "xs", className }: VipBadg
       {tier.label}
     </span>
   );
+}
+
+interface VipBadgeProps {
+  /** fans.lifetime_spend_coins — badge renders null below the VIP floor. */
+  lifetimeSpendCoins: number | null | undefined;
+  size?: "xs" | "sm";
+  className?: string;
+}
+
+/**
+ * Fan VIP tier pill (VIP / Star / Diamond). Shows earned status only —
+ * never spend amounts. Renders nothing for fans below the VIP floor, so
+ * it can be dropped inline next to any fan name without a guard.
+ */
+export function VipBadge({ lifetimeSpendCoins, size = "xs", className }: VipBadgeProps) {
+  const tier = vipTierOf(lifetimeSpendCoins);
+  if (!tier) return null;
+
+  return <VipTierBadge tier={tier} size={size} className={className} />;
 }
