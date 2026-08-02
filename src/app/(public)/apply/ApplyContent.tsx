@@ -53,7 +53,7 @@ export function ApplyContent() {
       <div className="relative overflow-hidden rounded-2xl border border-pink-500/20 bg-white/[0.02] p-6 md:p-8 shadow-[0_0_40px_rgba(236,72,153,0.12)]">
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-500/15 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10">
-          <ModelSignupForm />
+          <ModelSignupForm surface="apply_page" />
         </div>
       </div>
 

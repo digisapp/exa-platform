@@ -39,6 +39,15 @@ const ALLOWED_EVENTS = new Set([
   // Emitted server-side by /api/calls/knock (fan tried to call an offline
   // model); listed here so reporting treats it as a known event.
   "call_knock",
+  // Model signup funnel (2026-08-03). The application form had no telemetry at
+  // all, so a falling submission count was indistinguishable from falling
+  // traffic. signup_form_opened fires once per mount (metadata.surface:
+  // "dialog" | "apply_page"); signup_validation_error carries metadata.field
+  // so we can see which field people die on; signup_submitted fires on a
+  // successful POST. Drop-off = opened - submitted.
+  "signup_form_opened",
+  "signup_validation_error",
+  "signup_submitted",
 ]);
 
 export async function POST(request: NextRequest) {

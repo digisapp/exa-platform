@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -15,6 +16,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { toast } from "sonner";
 import { Loader2, Clock, Sparkles, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { trackEvent } from "@/lib/analytics-client";
 import { cn } from "@/lib/utils";
 import { useLocale, type Locale } from "@/i18n";
 import { en } from "@/i18n/dictionaries/en";
@@ -29,6 +31,8 @@ interface ModelSignupFormProps {
   className?: string;
   /** Called right before the post-submit redirect fires. */
   onSuccess?: () => void;
+  /** Where this form is mounted — rides along on the funnel events. */
+  surface?: "dialog" | "apply_page";
 }
 
 const EMAIL_LIKE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -38,7 +42,7 @@ const EMAIL_LIKE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * logged-out gig Apply, Live Wall) and the standalone /apply page. All state
  * lives here, so the dialog resets naturally when Radix unmounts it on close.
  */
-export function ModelSignupForm({ forceLocale, className, onSuccess }: ModelSignupFormProps) {
+export function ModelSignupForm({ forceLocale, className, onSuccess, surface = "dialog" }: ModelSignupFormProps) {
   const { locale: contextLocale } = useLocale();
   const locale = forceLocale ?? contextLocale;
   const s = locale === "es" ? es.signup : en.signup;
@@ -50,6 +54,7 @@ export function ModelSignupForm({ forceLocale, className, onSuccess }: ModelSign
   const [name, setName] = useState("");
   const [instagram, setInstagram] = useState("");
   const [tiktok, setTiktok] = useState("");
+  const [noSocial, setNoSocial] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -58,6 +63,20 @@ export function ModelSignupForm({ forceLocale, className, onSuccess }: ModelSign
   const [height, setHeight] = useState("");
 
   const supabase = createClient();
+
+  // The form had no telemetry at all, so a falling submission count was
+  // indistinguishable from falling traffic. One event per mount gives us the
+  // denominator; signup_validation_error gives us the field people die on.
+  useEffect(() => {
+    trackEvent("signup_form_opened", { metadata: { surface, locale } });
+    // Mount-only: a locale flip mid-form is still the same form opening.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fail = (field: string, message: string) => {
+    trackEvent("signup_validation_error", { metadata: { field, surface } });
+    toast.error(message);
+  };
 
   // Height options from 4'10" to 7'0"
   const heightOptions = [
@@ -91,99 +110,99 @@ export function ModelSignupForm({ forceLocale, className, onSuccess }: ModelSign
     data.error ||
     s.errGeneric;
 
+  /**
+   * Turn whatever the applicant pasted into a bare handle.
+   *
+   * Pasting a profile URL is exactly what a non-technical model does, so a
+   * recognised instagram.com / tiktok.com link is cleaned and the submit
+   * continues. This used to `return` after setState with no toast, which read
+   * as "the button is broken" and cost an unknown number of applications.
+   */
+  const normalizeHandle = (
+    raw: string,
+    kind: "instagram" | "tiktok"
+  ): { handle: string | null; error?: string } => {
+    const trimmed = raw.trim();
+    if (!trimmed) return { handle: null };
+
+    const urlMatch =
+      kind === "instagram"
+        ? trimmed.match(/instagram\.com\/([a-zA-Z0-9._]+)/)
+        : trimmed.match(/tiktok\.com\/@?([a-zA-Z0-9._]+)/);
+
+    const value = (urlMatch ? urlMatch[1] : trimmed).replace(/^@/, "");
+    const err = (key: "Spaces" | "Email" | "Url") =>
+      kind === "instagram"
+        ? ({ Spaces: s.errInstagramSpaces, Email: s.errInstagramEmail, Url: s.errInstagramUrl }[key])
+        : ({ Spaces: s.errTiktokSpaces, Email: s.errTiktokEmail, Url: s.errTiktokUrl }[key]);
+
+    if (/\s/.test(value)) return { handle: null, error: err("Spaces") };
+    if (EMAIL_LIKE.test(value)) return { handle: null, error: err("Email") };
+
+    // Other URLs / domains — require a protocol, www. or a slash so handles
+    // like camille.woods don't trip the check.
+    if (!urlMatch && (/^(https?:\/\/|www\.)/i.test(value) || /\.[a-z]{2,}\//i.test(value))) {
+      return { handle: null, error: err("Url") };
+    }
+
+    return { handle: value };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast.error(s.errName);
+      fail("name", s.errName);
       return;
     }
 
-    // Instagram OR TikTok — at least one social handle is required
-    if (!instagram.trim() && !tiktok.trim()) {
-      toast.error(s.errSocial);
+    // Instagram OR TikTok — unless the applicant told us they have neither
+    if (!noSocial && !instagram.trim() && !tiktok.trim()) {
+      fail("social", s.errSocial);
       return;
     }
 
-    if (instagram.trim()) {
-      if (/\s/.test(instagram.trim().replace(/^@/, ""))) {
-        toast.error(s.errInstagramSpaces);
-        return;
-      }
-
-      // Catch emails entered in the Instagram field
-      if (EMAIL_LIKE.test(instagram.trim())) {
-        toast.error(s.errInstagramEmail);
-        return;
-      }
-
-      // Strip instagram.com URLs down to just the handle
-      const igUrlMatch = instagram.trim().match(/instagram\.com\/([a-zA-Z0-9._]+)/);
-      if (igUrlMatch) {
-        setInstagram(igUrlMatch[1]);
-        return;
-      }
-
-      // Catch other URLs / domains (require protocol or www. or a slash — avoid false-positives on handles like camille.woods)
-      const igClean = instagram.trim().replace(/^@/, "");
-      if (/^(https?:\/\/|www\.)/i.test(igClean) || /\.[a-z]{2,}\//i.test(igClean)) {
-        toast.error(s.errInstagramUrl);
-        return;
-      }
+    const ig = noSocial ? { handle: null } : normalizeHandle(instagram, "instagram");
+    if (ig.error) {
+      fail("instagram", ig.error);
+      return;
     }
 
-    if (tiktok.trim()) {
-      if (/\s/.test(tiktok.trim().replace(/^@/, ""))) {
-        toast.error(s.errTiktokSpaces);
-        return;
-      }
-
-      // Catch emails entered in the TikTok field
-      if (EMAIL_LIKE.test(tiktok.trim())) {
-        toast.error(s.errTiktokEmail);
-        return;
-      }
-
-      // Strip tiktok.com URLs down to just the handle
-      const ttUrlMatch = tiktok.trim().match(/tiktok\.com\/@?([a-zA-Z0-9._]+)/);
-      if (ttUrlMatch) {
-        setTiktok(ttUrlMatch[1]);
-        return;
-      }
-
-      // Catch other URLs / domains (require protocol or www. or a slash)
-      const ttClean = tiktok.trim().replace(/^@/, "");
-      if (/^(https?:\/\/|www\.)/i.test(ttClean) || /\.[a-z]{2,}\//i.test(ttClean)) {
-        toast.error(s.errTiktokUrl);
-        return;
-      }
+    const tt = noSocial ? { handle: null } : normalizeHandle(tiktok, "tiktok");
+    if (tt.error) {
+      fail("tiktok", tt.error);
+      return;
     }
+
+    // Reflect the cleaned handles back so the field shows what we'll submit
+    if (ig.handle && ig.handle !== instagram) setInstagram(ig.handle);
+    if (tt.handle && tt.handle !== tiktok) setTiktok(tt.handle);
 
     if (!email.trim()) {
-      toast.error(s.errEmail);
+      fail("email", s.errEmail);
       return;
     }
 
     // Basic email validation
     if (!email.includes("@") || !email.includes(".")) {
-      toast.error(s.errEmailInvalid);
+      fail("email", s.errEmailInvalid);
       return;
     }
 
     if (password.length < 8) {
-      toast.error(s.errPassword);
+      fail("password", s.errPassword);
       return;
     }
 
     // Phone is optional, but a provided number needs enough digits to be real
     if (phone && phone.replace(/\D/g, "").length < 8) {
-      toast.error(s.errPhone);
+      fail("phone", s.errPhone);
       return;
     }
 
     // Date of birth validation (must be 18+)
     if (!dateOfBirth) {
-      toast.error(s.errDob);
+      fail("dob", s.errDob);
       return;
     }
 
@@ -196,18 +215,18 @@ export function ModelSignupForm({ forceLocale, className, onSuccess }: ModelSign
     }
 
     if (age < 18) {
-      toast.error(s.errUnderage);
+      fail("underage", s.errUnderage);
       return;
     }
 
     // Height validation
     if (!height) {
-      toast.error(s.errHeight);
+      fail("height", s.errHeight);
       return;
     }
 
-    const instagramUsername = instagram.trim() ? instagram.trim().replace("@", "") : null;
-    const tiktokUsername = tiktok.trim() ? tiktok.trim().replace("@", "") : null;
+    const instagramUsername = ig.handle;
+    const tiktokUsername = tt.handle;
 
     setLoading(true);
 
@@ -255,14 +274,20 @@ export function ModelSignupForm({ forceLocale, className, onSuccess }: ModelSign
           date_of_birth: dateOfBirth,
           height: height,
           preferred_language: locale,
+          no_social: noSocial,
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
+        trackEvent("signup_validation_error", {
+          metadata: { field: "server", code: data.code ?? "unknown", surface },
+        });
         throw new Error(serverError(data));
       }
+
+      trackEvent("signup_submitted", { metadata: { surface, noSocial, locale } });
 
       // Step 3: Sign in directly (email is auto-confirmed by the API)
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -315,7 +340,7 @@ export function ModelSignupForm({ forceLocale, className, onSuccess }: ModelSign
               placeholder={s.instagramPlaceholder}
               value={instagram}
               onChange={(e) => setInstagram(e.target.value)}
-              disabled={loading}
+              disabled={loading || noSocial}
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
@@ -329,14 +354,39 @@ export function ModelSignupForm({ forceLocale, className, onSuccess }: ModelSign
               placeholder={s.tiktokPlaceholder}
               value={tiktok}
               onChange={(e) => setTiktok(e.target.value)}
-              disabled={loading}
+              disabled={loading || noSocial}
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
             />
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">{s.socialHint}</p>
+        {!noSocial && <p className="text-xs text-muted-foreground">{s.socialHint}</p>}
+
+        {/* Escape hatch: new, private and agency-managed models had no way in.
+            The gate moves to the review queue, where photos decide it. */}
+        <div className="flex items-start gap-2 pt-1">
+          <Checkbox
+            id="noSocial"
+            checked={noSocial}
+            onCheckedChange={(checked) => {
+              const on = checked === true;
+              setNoSocial(on);
+              if (on) {
+                setInstagram("");
+                setTiktok("");
+              }
+            }}
+            disabled={loading}
+            className="mt-0.5"
+          />
+          <Label htmlFor="noSocial" className="text-xs font-normal text-muted-foreground leading-snug cursor-pointer">
+            {s.noSocial}
+          </Label>
+        </div>
+        {noSocial && (
+          <p className="text-xs text-muted-foreground pl-6">{s.noSocialHint}</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -405,7 +455,10 @@ export function ModelSignupForm({ forceLocale, className, onSuccess }: ModelSign
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phone">{s.phone}</Label>
+        <Label htmlFor="phone" className="flex items-center gap-2">
+          {s.phone}
+          <span className="text-xs font-normal text-muted-foreground">({s.phoneOptional})</span>
+        </Label>
         <PhoneInput
           id="phone"
           value={phone}

@@ -22,8 +22,11 @@ const modelSignupSchema = z.object({
   date_of_birth: z.string().min(1, "Date of birth is required"),
   height: z.string().max(10, "Height is too long").optional().nullable(),
   preferred_language: z.string().max(5).optional().nullable(),
+  // Applicant declared they have no public Instagram/TikTok — waives the
+  // handle requirement and flags the application for photo-based review.
+  no_social: z.boolean().optional().default(false),
 }).refine(
-  (data) => data.instagram_username?.trim() || data.tiktok_username?.trim(),
+  (data) => data.no_social || data.instagram_username?.trim() || data.tiktok_username?.trim(),
   { message: "Please provide at least one social media handle", path: ["instagram_username"] }
 );
 
@@ -138,6 +141,7 @@ export async function POST(request: NextRequest) {
       date_of_birth,
       height,
       preferred_language,
+      no_social,
     } = validationResult.data;
 
     // Age validation — DOB is now required by the schema; the age check runs
@@ -344,7 +348,8 @@ export async function POST(request: NextRequest) {
       phone,
       date_of_birth,
       height,
-      preferred_language
+      preferred_language,
+      no_social
     );
 
     return NextResponse.json({
@@ -370,7 +375,8 @@ async function createFanAndApplication(
   phone: string | null | undefined,
   dateOfBirth: string | null | undefined,
   height: string | null | undefined,
-  preferredLanguage: string | null | undefined
+  preferredLanguage: string | null | undefined,
+  noSocial: boolean = false
 ): Promise<boolean> {
   // Create actor record
   const { data: actor } = await adminClient
@@ -438,6 +444,7 @@ async function createFanAndApplication(
       phone: phone?.trim() || null,
       date_of_birth: dateOfBirth || null,
       height: height || null,
+      no_social: noSocial,
       status: "pending",
     })
     .select("email_confirm_token")
