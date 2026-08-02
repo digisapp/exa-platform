@@ -225,7 +225,6 @@ export const en = {
     instagramPlaceholder: "@yourhandle",
     tiktok: "TikTok",
     tiktokPlaceholder: "@yourhandle",
-    socialHint: "Instagram or TikTok — optional, but it gets you reviewed fastest",
     email: "Email",
     emailPlaceholder: "you@example.com",
     password: "Password",

@@ -359,11 +359,9 @@ export function ModelSignupForm({ forceLocale, className, onSuccess, surface = "
             />
           </div>
         </div>
-        {/* Neither handle is required. Both blank is a valid application — the
-            server flags it no_social and the reviewer judges on photos. The
-            hint stays because a handle is still the fastest route to approval;
-            it just isn't a gate any more. */}
-        <p className="text-xs text-muted-foreground">{s.socialHint}</p>
+        {/* No hint under these — neither handle is required, and the labels
+            already say what the fields are. Both blank is a valid application;
+            the server flags it no_social and the reviewer judges on photos. */}
       </div>
 
       <div className="space-y-2">

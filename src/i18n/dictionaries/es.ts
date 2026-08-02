@@ -227,7 +227,6 @@ export const es: Dictionary = {
     instagramPlaceholder: "@tuusuario",
     tiktok: "TikTok",
     tiktokPlaceholder: "@tuusuario",
-    socialHint: "Instagram o TikTok — opcional, pero acelera tu revisión",
     email: "Correo Electrónico",
     emailPlaceholder: "tu@correo.com",
     password: "Contraseña",
