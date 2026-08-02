@@ -3848,6 +3848,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           coin_balance: number | null
+          celebrated_vip_tier: string | null
           created_at: string | null
           deleted_at: string | null
           deleted_reason: string | null
@@ -3875,6 +3876,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           coin_balance?: number | null
+          celebrated_vip_tier?: string | null
           created_at?: string | null
           deleted_at?: string | null
           deleted_reason?: string | null
@@ -3902,6 +3904,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           coin_balance?: number | null
+          celebrated_vip_tier?: string | null
           created_at?: string | null
           deleted_at?: string | null
           deleted_reason?: string | null
