@@ -10,6 +10,8 @@ import { TipDialog } from "./TipDialog";
 import { ChatMessages, ChatMessagesHandle } from "./ChatMessages";
 import { IncomingCallDialog } from "@/components/video";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import { useConversationPresence } from "@/hooks/useConversationPresence";
+import { vipTierOf } from "@/lib/vip-config";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useReadReceipts } from "@/hooks/useReadReceipts";
 import { useIncomingCalls } from "@/hooks/useIncomingCalls";
@@ -293,6 +295,34 @@ export function ChatView({
       lifetimeSpendCoins: null,
     };
   }, [otherParticipant]);
+
+  // Live mutual presence on this conversation (sharper than the 5-minute
+  // last_active_at heuristic): drives the header's "In the chat" status and
+  // the model-facing VIP entrance announcement.
+  const { otherPresent, otherEnteredAt } = useConversationPresence({
+    conversationId: conversation.id,
+    currentActorId: currentActor.id,
+    otherActorId: otherParticipant.actor_id,
+  });
+
+  // VIP entrance: when a VIP/Star/Diamond fan opens this chat while the model
+  // is looking at it, announce the arrival. Tier derives from the RSC-loaded
+  // fan row (server data, not the presence payload). Throttled so tab-hopping
+  // fans don't re-announce; recognition only — never spend amounts.
+  const vipEntranceShownAtRef = useRef(0);
+  useEffect(() => {
+    if (!otherEnteredAt) return;
+    if (currentActor.type !== "model" && currentActor.type !== "admin") return;
+    if (otherInfo.type !== "fan") return;
+    const tier = vipTierOf(otherInfo.lifetimeSpendCoins);
+    if (!tier) return;
+    if (otherEnteredAt - vipEntranceShownAtRef.current < 10 * 60_000) return;
+    vipEntranceShownAtRef.current = otherEnteredAt;
+    toast(`${tier.emoji} ${tier.label} supporter is here`, {
+      description: `${otherInfo.name} just opened your chat — say hi!`,
+      duration: 6000,
+    });
+  }, [otherEnteredAt, currentActor.type, otherInfo]);
 
   const otherName = otherInfo.name;
   const otherAvatar = otherInfo.avatar;
@@ -762,6 +792,7 @@ export function ChatView({
         otherParticipantModel={otherParticipant.model}
         otherInfo={otherInfo}
         otherInitials={otherInitials}
+        otherInChat={otherPresent}
         localCoinBalance={localCoinBalance}
         onBalanceChange={handleBalanceChange}
         soundEnabled={soundEnabled}
@@ -787,6 +818,7 @@ export function ChatView({
           callerName={incomingCall.callerName}
           callerAvatar={incomingCall.callerAvatar}
           callType={incomingCall.callType}
+          callerLifetimeSpend={otherInfo.lifetimeSpendCoins}
           onClose={dismissCall}
         />
       )}

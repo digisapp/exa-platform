@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { vipTierOf, type VipTier } from "@/lib/vip-config";
 
 interface TipNotificationListenerProps {
   actorId: string;
@@ -71,13 +72,15 @@ export function TipNotificationListener({ actorId }: TipNotificationListenerProp
 
           const senderActor = senderActorResult.data;
           let senderName = "Someone";
+          let senderTier: VipTier | null = null;
           if (senderActor?.type === "fan") {
-            const { data: fan } = await supabase
-              .from("fans")
-              .select("display_name")
+            const { data: fan } = await (supabase
+              .from("fans") as any)
+              .select("display_name, lifetime_spend_coins")
               .eq("id", message.sender_id)
               .maybeSingle();
             senderName = fan?.display_name || "A fan";
+            senderTier = vipTierOf(fan?.lifetime_spend_coins);
           } else if (senderActor?.type === "model" && senderActor.user_id) {
             const { data: model } = await supabase
               .from("models")
@@ -94,12 +97,14 @@ export function TipNotificationListener({ actorId }: TipNotificationListenerProp
           const amountMatch = message.content?.match(/(\d+)\s*coin/i);
           const amount = amountMatch ? amountMatch[1] : "";
 
+          // VIP tippers get announced with their earned tier — badge only
+          const tierPrefix = senderTier ? `${senderTier.label} supporter ` : "";
           toast.success(
             amount
-              ? `${senderName} sent you a ${amount} coin tip!`
-              : `${senderName} sent you a tip!`,
+              ? `${tierPrefix}${senderName} sent you a ${amount} coin tip!`
+              : `${tierPrefix}${senderName} sent you a tip!`,
             {
-              icon: "💝",
+              icon: senderTier ? senderTier.emoji : "💝",
               duration: 8000,
               action: {
                 label: "Reply",

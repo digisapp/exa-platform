@@ -75,6 +75,8 @@ interface ChatHeaderProps {
   otherParticipantModel?: ChatParticipantModel | null;
   otherInfo: OtherParticipantInfo;
   otherInitials: string;
+  /** Live conversation presence — the other participant has this chat open now. */
+  otherInChat?: boolean;
   localCoinBalance: number;
   onBalanceChange: (newBalance: number) => void;
   soundEnabled?: boolean;
@@ -89,6 +91,7 @@ export function ChatHeader({
   otherParticipantModel,
   otherInfo,
   otherInitials,
+  otherInChat = false,
   localCoinBalance,
   onBalanceChange,
   soundEnabled = true,
@@ -140,17 +143,25 @@ export function ChatHeader({
       ? isReachableForCalls(otherParticipantModel)
       : true // no model row loaded — fail open, the server still gates
     : true;
-  const isOnline = otherIsModel
-    ? !!otherParticipantModel && modelReachable
-    : !!(
-        otherInfo.lastActive &&
-        new Date().getTime() - new Date(otherInfo.lastActive).getTime() < 5 * 60 * 1000
-      );
-  const statusLabel = !isOnline
-    ? null
-    : otherIsModel && !otherParticipantModel?.video_is_online
-      ? "Taking calls"
-      : "Online";
+  // Live presence (chat open right now) lights the dot for either type; call
+  // gating stays on callsDisabled below, so this never un-gates a 409 button.
+  const isOnline =
+    otherInChat ||
+    (otherIsModel
+      ? !!otherParticipantModel && modelReachable
+      : !!(
+          otherInfo.lastActive &&
+          new Date().getTime() - new Date(otherInfo.lastActive).getTime() < 5 * 60 * 1000
+        ));
+  // Live presence beats the heuristics: "In the chat" means they have THIS
+  // conversation open right now (both participant types).
+  const statusLabel = otherInChat
+    ? "In the chat"
+    : !isOnline
+      ? null
+      : otherIsModel && !otherParticipantModel?.video_is_online
+        ? "Taking calls"
+        : "Online";
   // Only fans get gated (models can always ring their fans; the server gate
   // is fan-only too)
   const callsDisabled =

@@ -14,12 +14,15 @@ import { toast } from "sonner";
 import { VideoRoom } from "./VideoRoom";
 import { Ringtone } from "./ringtone";
 import { createClient } from "@/lib/supabase/client";
+import { VipBadge } from "@/components/vip/VipBadge";
 
 interface IncomingCallDialogProps {
   sessionId: string;
   callerName: string;
   callerAvatar?: string;
   callType?: "video" | "voice";
+  /** fans.lifetime_spend_coins for fan callers — shows their VIP tier pill. */
+  callerLifetimeSpend?: number | null;
   onClose: () => void;
 }
 
@@ -28,6 +31,7 @@ export function IncomingCallDialog({
   callerName,
   callerAvatar,
   callType: initialCallType = "video",
+  callerLifetimeSpend,
   onClose,
 }: IncomingCallDialogProps) {
   const [isJoining, setIsJoining] = useState(false);
@@ -195,7 +199,10 @@ export function IncomingCallDialog({
             </Avatar>
           </div>
 
-          <h3 className="mt-4 text-xl font-semibold">{callerName}</h3>
+          <div className="mt-4 flex items-center gap-2">
+            <h3 className="text-xl font-semibold">{callerName}</h3>
+            <VipBadge lifetimeSpendCoins={callerLifetimeSpend} size="sm" />
+          </div>
           <p className="text-muted-foreground">is calling you...</p>
 
           <p className="text-sm text-muted-foreground mt-2">

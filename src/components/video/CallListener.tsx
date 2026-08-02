@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { IncomingCallDialog } from "./IncomingCallDialog";
 import { unlockRingtoneAudio } from "./ringtone";
 import { toast } from "sonner";
+import { vipTierOf } from "@/lib/vip-config";
 
 interface CallListenerProps {
   actorId: string;
@@ -16,6 +17,7 @@ export function CallListener({ actorId }: CallListenerProps) {
     callerName: string;
     callerAvatar?: string;
     callType?: "video" | "voice";
+    callerLifetimeSpend?: number | null;
   } | null>(null);
   const supabase = createClient();
 
@@ -74,6 +76,7 @@ export function CallListener({ actorId }: CallListenerProps) {
 
           let callerName = "Someone";
           let callerAvatar: string | undefined;
+          let callerLifetimeSpend: number | null = null;
 
           if (callerActor.type === "model") {
             const { data: model } = await (supabase
@@ -89,13 +92,14 @@ export function CallListener({ actorId }: CallListenerProps) {
           } else if (callerActor.type === "fan") {
             const { data: fan } = await (supabase
               .from("fans") as any)
-              .select("display_name, avatar_url")
+              .select("display_name, avatar_url, lifetime_spend_coins")
               .eq("id", callerActor.id)
-              .single() as { data: { display_name?: string; avatar_url?: string } | null };
+              .single() as { data: { display_name?: string; avatar_url?: string; lifetime_spend_coins?: number | null } | null };
 
             if (fan) {
               callerName = fan.display_name || "Fan";
               callerAvatar = fan.avatar_url || undefined;
+              callerLifetimeSpend = fan.lifetime_spend_coins ?? null;
             }
           }
 
@@ -105,12 +109,20 @@ export function CallListener({ actorId }: CallListenerProps) {
             callerName,
             callerAvatar,
             callType,
+            callerLifetimeSpend,
           });
 
           const callTypeLabel = callType === "voice" ? "voice" : "video";
-          toast.info(`${callerName} is ${callTypeLabel} calling you...`, {
-            duration: 5000,
-          });
+          // VIP callers announce with their earned tier — badge only, no amounts
+          const callerTier = vipTierOf(callerLifetimeSpend);
+          toast.info(
+            callerTier
+              ? `${callerTier.emoji} ${callerTier.label} supporter ${callerName} is ${callTypeLabel} calling you...`
+              : `${callerName} is ${callTypeLabel} calling you...`,
+            {
+              duration: 5000,
+            }
+          );
 
           // The toast is invisible if the tab is backgrounded — fire an OS
           // notification too so the call can actually be answered.
@@ -150,6 +162,7 @@ export function CallListener({ actorId }: CallListenerProps) {
       callerName={incomingCall.callerName}
       callerAvatar={incomingCall.callerAvatar}
       callType={incomingCall.callType}
+      callerLifetimeSpend={incomingCall.callerLifetimeSpend}
       onClose={() => setIncomingCall(null)}
     />
   );

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { LiveWall } from "./LiveWall";
 import { enrichLiveWallAvatars } from "@/lib/live-wall-avatars";
+import { vipTierOf, type VipTierKey } from "@/lib/vip-config";
 
 /** Tuck the message history behind a "Show recent posts" expander after this
  *  many silent days. A new post (including system heartbeats on gig
@@ -58,6 +59,10 @@ export async function LiveWallServer({ actorId, actorType, compact }: Props) {
   } = await supabase.auth.getUser();
 
   let coinBalance = 0;
+  // Fan VIP tier + name, tracked into wall presence so the room can announce
+  // VIP arrivals. Server-resolved (badges are never client-claimed data).
+  let vipTierKey: VipTierKey | null = null;
+  let displayName: string | null = null;
   if (user) {
     if (actorType === "model") {
       const { data } = await supabase
@@ -67,12 +72,14 @@ export async function LiveWallServer({ actorId, actorType, compact }: Props) {
         .maybeSingle();
       coinBalance = data?.coin_balance ?? 0;
     } else if (actorType === "fan") {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("fans")
-        .select("coin_balance")
+        .select("coin_balance, display_name, username, lifetime_spend_coins")
         .eq("user_id", user.id)
         .maybeSingle();
       coinBalance = data?.coin_balance ?? 0;
+      vipTierKey = vipTierOf(data?.lifetime_spend_coins)?.key ?? null;
+      displayName = data?.username ? `@${data.username}` : data?.display_name || null;
     } else if (actorType === "brand") {
       const { data } = await supabase
         .from("brands")
@@ -86,7 +93,7 @@ export async function LiveWallServer({ actorId, actorType, compact }: Props) {
   return (
     <LiveWall
       initialMessages={messages}
-      currentUser={{ actorId, actorType, coinBalance }}
+      currentUser={{ actorId, actorType, coinBalance, vipTierKey, displayName }}
       compact={compact}
       startCollapsed={isQuiet}
     />
