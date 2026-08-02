@@ -5037,6 +5037,50 @@ export type Database = {
         }
         Relationships: []
       }
+      model_goals: {
+        Row: {
+          celebrated: boolean
+          completed_at: string | null
+          created_at: string
+          id: string
+          model_actor_id: string
+          progress_coins: number
+          reward_text: string
+          status: string
+          target_coins: number
+        }
+        Insert: {
+          celebrated?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          model_actor_id: string
+          progress_coins?: number
+          reward_text: string
+          status?: string
+          target_coins: number
+        }
+        Update: {
+          celebrated?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          model_actor_id?: string
+          progress_coins?: number
+          reward_text?: string
+          status?: string
+          target_coins?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_goals_model_actor_id_fkey"
+            columns: ["model_actor_id"]
+            isOneToOne: false
+            referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       model_applications: {
         Row: {
           bio: string | null
