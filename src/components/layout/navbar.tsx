@@ -1,6 +1,8 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { vipTierOf, vipTierByKey } from "@/lib/vip-config";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -89,6 +91,34 @@ const DROPDOWN_ITEM_CLASS =
   "cursor-pointer rounded-lg px-2.5 py-2 text-sm text-white/80 focus:bg-white/10 focus:text-white data-[highlighted]:bg-white/10 data-[highlighted]:text-white";
 
 export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, notificationCount = 0, bellCount = 0, fanLifetimeSpend = 0 }: NavbarProps) {
+  // VIP tier-up celebration: when the viewer's earned tier is one this
+  // browser hasn't celebrated yet, ping the server — it's authoritative and
+  // idempotent (fans.celebrated_vip_tier), so duplicate pings and multiple
+  // devices are safe. Only a genuine first-time tier-up returns `celebrated`,
+  // which triggers the personal congratulations.
+  const celebratePingedRef = useRef(false);
+  useEffect(() => {
+    if (celebratePingedRef.current) return;
+    const tier = vipTierOf(fanLifetimeSpend);
+    if (!tier) return;
+    if (localStorage.getItem("exaVipCelebratedTier") === tier.key) return;
+    celebratePingedRef.current = true;
+    fetch("/api/vip/celebrate", { method: "POST" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) return; // failed — leave localStorage unset so we retry next visit
+        localStorage.setItem("exaVipCelebratedTier", tier.key);
+        const celebrated = vipTierByKey(data.celebrated);
+        if (celebrated) {
+          toast(`${celebrated.emoji} You're now a ${celebrated.label} supporter!`, {
+            description:
+              "Thank you for supporting EXA models — your status now shows wherever you appear.",
+            duration: 10000,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [fanLifetimeSpend]);
   const pathname = usePathname();
   const unreadCount = useUnreadCount(unreadCountProp);
   const coinBalanceContext = useCoinBalanceOptional();
