@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -54,7 +53,6 @@ export function ModelSignupForm({ forceLocale, className, onSuccess, surface = "
   const [name, setName] = useState("");
   const [instagram, setInstagram] = useState("");
   const [tiktok, setTiktok] = useState("");
-  const [noSocial, setNoSocial] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -156,19 +154,16 @@ export function ModelSignupForm({ forceLocale, className, onSuccess, surface = "
       return;
     }
 
-    // Instagram OR TikTok — unless the applicant told us they have neither
-    if (!noSocial && !instagram.trim() && !tiktok.trim()) {
-      fail("social", s.errSocial);
-      return;
-    }
-
-    const ig = noSocial ? { handle: null } : normalizeHandle(instagram, "instagram");
+    // Social handles are optional — an applicant with neither still gets in.
+    // A handle that IS supplied still has to be a real handle, so the paste
+    // guards below stay.
+    const ig = normalizeHandle(instagram, "instagram");
     if (ig.error) {
       fail("instagram", ig.error);
       return;
     }
 
-    const tt = noSocial ? { handle: null } : normalizeHandle(tiktok, "tiktok");
+    const tt = normalizeHandle(tiktok, "tiktok");
     if (tt.error) {
       fail("tiktok", tt.error);
       return;
@@ -274,7 +269,6 @@ export function ModelSignupForm({ forceLocale, className, onSuccess, surface = "
           date_of_birth: dateOfBirth,
           height: height,
           preferred_language: locale,
-          no_social: noSocial,
         }),
       });
 
@@ -287,7 +281,11 @@ export function ModelSignupForm({ forceLocale, className, onSuccess, surface = "
         throw new Error(serverError(data));
       }
 
-      trackEvent("signup_submitted", { metadata: { surface, noSocial, locale } });
+      // hasSocial is the fill-rate watch: handles are no longer required, so if
+      // this ratio falls the reviewer is losing their main vetting signal.
+      trackEvent("signup_submitted", {
+        metadata: { surface, locale, hasSocial: !!(instagramUsername || tiktokUsername) },
+      });
 
       // Step 3: Sign in directly (email is auto-confirmed by the API)
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -340,7 +338,7 @@ export function ModelSignupForm({ forceLocale, className, onSuccess, surface = "
               placeholder={s.instagramPlaceholder}
               value={instagram}
               onChange={(e) => setInstagram(e.target.value)}
-              disabled={loading || noSocial}
+              disabled={loading}
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
@@ -354,39 +352,18 @@ export function ModelSignupForm({ forceLocale, className, onSuccess, surface = "
               placeholder={s.tiktokPlaceholder}
               value={tiktok}
               onChange={(e) => setTiktok(e.target.value)}
-              disabled={loading || noSocial}
+              disabled={loading}
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
             />
           </div>
         </div>
-        {!noSocial && <p className="text-xs text-muted-foreground">{s.socialHint}</p>}
-
-        {/* Escape hatch: new, private and agency-managed models had no way in.
-            The gate moves to the review queue, where photos decide it. */}
-        <div className="flex items-start gap-2 pt-1">
-          <Checkbox
-            id="noSocial"
-            checked={noSocial}
-            onCheckedChange={(checked) => {
-              const on = checked === true;
-              setNoSocial(on);
-              if (on) {
-                setInstagram("");
-                setTiktok("");
-              }
-            }}
-            disabled={loading}
-            className="mt-0.5"
-          />
-          <Label htmlFor="noSocial" className="text-xs font-normal text-muted-foreground leading-snug cursor-pointer">
-            {s.noSocial}
-          </Label>
-        </div>
-        {noSocial && (
-          <p className="text-xs text-muted-foreground pl-6">{s.noSocialHint}</p>
-        )}
+        {/* Neither handle is required. Both blank is a valid application — the
+            server flags it no_social and the reviewer judges on photos. The
+            hint stays because a handle is still the fastest route to approval;
+            it just isn't a gate any more. */}
+        <p className="text-xs text-muted-foreground">{s.socialHint}</p>
       </div>
 
       <div className="space-y-2">

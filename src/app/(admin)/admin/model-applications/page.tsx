@@ -449,7 +449,7 @@ export default function AdminModelApplicationsPage() {
                         <div className="flex-1 text-center text-sm py-2">
                           {current.no_social ? (
                             <span className="text-amber-500">
-                              No socials — applicant said they have none. Judge on photos.
+                              No socials provided — judge on photos.
                             </span>
                           ) : (
                             <span className="text-muted-foreground">No Instagram</span>

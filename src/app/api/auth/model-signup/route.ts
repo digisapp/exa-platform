@@ -22,13 +22,7 @@ const modelSignupSchema = z.object({
   date_of_birth: z.string().min(1, "Date of birth is required"),
   height: z.string().max(10, "Height is too long").optional().nullable(),
   preferred_language: z.string().max(5).optional().nullable(),
-  // Applicant declared they have no public Instagram/TikTok — waives the
-  // handle requirement and flags the application for photo-based review.
-  no_social: z.boolean().optional().default(false),
-}).refine(
-  (data) => data.no_social || data.instagram_username?.trim() || data.tiktok_username?.trim(),
-  { message: "Please provide at least one social media handle", path: ["instagram_username"] }
-);
+});
 
 // Admin client to bypass RLS
 const adminClient = createServiceRoleClient();
@@ -141,7 +135,6 @@ export async function POST(request: NextRequest) {
       date_of_birth,
       height,
       preferred_language,
-      no_social,
     } = validationResult.data;
 
     // Age validation — DOB is now required by the schema; the age check runs
@@ -158,6 +151,13 @@ export async function POST(request: NextRequest) {
     const normalizedEmail = email; // Already normalized by Zod schema
     const normalizedInstagram = extractInstagramUsername(instagram_username);
     const normalizedTikTok = extractTikTokUsername(tiktok_username);
+
+    // Social handles are optional. An application with neither is flagged so
+    // /admin/model-applications knows to review it on photos rather than
+    // hunting for a handle that was never supplied. Derived here rather than
+    // asked of the applicant — the reviewer's next action is the same either
+    // way, so making someone tick a box to declare an absence bought nothing.
+    const noSocial = !normalizedInstagram && !normalizedTikTok;
 
     // Check for Instagram duplicate in existing models (claimed accounts only)
     if (normalizedInstagram) {
@@ -349,7 +349,7 @@ export async function POST(request: NextRequest) {
       date_of_birth,
       height,
       preferred_language,
-      no_social
+      noSocial
     );
 
     return NextResponse.json({
