@@ -31,6 +31,7 @@ import { BioExpand } from "@/components/model/BioExpand";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
 import { ModelGoalMeter } from "@/components/profile/ModelGoalMeter";
+import { computeVisitStreak, getVisitDates } from "@/lib/attendance";
 import { BookModelButton } from "@/components/booking/BookModelButton";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 import {
@@ -413,6 +414,19 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
     ) {
       modelGoal = goalRow;
     }
+  }
+
+  // Fan's own visit streak on THIS profile — computed from profile_views
+  // (already one row per viewer per day), shown only to the fan themself.
+  // Today counts implicitly (the ViewTracker POST races this render).
+  let fanVisitStreak = 0;
+  if (isFan && user) {
+    const svc = createServiceRoleClient();
+    const visitDates = await getVisitDates(svc, {
+      modelId: model.id,
+      viewerUserId: user.id,
+    });
+    fanVisitStreak = computeVisitStreak(visitDates);
   }
 
   // Public name: the model's opt-in display_name (typed in by her in Settings,
@@ -1082,6 +1096,17 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
               allowTips={model.allow_tips ?? true}
               callReachable={callReachable}
             />
+          )}
+
+          {/* Fan's own visit streak — habit loop, visible only to the fan */}
+          {fanVisitStreak >= 2 && (
+            <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] px-3.5 py-2.5">
+              <span className="text-lg leading-none">🔥</span>
+              <p className="text-xs text-amber-200/90">
+                <span className="font-bold">{fanVisitStreak}-day streak</span> visiting{" "}
+                {displayName} — come back tomorrow to keep it alive.
+              </p>
+            </div>
           )}
 
           {/* Tip goal meter — the model's public communal target; live-updates

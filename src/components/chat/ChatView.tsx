@@ -28,7 +28,11 @@ import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 export type ChatParticipantFan = Pick<
   Fan,
   "id" | "username" | "display_name" | "avatar_url" | "last_active_at" | "lifetime_spend_coins"
->;
+> & {
+  /** Server-computed "shows up often" flag (see lib/attendance.ts) — binary
+   *  by design, the model never sees visit counts. */
+  is_regular?: boolean;
+};
 
 interface Participant {
   actor_id: string;
@@ -272,6 +276,7 @@ export function ChatView({
         // "Online" heuristic it uses for models.
         lastActive: fan.last_active_at ?? null,
         lifetimeSpendCoins: fan.lifetime_spend_coins ?? null,
+        isRegular: fan.is_regular ?? false,
       };
     }
 

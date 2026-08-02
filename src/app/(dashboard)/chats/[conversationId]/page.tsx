@@ -5,6 +5,7 @@ import { ChatView, type ChatParticipantFan } from "@/components/chat/ChatView";
 import type { ChatParticipantModel } from "@/components/chat/ChatHeader";
 import type { Message, Actor, Model, Fan, Brand } from "@/types/database";
 import { stripLockedMediaUrl } from "@/lib/ppv";
+import { getVisitDates, isRegularVisitor } from "@/lib/attendance";
 import { signChatMediaUrls } from "@/lib/chat-media";
 
 // Admin client for fetching participant data (bypasses RLS)
@@ -182,6 +183,17 @@ export default async function ChatPage({ params }: PageProps) {
           .eq("id", otherActorId)
           .maybeSingle() as { data: ChatParticipantFan | null };
         otherFan = data;
+
+        // "Regular" chip for the model: binary flag only — the model never
+        // sees day counts or visit patterns, just that this fan shows up
+        // often (>= 4 distinct days in the last 14, from profile_views).
+        if (otherFan && currentModel?.id && otherActor.user_id) {
+          const visitDates = await getVisitDates(adminClient, {
+            modelId: currentModel.id,
+            viewerUserId: otherActor.user_id,
+          });
+          otherFan = { ...otherFan, is_regular: isRegularVisitor(visitDates) };
+        }
       } else if (otherActor.type === "brand") {
         // Brands use actor.id as their id
         const { data } = await (supabase
