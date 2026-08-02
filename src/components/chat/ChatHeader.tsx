@@ -65,6 +65,8 @@ export interface OtherParticipantInfo {
   lastActive: string | null;
   /** fans.lifetime_spend_coins — drives the VIP badge; null for non-fans. */
   lifetimeSpendCoins: number | null;
+  /** Fan visits this model's profile often (binary — never day counts). */
+  isRegular?: boolean;
 }
 
 interface ChatHeaderProps {
@@ -228,6 +230,15 @@ export function ChatHeader({
                   Fan
                 </Badge>
               )
+            )}
+            {/* Regular chip — this fan shows up often; greet them by name */}
+            {otherInfo.type === "fan" && otherInfo.isRegular && (
+              <span
+                className="inline-flex items-center gap-0.5 rounded-full border border-amber-400/40 bg-amber-500/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-amber-300 shrink-0"
+                title="Visits your profile most days"
+              >
+                🔥 Regular
+              </span>
             )}
             {otherInfo.type === "brand" && (
               <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 bg-amber-500/10 text-amber-500 border-amber-500/20">
