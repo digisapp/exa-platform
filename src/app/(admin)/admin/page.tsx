@@ -34,6 +34,7 @@ import {
   Crown,
   Trophy,
   CalendarCheck,
+  Server,
 } from "lucide-react";
 
 type Color =
@@ -136,6 +137,7 @@ export default async function AdminPage() {
     { href: "/admin/stats", label: "Leaderboards", icon: Trophy, color: "amber" },
     { href: "/admin/transactions", label: "Purchases", icon: Coins, color: "amber" },
     { href: "/admin/payouts", label: "Payouts", icon: Banknote, color: "emerald" },
+    { href: "/admin/costs", label: "Costs", icon: Server, color: "teal", subtitle: "infra spend" },
     { href: "/admin/usernames", label: "Usernames", icon: AtSign, color: "purple" },
     { href: "/admin/gigs", label: "Manage Gigs", icon: Sparkles, color: "violet" },
     { href: "/admin/shows", label: "Show Lineups", icon: ListOrdered, color: "pink", featured: true },
