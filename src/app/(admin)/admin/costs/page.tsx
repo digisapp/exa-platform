@@ -37,8 +37,20 @@ interface VercelBreakdown {
   last30Cents: number;
 }
 
+interface VercelInvoice {
+  date: string;
+  amountCents: number;
+  invoiceNumber?: string;
+  hostedUrl?: string;
+}
+
 interface CostsResponse {
   fixed: PlatformCost[];
+  vercelInvoices: {
+    available: boolean;
+    note?: string;
+    invoices?: VercelInvoice[];
+  };
   vercel: {
     available: boolean;
     note?: string;
@@ -296,6 +308,44 @@ export default function PlatformCostsPage() {
             </CardContent>
           </Card>
 
+          {data.vercelInvoices?.available && (data.vercelInvoices.invoices ?? []).length > 0 && (
+            <Card>
+              <CardContent className="space-y-3">
+                <h2 className="font-semibold flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-pink-300" />
+                  Vercel — actual invoices
+                </h2>
+                <div className="space-y-2">
+                  {(data.vercelInvoices.invoices ?? []).map((inv, i) => (
+                    <div
+                      key={inv.invoiceNumber ?? i}
+                      className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm"
+                    >
+                      <span className="text-white/70">{inv.date}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{usd(inv.amountCents)}</span>
+                        {inv.hostedUrl && (
+                          <a
+                            href={inv.hostedUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-white/40 hover:text-white/80"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-white/40">
+                  Real billed amounts from Vercel — includes the Pro seat, usage, and any credits.
+                  The build-usage card above is the live current-month estimate.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardContent className="space-y-3">
               <h2 className="font-semibold flex items-center gap-2">
@@ -379,8 +429,9 @@ export default function PlatformCostsPage() {
                 </Button>
               </div>
               <p className="text-xs text-white/40">
-                Amounts here are editable estimates for services without billing APIs — keep them in
-                sync with the real invoices via the links.
+                Vercel and Stripe sync live. The rest have no billing API for their regular keys —
+                Upstash and LiveKit can go live too if you create a management key in their consoles
+                (one-time setup); until then these are editable estimates.
               </p>
             </CardContent>
           </Card>

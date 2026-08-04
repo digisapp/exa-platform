@@ -32,6 +32,19 @@ type VercelUsage = {
   breakdown?: VercelProjectBreakdown[];
 };
 
+type VercelInvoice = {
+  date: string;
+  amountCents: number;
+  invoiceNumber?: string;
+  hostedUrl?: string;
+};
+
+type VercelInvoices = {
+  available: boolean;
+  note?: string;
+  invoices?: VercelInvoice[];
+};
+
 type StripeFees = {
   available: boolean;
   note?: string;
@@ -116,6 +129,24 @@ async function getVercelUsage(): Promise<VercelUsage> {
   return { available: true, mtdCents, last30Cents, projectedMonthCents, breakdown };
 }
 
+// Real billed invoices from Vercel — actual amounts including usage credits,
+// unlike the computed build estimate above.
+async function getVercelInvoices(): Promise<VercelInvoices> {
+  const token = process.env.VERCEL_API_TOKEN;
+  const teamId = process.env.VERCEL_TEAM_ID;
+  if (!token || !teamId) {
+    return { available: false, note: "Set VERCEL_API_TOKEN and VERCEL_TEAM_ID env vars." };
+  }
+  const data = await vercelGet(`/v1/invoices?teamId=${teamId}&limit=6`, token);
+  const invoices = ((data.data || []) as any[]).map((inv) => ({
+    date: String(inv.issuedAt || inv.createdAt || "").slice(0, 10),
+    amountCents: Math.round(parseFloat(inv.amountDue || "0") * 100),
+    invoiceNumber: inv.invoiceNumber,
+    hostedUrl: inv.hostedUrl,
+  }));
+  return { available: true, invoices };
+}
+
 async function getStripeFees(): Promise<StripeFees> {
   if (!process.env.STRIPE_SECRET_KEY) {
     return { available: false, note: "STRIPE_SECRET_KEY not configured." };
@@ -141,13 +172,14 @@ export const GET = withAuth(
   async () => {
     const service: any = createServiceRoleClient();
 
-    const [fixedRes, vercel, stripeFees] = await Promise.all([
+    const [fixedRes, vercel, vercelInvoices, stripeFees] = await Promise.all([
       service
         .from("platform_costs")
         .select("*")
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true }),
       getVercelUsage().catch((e): VercelUsage => ({ available: false, note: e.message })),
+      getVercelInvoices().catch((e): VercelInvoices => ({ available: false, note: e.message })),
       getStripeFees().catch((e): StripeFees => ({ available: false, note: e.message })),
     ]);
 
@@ -165,6 +197,7 @@ export const GET = withAuth(
     return NextResponse.json({
       fixed,
       vercel,
+      vercelInvoices,
       stripeFees,
       totals: { fixedMonthlyCents, estimatedMonthlyCents },
     });
