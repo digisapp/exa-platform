@@ -36,6 +36,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { parseInstagram } from "@/lib/instagram";
 import { toast } from "sonner";
 
 interface MediaContact {
@@ -259,6 +260,7 @@ export default function MediaTab() {
                 </TableHeader>
                 <TableBody>
                   {mediaContacts.map((contact) => {
+                    const instagram = contact.instagram_handle ? parseInstagram(contact.instagram_handle) : null;
                     return (
                       <TableRow key={contact.id}>
                         <TableCell>
@@ -268,15 +270,16 @@ export default function MediaTab() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {contact.instagram_handle ? (
+                          {instagram ? (
                             <a
-                              href={`https://instagram.com/${contact.instagram_handle.replace(/^@/, "")}`}
+                              href={instagram.href}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-pink-400 hover:text-pink-300 text-sm"
+                              title={contact.instagram_handle || undefined}
+                              className="flex items-center gap-1 text-pink-400 hover:text-pink-300 text-sm max-w-[200px]"
                             >
-                              <Instagram className="h-3.5 w-3.5" />
-                              @{contact.instagram_handle.replace(/^@/, "")}
+                              <Instagram className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">{instagram.label}</span>
                             </a>
                           ) : <span className="text-muted-foreground text-sm">&mdash;</span>}
                         </TableCell>

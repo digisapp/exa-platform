@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { normalizeInstagramHandle } from "@/lib/instagram";
 import { logger } from "@/lib/logger";
 
 const submitSchema = z.object({
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
       email: email.toLowerCase().trim(),
       phone: phone?.trim() || null,
-      instagram_handle: instagram_handle?.trim() || null,
+      instagram_handle: normalizeInstagramHandle(instagram_handle),
       media_company: media_company?.trim() || null,
       notes: message?.trim() || null,
       status: "new",

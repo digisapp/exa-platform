@@ -3,6 +3,7 @@ import { z } from "zod";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { logger } from "@/lib/logger";
+import { normalizeInstagramHandle } from "@/lib/instagram";
 import { format } from "date-fns";
 
 // Public designer/media applications for tour stops — no account required.
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
       email,
       phone: phone?.trim() || null,
       company: company?.trim() || null,
-      instagram_handle: instagram_handle?.trim().replace(/^@/, "") || null,
+      instagram_handle: normalizeInstagramHandle(instagram_handle),
       website_url: website_url?.trim() || null,
       media_type: role === "media" ? media_type || "other" : null,
       message: message?.trim() || null,
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
             .from("media_contacts")
             .update({
               phone: contact.phone || phone?.trim() || null,
-              instagram_handle: contact.instagram_handle || instagram_handle?.trim().replace(/^@/, "") || null,
+              instagram_handle: contact.instagram_handle || normalizeInstagramHandle(instagram_handle),
               website_url: contact.website_url || website_url?.trim() || null,
               media_company: contact.media_company || company?.trim() || null,
               notes: contact.notes ? `${contact.notes}\n${noteLine}` : noteLine,
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
             name: name.trim(),
             email,
             phone: phone?.trim() || null,
-            instagram_handle: instagram_handle?.trim().replace(/^@/, "") || null,
+            instagram_handle: normalizeInstagramHandle(instagram_handle),
             website_url: website_url?.trim() || null,
             media_company: company?.trim() || null,
             title: MEDIA_TYPE_TITLES[typeKey],

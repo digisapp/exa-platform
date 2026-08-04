@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth/with-auth";
+import { normalizeInstagramHandle } from "@/lib/instagram";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -82,6 +83,7 @@ export const POST = withAuth(async ({ request }) => {
       ...parsed.data,
       email: parsed.data.email || null,
       website_url: parsed.data.website_url || null,
+      instagram_handle: normalizeInstagramHandle(parsed.data.instagram_handle),
       status: parsed.data.status || "new",
     })
     .select()
@@ -113,9 +115,15 @@ export const PATCH = withAuth(async ({ request }) => {
   }
 
 
+  // Partial update — only touch the handle when the caller actually sent one.
+  const updates = { ...parsed.data };
+  if (updates.instagram_handle !== undefined) {
+    updates.instagram_handle = normalizeInstagramHandle(updates.instagram_handle);
+  }
+
   const { data, error } = await (adminClient as any)
     .from("media_contacts")
-    .update(parsed.data)
+    .update(updates)
     .eq("id", id)
     .select()
     .single();
