@@ -104,7 +104,7 @@ export function PremiumContentGrid({
 
   return (
     <div className="space-y-4">
-      {/* Videos - 2 columns for landscape aspect ratio */}
+      {/* Videos - 2 columns: wider cards give autoplay previews room */}
       {videos.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {videos.map((item) => (
@@ -127,7 +127,7 @@ export function PremiumContentGrid({
         </div>
       )}
 
-      {/* Photos - 3 columns for portrait aspect ratio */}
+      {/* Photos - 3 columns */}
       {photos.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {photos.map((item) => (
