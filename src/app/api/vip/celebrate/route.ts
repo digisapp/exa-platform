@@ -15,9 +15,9 @@ const adminClient = createServiceRoleClient();
  * route is fully authoritative and idempotent: the tier is recomputed from
  * fans.lifetime_spend_coins, compared against fans.celebrated_vip_tier, and
  * claimed with a conditional update so concurrent tabs can't double-post.
- * On a genuine tier-up it drops a public Live Wall system line (tier label
- * only — never spend amounts, per the VIP guardrails) and tells the caller
- * to show the personal congratulations.
+ * On a genuine tier-up it tells the caller to show the personal
+ * congratulations. Deliberately NO public Live Wall post — the wall is for
+ * model posts and model/show updates only, not fan milestones.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     const { data: fan } = await (adminClient as any)
       .from("fans")
-      .select("lifetime_spend_coins, celebrated_vip_tier, username, display_name")
+      .select("lifetime_spend_coins, celebrated_vip_tier")
       .eq("id", actor.id)
       .maybeSingle();
 
@@ -90,23 +90,6 @@ export async function POST(request: NextRequest) {
     if (claimError || !claimed?.length) {
       if (claimError) logger.error("VIP celebrate claim error", claimError);
       return NextResponse.json({ celebrated: null });
-    }
-
-    const wallName = fan.username
-      ? `@${fan.username}`
-      : fan.display_name || "A fan";
-
-    const { error: wallError } = await (adminClient as any)
-      .from("live_wall_messages")
-      .insert({
-        actor_type: "system",
-        display_name: "EXA",
-        content: `${tier.emoji} ${wallName} is now a ${tier.label} supporter!`,
-        message_type: "system",
-      });
-    if (wallError) {
-      // The tier stays claimed — a missed wall line beats a duplicate one
-      logger.error("VIP celebrate wall insert error", wallError);
     }
 
     return NextResponse.json({ celebrated: tier.key });
