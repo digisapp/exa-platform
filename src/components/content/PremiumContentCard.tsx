@@ -45,6 +45,11 @@ export function PremiumContentCard({
   const [imageError, setImageError] = useState(false);
   const [buyCoinsOpen, setBuyCoinsOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  // Portrait-first frame: nearly all content is phone-shot portrait, so the
+  // card defaults to 3:4 and flips to 16:9 only once the media reports
+  // landscape dimensions. Locked videos are covered too — their blurred
+  // teaser JPEG is captured at the video's own aspect ratio.
+  const [isLandscape, setIsLandscape] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -77,6 +82,10 @@ export function PremiumContentCard({
     observer.observe(el);
     return () => observer.disconnect();
   }, [isVideo]);
+
+  const detectOrientation = useCallback((w: number, h: number) => {
+    if (w > 0 && h > 0) setIsLandscape(w > h);
+  }, []);
 
   const toggleMute = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -140,7 +149,7 @@ export function PremiumContentCard({
           "cv-auto relative rounded-xl overflow-hidden cursor-pointer group",
           "transition-transform duration-150 active:scale-[0.98] active:duration-0",
           "bg-gradient-to-br from-gray-900 to-gray-800",
-          isVideo ? "aspect-video" : "aspect-[3/4]"
+          isLandscape ? "aspect-video" : "aspect-[3/4]"
         )}
         role="button"
         tabIndex={0}
@@ -163,6 +172,7 @@ export function PremiumContentCard({
                   loop
                   preload="metadata"
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  onLoadedMetadata={(e) => detectOrientation(e.currentTarget.videoWidth, e.currentTarget.videoHeight)}
                   onError={() => setImageError(true)}
                 />
                 {/* Mute/Unmute toggle */}
@@ -191,6 +201,7 @@ export function PremiumContentCard({
                   !isUnlocked && !isFree && !isOwner && "blur-[2px] brightness-[0.85]",
                   isUnlocked && "group-hover:scale-105"
                 )}
+                onLoad={(e) => detectOrientation(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
                 onError={() => setImageError(true)}
               />
             )}
@@ -261,8 +272,14 @@ export function PremiumContentCard({
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Blurred Preview */}
-            <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-900">
+            {/* Blurred Preview — portrait teasers get a narrower portrait frame
+                (full-width 3:4 would overflow the dialog on short screens) */}
+            <div
+              className={cn(
+                "relative rounded-lg overflow-hidden bg-gray-900",
+                isLandscape ? "aspect-video" : "aspect-[3/4] w-3/4 mx-auto"
+              )}
+            >
               {content.preview_url ? (
                 <Image
                   src={content.preview_url}
@@ -270,6 +287,7 @@ export function PremiumContentCard({
                   fill
                   sizes="(max-width: 640px) 100vw, 448px"
                   className="object-cover blur-[2px] brightness-[0.85]"
+                  onLoad={(e) => detectOrientation(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-pink-500/20 to-violet-500/20">
