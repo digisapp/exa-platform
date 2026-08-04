@@ -9,7 +9,9 @@ import {
 import { trackEvent } from "@/lib/analytics-client";
 
 // Self-contained "Book" CTA: button + inquiry dialog in one. "chip" sits in
-// the profile's top-right action cluster next to the heart; "link" is the
+// the profile's top-right action cluster, on its own row below the heart/share
+// bubbles (a single row overflows across the centered wordmark on phones);
+// "link" is the
 // muted one-liner under the /models header (model null → general talent
 // inquiry, anon visitors only — fans don't need it and a banner was too
 // heavy). Booking is team-mediated agency business, orthogonal to fan

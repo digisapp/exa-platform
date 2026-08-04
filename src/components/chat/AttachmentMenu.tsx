@@ -99,7 +99,7 @@ export function AttachmentMenu({
             size="icon"
             disabled={uploading || disabled}
             className={cn(
-              "shrink-0 h-12 w-12 rounded-2xl text-white/60 hover:text-pink-300 hover:bg-pink-500/10 transition-all border border-white/10 hover:border-pink-500/30",
+              "shrink-0 h-11 w-11 sm:h-12 sm:w-12 rounded-2xl text-white/60 hover:text-pink-300 hover:bg-pink-500/10 transition-all border border-white/10 hover:border-pink-500/30",
               open && "rotate-45 bg-pink-500/15 text-pink-300 border-pink-500/40 shadow-[0_0_16px_rgba(236,72,153,0.3)]"
             )}
           >

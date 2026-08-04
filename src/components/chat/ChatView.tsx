@@ -857,7 +857,7 @@ export function ChatView({
         onSend={handleSendMessage}
         coinCost={coinCost}
         coinBalance={localCoinBalance}
-        placeholder="Type a message..."
+        placeholder="Message…"
         isModel={currentActor.type === "model"}
         modelId={currentModel?.id}
         conversationId={conversation.id}

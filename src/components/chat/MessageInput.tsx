@@ -6,7 +6,7 @@ import { BuyCoinsModal } from "@/components/coins/BuyCoinsModal";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Coins, X, Video, Mic, Camera, Lock, Reply, Gift, Sticker as StickerIcon } from "lucide-react";
+import { Send, Loader2, Coins, X, Video, Mic, Camera, Lock, Reply, Gift, Sticker as StickerIcon, ChevronRight } from "lucide-react";
 import { StickerPicker, type PickedSticker } from "@/components/live-wall/StickerPicker";
 import type { Message } from "@/types/database";
 import { cn } from "@/lib/utils";
@@ -59,7 +59,7 @@ export function MessageInput({
   disabled = false,
   coinCost = 0,
   coinBalance = 0,
-  placeholder = "Type a message...",
+  placeholder = "Message…",
   isModel = false,
   modelId,
   conversationId,
@@ -90,6 +90,8 @@ export function MessageInput({
   const [showPriceInput, setShowPriceInput] = useState(false);
   const [virtualFirstWarningOpen, setVirtualFirstWarningOpen] = useState(false);
   const [showStickers, setShowStickers] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
+  const [manuallyExpanded, setManuallyExpanded] = useState(false);
   const stickerBtnRef = useRef<HTMLButtonElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const draftKey = conversationId ? `${DRAFT_PREFIX}${conversationId}` : null;
@@ -149,6 +151,11 @@ export function MessageInput({
 
   const canSend = (content.trim() || attachedMedia) && !disabled && !sending && !uploading;
   const hasEnoughCoins = coinCost === 0 || coinBalance >= coinCost;
+
+  // Mobile only: while composing, the aux buttons fold behind a chevron so the
+  // textarea gets the row width (Messenger pattern). sm+ always shows the full
+  // row via responsive classes, so this state has no effect on desktop.
+  const composerCollapsed = !manuallyExpanded && (inputFocused || content.length > 0);
 
   const performSend = async () => {
     // Haptic feedback on send
@@ -211,6 +218,8 @@ export function MessageInput({
   // Handle content change with typing indicator
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
+    // Typing re-collapses a chevron-expanded action row
+    setManuallyExpanded(false);
     // Broadcast typing when user types
     if (e.target.value.trim()) {
       onTyping?.();
@@ -434,7 +443,7 @@ export function MessageInput({
   }
 
   return (
-    <div className="border-t border-white/10 bg-white/[0.03] backdrop-blur-sm p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <div className="border-t border-white/10 bg-white/[0.03] backdrop-blur-sm px-3 pt-3 sm:px-4 sm:pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
       {/* Low-balance warning — the send button already shows the per-message
           cost, so the banner only appears when the fan can't afford to send */}
       {coinCost > 0 && !hasEnoughCoins && (
@@ -604,17 +613,36 @@ export function MessageInput({
         </div>
       )}
 
-      <div className="flex items-end gap-2">
+      <div className="flex items-end gap-1.5 sm:gap-2">
+        {/* Collapsed action row (mobile only): one chevron re-expands the buttons */}
+        {composerCollapsed && (
+          <button
+            type="button"
+            onPointerDown={(e) => {
+              // Expand on pointerdown and swallow the default so the textarea
+              // keeps focus and the keyboard stays open
+              e.preventDefault();
+              setManuallyExpanded(true);
+            }}
+            aria-label="Show message actions"
+            className="sm:hidden shrink-0 h-11 w-11 flex items-center justify-center rounded-2xl text-white/60 hover:text-pink-200 hover:bg-pink-500/10 active:scale-95 transition-all"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        )}
+
         {/* Attachment menu (+ button) */}
-        <AttachmentMenu
-          onPhotoSelect={handlePhotoSelect}
-          onVideoSelect={handleVideoSelect}
-          onVoiceRecord={handleVoiceRecord}
-          onLibraryOpen={() => setLibraryOpen(true)}
-          uploading={uploading}
-          disabled={disabled || sending}
-          isModel={isModel}
-        />
+        <div className={cn("shrink-0", composerCollapsed && "hidden sm:block")}>
+          <AttachmentMenu
+            onPhotoSelect={handlePhotoSelect}
+            onVideoSelect={handleVideoSelect}
+            onVoiceRecord={handleVoiceRecord}
+            onLibraryOpen={() => setLibraryOpen(true)}
+            uploading={uploading}
+            disabled={disabled || sending}
+            isModel={isModel}
+          />
+        </div>
 
         {/* Super Tip (fan → model only) */}
         {onTipClick && (
@@ -624,7 +652,10 @@ export function MessageInput({
             disabled={disabled}
             title="Send a tip or gift"
             aria-label="Send a tip or gift"
-            className="shrink-0 h-12 w-12 flex items-center justify-center rounded-2xl text-pink-300 hover:text-pink-200 hover:bg-pink-500/10 active:scale-95 transition-all disabled:opacity-40"
+            className={cn(
+              "shrink-0 h-11 w-11 sm:h-12 sm:w-12 flex items-center justify-center rounded-2xl text-pink-300 hover:text-pink-200 hover:bg-pink-500/10 active:scale-95 transition-all disabled:opacity-40",
+              composerCollapsed && "hidden sm:flex"
+            )}
           >
             <Gift className="h-5 w-5" />
           </button>
@@ -639,10 +670,11 @@ export function MessageInput({
           title="EXA stickers"
           aria-label="EXA stickers"
           className={cn(
-            "shrink-0 h-12 w-12 flex items-center justify-center rounded-2xl active:scale-95 transition-all disabled:opacity-40",
+            "shrink-0 h-11 w-11 sm:h-12 sm:w-12 flex items-center justify-center rounded-2xl active:scale-95 transition-all disabled:opacity-40",
             showStickers
               ? "text-pink-300 bg-pink-500/10"
-              : "text-white/60 hover:text-pink-200 hover:bg-pink-500/10"
+              : "text-white/60 hover:text-pink-200 hover:bg-pink-500/10",
+            composerCollapsed && "hidden sm:flex"
           )}
         >
           <StickerIcon className="h-5 w-5" />
@@ -683,10 +715,12 @@ export function MessageInput({
           value={content}
           onChange={handleContentChange}
           onKeyDown={handleKeyDown}
+          onFocus={() => setInputFocused(true)}
+          onBlur={() => setInputFocused(false)}
           placeholder={placeholder}
           disabled={disabled || sending || uploading}
           maxLength={5000}
-          className="min-h-[48px] max-h-32 resize-none text-base md:text-[15px] rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:border-pink-400/60 focus-visible:ring-pink-500/20 focus-visible:shadow-[0_0_16px_rgba(236,72,153,0.25)]"
+          className="min-h-[44px] sm:min-h-[48px] max-h-32 resize-none text-base md:text-[15px] rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:border-pink-400/60 focus-visible:ring-pink-500/20 focus-visible:shadow-[0_0_16px_rgba(236,72,153,0.25)]"
           rows={1}
         />
 
@@ -695,8 +729,8 @@ export function MessageInput({
           onClick={handleSend}
           disabled={!canSend || !hasEnoughCoins}
           className={cn(
-            "shrink-0 h-12 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 gap-1.5 rounded-2xl shadow-[0_0_24px_rgba(236,72,153,0.45)] hover:shadow-[0_0_32px_rgba(236,72,153,0.65)] active:scale-[0.98] transition-all border-0 disabled:opacity-40 disabled:shadow-none",
-            coinCost > 0 ? "px-4" : "w-12"
+            "relative shrink-0 h-11 sm:h-12 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 gap-1.5 rounded-2xl shadow-[0_0_24px_rgba(236,72,153,0.45)] hover:shadow-[0_0_32px_rgba(236,72,153,0.65)] active:scale-[0.98] transition-all border-0 disabled:opacity-40 disabled:shadow-none",
+            coinCost > 0 ? "w-11 px-0 sm:w-auto sm:px-4" : "w-11 sm:w-12"
           )}
         >
           {sending || uploading ? (
@@ -705,12 +739,19 @@ export function MessageInput({
             <>
               <Send className="h-5 w-5" />
               {coinCost > 0 && (
-                <span className="flex items-center gap-0.5 text-sm font-semibold">
+                <span className="hidden sm:flex items-center gap-0.5 text-sm font-semibold">
                   {coinCost}
                   <Coins className="h-3.5 w-3.5" />
                 </span>
               )}
             </>
+          )}
+          {/* Mobile: per-message cost as a corner badge so the button stays square */}
+          {coinCost > 0 && (
+            <span className="sm:hidden absolute -top-2 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#120a24] border border-amber-400/40 text-amber-300 shadow-md">
+              {coinCost}
+              <Coins className="h-2.5 w-2.5" />
+            </span>
           )}
         </Button>
       </div>

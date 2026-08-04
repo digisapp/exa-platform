@@ -585,39 +585,47 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
         >
           {/* Header Row — only for circle layout. Hero variant moves wordmark/share into the hero overlay. */}
           {!useHeroLayout && (
-          <div className="relative flex items-center justify-center mb-6 min-h-8">
+          /* grid-cols-[1fr_auto_1fr] keeps the wordmark truly centered while the
+             action cluster stacks in the right column: icon bubbles on top, Book
+             chip on its own row below — one row of chip+heart+share overflows
+             across the wordmark on phones. In-flow (not absolute) so the second
+             row pushes the content below instead of overlapping it. */
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mb-6 min-h-8">
+            <div />
             <Link
               href={user ? "/dashboard" : "/"}
               aria-label="exa models home"
-              className={`${glacialIndifference.className} wordmark-glimmer text-3xl md:text-4xl leading-none tracking-[0.01em] lowercase hover:opacity-90 transition-opacity`}
+              className={`${glacialIndifference.className} wordmark-glimmer text-3xl md:text-4xl leading-none tracking-[0.01em] lowercase hover:opacity-90 transition-opacity justify-self-center`}
             >
               exa models
             </Link>
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              {isBrand && !isOwner && (
-                <>
-                  <ModelNotesDialog
+            <div className="flex flex-col items-end gap-1.5 min-w-0 justify-self-end self-start">
+              <div className="flex items-center gap-2">
+                {isBrand && !isOwner && (
+                  <>
+                    <ModelNotesDialog
+                      modelId={model.id}
+                      modelName={displayName}
+                    />
+                    <AddToCampaignButton
+                      modelId={model.id}
+                      modelName={displayName}
+                    />
+                  </>
+                )}
+                {!isOwner && !isBrand && !isAdmin && (
+                  <FavoriteButton
                     modelId={model.id}
-                    modelName={displayName}
+                    initialFavorited={isModelFavorited}
+                    isLoggedIn={!!user}
+                    modelUsername={model.username}
+                    modelPhotoUrl={model.profile_photo_url}
                   />
-                  <AddToCampaignButton
-                    modelId={model.id}
-                    modelName={displayName}
-                  />
-                </>
-              )}
+                )}
+                <ShareButton title={displayName} />
+              </div>
               {/* Agency booking chip — leads go to the EXA team, not the model */}
               {bookable && <BookModelButton model={bookableModel} source="profile" variant="chip" />}
-              {!isOwner && !isBrand && !isAdmin && (
-                <FavoriteButton
-                  modelId={model.id}
-                  initialFavorited={isModelFavorited}
-                  isLoggedIn={!!user}
-                  modelUsername={model.username}
-                  modelPhotoUrl={model.profile_photo_url}
-                />
-              )}
-              <ShareButton title={displayName} />
             </div>
           </div>
           )}
@@ -726,7 +734,10 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
                     exa models
                   </Link>
 
-                  {/* Right column: brand actions (if brand) + share + event badges stacked */}
+                  {/* Right column: brand actions (if brand) + share + event badges stacked.
+                      The Book chip sits on its OWN row below the icon bubbles — a single
+                      row of chip+heart+share is wider than the 1fr column on phones and
+                      overflows across the centered wordmark. */}
                   <div className="flex flex-col items-end gap-1.5 min-w-0 justify-self-end">
                     <div className="flex items-center gap-1.5">
                       {isBrand && !isOwner && (
@@ -738,10 +749,6 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
                             <AddToCampaignButton modelId={model.id} modelName={displayName} />
                           </div>
                         </>
-                      )}
-                      {/* Agency booking chip — leads go to the EXA team, not the model */}
-                      {bookable && (
-                        <BookModelButton model={bookableModel} source="profile" variant="chip" />
                       )}
                       {!isOwner && !isBrand && !isAdmin && (
                         <div className="rounded-full bg-black/45 backdrop-blur-md border border-white/15 shadow-[0_4px_12px_rgba(0,0,0,0.35)]">
@@ -758,6 +765,10 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
                         <ShareButton title={displayName} />
                       </div>
                     </div>
+                    {/* Agency booking chip — leads go to the EXA team, not the model */}
+                    {bookable && (
+                      <BookModelButton model={bookableModel} source="profile" variant="chip" />
+                    )}
                   </div>
                 </div>
 
