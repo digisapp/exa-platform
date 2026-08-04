@@ -225,7 +225,6 @@ export const en = {
     instagramPlaceholder: "@yourhandle",
     tiktok: "TikTok",
     tiktokPlaceholder: "@yourhandle",
-    socialHint: "Instagram or TikTok — at least one is required",
     email: "Email",
     emailPlaceholder: "you@example.com",
     password: "Password",
@@ -234,6 +233,7 @@ export const en = {
     showPassword: "Show password",
     hidePassword: "Hide password",
     phone: "Phone Number",
+    phoneOptional: "Optional",
     dob: "Date of Birth",
     height: "Height",
     heightPlaceholder: "Select height",
@@ -247,7 +247,6 @@ export const en = {
     success: "Application submitted!",
     // Client-side validation
     errName: "Please enter your name",
-    errSocial: "Please enter your Instagram or TikTok username — at least one",
     errInstagramSpaces: "Instagram usernames don't contain spaces — did you enter your name instead?",
     errInstagramEmail: "That looks like an email address — please enter your Instagram username (e.g. @yourhandle)",
     errInstagramUrl: "Please enter your Instagram username only (e.g. @yourhandle), not a URL",

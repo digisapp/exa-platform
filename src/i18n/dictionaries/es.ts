@@ -227,7 +227,6 @@ export const es: Dictionary = {
     instagramPlaceholder: "@tuusuario",
     tiktok: "TikTok",
     tiktokPlaceholder: "@tuusuario",
-    socialHint: "Instagram o TikTok — se requiere al menos uno",
     email: "Correo Electrónico",
     emailPlaceholder: "tu@correo.com",
     password: "Contraseña",
@@ -236,6 +235,7 @@ export const es: Dictionary = {
     showPassword: "Mostrar contraseña",
     hidePassword: "Ocultar contraseña",
     phone: "Teléfono",
+    phoneOptional: "Opcional",
     dob: "Fecha de Nacimiento",
     height: "Estatura",
     heightPlaceholder: "Seleccionar",
@@ -249,7 +249,6 @@ export const es: Dictionary = {
     success: "¡Solicitud enviada!",
     // Client-side validation
     errName: "Por favor ingresa tu nombre",
-    errSocial: "Ingresa tu usuario de Instagram o TikTok — al menos uno",
     errInstagramSpaces: "Los usuarios de Instagram no tienen espacios — ¿ingresaste tu nombre?",
     errInstagramEmail: "Eso parece un correo electrónico — ingresa tu usuario de Instagram (ej. @tuusuario)",
     errInstagramUrl: "Ingresa solo tu usuario de Instagram (ej. @tuusuario), no una URL",

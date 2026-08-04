@@ -45,6 +45,7 @@ interface ModelApplication {
   bio: string | null;
   instagram_username: string | null;
   tiktok_username: string | null;
+  no_social: boolean | null;
   date_of_birth: string | null;
   height: string | null;
   status: string;
@@ -90,7 +91,7 @@ export default function AdminModelApplicationsPage() {
     setLoading(true);
     try {
       const { data, error } = await (supabase.from("model_applications") as any)
-        .select("id, display_name, email, bio, instagram_username, tiktok_username, date_of_birth, height, status, created_at, email_confirmed_at, profile_photo_url, photo_requested_at")
+        .select("id, display_name, email, bio, instagram_username, tiktok_username, no_social, date_of_birth, height, status, created_at, email_confirmed_at, profile_photo_url, photo_requested_at")
         .eq("status", "pending")
         .order("created_at", { ascending: false })
         .limit(500);
@@ -445,7 +446,15 @@ export default function AdminModelApplicationsPage() {
                           </a>
                         </Button>
                       ) : (
-                        <div className="flex-1 text-center text-sm text-muted-foreground py-2">No Instagram</div>
+                        <div className="flex-1 text-center text-sm py-2">
+                          {current.no_social ? (
+                            <span className="text-amber-500">
+                              No socials provided — judge on photos.
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">No Instagram</span>
+                          )}
+                        </div>
                       )}
                       {current.tiktok_username && (
                         <Button asChild variant="outline">
