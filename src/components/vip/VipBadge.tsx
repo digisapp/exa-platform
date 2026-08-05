@@ -1,4 +1,4 @@
-import { Gem } from "lucide-react";
+import { Crown, Gem } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { vipTierOf, type VipTier } from "@/lib/vip-config";
 
@@ -11,6 +11,8 @@ interface VipTierBadgeProps {
 
 /** Tier pill for an already-resolved tier. */
 function VipTierBadge({ tier, size = "xs", className }: VipTierBadgeProps) {
+  // key 'diamond' is the frozen top-tier key, rendered as "Crown"
+  const Icon = tier.key === "diamond" ? Crown : Gem;
   return (
     <span
       className={cn(
@@ -20,7 +22,7 @@ function VipTierBadge({ tier, size = "xs", className }: VipTierBadgeProps) {
         className
       )}
     >
-      <Gem className={cn(size === "xs" ? "h-2.5 w-2.5" : "h-3 w-3", tier.iconClass)} />
+      <Icon className={cn(size === "xs" ? "h-2.5 w-2.5" : "h-3 w-3", tier.iconClass)} />
       {tier.label}
     </span>
   );
@@ -34,7 +36,7 @@ interface VipBadgeProps {
 }
 
 /**
- * Fan VIP tier pill (VIP / Star / Diamond). Shows earned status only —
+ * Fan VIP tier pill (VIP / Diamond / Crown). Shows earned status only —
  * never spend amounts. Renders nothing for fans below the VIP floor, so
  * it can be dropped inline next to any fan name without a guard.
  */

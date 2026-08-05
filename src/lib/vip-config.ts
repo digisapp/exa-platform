@@ -14,9 +14,25 @@
  * - Phase 1 surfaces: chat (model-facing + fan self). Public surfaces
  *   (profile Top Supporters) are Phase 2 and need a fan opt-out first.
  *
- * Thresholds calibrated against the prod ledger 2026-07-24: top spender
- * 10,010 coins, then 1,022 / 740 / 450, ~13 fans in the 100-300 band —
- * giving 1 Diamond, 2 Stars, ~13 VIPs on day one.
+ * Ladder reset 2026-08-06 (owner: "$10 is nothing"): VIP 5,000 /
+ * Diamond 25,000 / Crown 100,000. Against that day's ledger (top spender
+ * 10,010, then 1,022, then a 100-300 band) exactly one fan holds a badge
+ * (VIP); Diamond and Crown are aspirational. Deliberate — tiers mark real
+ * spend. USD framing: thresholds are COINS, and fans pay pack-dependent
+ * rates ($0.13-$0.20/coin per stripe-config) — $0.10/coin is the model
+ * cashout rate, never a fan price.
+ *
+ * Naming: fan tiers must not use model-side or coin-pack words. Rejected:
+ * "Star" (fans aren't the stars — models are), "Elite"/"Whale" (coin-pack
+ * labels in stripe-config). "Crown" is an explicit owner call (2026-08-06):
+ * the fan tier is distinct from the yearly SwimCrown model competition —
+ * don't re-flag that overlap.
+ *
+ * KEYS ARE POSITIONAL AND FROZEN: 'vip'/'star'/'diamond' persist in
+ * fans.celebrated_vip_tier and live_wall_messages.vip_tier, so renames
+ * change ONLY label/emoji — key 'star' now renders "Diamond" and key
+ * 'diamond' renders "Crown". Same label≠stored-value convention as PPV's
+ * DB value 'exclusive'. Never repurpose or reorder keys.
  */
 
 export type VipTierKey = "vip" | "star" | "diamond";
@@ -37,25 +53,25 @@ export interface VipTier {
 /** Ordered highest → lowest so the first match wins. */
 export const VIP_TIERS: readonly VipTier[] = [
   {
-    key: "diamond",
+    key: "diamond", // frozen key — renders as top tier "Crown"
+    label: "Crown",
+    minSpend: 100000,
+    badgeClass: "bg-amber-500/15 border-amber-400/40 text-amber-300",
+    iconClass: "text-amber-300",
+    emoji: "👑",
+  },
+  {
+    key: "star", // frozen key — renders as middle tier "Diamond"
     label: "Diamond",
-    minSpend: 5000,
+    minSpend: 25000,
     badgeClass: "bg-cyan-500/15 border-cyan-400/40 text-cyan-300",
     iconClass: "text-cyan-300",
     emoji: "💎",
   },
   {
-    key: "star",
-    label: "Star",
-    minSpend: 500,
-    badgeClass: "bg-pink-500/15 border-pink-400/40 text-pink-300",
-    iconClass: "text-pink-300",
-    emoji: "🌟",
-  },
-  {
     key: "vip",
     label: "VIP",
-    minSpend: 100,
+    minSpend: 5000,
     badgeClass: "bg-violet-500/15 border-violet-400/40 text-violet-300",
     iconClass: "text-violet-300",
     emoji: "✨",
