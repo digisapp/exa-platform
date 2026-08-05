@@ -236,10 +236,10 @@ export function TVGrid({ videos }: { videos: Video[] }) {
           <span className="text-white font-medium">EXA is casting for upcoming shows.</span>
         </p>
         <Link
-          href="/gigs"
+          href="/apply"
           className="inline-flex items-center gap-1.5 self-start sm:self-auto whitespace-nowrap px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs md:text-sm font-semibold shadow-lg shadow-pink-500/25 hover:opacity-90 transition-opacity"
         >
-          See casting calls
+          Apply to EXA
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>

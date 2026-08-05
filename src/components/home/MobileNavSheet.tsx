@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, Mic2, Play, Sparkles, Ticket, Tv, Users } from "lucide-react";
+import { Menu, Mic2, Play, Ticket, Tv, Users } from "lucide-react";
 import {
   Sheet,
   SheetClose,
@@ -18,9 +18,10 @@ interface MobileNavSheetProps {
   dashboardHref?: string;
 }
 
+// No Gigs here: castings are members-only (signed-in models reach them via
+// their own nav) — this menu is for logged-out visitors.
 const NAV_LINKS = [
   { href: "/models", label: "Models", icon: Users },
-  { href: "/gigs", label: "Gigs", icon: Sparkles },
   { href: "/tour", label: "Tour Dates", icon: Mic2 },
   { href: "/shows", label: "Shows", icon: Ticket },
   { href: "/tv", label: "EXA TV", icon: Tv },
@@ -29,7 +30,7 @@ const NAV_LINKS = [
 /**
  * Mobile-only hamburger menu for the public homepage nav. The inline desktop
  * nav only surfaces EXA TV + Sign In, which leaves logged-out phone users with
- * no path to /models, /gigs, or /shows without scrolling to the footer.
+ * no path to /models or /shows without scrolling to the footer.
  */
 export function MobileNavSheet({ isAuthed = false, dashboardHref = "/dashboard" }: MobileNavSheetProps) {
   return (
