@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Flame } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { ModelFilters } from "@/components/models/model-filters";
@@ -199,19 +200,33 @@ export default async function ModelsPage({
       .not("deactivated", "is", true)
       .not("profile_photo_url", "is", null)
       .limit(5) as Promise<{ data: any[] | null }>,
-    // Trending models — this week's EXA Spotlight leaders. 1-2★ models can't
-    // trend: engagement points must not override the admin brand-image gate.
-    (supabase
-      .from("top_model_leaderboard") as any)
-      .select("week_points, models!inner(id, username, profile_photo_url)")
-      .gt("week_points", 0)
-      .gte("models.rating_tier", 3)
-      .eq("models.is_approved", true)
-      .is("models.deleted_at", null)
-      .not("models.deactivated", "is", true)
-      .not("models.profile_photo_url", "is", null)
-      .order("week_points", { ascending: false })
-      .limit(5) as Promise<{ data: any[] | null }>,
+    // Trending models — highest unique profile traffic, trailing 7 days
+    // (rolling window, not calendar week: no Monday empty-state). Traffic is
+    // still thin, so backfill remaining slots from the 30-day window rather
+    // than show a sparse row. The RPC is service-role-only and enforces the
+    // eligibility gates (approved, not deactivated, photo, rating_tier >= 3 —
+    // traffic never out-ranks the admin brand-image gate); visitor counts
+    // stay server-side.
+    (async () => {
+      const svc = createServiceRoleClient();
+      const { data: week } = await (svc as any).rpc("get_trending_models_by_traffic", {
+        p_days: 7,
+        p_limit: 5,
+      });
+      const rows: any[] = week ?? [];
+      if (rows.length < 5) {
+        const { data: month } = await (svc as any).rpc("get_trending_models_by_traffic", {
+          p_days: 30,
+          p_limit: 5,
+        });
+        const seen = new Set(rows.map((r) => r.id));
+        for (const r of month ?? []) {
+          if (rows.length >= 5) break;
+          if (!seen.has(r.id)) rows.push(r);
+        }
+      }
+      return { data: rows };
+    })() as Promise<{ data: any[] | null }>,
     // Actor info (logged-in only)
     user
       ? (supabase
@@ -226,10 +241,10 @@ export default async function ModelsPage({
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
 
-  // A model can be both featured and topping the weekly leaderboard — trending
+  // A model can be both featured and topping the traffic ranking — trending
   // wins, so drop it from the Featured row to avoid duplicate cards.
   const trendingIds = new Set<string>(
-    (trending as any[])?.map((t) => t.models?.id).filter(Boolean) ?? []
+    (trending as any[])?.map((t) => t.id).filter(Boolean) ?? []
   );
   const featuredRow = ((featured as any[]) ?? []).filter((m) => !trendingIds.has(m.id));
 
@@ -358,7 +373,7 @@ export default async function ModelsPage({
           )}
         </div>
 
-        {/* Trending This Week — EXA Spotlight weekly leaders */}
+        {/* Trending This Week — most-visited profiles, trailing 7 days */}
         {showDiscoveryRows && trending && trending.length > 0 && (
           <div className="mb-10">
             <div className="flex items-center gap-3 mb-4">
@@ -376,8 +391,8 @@ export default async function ModelsPage({
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {trending.map((entry: any) => (
-                <div key={entry.models.id} className="relative">
-                  <ModelCard model={entry.models} variant="compact" />
+                <div key={entry.id} className="relative">
+                  <ModelCard model={entry} variant="compact" />
                   <div className="absolute -top-2 -right-2 z-10 pointer-events-none flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white text-[10px] font-semibold shadow-[0_0_12px_rgba(249,115,22,0.5)]">
                     <Flame className="h-3 w-3" />
                     Trending
