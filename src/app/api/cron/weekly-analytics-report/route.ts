@@ -11,7 +11,9 @@ import { MODEL_EARNING_ACTIONS, COIN_USD_RATE } from "@/lib/coin-config";
 // gate funnel (taps → signups), coin revenue by action, and top models by
 // profile views. Plus the model-activation north star, as-of-now: the
 // claimed → visible → active → earning funnel and "first $1 within 14 days
-// of approval" by weekly approval cohort. This is an internal report — no
+// of approval" by weekly approval cohort. Also as-of-now: open booking
+// leads (status new/contacted, oldest first) so the sales pipeline is in
+// front of the owner weekly. This is an internal report — no
 // unsubscribe/suppression machinery on purpose.
 //
 // ?dryRun=1 returns the computed stats as JSON without sending.
@@ -444,6 +446,62 @@ async function gatherActivationStats(): Promise<ActivationStats> {
   };
 }
 
+// ─── Open leads (booking pipeline, as-of-now) ──
+//
+// Surfaces every booking inquiry still in `new` or `contacted` so leads
+// can't silently rot in /admin/booking-inquiries between visits. Oldest
+// first: the most-rotted lead is the one to act on.
+
+type OpenLeads = {
+  inquiries: {
+    name: string;
+    company: string | null;
+    email: string;
+    inquiry_type: string;
+    budget_range: string | null;
+    model_username: string | null;
+    status: string;
+    created_at: string;
+  }[];
+  openTotal: number;
+  tourNew: number;
+};
+
+const BUDGET_LABELS: Record<string, string> = {
+  under_1k: "<$1k",
+  "1k_5k": "$1–5k",
+  "5k_15k": "$5–15k",
+  "15k_plus": "$15k+",
+  discuss: "budget TBD",
+};
+
+async function gatherOpenLeads(): Promise<OpenLeads> {
+  const [listRes, countRes, tourRes] = await Promise.all([
+    adminClient
+      .from("booking_inquiries")
+      .select("name, company, email, inquiry_type, budget_range, model_username, status, created_at")
+      .in("status", ["new", "contacted"])
+      .order("created_at", { ascending: true })
+      .limit(10),
+    adminClient
+      .from("booking_inquiries")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["new", "contacted"]),
+    adminClient
+      .from("tour_applications")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "new"),
+  ]);
+  if (listRes.error) throw new Error(listRes.error.message);
+  if (countRes.error) throw new Error(countRes.error.message);
+  if (tourRes.error) throw new Error(tourRes.error.message);
+  return {
+    inquiries: listRes.data || [],
+    openTotal: countRes.count || 0,
+    tourNew: tourRes.count || 0,
+  };
+}
+
 function fmtHours(h: number): string {
   if (h < 1) return "<1h";
   if (h < 48) return `${Math.round(h)}h`;
@@ -464,7 +522,8 @@ function buildEmailHtml(
   cur: Stats,
   prev: Stats,
   weekLabel: string,
-  activation: ActivationStats | null
+  activation: ActivationStats | null,
+  leads: OpenLeads | null
 ): string {
   const row = (label: string, value: string | number, wow: string) => `
     <tr>
@@ -503,6 +562,37 @@ function buildEmailHtml(
         `<tr><td style="padding:6px 14px;color:#c4b5fd;">${esc(a.action)}</td><td style="padding:6px 14px;color:#fff;text-align:right;">${Math.abs(a.coins).toLocaleString()} coins · ${a.count}x</td></tr>`
     )
     .join("") || `<tr><td style="padding:6px 14px;color:#c4b5fd;">no coin activity</td><td></td></tr>`;
+
+  const leadRows = leads
+    ? leads.inquiries
+        .map((l) => {
+          const ageDays = Math.max(
+            0,
+            Math.floor((Date.now() - new Date(l.created_at).getTime()) / DAY_MS)
+          );
+          const who = `${esc(l.name)}${l.company ? ` · ${esc(l.company)}` : ""}`;
+          const detail = [
+            esc(l.inquiry_type),
+            l.budget_range ? BUDGET_LABELS[l.budget_range] || esc(l.budget_range) : null,
+            l.model_username ? `@${esc(l.model_username)}` : "general",
+          ]
+            .filter(Boolean)
+            .join(" · ");
+          const status =
+            l.status === "new"
+              ? `<span style="color:#f9a8d4;font-weight:600;">new</span>`
+              : `<span style="color:#a78bfa;">contacted</span>`;
+          return `<tr><td style="padding:6px 14px;color:#c4b5fd;">${who}<br><span style="color:#6d5b95;font-size:12px;">${esc(l.email)}</span></td><td style="padding:6px 14px;color:#fff;text-align:right;font-size:13px;">${detail}<br>${status} · ${ageDays}d old</td></tr>`;
+        })
+        .join("") +
+      (leads.openTotal > leads.inquiries.length
+        ? `<tr><td style="padding:6px 14px;color:#c4b5fd;" colspan="2">…and ${leads.openTotal - leads.inquiries.length} more at /admin/booking-inquiries</td></tr>`
+        : "") +
+      (leads.inquiries.length === 0
+        ? `<tr><td style="padding:6px 14px;color:#c4b5fd;">no open booking leads — pipeline clear</td><td></td></tr>`
+        : "") +
+      `<tr><td style="padding:6px 14px;color:#c4b5fd;">Tour applications awaiting reply</td><td style="padding:6px 14px;color:#fff;text-align:right;">${leads.tourNew}</td></tr>`
+    : `<tr><td style="padding:6px 14px;color:#c4b5fd;">lead stats unavailable this week (see logs)</td><td></td></tr>`;
 
   const section = (title: string, inner: string) => `
     <h2 style="margin:28px 0 8px;font-size:15px;color:#f9a8d4;letter-spacing:0.06em;text-transform:uppercase;">${title}</h2>
@@ -585,6 +675,11 @@ function buildEmailHtml(
         row("Purchases", cur.purchaseCount, delta(cur.purchaseCount, prev.purchaseCount))
       )}
 
+      ${section(
+        `Open leads${leads && leads.openTotal > 0 ? ` (${leads.openTotal})` : ""}`,
+        leadRows
+      )}
+
       ${section("Model activation", activationFunnelRows)}
 
       ${activation ? section("First $1 within 14d, by approval week", cohortRows) : ""}
@@ -612,7 +707,7 @@ export async function GET(request: NextRequest) {
 
     const curWindow = lastNDays(7);
     const prevWindow = lastNDays(7, 7);
-    const [cur, prev, activation] = await Promise.all([
+    const [cur, prev, activation, openLeads] = await Promise.all([
       gatherStats(curWindow),
       gatherStats(prevWindow),
       // Activation stats must never sink the whole report — on failure the
@@ -623,12 +718,26 @@ export async function GET(request: NextRequest) {
         });
         return null;
       }),
+      // Same degradation contract as activation.
+      gatherOpenLeads().catch((e: unknown): OpenLeads | null => {
+        logger.error("weekly-analytics-report: open leads failed", undefined, {
+          message: e instanceof Error ? e.message : String(e),
+        });
+        return null;
+      }),
     ]);
 
     const weekLabel = `${curWindow.since.slice(0, 10)} → ${curWindow.until.slice(0, 10)}`;
 
     if (dryRun) {
-      return NextResponse.json({ dryRun: true, weekLabel, current: cur, previous: prev, activation });
+      return NextResponse.json({
+        dryRun: true,
+        weekLabel,
+        current: cur,
+        previous: prev,
+        activation,
+        openLeads,
+      });
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
@@ -636,7 +745,7 @@ export async function GET(request: NextRequest) {
       from: FROM_EMAIL,
       to: REPORT_RECIPIENT,
       subject: `EXA weekly: ${cur.newFans} fans, $${cur.revenueUsd}, ${cur.pageViews.toLocaleString()} views`,
-      html: buildEmailHtml(cur, prev, weekLabel, activation),
+      html: buildEmailHtml(cur, prev, weekLabel, activation, openLeads),
     });
 
     if (error) {
