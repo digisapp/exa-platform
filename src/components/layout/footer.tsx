@@ -54,11 +54,6 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/gigs" className="text-muted-foreground hover:text-primary transition-colors">
-                  Open Gigs
-                </Link>
-              </li>
-              <li>
                 <Link href="/tour" className="text-muted-foreground hover:text-primary transition-colors">
                   Tour Dates
                 </Link>

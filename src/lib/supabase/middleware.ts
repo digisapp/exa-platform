@@ -18,6 +18,9 @@ const PROTECTED_PATHS = [
   '/favorites',
   '/campaigns',
   '/my-content',
+  // Gigs went members-only 2026-08-05 (reverses the PR #73 public funnel):
+  // castings and pay rates are for signed-in models, not public visitors.
+  '/gigs',
 ]
 
 // Routes that require model approval (subset of protected paths)
@@ -33,6 +36,7 @@ const MODEL_APPROVED_PATHS = [
   '/campaigns',
   '/my-content',
   '/chats',
+  '/gigs',
 ]
 
 export async function updateSession(request: NextRequest) {
@@ -184,6 +188,13 @@ export async function updateSession(request: NextRequest) {
     if (cachedActor?.type !== 'admin' || cachedActor?.user_id !== user.id) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
+  }
+
+  // Gigs are model-only: signed-in fans/brands get bounced to their dashboard.
+  // (RLS enforces the same at the data layer; this keeps the UX coherent.)
+  if (user && request.nextUrl.pathname.startsWith('/gigs') &&
+      cachedActor && cachedActor.type !== 'model' && cachedActor.type !== 'admin') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // Check if unapproved model is trying to access restricted pages
