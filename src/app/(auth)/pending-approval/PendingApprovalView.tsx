@@ -141,9 +141,10 @@ export function PendingApprovalView({ application }: { application: PendingAppli
     };
   }, [supabase]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/";
+  const handleLogout = () => {
+    // Server route expires the auth cookies even when the Supabase auth
+    // API is unreachable — client-side signOut keeps the session on failure.
+    window.location.href = "/auth/logout";
   };
 
   const s = t[lang];

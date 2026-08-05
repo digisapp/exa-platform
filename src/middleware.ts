@@ -62,6 +62,6 @@ export const config = {
      * - public folder
      * - auth routes (let them handle their own auth)
      */
-    '/((?!_next/static|_next/image|favicon.ico|auth/reset-password|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|auth/reset-password|auth/callback|auth/logout|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

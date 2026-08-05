@@ -82,7 +82,10 @@ export async function updateSession(request: NextRequest) {
           })
           // Set cookies on the response for the browser with extended expiration
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, {
+            // Deletions arrive as maxAge 0 / empty value — extending their
+            // lifetime would resurrect them as empty 30-day cookies.
+            const isRemoval = value === '' || options?.maxAge === 0
+            response.cookies.set(name, value, isRemoval ? { ...options, path: '/' } : {
               ...options,
               // Extend cookie lifetime to 30 days (in seconds)
               maxAge: 60 * 60 * 24 * 30,

@@ -16,15 +16,18 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // Deletions arrive as maxAge 0 / empty value — extending their
+              // lifetime would resurrect them as empty 30-day cookies.
+              const isRemoval = value === '' || options?.maxAge === 0
+              cookieStore.set(name, value, isRemoval ? options : {
                 ...options,
                 // Extend cookie lifetime to 30 days
                 maxAge: 60 * 60 * 24 * 30,
                 sameSite: 'lax',
                 secure: process.env.NODE_ENV === 'production',
               })
-            )
+            })
           } catch {
             // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing sessions.
