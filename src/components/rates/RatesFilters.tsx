@@ -98,10 +98,10 @@ export function RatesFilters({ states }: RatesFiltersProps) {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Any Price</SelectItem>
-          <SelectItem value="0-1000">Under 1,000 coins/hr</SelectItem>
-          <SelectItem value="1000-2500">1,000 - 2,500 coins/hr</SelectItem>
-          <SelectItem value="2500-5000">2,500 - 5,000 coins/hr</SelectItem>
-          <SelectItem value="5000-100000">5,000+ coins/hr</SelectItem>
+          <SelectItem value="0-100">Under $100/hr</SelectItem>
+          <SelectItem value="100-250">$100 - $250/hr</SelectItem>
+          <SelectItem value="250-500">$250 - $500/hr</SelectItem>
+          <SelectItem value="500-100000">$500+/hr</SelectItem>
         </SelectContent>
       </Select>
 
