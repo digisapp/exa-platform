@@ -39,12 +39,32 @@ const CATEGORIES = [
   { id: "effects", label: "FX" },
 ];
 
+// Recently-used stickers, per device. IDs only — resolved against the loaded
+// library so deleted stickers silently drop out.
+const RECENTS_KEY = "exa-recent-stickers";
+const RECENTS_MAX = 10;
+
+function readRecents(): string[] {
+  try {
+    const ids = JSON.parse(localStorage.getItem(RECENTS_KEY) || "[]");
+    return Array.isArray(ids) ? ids.filter((id) => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 export function StickerPicker({ onSelect, onClose }: Props) {
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("");
+  const [recentIds, setRecentIds] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // localStorage isn't available during SSR — read after mount
+  useEffect(() => {
+    setRecentIds(readRecents());
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -87,8 +107,20 @@ export function StickerPicker({ onSelect, onClose }: Props) {
     });
   }, [stickers, search, activeCategory]);
 
+  // Shown only on the unfiltered "All" tab, above the full grid
+  const recents = useMemo(() => {
+    if (search.trim() || activeCategory) return [];
+    const byId = new Map(stickers.map((s) => [s.id, s]));
+    return recentIds.flatMap((id) => byId.get(id) ?? []);
+  }, [stickers, recentIds, search, activeCategory]);
+
   const handlePick = (s: Sticker) => {
     onSelect({ id: s.id, url: s.url, mime_type: s.mime_type });
+    const next = [s.id, ...recentIds.filter((id) => id !== s.id)].slice(0, RECENTS_MAX);
+    setRecentIds(next);
+    try {
+      localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
+    } catch {}
     // Fire-and-forget telemetry
     fetch("/api/stickers", {
       method: "POST",
@@ -153,25 +185,28 @@ export function StickerPicker({ onSelect, onClose }: Props) {
               : "No matches."}
           </div>
         ) : (
-          <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">
-            {filtered.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => handlePick(s)}
-                title={s.name}
-                className="aspect-square rounded-lg bg-white/5 hover:bg-white/10 hover:scale-105 transition-all p-1 flex items-center justify-center overflow-hidden border border-transparent hover:border-pink-500/30"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={s.url}
-                  alt={s.name}
-                  loading="lazy"
-                  decoding="async"
-                  className="max-w-full max-h-full object-contain"
-                />
-              </button>
-            ))}
-          </div>
+          <>
+            {recents.length > 0 && (
+              <>
+                <div className="px-1 pb-1.5 text-[10px] font-medium uppercase tracking-wider text-white/30">
+                  Recent
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 mb-2">
+                  {recents.map((s) => (
+                    <StickerCell key={s.id} sticker={s} onPick={handlePick} />
+                  ))}
+                </div>
+                <div className="px-1 pb-1.5 text-[10px] font-medium uppercase tracking-wider text-white/30">
+                  All stickers
+                </div>
+              </>
+            )}
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">
+              {filtered.map((s) => (
+                <StickerCell key={s.id} sticker={s} onPick={handlePick} />
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -182,5 +217,23 @@ export function StickerPicker({ onSelect, onClose }: Props) {
       </div>
       </div>
     </div>
+  );
+}
+
+function StickerCell({ sticker, onPick }: { sticker: Sticker; onPick: (s: Sticker) => void }) {
+  return (
+    <button
+      onClick={() => onPick(sticker)}
+      title={sticker.name}
+      className="aspect-square rounded-lg bg-white/5 hover:bg-white/10 hover:scale-105 transition-all p-1 flex items-center justify-center overflow-hidden border border-transparent hover:border-pink-500/30"
+    >
+      <img
+        src={sticker.url}
+        alt={sticker.name}
+        loading="lazy"
+        decoding="async"
+        className="max-w-full max-h-full object-contain"
+      />
+    </button>
   );
 }
