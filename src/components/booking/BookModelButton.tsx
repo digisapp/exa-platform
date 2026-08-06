@@ -14,16 +14,18 @@ import { trackEvent } from "@/lib/analytics-client";
 // "link" is the
 // muted one-liner under the /models header (model null → general talent
 // inquiry, anon visitors only — fans don't need it and a banner was too
-// heavy). Booking is team-mediated agency business, orthogonal to fan
-// monetization.
+// heavy); "primary" is the full-width booking CTA on /[username]/rates.
+// Booking is team-mediated agency business, orthogonal to fan monetization.
 
 interface BookModelButtonProps {
   model: BookableModel | null;
-  source: "profile" | "explore_header";
-  variant?: "chip" | "link";
+  source: "profile" | "explore_header" | "rates";
+  variant?: "chip" | "link" | "primary";
+  label?: string;
+  defaultEmail?: string;
 }
 
-export function BookModelButton({ model, source, variant = "chip" }: BookModelButtonProps) {
+export function BookModelButton({ model, source, variant = "chip", label, defaultEmail }: BookModelButtonProps) {
   const [open, setOpen] = useState(false);
 
   const handleOpen = () => {
@@ -48,6 +50,15 @@ export function BookModelButton({ model, source, variant = "chip" }: BookModelBu
             Send an inquiry
           </span>
         </button>
+      ) : variant === "primary" ? (
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="flex w-full items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-white font-semibold transition-all shadow-[0_0_18px_rgba(236,72,153,0.4)] hover:shadow-[0_0_24px_rgba(236,72,153,0.6)] active:scale-[0.98]"
+        >
+          <CalendarCheck className="h-5 w-5" />
+          {label || "Request a Booking"}
+        </button>
       ) : (
         <button
           type="button"
@@ -66,6 +77,7 @@ export function BookModelButton({ model, source, variant = "chip" }: BookModelBu
         onOpenChange={setOpen}
         model={model}
         source={source}
+        defaultEmail={defaultEmail}
       />
     </>
   );
