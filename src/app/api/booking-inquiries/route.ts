@@ -25,7 +25,7 @@ const inquirySchema = z.object({
   location: z.string().trim().max(200).optional().nullable(),
   budgetRange: z.enum(["under_1k", "1k_5k", "5k_15k", "15k_plus", "discuss"]).optional().nullable(),
   details: z.string().trim().max(3000).optional().nullable(),
-  source: z.enum(["card", "profile", "explore_header"]).optional().nullable(),
+  source: z.enum(["card", "profile", "explore_header", "rates"]).optional().nullable(),
   // Honeypot — hidden offscreen input real users never see. Bots fill it.
   website: z.string().max(500).optional().nullable(),
 });

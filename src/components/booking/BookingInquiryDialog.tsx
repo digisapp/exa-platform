@@ -40,9 +40,13 @@ interface BookingInquiryDialogProps {
   /** Preselected model, or null for a general "find me talent" inquiry. */
   model: BookableModel | null;
   /** Which surface produced the lead — stored for funnel reporting. */
-  source: "card" | "profile" | "explore_header";
+  source: "card" | "profile" | "explore_header" | "rates";
   /** Pre-fill for logged-in users. */
   defaultEmail?: string;
+  /** Pre-select the booking type, e.g. from a tapped rate card. */
+  defaultInquiryType?: string;
+  /** Pre-fill project details, e.g. the tapped service and its rate. */
+  defaultDetails?: string;
 }
 
 const INQUIRY_TYPES = [
@@ -68,6 +72,8 @@ export function BookingInquiryDialog({
   model,
   source,
   defaultEmail,
+  defaultInquiryType,
+  defaultDetails,
 }: BookingInquiryDialogProps) {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -76,11 +82,11 @@ export function BookingInquiryDialog({
   const [email, setEmail] = useState(defaultEmail || "");
   const [phone, setPhone] = useState("");
   const [company, setCompany] = useState("");
-  const [inquiryType, setInquiryType] = useState("");
+  const [inquiryType, setInquiryType] = useState(defaultInquiryType || "");
   const [eventDate, setEventDate] = useState("");
   const [location, setLocation] = useState("");
   const [budgetRange, setBudgetRange] = useState("");
-  const [details, setDetails] = useState("");
+  const [details, setDetails] = useState(defaultDetails || "");
   const [website, setWebsite] = useState(""); // honeypot
 
   const photoUrl = resolveMediaUrl(model?.profile_photo_url);

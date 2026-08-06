@@ -15,9 +15,15 @@ import {
   MESSAGE_RATE_MAX_COINS,
   MESSAGE_RATE_MIN_COINS,
 } from "@/lib/coin-config";
+import { modelBookingPayout } from "@/lib/booking-config";
 
 const coinsToUSD = (coins: number) =>
   (coins * 0.10).toLocaleString("en-US", { style: "currency", currency: "USD" });
+
+// Booking rates are USD (what the client pays); the payout line shows the
+// model's 80% after EXA's booking commission.
+const usd = (n: number) =>
+  n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
 interface ModelRatesTabProps {
   model: Model;
@@ -200,7 +206,9 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
         <CardHeader>
           <CardTitle>Booking Rates</CardTitle>
           <CardDescription>
-            Set your rates for in-person services. 1 coin = $0.10 USD.
+            Rates are in USD — this is what clients pay. Bookings come through
+            the EXA talent team, and you receive 80% of each booking after
+            EXA&apos;s 20% commission.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -259,19 +267,19 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">$</span>
                         <Input
                           type="number"
                           inputMode="numeric"
                           min="0"
-                          max="100000"
+                          max="10000"
                           value={model.photoshoot_hourly_rate || ""}
                           onChange={(e) => onChange({ ...model, photoshoot_hourly_rate: parseInt(e.target.value) || 0 })}
                           className="w-24 text-right"
-                          placeholder="1500"
+                          placeholder="150"
                         />
-                        <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {model.photoshoot_hourly_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.photoshoot_hourly_rate)}/hr</span> : null}
+                      {model.photoshoot_hourly_rate ? <span className="text-xs text-emerald-400/80">You receive {usd(modelBookingPayout(model.photoshoot_hourly_rate))}/hr</span> : null}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border bg-pink-500/5">
@@ -281,19 +289,19 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">$</span>
                         <Input
                           type="number"
                           inputMode="numeric"
                           min="0"
-                          max="500000"
+                          max="50000"
                           value={model.photoshoot_half_day_rate || ""}
                           onChange={(e) => onChange({ ...model, photoshoot_half_day_rate: parseInt(e.target.value) || 0 })}
                           className="w-24 text-right"
-                          placeholder="5000"
+                          placeholder="500"
                         />
-                        <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {model.photoshoot_half_day_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.photoshoot_half_day_rate)}</span> : null}
+                      {model.photoshoot_half_day_rate ? <span className="text-xs text-emerald-400/80">You receive {usd(modelBookingPayout(model.photoshoot_half_day_rate))}</span> : null}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border bg-pink-500/5">
@@ -303,19 +311,19 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">$</span>
                         <Input
                           type="number"
                           inputMode="numeric"
                           min="0"
-                          max="1000000"
+                          max="100000"
                           value={model.photoshoot_full_day_rate || ""}
                           onChange={(e) => onChange({ ...model, photoshoot_full_day_rate: parseInt(e.target.value) || 0 })}
                           className="w-24 text-right"
-                          placeholder="8000"
+                          placeholder="800"
                         />
-                        <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {model.photoshoot_full_day_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.photoshoot_full_day_rate)}</span> : null}
+                      {model.photoshoot_full_day_rate ? <span className="text-xs text-emerald-400/80">You receive {usd(modelBookingPayout(model.photoshoot_full_day_rate))}</span> : null}
                     </div>
                   </div>
                 </div>
@@ -335,19 +343,19 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">$</span>
                         <Input
                           type="number"
                           inputMode="numeric"
                           min="0"
-                          max="100000"
+                          max="10000"
                           value={model.promo_hourly_rate || ""}
                           onChange={(e) => onChange({ ...model, promo_hourly_rate: parseInt(e.target.value) || 0 })}
                           className="w-24 text-right"
-                          placeholder="750"
+                          placeholder="75"
                         />
-                        <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {model.promo_hourly_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.promo_hourly_rate)}/hr</span> : null}
+                      {model.promo_hourly_rate ? <span className="text-xs text-emerald-400/80">You receive {usd(modelBookingPayout(model.promo_hourly_rate))}/hr</span> : null}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-500/5">
@@ -357,19 +365,19 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">$</span>
                         <Input
                           type="number"
                           inputMode="numeric"
                           min="0"
-                          max="500000"
+                          max="50000"
                           value={model.brand_ambassador_daily_rate || ""}
                           onChange={(e) => onChange({ ...model, brand_ambassador_daily_rate: parseInt(e.target.value) || 0 })}
                           className="w-24 text-right"
-                          placeholder="3000"
+                          placeholder="300"
                         />
-                        <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {model.brand_ambassador_daily_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.brand_ambassador_daily_rate)}/day</span> : null}
+                      {model.brand_ambassador_daily_rate ? <span className="text-xs text-emerald-400/80">You receive {usd(modelBookingPayout(model.brand_ambassador_daily_rate))}/day</span> : null}
                     </div>
                   </div>
                 </div>
@@ -389,19 +397,19 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">$</span>
                         <Input
                           type="number"
                           inputMode="numeric"
                           min="0"
-                          max="100000"
+                          max="10000"
                           value={model.private_event_hourly_rate || ""}
                           onChange={(e) => onChange({ ...model, private_event_hourly_rate: parseInt(e.target.value) || 0 })}
                           className="w-24 text-right"
-                          placeholder="2000"
+                          placeholder="200"
                         />
-                        <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {model.private_event_hourly_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.private_event_hourly_rate)}/hr</span> : null}
+                      {model.private_event_hourly_rate ? <span className="text-xs text-emerald-400/80">You receive {usd(modelBookingPayout(model.private_event_hourly_rate))}/hr</span> : null}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border bg-violet-500/5">
@@ -411,19 +419,19 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">$</span>
                         <Input
                           type="number"
                           inputMode="numeric"
                           min="0"
-                          max="100000"
+                          max="10000"
                           value={model.social_companion_hourly_rate || ""}
                           onChange={(e) => onChange({ ...model, social_companion_hourly_rate: parseInt(e.target.value) || 0 })}
                           className="w-24 text-right"
-                          placeholder="1500"
+                          placeholder="150"
                         />
-                        <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {model.social_companion_hourly_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.social_companion_hourly_rate)}/hr</span> : null}
+                      {model.social_companion_hourly_rate ? <span className="text-xs text-emerald-400/80">You receive {usd(modelBookingPayout(model.social_companion_hourly_rate))}/hr</span> : null}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border bg-violet-500/5">
@@ -433,19 +441,19 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">$</span>
                         <Input
                           type="number"
                           inputMode="numeric"
                           min="0"
-                          max="500000"
+                          max="50000"
                           value={model.meet_greet_rate || ""}
                           onChange={(e) => onChange({ ...model, meet_greet_rate: parseInt(e.target.value) || 0 })}
                           className="w-24 text-right"
-                          placeholder="1000"
+                          placeholder="100"
                         />
-                        <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {model.meet_greet_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.meet_greet_rate)}</span> : null}
+                      {model.meet_greet_rate ? <span className="text-xs text-emerald-400/80">You receive {usd(modelBookingPayout(model.meet_greet_rate))}</span> : null}
                     </div>
                   </div>
                 </div>
@@ -464,25 +472,25 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">$</span>
                       <Input
                         type="number"
                         inputMode="numeric"
                         min="0"
-                        max="100000"
+                        max="10000"
                         value={model.travel_fee || ""}
                         onChange={(e) => onChange({ ...model, travel_fee: parseInt(e.target.value) || 0 })}
                         className="w-24 text-right"
-                        placeholder="500"
+                        placeholder="50"
                       />
-                      <span className="text-sm text-muted-foreground">coins</span>
                     </div>
-                    {model.travel_fee ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.travel_fee)}</span> : null}
+                    {model.travel_fee ? <span className="text-xs text-emerald-400/80">You receive {usd(modelBookingPayout(model.travel_fee))}</span> : null}
                   </div>
                 </div>
               </div>
 
               <p className="text-sm text-muted-foreground">
-                Set a rate to 0 coins to hide that service if you don&apos;t offer it.
+                Set a rate to $0 to hide that service if you don&apos;t offer it.
               </p>
             </div>
           )}

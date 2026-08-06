@@ -223,7 +223,7 @@ export default async function RatesPage({ searchParams }: Props) {
                               {startingRate && (
                                 <div className="text-right">
                                   <p className="text-sm text-muted-foreground">Starting at</p>
-                                  <p className="text-2xl font-bold text-pink-500">{startingRate.toLocaleString()}<span className="text-sm font-normal text-muted-foreground"> coins/hr</span></p>
+                                  <p className="text-2xl font-bold text-pink-500">${startingRate.toLocaleString()}<span className="text-sm font-normal text-muted-foreground">/hr</span></p>
                                 </div>
                               )}
                             </div>
@@ -264,25 +264,25 @@ export default async function RatesPage({ searchParams }: Props) {
                             {(model.photoshoot_hourly_rate || 0) > 0 && (
                               <div className="p-2 rounded-lg bg-muted/50">
                                 <p className="text-muted-foreground text-xs">Photoshoot</p>
-                                <p className="font-semibold">{model.photoshoot_hourly_rate?.toLocaleString()} coins/hr</p>
+                                <p className="font-semibold">${model.photoshoot_hourly_rate?.toLocaleString()}/hr</p>
                               </div>
                             )}
                             {(model.promo_hourly_rate || 0) > 0 && (
                               <div className="p-2 rounded-lg bg-muted/50">
                                 <p className="text-muted-foreground text-xs">Promo</p>
-                                <p className="font-semibold">{model.promo_hourly_rate?.toLocaleString()} coins/hr</p>
+                                <p className="font-semibold">${model.promo_hourly_rate?.toLocaleString()}/hr</p>
                               </div>
                             )}
                             {(model.private_event_hourly_rate || 0) > 0 && (
                               <div className="p-2 rounded-lg bg-muted/50">
                                 <p className="text-muted-foreground text-xs">Private Event</p>
-                                <p className="font-semibold">{model.private_event_hourly_rate?.toLocaleString()} coins/hr</p>
+                                <p className="font-semibold">${model.private_event_hourly_rate?.toLocaleString()}/hr</p>
                               </div>
                             )}
                             {(model.brand_ambassador_daily_rate || 0) > 0 && (
                               <div className="p-2 rounded-lg bg-muted/50">
                                 <p className="text-muted-foreground text-xs">Ambassador</p>
-                                <p className="font-semibold">{model.brand_ambassador_daily_rate?.toLocaleString()} coins/day</p>
+                                <p className="font-semibold">${model.brand_ambassador_daily_rate?.toLocaleString()}/day</p>
                               </div>
                             )}
                           </div>

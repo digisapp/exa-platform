@@ -15,7 +15,6 @@ import {
   ArrowLeft,
   MessageCircle,
   Clock,
-  CheckCircle2,
   EyeOff,
   Handshake,
   Instagram,
@@ -139,6 +138,15 @@ export default async function ModelRatesPage({ params }: Props) {
   }));
 
   const displayName = modelPublicName(model);
+
+  // Tapping a rate opens the team-mediated booking inquiry (USD, no account
+  // required) — see ClickableRateCard.
+  const bookableModel = {
+    id: model.id,
+    username: model.username,
+    profile_photo_url: model.profile_photo_url,
+  };
+  const defaultEmail = user?.email;
 
   return (
     <div className="min-h-dvh relative">
@@ -301,41 +309,36 @@ export default async function ModelRatesPage({ params }: Props) {
                 <div className="space-y-3">
                   {(model.photoshoot_hourly_rate || 0) > 0 && (
                     <ClickableRateCard
-                      modelId={model.id}
-                      modelName={displayName}
-                      modelRates={model}
+                      model={bookableModel}
                       serviceType="photoshoot_hourly"
                       label="Hourly Rate"
                       description="Per hour of shooting"
                       rate={model.photoshoot_hourly_rate}
+                      unit="/hr"
                       colorClass="text-pink-400"
-                      isLoggedIn={!!user}
+                      defaultEmail={defaultEmail}
                     />
                   )}
                   {(model.photoshoot_half_day_rate || 0) > 0 && (
                     <ClickableRateCard
-                      modelId={model.id}
-                      modelName={displayName}
-                      modelRates={model}
+                      model={bookableModel}
                       serviceType="photoshoot_half_day"
                       label="Half-Day Rate"
                       description="4 hours of shooting"
                       rate={model.photoshoot_half_day_rate}
                       colorClass="text-pink-400"
-                      isLoggedIn={!!user}
+                      defaultEmail={defaultEmail}
                     />
                   )}
                   {(model.photoshoot_full_day_rate || 0) > 0 && (
                     <ClickableRateCard
-                      modelId={model.id}
-                      modelName={displayName}
-                      modelRates={model}
+                      model={bookableModel}
                       serviceType="photoshoot_full_day"
                       label="Full-Day Rate"
                       description="8 hours of shooting"
                       rate={model.photoshoot_full_day_rate}
                       colorClass="text-pink-400"
-                      isLoggedIn={!!user}
+                      defaultEmail={defaultEmail}
                     />
                   )}
                 </div>
@@ -352,28 +355,26 @@ export default async function ModelRatesPage({ params }: Props) {
                 <div className="space-y-3">
                   {(model.promo_hourly_rate || 0) > 0 && (
                     <ClickableRateCard
-                      modelId={model.id}
-                      modelName={displayName}
-                      modelRates={model}
+                      model={bookableModel}
                       serviceType="promo"
                       label="Promo Modeling"
                       description="Per hour for promotional work"
                       rate={model.promo_hourly_rate}
+                      unit="/hr"
                       colorClass="text-blue-400"
-                      isLoggedIn={!!user}
+                      defaultEmail={defaultEmail}
                     />
                   )}
                   {(model.brand_ambassador_daily_rate || 0) > 0 && (
                     <ClickableRateCard
-                      modelId={model.id}
-                      modelName={displayName}
-                      modelRates={model}
+                      model={bookableModel}
                       serviceType="brand_ambassador"
                       label="Brand Ambassador"
                       description="Daily rate for brand work"
                       rate={model.brand_ambassador_daily_rate}
+                      unit="/day"
                       colorClass="text-blue-400"
-                      isLoggedIn={!!user}
+                      defaultEmail={defaultEmail}
                     />
                   )}
                 </div>
@@ -390,41 +391,37 @@ export default async function ModelRatesPage({ params }: Props) {
                 <div className="space-y-3">
                   {(model.private_event_hourly_rate || 0) > 0 && (
                     <ClickableRateCard
-                      modelId={model.id}
-                      modelName={displayName}
-                      modelRates={model}
+                      model={bookableModel}
                       serviceType="private_event"
                       label="Private Events"
                       description="Per hour for private events"
                       rate={model.private_event_hourly_rate}
+                      unit="/hr"
                       colorClass="text-violet-400"
-                      isLoggedIn={!!user}
+                      defaultEmail={defaultEmail}
                     />
                   )}
                   {(model.social_companion_hourly_rate || 0) > 0 && (
                     <ClickableRateCard
-                      modelId={model.id}
-                      modelName={displayName}
-                      modelRates={model}
+                      model={bookableModel}
                       serviceType="social_companion"
                       label="Social Companion"
                       description="Per hour for social events"
                       rate={model.social_companion_hourly_rate}
+                      unit="/hr"
                       colorClass="text-violet-400"
-                      isLoggedIn={!!user}
+                      defaultEmail={defaultEmail}
                     />
                   )}
                   {(model.meet_greet_rate || 0) > 0 && (
                     <ClickableRateCard
-                      modelId={model.id}
-                      modelName={displayName}
-                      modelRates={model}
+                      model={bookableModel}
                       serviceType="meet_greet"
                       label="Meet & Greet"
                       description="Flat fee for appearances"
                       rate={model.meet_greet_rate}
                       colorClass="text-violet-400"
-                      isLoggedIn={!!user}
+                      defaultEmail={defaultEmail}
                     />
                   )}
                 </div>
@@ -442,7 +439,7 @@ export default async function ModelRatesPage({ params }: Props) {
                       <p className="text-sm text-white/50">For out-of-area bookings</p>
                     </div>
                   </div>
-                  <p className="text-xl font-bold text-green-400">{model.travel_fee?.toLocaleString()} coins</p>
+                  <p className="text-xl font-bold text-green-400">${model.travel_fee?.toLocaleString()}</p>
                 </div>
               </div>
             )}
