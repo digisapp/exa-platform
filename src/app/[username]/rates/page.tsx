@@ -14,13 +14,13 @@ import {
   Calendar,
   ArrowLeft,
   MessageCircle,
-  Clock,
   EyeOff,
   Handshake,
   Instagram,
   TrendingUp,
 } from "lucide-react";
 import { ClickableRateCard } from "@/components/bookings/ClickableRateCard";
+import { BookModelButton } from "@/components/booking/BookModelButton";
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `@${displayName} — Rates & Booking`,
     description,
     alternates: {
-      canonical: `https://www.examodels.com/${displayName}/rates`,
+      canonical: `https://www.examodels.com/${model.username}/rates`,
     },
     openGraph: {
       title: `${displayName} — Rates & Booking | EXA Models`,
@@ -138,6 +138,13 @@ export default async function ModelRatesPage({ params }: Props) {
   }));
 
   const displayName = modelPublicName(model);
+  const descriptor = modelSeoDescriptor(model);
+
+  // Booker-facing intro: a one-word fan bio ("hii") reads unprofessional next
+  // to real-money rates, so short bios fall back to the descriptor line.
+  const bioText: string = model.bio?.trim() || "";
+  const introText =
+    bioText.length >= 40 ? bioText : descriptor !== "Model" ? descriptor : bioText || null;
 
   // Tapping a rate opens the team-mediated booking inquiry (USD, no account
   // required) — see ClickableRateCard.
@@ -148,8 +155,48 @@ export default async function ModelRatesPage({ params }: Props) {
   };
   const defaultEmail = user?.email;
 
+  // Structured data so rates pages can rank for "book <name>" queries.
+  // Public fields only — never social handles or contact info (signup gate),
+  // and location only via the show_location-gated descriptor.
+  const structuredOffers = [
+    { name: "Photoshoot — hourly", price: model.photoshoot_hourly_rate },
+    { name: "Photoshoot — half day", price: model.photoshoot_half_day_rate },
+    { name: "Photoshoot — full day", price: model.photoshoot_full_day_rate },
+    { name: "Promotional modeling — hourly", price: model.promo_hourly_rate },
+    { name: "Brand ambassador — daily", price: model.brand_ambassador_daily_rate },
+    { name: "Private event — hourly", price: model.private_event_hourly_rate },
+    { name: "Social companion — hourly", price: model.social_companion_hourly_rate },
+    { name: "Meet & greet", price: model.meet_greet_rate },
+  ].filter((o) => (o.price || 0) > 0);
+
+  const jsonLd =
+    model.is_approved && structuredOffers.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "Person",
+          name: displayName,
+          alternateName: `@${model.username}`,
+          url: `https://www.examodels.com/${model.username}/rates`,
+          ...(model.profile_photo_url ? { image: model.profile_photo_url } : {}),
+          jobTitle: "Model",
+          description: descriptor,
+          makesOffer: structuredOffers.map((o) => ({
+            "@type": "Offer",
+            price: o.price,
+            priceCurrency: "USD",
+            itemOffered: { "@type": "Service", name: o.name },
+          })),
+        }
+      : null;
+
   return (
     <div className="min-h-dvh relative">
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+        />
+      )}
       <FloatingOrbs />
 
       {/* Preview Banner for unapproved profiles (owner or admin viewing) */}
@@ -227,40 +274,102 @@ export default async function ModelRatesPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Availability Status - based on real activity */}
-          {model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000 ? (
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/40 shadow-[0_0_16px_rgba(52,211,153,0.2)] mb-6">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
-              </span>
-              <span className="text-emerald-300 font-semibold">Available for booking</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/10 mb-6">
-              <Clock className="h-4 w-4 text-white/40" />
-              <span className="text-white/50 font-medium text-sm">Currently offline</span>
-            </div>
-          )}
-
-          {/* Bio */}
-          {model.bio && (
+          {/* Intro */}
+          {introText && (
             <p className="text-white/70 text-sm leading-relaxed mb-6">
-              {model.bio}
+              {introText}
             </p>
           )}
 
-          {/* Message Button */}
+          {/* How booking works — bookings are team-mediated and async, so we
+              show the process instead of live presence (which read "Currently
+              offline" for nearly every model and undercut the page). Copy
+              matches the inquiry confirmation email's 24-hour promise. */}
+          {hasAnyRates && !isOwner && (
+            <div className="rounded-xl bg-white/[0.03] border border-white/10 p-4 mb-6">
+              <ol className="space-y-2.5">
+                {[
+                  "Tap a service and tell us your dates",
+                  "The EXA team gets back to you within 24 hours",
+                  "Confirm details and book securely through EXA",
+                ].map((step, i) => (
+                  <li key={step} className="flex items-start gap-2.5 text-sm text-white/70">
+                    <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500/30 to-violet-500/30 ring-1 ring-pink-500/40 text-[11px] font-bold text-pink-300">
+                      {i + 1}
+                    </span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-3 text-xs text-white/40 text-center">No account needed</p>
+            </div>
+          )}
+
+          {/* Primary CTA: booking first — it needs no account, while chat
+              dead-ends anon bookers at a sign-in wall. Messaging stays as a
+              quiet secondary link. */}
           {!isOwner && (
-            <Link
-              href={user ? `/chats?new=${model.username}` : "/signin"}
-              className="group flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/[0.06] hover:bg-pink-500/15 border border-white/10 hover:border-pink-500/40 text-white font-semibold transition-all hover:shadow-[0_0_18px_rgba(236,72,153,0.3)] w-full"
-            >
-              <MessageCircle className="h-5 w-5 group-hover:text-pink-300 transition-colors" />
-              <span className="group-hover:text-pink-100 transition-colors">Send Message</span>
-            </Link>
+            hasAnyRates ? (
+              <>
+                <BookModelButton
+                  model={bookableModel}
+                  source="rates"
+                  variant="primary"
+                  defaultEmail={defaultEmail}
+                />
+                <Link
+                  href={user ? `/chats?new=${model.username}` : "/signin"}
+                  className="mt-3 flex items-center justify-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Have a question? Message {displayName}
+                </Link>
+              </>
+            ) : (
+              <Link
+                href={user ? `/chats?new=${model.username}` : "/signin"}
+                className="group flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/[0.06] hover:bg-pink-500/15 border border-white/10 hover:border-pink-500/40 text-white font-semibold transition-all hover:shadow-[0_0_18px_rgba(236,72,153,0.3)] w-full"
+              >
+                <MessageCircle className="h-5 w-5 group-hover:text-pink-300 transition-colors" />
+                <span className="group-hover:text-pink-100 transition-colors">Send Message</span>
+              </Link>
+            )
           )}
         </div>
+
+        {/* Portfolio strip — bookers decide with their eyes, so photos sit
+            above the rates instead of buried at the bottom of the page. */}
+        {photos.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Portfolio</h3>
+              <Link
+                href={`/${model.username}`}
+                className="text-sm text-pink-400 hover:text-pink-300 transition-colors flex items-center gap-1"
+              >
+                View Full Profile
+                <ArrowLeft className="h-3 w-3 rotate-180" />
+              </Link>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 snap-x">
+              {photos.map((photo: any) => (
+                <Link
+                  key={photo.id}
+                  href={`/${model.username}`}
+                  className="relative h-44 aspect-[3/4] flex-shrink-0 snap-start rounded-xl overflow-hidden ring-1 ring-white/10 hover:ring-pink-500/50 hover:shadow-[0_0_16px_rgba(236,72,153,0.4)] transition-all"
+                >
+                  <Image
+                    src={photo.url}
+                    alt={`${displayName} portfolio photo`}
+                    fill
+                    sizes="132px"
+                    className="object-cover"
+                  />
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Rates Cards */}
         {hasAnyRates && !isOwner && (
@@ -507,51 +616,25 @@ export default async function ModelRatesPage({ params }: Props) {
           </div>
         )}
 
-        {/* Portfolio Preview */}
-        {photos && photos.length > 0 && (
-          <div className="mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Portfolio</h3>
-              <Link
-                href={`/${model.username}`}
-                className="text-sm text-pink-400 hover:text-pink-300 transition-colors flex items-center gap-1"
-              >
-                View Full Profile
-                <ArrowLeft className="h-3 w-3 rotate-180" />
-              </Link>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {photos.map((photo: any) => (
-                <Link
-                  key={photo.id}
-                  href={`/${model.username}`}
-                  className="group relative aspect-square rounded-xl overflow-hidden ring-1 ring-white/10 hover:ring-pink-500/50 hover:shadow-[0_0_16px_rgba(236,72,153,0.4)] transition-all"
-                >
-                  <Image
-                    src={photo.url}
-                    alt="Portfolio"
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Bottom CTA */}
+        {/* Bottom CTA — booking-first, mirroring the header */}
         {!isOwner && hasAnyRates && (
           <div className="mt-6 profile-card rounded-2xl p-5">
             <p className="text-center text-white/70 mb-4">
-              Have questions? Send <span className="text-white font-semibold">{displayName}</span> a message.
+              Ready to work with <span className="text-white font-semibold">{displayName}</span>?
             </p>
+            <BookModelButton
+              model={bookableModel}
+              source="rates"
+              variant="primary"
+              defaultEmail={defaultEmail}
+              label={`Book ${displayName}`}
+            />
             <Link
               href={user ? `/chats?new=${model.username}` : "/signin"}
-              className="group flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-white/[0.06] hover:bg-pink-500/15 border border-white/10 hover:border-pink-500/40 text-white font-semibold transition-all hover:shadow-[0_0_18px_rgba(236,72,153,0.3)]"
+              className="mt-3 flex items-center justify-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors"
             >
-              <MessageCircle className="h-5 w-5 group-hover:text-pink-300 transition-colors" />
-              <span className="group-hover:text-pink-100 transition-colors">{user ? "Send Message" : "Sign In to Message"}</span>
+              <MessageCircle className="h-4 w-4" />
+              {user ? "Or send a message with any questions" : "Or sign in to send a message"}
             </Link>
           </div>
         )}
