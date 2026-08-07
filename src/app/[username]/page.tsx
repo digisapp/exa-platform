@@ -895,6 +895,7 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
                     modelId={model.id}
                     modelActorId={modelActorId}
                     modelName={displayName}
+                    modelPhotoUrl={model.profile_photo_url}
                     coinBalance={coinBalance}
                     messageRate={model.message_rate || 0}
                     videoCallRate={model.video_call_rate || 0}
@@ -1097,6 +1098,7 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
               modelId={model.id}
               modelActorId={modelActorId}
               modelName={displayName}
+              modelPhotoUrl={model.profile_photo_url}
               coinBalance={coinBalance}
               messageRate={model.message_rate || 0}
               videoCallRate={model.video_call_rate || 0}

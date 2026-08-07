@@ -36,6 +36,7 @@ import { hapticFeedback } from "@/hooks/useHapticFeedback";
 import { showTipSuccessToast } from "@/lib/tip-toast";
 import { createClient } from "@/lib/supabase/client";
 import { messageCoinCost } from "@/lib/coin-config";
+import { trackEvent } from "@/lib/analytics-client";
 import {
   TIP_GIFTS,
   SUPER_TIP_AMOUNTS,
@@ -62,6 +63,7 @@ interface ProfileActionButtonsProps {
   modelId: string;
   modelActorId: string | null;
   modelName?: string;
+  modelPhotoUrl?: string | null;
   coinBalance?: number;
   messageRate?: number;
   videoCallRate?: number;
@@ -82,6 +84,7 @@ export function ProfileActionButtons({
   modelId,
   modelActorId,
   modelName,
+  modelPhotoUrl,
   coinBalance = 0,
   messageRate = 0,
   videoCallRate = 0,
@@ -109,6 +112,16 @@ export function ProfileActionButtons({
   const [existingConversationId, setExistingConversationId] = useState<string | null>(null);
   const [inputFocused, setInputFocused] = useState(false);
   const chatInputRef = useRef<HTMLInputElement>(null);
+
+  // Post-signup welcome sheet (set via sessionStorage cue by FanSignupDialog)
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  // True once the welcome sheet has shown this pageview — marks the next
+  // successful send as welcome-driven for the shown → message_sent funnel.
+  const welcomeShownRef = useRef(false);
+  // Set when a send hit 402 and the buy-coins modal opened in its place; the
+  // modal's onSuccess retries the send so the typed message survives the
+  // purchase instead of being lost to a /coins redirect.
+  const retryAfterPurchaseRef = useRef(false);
 
   // Active call session (model accepted)
   const [callSession, setCallSession] = useState<{
@@ -165,6 +178,34 @@ export function ProfileActionButtons({
       .catch(() => { /* hint only — the send box works without it */ });
     return () => { cancelled = true; };
   }, [isLoggedIn, isOwner, allowChat, modelUsername]);
+
+  // ── Post-signup welcome ────────────────────────────────────────────────────
+  // A gate signup (social chips, profile actions) reloads back onto this
+  // profile with a one-time sessionStorage cue. This is the only moment we
+  // reliably have that fan's attention — deliver the promise (socials are
+  // unlocked) and pivot to the first message. Data behind this: 37 gate
+  // signups in the first 3.5 weeks, 1 ever spent a coin.
+  useEffect(() => {
+    if (!isLoggedIn || isOwner) return;
+    try {
+      const raw = sessionStorage.getItem("exa_post_signup_welcome");
+      if (!raw) return;
+      const cue = JSON.parse(raw) as { username?: string; source?: string; ts?: number };
+      if (cue.username !== modelUsername.toLowerCase()) return;
+      sessionStorage.removeItem("exa_post_signup_welcome");
+      // A stale cue (tab reopened much later) would read as a random popup,
+      // not a welcome — only fire close to the signup itself.
+      if (!cue.ts || Date.now() - cue.ts > 10 * 60 * 1000) return;
+      welcomeShownRef.current = true;
+      setWelcomeOpen(true);
+      trackEvent("welcome_prompt_shown", {
+        modelId,
+        metadata: { source: cue.source ?? null },
+      });
+    } catch {
+      // corrupt cue — skip the sheet
+    }
+  }, [isLoggedIn, isOwner, modelUsername, modelId]);
 
   // ── Cancel outgoing call ───────────────────────────────────────────────────
   const cancelCall = useCallback(async (reason: "missed" | "declined" = "declined") => {
@@ -327,13 +368,22 @@ export function ProfileActionButtons({
     }
   };
 
-  const focusMessageBox = () => {
-    setOfflineSheet(null);
-    // Let the dialog close before grabbing focus
+  // Let whichever dialog is closing finish before grabbing focus
+  const focusChatInput = () => {
     setTimeout(() => {
       chatInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       chatInputRef.current?.focus();
     }, 150);
+  };
+
+  const focusMessageBox = () => {
+    setOfflineSheet(null);
+    focusChatInput();
+  };
+
+  const welcomeSayHi = () => {
+    setWelcomeOpen(false);
+    focusChatInput();
   };
 
   const handleTip = () => {
@@ -350,10 +400,11 @@ export function ProfileActionButtons({
     setInputFocused(true);
   };
 
-  const handleSendChatMessage = async () => {
+  const handleSendChatMessage = async (autoRetries = 0, isRetry = false) => {
     if (!isLoggedIn) { setShowAuthDialog(true); return; }
-    if (!chatMessage.trim() || sendingMessage) return;
+    if (!chatMessage.trim() || (sendingMessage && !isRetry)) return;
     setSendingMessage(true);
+    let scheduledRetry = false;
     try {
       const res = await fetch("/api/messages/send", {
         method: "POST",
@@ -363,15 +414,28 @@ export function ProfileActionButtons({
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 402) {
-          toast.error(`Need ${data.required} coins — you have ${data.balance}.`, {
-            action: { label: "Buy coins", onClick: () => router.push("/coins") },
-          });
+          if (autoRetries > 0) {
+            // Right after checkout the coins land via webhook a beat behind
+            // the success screen — keep the spinner on and try again instead
+            // of bouncing the fan back to a second paywall.
+            scheduledRetry = true;
+            setTimeout(() => handleSendChatMessage(autoRetries - 1, true), 1500);
+          } else {
+            // Paywall at the moment of intent: open checkout in place. The
+            // typed message stays in the input and sends itself on success.
+            retryAfterPurchaseRef.current = true;
+            setBuyCoinsOpen(true);
+          }
         } else {
           toast.error(data.error || "Failed to send message");
         }
         return;
       }
       hapticFeedback("success");
+      if (welcomeShownRef.current) {
+        welcomeShownRef.current = false;
+        trackEvent("welcome_prompt_message_sent", { modelId });
+      }
       setSentConversationId(data.conversationId);
       setChatMessage("");
       // Land the fan in the thread — that's where the model's reply (and the
@@ -384,7 +448,7 @@ export function ProfileActionButtons({
     } catch {
       toast.error("Failed to send message");
     } finally {
-      setSendingMessage(false);
+      if (!scheduledRetry) setSendingMessage(false);
     }
   };
 
@@ -551,7 +615,7 @@ export function ProfileActionButtons({
                   maxLength={500}
                 />
                 <button
-                  onClick={handleSendChatMessage}
+                  onClick={() => handleSendChatMessage()}
                   disabled={sendingMessage || !chatMessage.trim()}
                   className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200",
@@ -899,7 +963,79 @@ export function ProfileActionButtons({
                 Buy coins
               </button>
             </p>
-            <BuyCoinsModal isOpen={buyCoinsOpen} onClose={() => setBuyCoinsOpen(false)} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Coin checkout — mounted at the root (not inside the tip dialog) so
+          the message-send 402 path can open it too. When a typed message
+          triggered it, the purchase success auto-retries the send; retries
+          absorb the webhook lag between checkout completing and the coins
+          landing on the balance. */}
+      <BuyCoinsModal
+        isOpen={buyCoinsOpen}
+        onClose={() => {
+          setBuyCoinsOpen(false);
+          retryAfterPurchaseRef.current = false;
+        }}
+        onSuccess={() => {
+          if (retryAfterPurchaseRef.current && chatMessage.trim()) {
+            retryAfterPurchaseRef.current = false;
+            handleSendChatMessage(3, true);
+          }
+        }}
+      />
+
+      {/* Post-signup welcome — shown once when a gate signup lands back on
+          this profile. Deliver the promise that drove the signup (socials
+          unlocked), then pivot to the first message with the price stated
+          honestly up front. */}
+      <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center">
+            <div className="mx-auto mb-2 w-16 h-16 rounded-full overflow-hidden ring-2 ring-pink-500/60 shadow-[0_0_18px_rgba(236,72,153,0.4)]">
+              {modelPhotoUrl ? (
+                <Image
+                  src={modelPhotoUrl}
+                  alt={firstName}
+                  width={64}
+                  height={64}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-pink-500/30 to-violet-500/30 flex items-center justify-center text-xl font-bold text-white">
+                  {firstName.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <DialogTitle className="text-xl">You&apos;re in 🎉</DialogTitle>
+            <DialogDescription>
+              @{modelUsername}&apos;s socials are unlocked for you.
+              {allowChat && ` And ${firstName} replies to messages from fans right here on EXA.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 pt-2">
+            {allowChat && (
+              <button
+                onClick={welcomeSayHi}
+                className="w-full flex flex-col items-center gap-0.5 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white transition-all active:scale-[0.98] shadow-lg shadow-pink-500/25"
+              >
+                <span className="flex items-center gap-2 text-sm font-semibold">
+                  <MessageCircle className="h-4 w-4" />
+                  Say hi to {firstName}
+                </span>
+                <span className="flex items-center gap-1 text-[11px] text-white/75">
+                  <Coins className="h-2.5 w-2.5" />
+                  {messageCoinCost(messageRate)} coins per message
+                </span>
+              </button>
+            )}
+            <button
+              onClick={() => setWelcomeOpen(false)}
+              className="w-full py-2.5 text-sm text-white/50 hover:text-white/80 transition-colors"
+            >
+              Just looking around
+            </button>
           </div>
         </DialogContent>
       </Dialog>
