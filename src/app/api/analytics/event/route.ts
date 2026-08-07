@@ -48,6 +48,13 @@ const ALLOWED_EVENTS = new Set([
   "signup_form_opened",
   "signup_validation_error",
   "signup_submitted",
+  // Post-signup welcome sheet on model profiles (2026-08-07): shown fires
+  // once when the sheet opens after a gate signup (metadata.source carries
+  // the originating gate, e.g. "social_gate"); message_sent fires when that
+  // same pageview later sends a message, so shown → message_sent is the
+  // activation rate of the welcome moment.
+  "welcome_prompt_shown",
+  "welcome_prompt_message_sent",
 ]);
 
 export async function POST(request: NextRequest) {

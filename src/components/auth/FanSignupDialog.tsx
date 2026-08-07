@@ -192,6 +192,26 @@ export function FanSignupDialog({
         }
       }
 
+      // Hand the profile page a one-time welcome cue: a gate signup lands
+      // back on the model's profile after this reload, and that moment is
+      // the only reliable chance to turn the signup into a first message.
+      // Consumed (and removed) by ProfileActionButtons.
+      try {
+        const profileMatch = (redirectTo || "").match(/^\/([a-z0-9_]+)$/i);
+        if (source && profileMatch) {
+          sessionStorage.setItem(
+            "exa_post_signup_welcome",
+            JSON.stringify({
+              username: profileMatch[1].toLowerCase(),
+              source,
+              ts: Date.now(),
+            })
+          );
+        }
+      } catch {
+        // storage unavailable — the fan just lands on the profile without the sheet
+      }
+
       toast.success("Welcome to EXA!");
       // Deliver on the promise that prompted the signup (e.g. "Sign Up to
       // View Profile" → that model's profile), not a generic dashboard
