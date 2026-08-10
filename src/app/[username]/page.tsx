@@ -141,8 +141,12 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
   // Get current user first to check ownership
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Get model (without is_approved filter - we check ownership below)
-  const { data: model } = await supabase
+  // Get model (without is_approved filter - we check ownership below).
+  // Service client: select("*") is not possible for client roles since the
+  // 20260810 anon column grants (PII columns are ungranted). The redaction
+  // block below still strips names/phone/etc. before anything reaches the
+  // client payload — only explicitly passed fields render.
+  const { data: model } = await createServiceRoleClient()
     .from("models")
     .select("*")
     .eq("username", username)
@@ -276,7 +280,10 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
     { data: liveAuctions },
     { count: premiumContentCount },
   ] = await Promise.all([
-    (supabase as any)
+    // Service client for portfolio media: content_items.media_url is not
+    // column-granted to client roles (20260810) — portfolio assets live in the
+    // public bucket, so resolving their URLs server-side leaks nothing.
+    (createServiceRoleClient() as any)
       .from("content_items")
       .select("id, media_url, media_type, title, created_at, width, height, is_primary")
       .eq("model_id", model.id)
@@ -284,7 +291,7 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
       .eq("media_type", "image")
       .order("created_at", { ascending: false })
       .limit(50) as Promise<{ data: any[] | null }>,
-    (supabase as any)
+    (createServiceRoleClient() as any)
       .from("content_items")
       .select("id, media_url, media_type, title, created_at")
       .eq("model_id", model.id)
@@ -302,7 +309,7 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
       .limit(6) as Promise<{ data: any[] | null }>,
     (supabase as any)
       .from("content_items")
-      .select("*", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .eq("model_id", model.id)
       .eq("status", "exclusive")
       .gt("coin_price", 0) as unknown as Promise<{ count: number | null }>,
