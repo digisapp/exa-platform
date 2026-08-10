@@ -9,7 +9,7 @@ import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { z } from "zod";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
-import { TIP_GIFT_KEYS, giftByKey, formatTipMessage } from "@/lib/tip-config";
+import { TIP_GIFT_KEYS, MIN_CUSTOM_TIP, giftByKey, formatTipMessage } from "@/lib/tip-config";
 
 // Zod schema for tip validation
 const tipSchema = z.object({
@@ -58,6 +58,15 @@ export async function POST(request: NextRequest) {
     if (giftKey && (!gift || gift.amount !== amount)) {
       return NextResponse.json(
         { error: "Gift amount mismatch" },
+        { status: 400 }
+      );
+    }
+
+    // Custom (non-gift) tips have a product minimum; gifts carry their own
+    // fixed prices below it.
+    if (!giftKey && amount < MIN_CUSTOM_TIP) {
+      return NextResponse.json(
+        { error: `Minimum tip is ${MIN_CUSTOM_TIP} coins` },
         { status: 400 }
       );
     }
@@ -172,19 +181,22 @@ export async function POST(request: NextRequest) {
         .eq("actor_id", sender.id);
 
       if (senderParticipations && senderParticipations.length > 0) {
+        // Batched: one .in() with every id fails outright past ~300 UUIDs
+        // (16KB URL limit), and the swallowed error would silently fork a
+        // duplicate conversation per tip. Same pattern as messages/send.
         const conversationIds = senderParticipations.map((p: any) => p.conversation_id);
+        for (let i = 0; i < conversationIds.length && !finalConversationId; i += 200) {
+          const { data: recipientParticipation } = await adminClient
+            .from("conversation_participants")
+            .select("conversation_id")
+            .eq("actor_id", recipientId)
+            .in("conversation_id", conversationIds.slice(i, i + 200))
+            .limit(1)
+            .maybeSingle();
 
-        // Check if recipient is in any of these conversations
-        const { data: recipientParticipation } = await adminClient
-          .from("conversation_participants")
-          .select("conversation_id")
-          .eq("actor_id", recipientId)
-          .in("conversation_id", conversationIds)
-          .limit(1)
-          .maybeSingle();
-
-        if (recipientParticipation) {
-          finalConversationId = recipientParticipation.conversation_id;
+          if (recipientParticipation) {
+            finalConversationId = recipientParticipation.conversation_id;
+          }
         }
       }
 

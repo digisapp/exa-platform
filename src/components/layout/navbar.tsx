@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { vipTierOf, vipTierByKey } from "@/lib/vip-config";
+import { vipTierByKey } from "@/lib/vip-config";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -73,7 +73,7 @@ interface NavbarProps {
   notificationCount?: number;
   bellCount?: number;
   /** fans.lifetime_spend_coins — fan's own VIP badge in the coin popover */
-  fanLifetimeSpend?: number;
+  fanVipTierKey?: string | null;
 }
 
 const publicLinks: { href: string; label: string; icon: any }[] = [];
@@ -90,7 +90,7 @@ const DROPDOWN_GLASS_CLASS =
 const DROPDOWN_ITEM_CLASS =
   "cursor-pointer rounded-lg px-2.5 py-2 text-sm text-white/80 focus:bg-white/10 focus:text-white data-[highlighted]:bg-white/10 data-[highlighted]:text-white";
 
-export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, notificationCount = 0, bellCount = 0, fanLifetimeSpend = 0 }: NavbarProps) {
+export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, notificationCount = 0, bellCount = 0, fanVipTierKey = null }: NavbarProps) {
   // VIP tier-up celebration: when the viewer's earned tier is one this
   // browser hasn't celebrated yet, ping the server — it's authoritative and
   // idempotent (fans.celebrated_vip_tier), so duplicate pings and multiple
@@ -99,7 +99,7 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
   const celebratePingedRef = useRef(false);
   useEffect(() => {
     if (celebratePingedRef.current) return;
-    const tier = vipTierOf(fanLifetimeSpend);
+    const tier = vipTierByKey(fanVipTierKey);
     if (!tier) return;
     if (localStorage.getItem("exaVipCelebratedTier") === tier.key) return;
     celebratePingedRef.current = true;
@@ -118,7 +118,7 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
         }
       })
       .catch(() => {});
-  }, [fanLifetimeSpend]);
+  }, [fanVipTierKey]);
   const pathname = usePathname();
   const unreadCount = useUnreadCount(unreadCountProp);
   const coinBalanceContext = useCoinBalanceOptional();
@@ -296,7 +296,7 @@ export function Navbar({ user, actorType, unreadCount: unreadCountProp = 0, noti
                         <div className="flex items-center gap-1.5">
                           <p className="text-[10px] uppercase tracking-wider text-white/40">{t.nav.availableBalance}</p>
                           {/* Fan's own earned status — tier only, never amounts */}
-                          <VipBadge lifetimeSpendCoins={fanLifetimeSpend} />
+                          <VipBadge tierKey={fanVipTierKey} />
                         </div>
                         {/* No USD equivalent here: fan coins aren't redeemable and
                             coinsToUsd is the model payout rate, not what fans paid */}

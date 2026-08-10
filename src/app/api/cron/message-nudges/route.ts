@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     // Get all participants for these conversations
     const { data: participants, error: partError } = await adminClient
       .from("conversation_participants")
-      .select("conversation_id, actor_id, last_read_at, nudge_sent_at")
+      .select("conversation_id, actor_id, last_read_at, nudge_sent_at, unread_count")
       .in("conversation_id", conversationIds);
 
     if (partError) throw partError;
@@ -179,17 +179,20 @@ export async function GET(request: NextRequest) {
       return "there";
     }
 
-    // Get emails via auth admin
-    const recipientUserIds = nudgeCandidates
-      .map((c) => actorMap.get(c.actorId)?.user_id)
-      .filter(Boolean) as string[];
+    // Emails come from per-recipient getUserById (same as reply-notifications):
+    // listUsers() only returns its first page, which silently skipped every
+    // recipient outside the first ~50 auth users.
+    const recipientUserIds = [...new Set(
+      nudgeCandidates
+        .map((c) => actorMap.get(c.actorId)?.user_id)
+        .filter(Boolean) as string[]
+    )];
 
-    const { data: authUsers } = await adminClient.auth.admin.listUsers();
-    const emailMap = new Map<string, string>(
-      authUsers?.users
-        ?.filter((u: any) => recipientUserIds.includes(u.id))
-        .map((u: any) => [u.id, u.email] as [string, string]) || []
-    );
+    const emailMap = new Map<string, string>();
+    for (const userId of recipientUserIds) {
+      const { data: authUser } = await adminClient.auth.admin.getUserById(userId);
+      if (authUser?.user?.email) emailMap.set(userId, authUser.user.email);
+    }
 
     let sentCount = 0;
     const errors: string[] = [];

@@ -202,18 +202,22 @@ export async function POST(request: NextRequest) {
         .select("conversation_id")
         .eq("actor_id", callerActor.id) as { data: { conversation_id: string }[] | null };
 
-      if (existingConv) {
-        for (const cp of existingConv) {
-          const { data: otherParticipant } = await supabase
+      if (existingConv && existingConv.length > 0) {
+        // Batched shared-conversation lookup (same pattern as messages/send):
+        // the old per-conversation loop issued one query per membership, which
+        // put 50-100+ sequential round trips in the call-connect critical path.
+        const convIds = existingConv.map((cp) => cp.conversation_id);
+        for (let i = 0; i < convIds.length && !conversationId; i += 200) {
+          const { data: match } = await supabase
             .from("conversation_participants")
-            .select("actor_id")
-            .eq("conversation_id", cp.conversation_id)
+            .select("conversation_id")
             .eq("actor_id", recipientActor.id)
-            .single();
+            .in("conversation_id", convIds.slice(i, i + 200))
+            .limit(1)
+            .maybeSingle();
 
-          if (otherParticipant) {
-            conversationId = cp.conversation_id;
-            break;
+          if (match) {
+            conversationId = match.conversation_id;
           }
         }
       }

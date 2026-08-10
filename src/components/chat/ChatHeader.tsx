@@ -33,7 +33,7 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { VipBadge } from "@/components/vip/VipBadge";
-import { vipTierOf } from "@/lib/vip-config";
+import { vipTierByKey } from "@/lib/vip-config";
 import type { Actor, Model, Conversation } from "@/types/database";
 
 /**
@@ -63,8 +63,8 @@ export interface OtherParticipantInfo {
   username: string | null;
   type: "fan" | "brand" | "model";
   lastActive: string | null;
-  /** fans.lifetime_spend_coins — drives the VIP badge; null for non-fans. */
-  lifetimeSpendCoins: number | null;
+  /** Server-resolved VipTierKey — drives the VIP badge; null for non-fans. */
+  vipTierKey: string | null;
   /** Fan visits this model's profile often (binary — never day counts). */
   isRegular?: boolean;
 }
@@ -222,8 +222,8 @@ export function ChatHeader({
             )}
             {/* VIP fans get their earned tier instead of the generic Fan chip */}
             {otherInfo.type === "fan" && (
-              vipTierOf(otherInfo.lifetimeSpendCoins) ? (
-                <VipBadge lifetimeSpendCoins={otherInfo.lifetimeSpendCoins} size="sm" />
+              vipTierByKey(otherInfo.vipTierKey) ? (
+                <VipBadge tierKey={otherInfo.vipTierKey} size="sm" />
               ) : (
                 <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 bg-blue-500/10 text-blue-500 border-blue-500/20">
                   <Users className="h-3 w-3 mr-1" />

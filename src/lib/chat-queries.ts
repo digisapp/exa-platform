@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { batchQuery } from "@/lib/supabase/batch";
 import { isChatMediaPath } from "@/lib/chat-media";
+import { vipTierOf } from "@/lib/vip-config";
 
 /**
  * Per-request memoized entry point. The chats layout and page both need this
@@ -122,9 +123,16 @@ export async function fetchConversationList(
     ),
   ]);
 
-  // Create lookup maps
+  // Create lookup maps. Fan tier resolves server-side: raw
+  // lifetime_spend_coins must never reach the client (VIP convention:
+  // badges only, never amounts).
   const modelsByUserId = new Map((models || []).map((m: any) => [m.user_id, m]));
-  const fansById = new Map((fans || []).map((f: any) => [f.id, f]));
+  const fansById = new Map(
+    (fans || []).map(({ lifetime_spend_coins, ...f }: any) => [
+      f.id,
+      { ...f, vip_tier: vipTierOf(lifetime_spend_coins)?.key ?? null },
+    ])
+  );
   const brandsById = new Map((brands || []).map((b: any) => [b.id, b]));
 
   // Group participants by conversation with enriched data
