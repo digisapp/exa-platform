@@ -62,8 +62,12 @@ export async function GET(request: NextRequest) {
     // Use helper to get actor ID
     const actorId = user ? await getActorId(supabase, user.id) : null;
 
-    // Get exclusive content from content_items (unified table)
-    const { data: content, error } = await supabase
+    // Get exclusive content from content_items (unified table).
+    // Service client: media_url is not column-granted to client roles
+    // (20260810 anon lockdown). The raw value is needed server-side only —
+    // for the distinct-preview leak guard and unlocked-preview fallback below —
+    // and is stripped from the response before it reaches the client.
+    const { data: content, error } = await createServiceRoleClient()
       .from("content_items")
       .select("id, title, description, media_type, preview_url, media_url, coin_price, unlock_count, created_at")
       .eq("model_id", modelId)

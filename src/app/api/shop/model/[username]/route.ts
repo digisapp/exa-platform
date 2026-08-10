@@ -19,16 +19,16 @@ export async function GET(
     // harvest it from this endpoint.
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Get model by username
+    // Get model by username. instagram_name is only selected for logged-in
+    // callers: it is not column-granted to anon (20260810 lockdown), and the
+    // response already nulls it for anonymous viewers anyway.
     const { data: model, error: modelError } = await (supabase
       .from("models")
-      .select(`
-        id,
-        username,
-        profile_photo_url,
-        bio,
-        instagram_name
-      `)
+      .select(
+        user
+          ? "id, username, profile_photo_url, bio, instagram_name"
+          : "id, username, profile_photo_url, bio"
+      )
       .eq("username", username.toLowerCase())
       .single() as any);
 

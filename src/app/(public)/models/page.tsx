@@ -150,9 +150,13 @@ export default async function ModelsPage({
   );
   const showDiscoveryRows = currentPage === 1 && !hasActiveFilters;
 
-  // Build models query with specific fields instead of SELECT *
+  // Build models query with specific fields instead of SELECT *.
+  // Service client: the roster orders by rating_tier, which is not
+  // column-granted to client roles (20260810 anon lockdown) — MODEL_CARD_FIELDS
+  // itself never includes the tier, so nothing sensitive reaches the client.
+  const grid = createServiceRoleClient();
   let modelsQuery = applyFilters(
-    supabase.from("models").select(MODEL_CARD_FIELDS).eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
+    grid.from("models").select(MODEL_CARD_FIELDS).eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
   );
 
   // Sort — admin rating tier first (5★ superstars lead, 1-2★ sink to the last
@@ -186,9 +190,10 @@ export default async function ModelsPage({
   ] = await Promise.all([
     // Models for current page
     modelsQuery as Promise<{ data: any[] | null; error: any }>,
-    // Count query — same filters, no range/sort
+    // Count query — same filters, no range/sort. select("id"): under column
+    // grants a head-count select("*") expands to non-granted columns and 403s.
     applyFilters(
-      supabase.from("models").select("*", { count: "exact", head: true }).eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
+      grid.from("models").select("id", { count: "exact", head: true }).eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
     ) as Promise<{ count: number | null }>,
     // Featured models
     (supabase

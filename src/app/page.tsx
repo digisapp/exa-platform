@@ -9,6 +9,7 @@ import { BrandInquiryDialog } from "@/components/auth/BrandInquiryDialog";
 import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
 import { MediaInquiryDialog } from "@/components/auth/MediaInquiryDialog";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import {
   ArrowRight,
   Instagram,
@@ -84,7 +85,9 @@ export default async function HomePage() {
 
   // Fetch top 50 models with 4-5 star admin rating (signed-in models with self-uploaded photos)
   // Requires: user_id (signed in) AND avatars bucket (self-uploaded, not Instagram imports)
-  const { data: topModelsData } = await (supabase
+  // Service client: admin_rating is not column-granted to client roles
+  // (20260810 anon lockdown) — the rating is stripped below before render.
+  const { data: topModelsData } = await (createServiceRoleClient()
     .from("models") as any)
     .select(`
       id, username, profile_photo_url, state, profile_views, admin_rating,

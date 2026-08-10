@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -124,7 +125,9 @@ export default async function ModelRatesPage({ params }: Props) {
   const resolveMediaUrl = (url: string) =>
     url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
 
-  const { data: rawPhotos } = await (supabase as any)
+  // Service client: content_items.media_url is not column-granted to client
+  // roles (20260810) — portfolio assets are public-bucket, nothing leaks.
+  const { data: rawPhotos } = await (createServiceRoleClient() as any)
     .from("content_items")
     .select("id, media_url, title, created_at")
     .eq("model_id", model.id)
