@@ -21,8 +21,8 @@ interface IncomingCallDialogProps {
   callerName: string;
   callerAvatar?: string;
   callType?: "video" | "voice";
-  /** fans.lifetime_spend_coins for fan callers — shows their VIP tier pill. */
-  callerLifetimeSpend?: number | null;
+  /** Server-resolved VipTierKey for fan callers — shows their VIP tier pill. */
+  callerTierKey?: string | null;
   onClose: () => void;
 }
 
@@ -31,7 +31,7 @@ export function IncomingCallDialog({
   callerName,
   callerAvatar,
   callType: initialCallType = "video",
-  callerLifetimeSpend,
+  callerTierKey,
   onClose,
 }: IncomingCallDialogProps) {
   const [isJoining, setIsJoining] = useState(false);
@@ -201,7 +201,7 @@ export function IncomingCallDialog({
 
           <div className="mt-4 flex items-center gap-2">
             <h3 className="text-xl font-semibold">{callerName}</h3>
-            <VipBadge lifetimeSpendCoins={callerLifetimeSpend} size="sm" />
+            <VipBadge tierKey={callerTierKey} size="sm" />
           </div>
           <p className="text-muted-foreground">is calling you...</p>
 

@@ -11,7 +11,7 @@ import { ChatMessages, ChatMessagesHandle } from "./ChatMessages";
 import { IncomingCallDialog } from "@/components/video";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import { useConversationPresence } from "@/hooks/useConversationPresence";
-import { vipTierOf } from "@/lib/vip-config";
+import { vipTierByKey } from "@/lib/vip-config";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useReadReceipts } from "@/hooks/useReadReceipts";
 import { useIncomingCalls } from "@/hooks/useIncomingCalls";
@@ -27,8 +27,11 @@ import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
  */
 export type ChatParticipantFan = Pick<
   Fan,
-  "id" | "username" | "display_name" | "avatar_url" | "last_active_at" | "lifetime_spend_coins"
+  "id" | "username" | "display_name" | "avatar_url" | "last_active_at"
 > & {
+  /** Server-resolved VipTierKey — raw lifetime_spend_coins never leaves the
+   *  server (VIP convention: badges only, never amounts). */
+  vip_tier?: string | null;
   /** Server-computed "shows up often" flag (see lib/attendance.ts) — binary
    *  by design, the model never sees visit counts. */
   is_regular?: boolean;
@@ -261,7 +264,7 @@ export function ChatView({
         username: model.username,
         type: "model" as const,
         lastActive: model.last_active_at,
-        lifetimeSpendCoins: null,
+        vipTierKey: null,
       };
     }
 
@@ -275,7 +278,7 @@ export function ChatView({
         // fans.last_active_at fresh, and the header applies the same 5-minute
         // "Online" heuristic it uses for models.
         lastActive: fan.last_active_at ?? null,
-        lifetimeSpendCoins: fan.lifetime_spend_coins ?? null,
+        vipTierKey: fan.vip_tier ?? null,
         isRegular: fan.is_regular ?? false,
       };
     }
@@ -287,7 +290,7 @@ export function ChatView({
         username: null,
         type: "brand" as const,
         lastActive: null,
-        lifetimeSpendCoins: null,
+        vipTierKey: null,
       };
     }
 
@@ -297,7 +300,7 @@ export function ChatView({
       username: null,
       type: actor.type as "fan" | "brand" | "model",
       lastActive: null,
-      lifetimeSpendCoins: null,
+      vipTierKey: null,
     };
   }, [otherParticipant]);
 
@@ -319,7 +322,7 @@ export function ChatView({
     if (!otherEnteredAt) return;
     if (currentActor.type !== "model" && currentActor.type !== "admin") return;
     if (otherInfo.type !== "fan") return;
-    const tier = vipTierOf(otherInfo.lifetimeSpendCoins);
+    const tier = vipTierByKey(otherInfo.vipTierKey);
     if (!tier) return;
     if (otherEnteredAt - vipEntranceShownAtRef.current < 10 * 60_000) return;
     vipEntranceShownAtRef.current = otherEnteredAt;
@@ -823,7 +826,7 @@ export function ChatView({
           callerName={incomingCall.callerName}
           callerAvatar={incomingCall.callerAvatar}
           callType={incomingCall.callType}
-          callerLifetimeSpend={otherInfo.lifetimeSpendCoins}
+          callerTierKey={otherInfo.vipTierKey}
           onClose={dismissCall}
         />
       )}

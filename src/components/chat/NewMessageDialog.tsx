@@ -19,6 +19,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PenSquare, Search, Loader2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import type { Model } from "@/types/database";
+
+/** The slice of a model row the picker renders — see the search select. */
+type ModelSearchResult = Pick<Model, "id" | "username" | "profile_photo_url" | "message_rate">;
 import { escapeIlike } from "@/lib/utils";
 
 interface NewMessageDialogProps {
@@ -32,8 +35,8 @@ export function NewMessageDialog({
 }: NewMessageDialogProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [models, setModels] = useState<Model[]>([]);
-  const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+  const [models, setModels] = useState<ModelSearchResult[]>([]);
+  const [selectedModel, setSelectedModel] = useState<ModelSearchResult | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -41,7 +44,7 @@ export function NewMessageDialog({
   const supabase = createClient();
 
   // Determine if coins are required (use model's rate, minimum 5)
-  const coinCost = currentActorType === "model" || currentActorType === "admin" ? 0 : messageCoinCost((selectedModel as any)?.message_rate);
+  const coinCost = currentActorType === "model" || currentActorType === "admin" ? 0 : messageCoinCost(selectedModel?.message_rate);
   const hasEnoughCoins = coinCost === 0 || coinBalance >= coinCost;
 
   // Search for models
@@ -54,9 +57,12 @@ export function NewMessageDialog({
 
       setSearching(true);
       try {
+        // Narrowed on purpose: select("*") put full model rows (real names,
+        // contact info, admin ratings, payout fields) in the fan's network
+        // payload. Only what the picker renders.
         const { data } = await supabase
           .from("models")
-          .select("*")
+          .select("id, username, profile_photo_url, message_rate")
           .eq("is_approved", true)
           .ilike("username", `%${escapeIlike(search)}%`)
           .limit(10);
@@ -71,7 +77,7 @@ export function NewMessageDialog({
     return () => clearTimeout(debounce);
   }, [search, supabase]);
 
-  const handleSelectModel = (model: Model) => {
+  const handleSelectModel = (model: ModelSearchResult) => {
     setSelectedModel(model);
     setSearch("");
     setModels([]);
@@ -206,7 +212,7 @@ export function NewMessageDialog({
                         {currentActorType !== "model" && currentActorType !== "admin" && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Coins className="h-3 w-3" />
-                            <span>{messageCoinCost((model as any).message_rate)}/msg</span>
+                            <span>{messageCoinCost(model.message_rate)}/msg</span>
                           </div>
                         )}
                       </button>

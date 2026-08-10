@@ -17,7 +17,7 @@ export function CallListener({ actorId }: CallListenerProps) {
     callerName: string;
     callerAvatar?: string;
     callType?: "video" | "voice";
-    callerLifetimeSpend?: number | null;
+    callerTierKey?: string | null;
   } | null>(null);
   const supabase = createClient();
 
@@ -104,17 +104,17 @@ export function CallListener({ actorId }: CallListenerProps) {
           }
 
           const callType = callSession.call_type || "video";
+          const callerTier = vipTierOf(callerLifetimeSpend);
           setIncomingCall({
             sessionId: callSession.id,
             callerName,
             callerAvatar,
             callType,
-            callerLifetimeSpend,
+            callerTierKey: callerTier?.key ?? null,
           });
 
           const callTypeLabel = callType === "voice" ? "voice" : "video";
           // VIP callers announce with their earned tier — badge only, no amounts
-          const callerTier = vipTierOf(callerLifetimeSpend);
           toast.info(
             callerTier
               ? `${callerTier.emoji} ${callerTier.label} supporter ${callerName} is ${callTypeLabel} calling you...`
@@ -162,7 +162,7 @@ export function CallListener({ actorId }: CallListenerProps) {
       callerName={incomingCall.callerName}
       callerAvatar={incomingCall.callerAvatar}
       callType={incomingCall.callType}
-      callerLifetimeSpend={incomingCall.callerLifetimeSpend}
+      callerTierKey={incomingCall.callerTierKey}
       onClose={() => setIncomingCall(null)}
     />
   );

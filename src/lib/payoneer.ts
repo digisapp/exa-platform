@@ -7,7 +7,17 @@
  * Documentation: https://developer.payoneer.com/docs/mass-payouts-and-services.html
  */
 
+import "server-only";
 import crypto from "crypto";
+
+// Country lists live in payoneer-constants.ts (client-safe); re-exported here
+// so server callers keep a single import surface.
+export {
+  PAYONEER_PREFERRED_COUNTRIES,
+  DUAL_PAYOUT_COUNTRIES,
+  shouldUsePayoneer,
+  supportsBothPayoutMethods,
+} from "./payoneer-constants";
 
 // ==============================================
 // TYPES
@@ -375,52 +385,3 @@ export function verifyPayoneerWebhook(
 // COUNTRY HELPERS
 // ==============================================
 
-/**
- * Countries where Payoneer is preferred over Stripe
- * (Stripe Connect not available or has limitations)
- */
-export const PAYONEER_PREFERRED_COUNTRIES = [
-  "AR", // Argentina - Stripe not available
-  "GH", // Ghana - Stripe not available
-  "NG", // Nigeria - Stripe limited
-  "KE", // Kenya - Stripe limited
-  "ZA", // South Africa - Stripe limited
-  "PH", // Philippines - Stripe limited
-  "VN", // Vietnam - Stripe not available
-  "BD", // Bangladesh - Stripe not available
-  "PK", // Pakistan - Stripe not available
-  "EG", // Egypt - Stripe not available
-  "MA", // Morocco - Stripe not available
-  "TN", // Tunisia - Stripe not available
-  "CO", // Colombia - Stripe limited
-  "PE", // Peru - Stripe limited
-  "CL", // Chile - Stripe limited
-  "UA", // Ukraine - Stripe limited
-];
-
-/**
- * Countries where both Stripe and Payoneer work well
- * (Let user choose their preference)
- */
-export const DUAL_PAYOUT_COUNTRIES = [
-  "BR", // Brazil
-  "TH", // Thailand
-  "MY", // Malaysia
-  "ID", // Indonesia
-  "MX", // Mexico
-  "IN", // India
-];
-
-/**
- * Check if country should use Payoneer
- */
-export function shouldUsePayoneer(countryCode: string): boolean {
-  return PAYONEER_PREFERRED_COUNTRIES.includes(countryCode.toUpperCase());
-}
-
-/**
- * Check if country supports both payout methods
- */
-export function supportsBothPayoutMethods(countryCode: string): boolean {
-  return DUAL_PAYOUT_COUNTRIES.includes(countryCode.toUpperCase());
-}

@@ -7,6 +7,7 @@ import type { Message, Actor, Model, Fan, Brand } from "@/types/database";
 import { stripLockedMediaUrl } from "@/lib/ppv";
 import { getVisitDates, isRegularVisitor } from "@/lib/attendance";
 import { signChatMediaUrls } from "@/lib/chat-media";
+import { vipTierOf } from "@/lib/vip-config";
 
 // Admin client for fetching participant data (bypasses RLS)
 const adminClient = createServiceRoleClient();
@@ -181,8 +182,19 @@ export default async function ChatPage({ params }: PageProps) {
           .from("fans")
           .select("id, username, display_name, avatar_url, last_active_at, lifetime_spend_coins")
           .eq("id", otherActorId)
-          .maybeSingle() as { data: ChatParticipantFan | null };
-        otherFan = data;
+          .maybeSingle();
+        if (data) {
+          // Tier resolves here so the raw spend number never serializes into
+          // the model's RSC payload (VIP convention: badges only, never
+          // amounts).
+          const { lifetime_spend_coins, ...fanFields } = data as ChatParticipantFan & {
+            lifetime_spend_coins: number | null;
+          };
+          otherFan = {
+            ...fanFields,
+            vip_tier: vipTierOf(lifetime_spend_coins)?.key ?? null,
+          };
+        }
 
         // "Regular" chip for the model: binary flag only — the model never
         // sees day counts or visit patterns, just that this fan shows up

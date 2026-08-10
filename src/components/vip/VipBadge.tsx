@@ -1,6 +1,6 @@
 import { Crown, Gem } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { vipTierOf, type VipTier } from "@/lib/vip-config";
+import { vipTierByKey, type VipTier } from "@/lib/vip-config";
 
 interface VipTierBadgeProps {
   tier: VipTier;
@@ -29,8 +29,13 @@ function VipTierBadge({ tier, size = "xs", className }: VipTierBadgeProps) {
 }
 
 interface VipBadgeProps {
-  /** fans.lifetime_spend_coins — badge renders null below the VIP floor. */
-  lifetimeSpendCoins: number | null | undefined;
+  /**
+   * Resolved VipTierKey ('vip'/'star'/'diamond'), or null below the VIP
+   * floor. Callers resolve the tier server-side via vipTierOf — raw
+   * lifetime_spend_coins must never be shipped to the client (VIP
+   * convention: badges only, never amounts).
+   */
+  tierKey: string | null | undefined;
   size?: "xs" | "sm";
   className?: string;
 }
@@ -40,8 +45,8 @@ interface VipBadgeProps {
  * never spend amounts. Renders nothing for fans below the VIP floor, so
  * it can be dropped inline next to any fan name without a guard.
  */
-export function VipBadge({ lifetimeSpendCoins, size = "xs", className }: VipBadgeProps) {
-  const tier = vipTierOf(lifetimeSpendCoins);
+export function VipBadge({ tierKey, size = "xs", className }: VipBadgeProps) {
+  const tier = vipTierByKey(tierKey);
   if (!tier) return null;
 
   return <VipTierBadge tier={tier} size={size} className={className} />;

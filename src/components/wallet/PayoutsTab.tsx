@@ -44,7 +44,7 @@ import {
   coinsToUsd,
   formatUsd,
 } from "@/lib/coin-config";
-import { PAYONEER_PREFERRED_COUNTRIES, DUAL_PAYOUT_COUNTRIES } from "@/lib/payoneer";
+import { PAYONEER_PREFERRED_COUNTRIES, DUAL_PAYOUT_COUNTRIES } from "@/lib/payoneer-constants";
 import { cn } from "@/lib/utils";
 
 import type { BankAccount, WithdrawalRequest, PayoneerAccount } from "@/app/(dashboard)/wallet/page";

@@ -9,6 +9,7 @@ import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { UnreadCountProvider } from "@/components/layout/UnreadCountProvider";
 import { RouteFocusManager } from "@/components/layout/RouteFocusManager";
 import { SuspensionBanner } from "@/components/layout/SuspensionBanner";
+import { vipTierOf } from "@/lib/vip-config";
 
 // Prevent caching to ensure fresh auth state on every request
 export const dynamic = 'force-dynamic';
@@ -209,7 +210,7 @@ export default async function DashboardLayout({
           unreadCount={unreadCount}
           notificationCount={notificationCount}
           bellCount={bellCount}
-          fanLifetimeSpend={actor?.type === "fan" ? profileData?.lifetime_spend_coins ?? 0 : 0}
+          fanVipTierKey={actor?.type === "fan" ? vipTierOf(profileData?.lifetime_spend_coins)?.key ?? null : null}
         />
         {actor?.type === "fan" && profileData?.is_suspended && <SuspensionBanner />}
         <DashboardClientWrapper actorId={actor?.id || null} actorType={actor?.type || null}>
