@@ -250,14 +250,24 @@ export default async function GigDetailPage({ params }: Props) {
         {/* Hero Section */}
         <div className="relative rounded-3xl overflow-hidden mb-8">
           {gig.cover_image_url ? (
-            <div className="aspect-[21/9] relative">
+            <div className="relative">
               <Image
                 src={gig.cover_image_url}
-                alt={gig.title}
+                alt=""
+                aria-hidden
                 fill
                 sizes="100vw"
-                className="object-cover"
+                className="object-cover blur-2xl scale-110 opacity-40"
               />
+              <div className="relative aspect-[3/4] w-full max-w-md mx-auto">
+                <Image
+                  src={gig.cover_image_url}
+                  alt={gig.title}
+                  fill
+                  sizes="(max-width: 448px) 100vw, 448px"
+                  className="object-cover"
+                />
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
             </div>
           ) : (

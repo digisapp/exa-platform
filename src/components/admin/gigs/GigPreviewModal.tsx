@@ -90,7 +90,7 @@ export default function GigPreviewModal({
             {/* Cover Image */}
             {formData.cover_image_url && (
               <div
-                className="relative aspect-[21/9] rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 cursor-pointer hover:opacity-90 transition-opacity"
+                className="relative aspect-[3/4] max-w-sm mx-auto rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => setPreviewExpandedImage(formData.cover_image_url)}
               >
                 <Image
