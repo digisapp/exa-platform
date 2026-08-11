@@ -83,6 +83,7 @@ interface Application {
   instagram_handle?: string;
   instagram_followers?: number;
   digis_username?: string;
+  client_liked?: boolean;
   model: {
     id: string;
     username: string;
@@ -669,6 +670,11 @@ export default function GigApplicationsPanel({
                       </div>
                     )}
                     <div className="flex flex-wrap gap-1 mt-1.5">
+                      {app.client_liked && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-pink-500/15 text-pink-300 text-[11px] font-semibold border border-pink-500/40">
+                          ❤ Client pick
+                        </span>
+                      )}
                       {app.instagram_handle && (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-pink-500/10 text-pink-300 text-[11px] font-medium border border-pink-500/20">
                           IG @{app.instagram_handle}{app.instagram_followers ? ` · ${app.instagram_followers >= 1_000_000 ? `${(app.instagram_followers / 1_000_000).toFixed(1)}M` : app.instagram_followers >= 1_000 ? `${Math.round(app.instagram_followers / 1_000)}K` : app.instagram_followers}` : ""}

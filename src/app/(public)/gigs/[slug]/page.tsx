@@ -154,6 +154,13 @@ export default async function GigDetailPage({ params }: Props) {
     ? profileData?.display_name
     : profileData?.username || undefined;
 
+  const typeLabel =
+    gig.type === "travel" ? "Travel Opportunity"
+    : gig.type === "runway" ? "Runway Show"
+    : gig.type === "movie" ? "Movie Casting"
+    : gig.type === "music_video" ? "Music Video Casting"
+    : "Model Gig";
+
   const spotsLeft = gig.spots ? gig.spots - gig.spots_filled : null;
   const deadline = gig.application_deadline
     ? new Date(gig.application_deadline)
@@ -272,7 +279,7 @@ export default async function GigDetailPage({ params }: Props) {
           {/* Event Info Overlay — desktop */}
           <div className="hidden md:block absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
             <p className="text-[10px] uppercase tracking-[0.3em] text-pink-300/90 font-bold mb-2 drop-shadow-lg">
-              {gig.type === "travel" ? "Travel Opportunity" : gig.type === "runway" ? "Runway Show" : "Model Gig"}
+              {typeLabel}
             </p>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
               {gig.title}
@@ -305,7 +312,7 @@ export default async function GigDetailPage({ params }: Props) {
         {/* Mobile event info */}
         <div className="md:hidden mb-6">
           <p className="text-[10px] uppercase tracking-[0.3em] text-pink-300/90 font-bold mb-1.5">
-            {gig.type === "travel" ? "Travel Opportunity" : gig.type === "runway" ? "Runway Show" : "Model Gig"}
+            {typeLabel}
           </p>
           <h1 className="text-2xl font-bold text-white mb-3">{gig.title}</h1>
           <div className="flex flex-wrap gap-2 text-xs">

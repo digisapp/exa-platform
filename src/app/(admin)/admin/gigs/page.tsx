@@ -27,6 +27,7 @@ import {
   FileEdit,
   GraduationCap,
   Plane,
+  Link2,
 } from "lucide-react";
 import Link from "next/link";
 // Email sending is done via API route to keep server-only code out of client bundle
@@ -76,6 +77,7 @@ interface Application {
   instagram_handle?: string;
   instagram_followers?: number;
   digis_username?: string;
+  client_liked?: boolean;
   model: {
     id: string;
     username: string;
@@ -114,6 +116,7 @@ export default function AdminGigsPage() {
   const [processingApp, setProcessingApp] = useState<string | null>(null);
   const [processingGig, setProcessingGig] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [copyingCastingLink, setCopyingCastingLink] = useState<string | null>(null);
   const [modelBadges, setModelBadges] = useState<Set<string>>(new Set()); // model_ids that have the event badge
   const [syncingBadges, setSyncingBadges] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -300,6 +303,20 @@ export default function AdminGigsPage() {
       }
     }
 
+    // Client casting hearts (admin browser client reads via is_admin() policy)
+    if (apps.length > 0) {
+      const heartSet = new Set<string>();
+      const appIds = apps.map((a: any) => a.id);
+      for (let i = 0; i < appIds.length; i += 200) {
+        const { data: hearts } = await (supabase as any)
+          .from("gig_casting_hearts")
+          .select("application_id")
+          .in("application_id", appIds.slice(i, i + 200));
+        for (const h of hearts || []) heartSet.add(h.application_id);
+      }
+      for (const app of apps) app.client_liked = heartSet.has(app.id);
+    }
+
     setApplications(apps);
 
     // Load badge status for this gig's event. Query event_id directly so we
@@ -314,6 +331,28 @@ export default function AdminGigsPage() {
       await loadBadgeStatus(gigRow.event_id, data || []);
     } else {
       setModelBadges(new Set());
+    }
+  }
+
+  async function handleCopyCastingLink(gigId: string) {
+    setCopyingCastingLink(gigId);
+    try {
+      const res = await fetch("/api/admin/gigs/casting-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gigId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.token) {
+        toast.error(data.error || "Failed to create client link");
+        return;
+      }
+      await navigator.clipboard.writeText(`${window.location.origin}/casting/${data.token}`);
+      toast.success("Client casting link copied — send it to your client");
+    } catch {
+      toast.error("Failed to copy client link");
+    } finally {
+      setCopyingCastingLink(null);
     }
   }
 
@@ -922,6 +961,8 @@ export default function AdminGigsPage() {
                       <SelectItem value="photoshoot">Photoshoot</SelectItem>
                       <SelectItem value="campaign">Campaign</SelectItem>
                       <SelectItem value="content">Content</SelectItem>
+                      <SelectItem value="movie">Movie</SelectItem>
+                      <SelectItem value="music_video">Music Video</SelectItem>
                       <SelectItem value="hosting">Hosting</SelectItem>
                       <SelectItem value="fun">Fun</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
@@ -1249,7 +1290,7 @@ export default function AdminGigsPage() {
                         <div className="min-w-0">
                           <h3 className="font-semibold text-white/85 truncate">{gig.title}</h3>
                           <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                            <Badge variant="outline" className="capitalize border-white/15 text-white/55 text-[11px]">{gig.type}</Badge>
+                            <Badge variant="outline" className="capitalize border-white/15 text-white/55 text-[11px]">{gig.type.replace(/_/g, " ")}</Badge>
                             <Badge
                               variant="outline"
                               className={
@@ -1293,6 +1334,21 @@ export default function AdminGigsPage() {
                     >
                       <Pencil className="h-4 w-4 mr-2" />
                       Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={(e) => { e.stopPropagation(); handleCopyCastingLink(gig.id); }}
+                      disabled={copyingCastingLink === gig.id}
+                      className="text-pink-400 hover:text-pink-300 hover:bg-pink-500/10"
+                    >
+                      {copyingCastingLink === gig.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Link2 className="h-4 w-4 mr-2" />
+                          Client Link
+                        </>
+                      )}
                     </Button>
                     {gig.status === "draft" ? (
                       <Button

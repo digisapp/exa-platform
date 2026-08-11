@@ -30,6 +30,8 @@ import {
   Clock,
   PartyPopper,
   Sparkles,
+  Clapperboard,
+  Music,
   ClipboardList,
   CheckCircle,
   XCircle,
@@ -49,6 +51,8 @@ const typeIcons: Record<string, any> = {
   tour: Mic2,
   campaign: Camera,
   content: Camera,
+  movie: Clapperboard,
+  music_video: Music,
   hosting: Users,
   fun: PartyPopper,
   other: Sparkles,
@@ -61,6 +65,8 @@ const typeColors: Record<string, string> = {
   tour: "bg-fuchsia-500/10 text-fuchsia-500 border-fuchsia-500/20",
   campaign: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   content: "bg-green-500/10 text-green-500 border-green-500/20",
+  movie: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+  music_video: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
   hosting: "bg-amber-500/10 text-amber-500 border-amber-500/20",
   fun: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
   other: "bg-gray-500/10 text-gray-500 border-gray-500/20",
@@ -213,6 +219,8 @@ export default async function GigsPage() {
     { value: "travel", label: "Travel", gigs: gigs?.filter((o) => o.type === "travel") || [] },
     { value: "tour", label: "Tour", gigs: gigs?.filter((o) => o.type === "tour") || [] },
     { value: "campaigns", label: "Campaigns", gigs: gigs?.filter((o) => ["campaign", "content"].includes(o.type)) || [] },
+    { value: "movies", label: "Movies", gigs: gigs?.filter((o) => o.type === "movie") || [] },
+    { value: "music-videos", label: "Music Videos", gigs: gigs?.filter((o) => o.type === "music_video") || [] },
     { value: "fun", label: "Fun", gigs: gigs?.filter((o) => o.type === "fun") || [] },
   ].filter((t) => t.gigs.length > 0);
 
@@ -388,7 +396,7 @@ function GigCard({ gig, completed = false }: { gig: any; completed?: boolean }) 
           {/* Type Badge */}
           <Badge className={`absolute top-3 left-3 capitalize ${typeColors[gig.type]}`}>
             <Icon className="h-3 w-3 mr-1" />
-            {gig.type}
+            {gig.type.replace(/_/g, " ")}
           </Badge>
 
           {/* Urgency Badge */}
@@ -607,7 +615,7 @@ function ApplicationCard({ application }: { application: any }) {
         {/* Type Badge */}
         <Badge className={`absolute top-3 left-3 capitalize ${typeColors[gig.type]}`}>
           <Icon className="h-3 w-3 mr-1" />
-          {gig.type}
+          {gig.type.replace(/_/g, " ")}
         </Badge>
 
         {/* Status Badge */}

@@ -62,6 +62,7 @@ interface Application {
   instagram_handle?: string;
   instagram_followers?: number;
   digis_username?: string;
+  client_liked?: boolean;
   model: {
     id: string;
     username: string;
@@ -153,10 +154,15 @@ function ApplicationCard({
         )}
 
         {/* Status badge */}
-        <div className="absolute top-3 left-3 z-10">
+        <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-1">
           <span className={cn("px-2 py-0.5 rounded-full text-xs font-semibold border backdrop-blur-sm", sc.color)}>
             {sc.label}
           </span>
+          {app.client_liked && (
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold border backdrop-blur-sm bg-pink-500/20 text-pink-300 border-pink-500/40">
+              ❤ Client pick
+            </span>
+          )}
         </div>
 
         {/* Bottom name bar — always visible */}

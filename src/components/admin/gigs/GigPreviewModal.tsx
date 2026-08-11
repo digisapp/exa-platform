@@ -127,7 +127,7 @@ export default function GigPreviewModal({
 
             {/* Header */}
             <div>
-              <Badge className="mb-3 capitalize">{formData.type}</Badge>
+              <Badge className="mb-3 capitalize">{formData.type.replace(/_/g, " ")}</Badge>
               <h1 className="text-2xl font-bold mb-2">{formData.title || "Untitled Gig"}</h1>
               {(formData.location_city || formData.location_state) && (
                 <div className="flex items-center gap-2 text-muted-foreground">
