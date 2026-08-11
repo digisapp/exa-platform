@@ -152,8 +152,16 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  // Gig invite links (/gigs/[slug]?invite=<token>, texted/DM'd to models) let
+  // a logged-out visitor view ONE gig detail page. The page validates the
+  // token server-side (invalid → signin redirect, same as this gate), so
+  // skipping the middleware gates here opens nothing on its own. Detail pages
+  // only — the bare /gigs listing stays members-only.
+  const isGigInvite = request.nextUrl.pathname.startsWith('/gigs/') &&
+    request.nextUrl.searchParams.has('invite')
+
   // Check if this is a protected route
-  const isProtectedPath = PROTECTED_PATHS.some(path =>
+  const isProtectedPath = !isGigInvite && PROTECTED_PATHS.some(path =>
     request.nextUrl.pathname.startsWith(path)
   )
 
@@ -192,13 +200,13 @@ export async function updateSession(request: NextRequest) {
 
   // Gigs are model-only: signed-in fans/brands get bounced to their dashboard.
   // (RLS enforces the same at the data layer; this keeps the UX coherent.)
-  if (user && request.nextUrl.pathname.startsWith('/gigs') &&
+  if (user && !isGigInvite && request.nextUrl.pathname.startsWith('/gigs') &&
       cachedActor && cachedActor.type !== 'model' && cachedActor.type !== 'admin') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // Check if unapproved model is trying to access restricted pages
-  const isModelApprovedPath = MODEL_APPROVED_PATHS.some(path =>
+  const isModelApprovedPath = !isGigInvite && MODEL_APPROVED_PATHS.some(path =>
     request.nextUrl.pathname.startsWith(path)
   )
 

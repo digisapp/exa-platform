@@ -1,6 +1,7 @@
 export const revalidate = 60;
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -32,17 +33,52 @@ import type { Metadata } from "next";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ invite?: string }>;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Invite links (?invite=<token>, texted/DM'd to models) show one gig to
+// logged-out visitors: a valid token fetches via service role, bypassing the
+// members-only gigs RLS for exactly that gig.
+async function fetchGigViaInvite(
+  slug: string,
+  invite: string | undefined,
+  columns: string
+): Promise<any | null> {
+  if (!invite || !UUID_RE.test(invite)) return null;
+  const service = createServiceRoleClient() as any;
+  const { data: link } = await service
+    .from("gig_invite_links")
+    .select("gig_id")
+    .eq("token", invite)
+    .single();
+  if (!link) return null;
+  const { data: gig } = await service
+    .from("gigs")
+    .select(columns)
+    .eq("id", link.gig_id)
+    .eq("slug", slug)
+    .single();
+  return gig || null;
+}
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const { invite } = await searchParams;
   const supabase = await createClient();
 
-  const { data } = await supabase
+  let { data }: { data: { title: string; description: string | null; cover_image_url: string | null } | null } = await supabase
     .from("gigs")
     .select("title, description, cover_image_url")
     .eq("slug", slug)
     .single() as { data: { title: string; description: string | null; cover_image_url: string | null } | null };
+
+  let viaInvite = false;
+  if (!data) {
+    data = await fetchGigViaInvite(slug, invite, "title, description, cover_image_url");
+    viaInvite = !!data;
+  }
 
   if (!data) {
     return { title: "Gig Not Found | EXA" };
@@ -56,21 +92,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: data.description || `Apply for ${data.title} on EXA Models`,
       images: data.cover_image_url ? [{ url: data.cover_image_url }] : [],
     },
+    // Invite URLs are private shares — keep them out of search indexes
+    ...(viaInvite ? { robots: { index: false, follow: false } } : {}),
   };
 }
 
-export default async function GigDetailPage({ params }: Props) {
+export default async function GigDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { invite } = await searchParams;
   const supabase = await createClient();
 
   // Get gig
-  const { data: gig } = await supabase
+  let { data: gig } = await supabase
     .from("gigs")
     .select("*")
     .eq("slug", slug)
     .single() as { data: any };
 
   if (!gig) {
+    gig = await fetchGigViaInvite(slug, invite, "*");
+  }
+
+  if (!gig) {
+    // A dud invite link should land like the middleware gate does, not 404 —
+    // the visitor is a real model who got a link that went stale.
+    if (invite) {
+      redirect(`/signin?redirect=/gigs/${slug}`);
+    }
     notFound();
   }
 
@@ -153,6 +201,13 @@ export default async function GigDetailPage({ params }: Props) {
   const displayName = actorType === "fan"
     ? profileData?.display_name
     : profileData?.username || undefined;
+
+  const typeLabel =
+    gig.type === "travel" ? "Travel Opportunity"
+    : gig.type === "runway" ? "Runway Show"
+    : gig.type === "movie" ? "Movie Casting"
+    : gig.type === "music_video" ? "Music Video Casting"
+    : "Model Gig";
 
   const spotsLeft = gig.spots ? gig.spots - gig.spots_filled : null;
   const deadline = gig.application_deadline
@@ -282,7 +337,7 @@ export default async function GigDetailPage({ params }: Props) {
           {/* Event Info Overlay — desktop */}
           <div className="hidden md:block absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
             <p className="text-[10px] uppercase tracking-[0.3em] text-pink-300/90 font-bold mb-2 drop-shadow-lg">
-              {gig.type === "travel" ? "Travel Opportunity" : gig.type === "runway" ? "Runway Show" : "Model Gig"}
+              {typeLabel}
             </p>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
               {gig.title}
@@ -315,7 +370,7 @@ export default async function GigDetailPage({ params }: Props) {
         {/* Mobile event info */}
         <div className="md:hidden mb-6">
           <p className="text-[10px] uppercase tracking-[0.3em] text-pink-300/90 font-bold mb-1.5">
-            {gig.type === "travel" ? "Travel Opportunity" : gig.type === "runway" ? "Runway Show" : "Model Gig"}
+            {typeLabel}
           </p>
           <h1 className="text-2xl font-bold text-white mb-3">{gig.title}</h1>
           <div className="flex flex-wrap gap-2 text-xs">
