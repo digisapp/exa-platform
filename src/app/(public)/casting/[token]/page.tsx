@@ -1,8 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Calendar, Heart } from "lucide-react";
-import { format } from "date-fns";
+import { Heart } from "lucide-react";
 import type { Metadata } from "next";
 import CastingGrid, { type CastingCard } from "@/components/casting/CastingGrid";
 
@@ -21,29 +20,11 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { token } = await params;
-  if (!UUID_RE.test(token)) return { title: "Casting | EXA", robots: { index: false, follow: false } };
-
-  const service = createServiceRoleClient() as any;
-  const { data: link } = await service
-    .from("gig_casting_links")
-    .select("gig_id")
-    .eq("token", token)
-    .single();
-
-  let title = "Casting | EXA";
-  if (link) {
-    const { data: gig } = await service
-      .from("gigs")
-      .select("title")
-      .eq("id", link.gig_id)
-      .single();
-    if (gig?.title) title = `${gig.title} — Casting | EXA`;
-  }
-
-  // Private share link: never index
-  return { title, robots: { index: false, follow: false } };
+// The client must see only the models — never the gig title, dates, or
+// location (owner call, 2026-08-11) — so the tab title / link preview stays
+// generic too. Private share link: never index.
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: "Available Models | EXA", robots: { index: false, follow: false } };
 }
 
 export default async function CastingPage({ params }: Props) {
@@ -61,7 +42,7 @@ export default async function CastingPage({ params }: Props) {
 
   const { data: gig } = await service
     .from("gigs")
-    .select("id, title, type, location_name, location_city, location_state, start_at, end_at")
+    .select("id")
     .eq("id", link.gig_id)
     .single();
   if (!gig) notFound();
@@ -144,15 +125,6 @@ export default async function CastingPage({ params }: Props) {
     liked: hearted.has(a.id),
   }));
 
-  const startDate = gig.start_at ? new Date(gig.start_at) : null;
-  const endDate = gig.end_at ? new Date(gig.end_at) : null;
-  const dateDisplay = startDate && endDate
-    ? `${format(startDate, "MMM d")} – ${format(endDate, "MMM d, yyyy")}`
-    : startDate
-      ? format(startDate, "MMMM d, yyyy")
-      : null;
-  const location = gig.location_name || [gig.location_city, gig.location_state].filter(Boolean).join(", ");
-
   return (
     <div className="min-h-dvh bg-background">
       <header className="border-b border-white/[0.06]">
@@ -161,30 +133,15 @@ export default async function CastingPage({ params }: Props) {
             EXA
           </Link>
           <span className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">
-            Casting Selects
+            Model Selects
           </span>
         </div>
       </header>
 
       <main className="container px-4 md:px-8 py-8 max-w-6xl">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-pink-300/90 font-bold mb-2">
-          {gig.type === "movie" ? "Movie Casting" : gig.type === "music_video" ? "Music Video Casting" : "Casting"}
-        </p>
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">{gig.title}</h1>
-        <div className="flex flex-wrap gap-2 mb-6 text-xs">
-          {location && (
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/80">
-              <MapPin className="h-3.5 w-3.5 text-pink-400" />
-              {location}
-            </span>
-          )}
-          {dateDisplay && (
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/80">
-              <Calendar className="h-3.5 w-3.5 text-cyan-400" />
-              {dateDisplay}
-            </span>
-          )}
-        </div>
+        {/* Deliberately no gig title, type, location, or dates — the client
+            sees only the models (owner call, 2026-08-11). */}
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">Available Models</h1>
 
         <div className="rounded-2xl border border-pink-500/20 bg-pink-500/[0.05] p-4 mb-6 flex items-start gap-3">
           <Heart className="h-5 w-5 text-pink-400 mt-0.5 flex-shrink-0" />
