@@ -28,6 +28,7 @@ import {
   GraduationCap,
   Plane,
   Link2,
+  Share2,
 } from "lucide-react";
 import Link from "next/link";
 // Email sending is done via API route to keep server-only code out of client bundle
@@ -117,6 +118,7 @@ export default function AdminGigsPage() {
   const [processingGig, setProcessingGig] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [copyingCastingLink, setCopyingCastingLink] = useState<string | null>(null);
+  const [copyingInviteLink, setCopyingInviteLink] = useState<string | null>(null);
   const [modelBadges, setModelBadges] = useState<Set<string>>(new Set()); // model_ids that have the event badge
   const [syncingBadges, setSyncingBadges] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -353,6 +355,30 @@ export default function AdminGigsPage() {
       toast.error("Failed to copy client link");
     } finally {
       setCopyingCastingLink(null);
+    }
+  }
+
+  async function handleCopyInviteLink(gig: Gig) {
+    setCopyingInviteLink(gig.id);
+    try {
+      const res = await fetch("/api/admin/gigs/invite-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gigId: gig.id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.token) {
+        toast.error(data.error || "Failed to create invite link");
+        return;
+      }
+      await navigator.clipboard.writeText(
+        `${window.location.origin}/gigs/${data.slug || gig.slug}?invite=${data.token}`
+      );
+      toast.success("Invite link copied — text or DM it to a model");
+    } catch {
+      toast.error("Failed to copy invite link");
+    } finally {
+      setCopyingInviteLink(null);
     }
   }
 
@@ -1347,6 +1373,21 @@ export default function AdminGigsPage() {
                         <>
                           <Link2 className="h-4 w-4 mr-2" />
                           Client Link
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={(e) => { e.stopPropagation(); handleCopyInviteLink(gig); }}
+                      disabled={copyingInviteLink === gig.id}
+                      className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                    >
+                      {copyingInviteLink === gig.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Share2 className="h-4 w-4 mr-2" />
+                          Invite Link
                         </>
                       )}
                     </Button>
