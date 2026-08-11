@@ -55,7 +55,7 @@ export default function CastingGrid({
     <div>
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-white/50">
-          {cards.length} model{cards.length !== 1 ? "s" : ""} applied
+          {cards.length} model{cards.length !== 1 ? "s" : ""} available
         </p>
         <div
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-semibold transition-colors ${
