@@ -66,11 +66,14 @@ export default async function CastingPage({ params }: Props) {
     .single();
   if (!gig) notFound();
 
-  // Privacy: username + photo + stats only — never real names, handles, or ratings.
+  // Privacy: username + photo + stats + social handles only — never real names
+  // or ratings. Handles are deliberately included here (owner call): the whole
+  // point of this token-gated page is letting a client vet the models, and
+  // that means clicking through to their Instagram.
   const { data: rawApps } = await service
     .from("gig_applications")
     .select(
-      "id, status, applied_at, model:models(id, username, profile_photo_url, height, instagram_followers, tiktok_followers)"
+      "id, status, applied_at, instagram_handle, instagram_followers, model:models(id, username, profile_photo_url, height, instagram_name, instagram_followers, tiktok_username, tiktok_followers)"
     )
     .eq("gig_id", gig.id)
     .order("applied_at", { ascending: true });
@@ -118,12 +121,25 @@ export default async function CastingPage({ params }: Props) {
     for (const h of hearts || []) hearted.add(h.application_id);
   }
 
+  // Handles can arrive as "@name" or full profile URLs — reduce to the bare handle
+  const cleanHandle = (raw: string | null | undefined): string | null => {
+    if (!raw) return null;
+    const handle = raw
+      .replace(/^https?:\/\/(www\.)?(instagram\.com|tiktok\.com)\//i, "")
+      .replace(/^@/, "")
+      .split(/[/?#]/)[0]
+      .trim();
+    return handle || null;
+  };
+
   const cards: CastingCard[] = apps.map((a: any) => ({
     applicationId: a.id,
     username: a.model.username,
     photoUrl: a.model.profile_photo_url || null,
     height: a.model.height || null,
-    instagramFollowers: a.model.instagram_followers || null,
+    instagramHandle: cleanHandle(a.instagram_handle) || cleanHandle(a.model.instagram_name),
+    instagramFollowers: a.instagram_followers ?? a.model.instagram_followers ?? null,
+    tiktokHandle: cleanHandle(a.model.tiktok_username),
     tiktokFollowers: a.model.tiktok_followers || null,
     liked: hearted.has(a.id),
   }));
@@ -175,7 +191,7 @@ export default async function CastingPage({ params }: Props) {
           <p className="text-sm text-white/75">
             Tap the heart on the models you&apos;d like for this casting — your picks are
             saved instantly and shared with the EXA team. Tap a photo to view a
-            model&apos;s full profile.
+            model&apos;s full profile, or their Instagram handle to open it directly.
           </p>
         </div>
 

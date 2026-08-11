@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Heart, User } from "lucide-react";
+import { Heart, User, Instagram } from "lucide-react";
 
 export interface CastingCard {
   applicationId: string;
   username: string;
   photoUrl: string | null;
   height: string | null;
+  instagramHandle: string | null;
   instagramFollowers: number | null;
+  tiktokHandle: string | null;
   tiktokFollowers: number | null;
   liked: boolean;
 }
@@ -70,8 +72,6 @@ export default function CastingGrid({
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
         {cards.map((card) => {
           const isLiked = !!liked[card.applicationId];
-          const followers =
-            (card.instagramFollowers || 0) + (card.tiktokFollowers || 0);
           return (
             <div
               key={card.applicationId}
@@ -100,24 +100,45 @@ export default function CastingGrid({
                     <User className="h-16 w-16 text-white/15" />
                   </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pt-10 pb-2.5 px-3">
-                  <p className="font-semibold text-white text-sm truncate">
-                    @{card.username}
-                  </p>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {card.height && (
-                      <span className="px-1.5 py-0.5 rounded bg-white/10 text-white/70 text-[10px]">
-                        {card.height}
-                      </span>
-                    )}
-                    {followers > 0 && (
-                      <span className="px-1.5 py-0.5 rounded bg-white/10 text-white/70 text-[10px]">
-                        {formatFollowers(followers)} followers
-                      </span>
-                    )}
-                  </div>
-                </div>
               </a>
+              {/* Info overlay: sibling of the photo link so the social chips
+                  can be links themselves; clicks pass through to the photo
+                  except on the chips. */}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pt-10 pb-2.5 px-3 pointer-events-none">
+                <p className="font-semibold text-white text-sm truncate">
+                  @{card.username}
+                </p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {card.height && (
+                    <span className="px-1.5 py-0.5 rounded bg-white/10 text-white/70 text-[10px]">
+                      {card.height}
+                    </span>
+                  )}
+                  {card.instagramHandle && (
+                    <a
+                      href={`https://instagram.com/${card.instagramHandle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="pointer-events-auto flex items-center gap-1 px-1.5 py-0.5 rounded bg-pink-500/30 text-pink-100 text-[10px] font-medium border border-pink-400/30 hover:bg-pink-500/50 transition-colors"
+                    >
+                      <Instagram className="h-2.5 w-2.5" />
+                      @{card.instagramHandle}
+                      {card.instagramFollowers ? ` · ${formatFollowers(card.instagramFollowers)}` : ""}
+                    </a>
+                  )}
+                  {card.tiktokHandle && (
+                    <a
+                      href={`https://www.tiktok.com/@${card.tiktokHandle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="pointer-events-auto px-1.5 py-0.5 rounded bg-cyan-500/25 text-cyan-100 text-[10px] font-medium border border-cyan-400/30 hover:bg-cyan-500/45 transition-colors"
+                    >
+                      TikTok @{card.tiktokHandle}
+                      {card.tiktokFollowers ? ` · ${formatFollowers(card.tiktokFollowers)}` : ""}
+                    </a>
+                  )}
+                </div>
+              </div>
               <button
                 type="button"
                 aria-label={isLiked ? `Remove ${card.username} from selections` : `Select ${card.username}`}
