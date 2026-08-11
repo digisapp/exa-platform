@@ -12,6 +12,12 @@ export const PATCH = withAuth<{ id: string }>(
     const body = await request.json();
     const { status } = body;
 
+    // Explicit admin override: skip the email-confirmed and photo gates on
+    // approval. For models the team has verified directly (text / IG DM) —
+    // the 18+ DOB gate inside approveModelApplication still applies, and a
+    // photo-less profile stays invisible in feeds until she uploads one.
+    const forceApprove = status === "approved" && body.force === true;
+
     if (!status || !["approved", "rejected", "request_photo", "pending"].includes(status)) {
       return NextResponse.json(
         { error: "Invalid status" },
@@ -59,7 +65,7 @@ export const PATCH = withAuth<{ id: string }>(
     // as confirmed, so this only gates post-feature applicants. The photo
     // request path shares the gate: auto-approval on upload would otherwise
     // dead-end for unconfirmed applicants.
-    if ((status === "approved" || status === "request_photo") && !(application as any).email_confirmed_at) {
+    if ((status === "approved" || status === "request_photo") && !(application as any).email_confirmed_at && !forceApprove) {
       return NextResponse.json(
         { error: "Applicant hasn't confirmed their email yet. Ask them to click the link in their application email (resend available on their pending page)." },
         { status: 400 }
@@ -69,7 +75,7 @@ export const PATCH = withAuth<{ id: string }>(
     // A model without a photo is invisible everywhere (explore, gigs, search),
     // so approving her only creates a dead profile. Use "Request photo"
     // instead — the upload puts her back in the queue for the final review.
-    if (status === "approved" && !(application as any).profile_photo_url) {
+    if (status === "approved" && !(application as any).profile_photo_url && !forceApprove) {
       return NextResponse.json(
         { error: "No profile photo yet — use \"Request photo\" instead: she gets a you're-selected email and returns to this queue for review once it's uploaded." },
         { status: 400 }

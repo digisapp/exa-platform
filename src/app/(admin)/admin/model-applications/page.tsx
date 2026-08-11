@@ -127,11 +127,11 @@ export default function AdminModelApplicationsPage() {
     setSessionActioned((prev) => prev + 1);
   };
 
-  const patchStatus = async (app: ModelApplication, status: string) => {
+  const patchStatus = async (app: ModelApplication, status: string, extra: Record<string, unknown> = {}) => {
     const res = await fetch(`/api/admin/model-applications/${app.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, ...extra }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -145,6 +145,27 @@ export default function AdminModelApplicationsPage() {
     try {
       await patchStatus(current, "approved");
       toast.success(`${current.display_name} approved!`);
+      removeCurrent();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Approve failed");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  // Explicit override: approve past the email/photo gates. For models the
+  // team has verified directly (text / IG DM). 18+ DOB still enforced
+  // server-side; a photo-less profile stays hidden until she uploads one.
+  const handleForceApprove = async () => {
+    if (!current || updating) return;
+    setUpdating("approve");
+    try {
+      const skipped = [
+        !current.email_confirmed_at ? "email unconfirmed" : null,
+        !current.profile_photo_url ? "no photo — profile hidden until she uploads one" : null,
+      ].filter(Boolean).join("; ");
+      await patchStatus(current, "approved", { force: true });
+      toast.success(`${current.display_name} approved${skipped ? ` (override: ${skipped})` : ""}`);
       removeCurrent();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Approve failed");
@@ -548,6 +569,25 @@ export default function AdminModelApplicationsPage() {
                     <>
                       <Camera className="h-5 w-5 mr-2" />
                       {current.photo_requested_at ? "Resend photo request" : "Request photo"}
+                    </>
+                  )}
+                </Button>
+              )}
+              {(primary === "resend_confirm" || primary === "request_photo") && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleForceApprove}
+                  disabled={updating !== null}
+                  title="Skip the email/photo gates and approve now — for models you've verified directly via text or DM"
+                  className="h-16 px-6 rounded-full border-green-500/60 text-green-400 hover:bg-green-500/10 hover:text-green-300 font-semibold"
+                >
+                  {updating === "approve" ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    <>
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Approve anyway
                     </>
                   )}
                 </Button>
