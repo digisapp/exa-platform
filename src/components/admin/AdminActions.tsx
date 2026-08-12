@@ -55,7 +55,7 @@ export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoReque
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const router = useRouter();
 
-  const handleAction = async (action: "approve" | "reject" | "request_photo") => {
+  const handleAction = async (action: "approve" | "reject" | "request_photo", opts?: { force?: boolean }) => {
     setLoading(action);
 
     try {
@@ -76,6 +76,9 @@ export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoReque
                 : action === "approve"
                   ? "approved"
                   : "rejected",
+            // Explicit admin override: skip the email/photo gates (18+ DOB
+            // still enforced server-side)
+            ...(action === "approve" && opts?.force ? { force: true } : {}),
           };
           break;
         case "model":
@@ -271,26 +274,62 @@ export function ApproveRejectButtons({ id, type, onSuccess, hasPhoto, photoReque
                 </>
               )}
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-green-500/60 text-green-400 hover:bg-green-500/10 hover:text-green-300"
+              onClick={() => handleAction("approve", { force: true })}
+              disabled={loading !== null}
+              title="Skip the email/photo gates and approve now — for models you've verified directly via text or DM"
+            >
+              {loading === "approve" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Approve anyway
+                </>
+              )}
+            </Button>
           </>
         ) : type === "model_application" && hasPhoto === false ? (
           // No photo → approval would 400; the real action is requesting one.
           // The upload returns her to the queue, where Approve becomes available.
-          <Button
-            size="sm"
-            className="bg-amber-500 hover:bg-amber-600 text-black"
-            onClick={() => handleAction("request_photo")}
-            disabled={loading !== null}
-            title="Sends a you're-selected email; she returns to the review queue when she uploads a photo"
-          >
-            {loading === "request_photo" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <Camera className="h-4 w-4 mr-1" />
-                {photoRequestedAt ? "Resend photo request" : "Request photo"}
-              </>
-            )}
-          </Button>
+          <>
+            <Button
+              size="sm"
+              className="bg-amber-500 hover:bg-amber-600 text-black"
+              onClick={() => handleAction("request_photo")}
+              disabled={loading !== null}
+              title="Sends a you're-selected email; she returns to the review queue when she uploads a photo"
+            >
+              {loading === "request_photo" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Camera className="h-4 w-4 mr-1" />
+                  {photoRequestedAt ? "Resend photo request" : "Request photo"}
+                </>
+              )}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-green-500/60 text-green-400 hover:bg-green-500/10 hover:text-green-300"
+              onClick={() => handleAction("approve", { force: true })}
+              disabled={loading !== null}
+              title="Approve without a photo — her profile stays hidden until she uploads one"
+            >
+              {loading === "approve" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Approve anyway
+                </>
+              )}
+            </Button>
+          </>
         ) : (
           <Button
             size="sm"
