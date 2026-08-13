@@ -24,7 +24,6 @@ import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { BoostTeaser } from "@/components/games/BoostTeaser";
 import { MobileNavSheet } from "@/components/home/MobileNavSheet";
 import { DigisMarqueeBanner } from "@/components/shows/digis-links";
-import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
 import { LiveWall } from "@/components/live-wall/LiveWall";
 import { enrichLiveWallAvatars } from "@/lib/live-wall-avatars";
 import { formatCoins, coinsToFanUsd, formatUsd } from "@/lib/coin-config";
@@ -40,7 +39,7 @@ export const metadata: Metadata = {
   },
 };
 
-// 5-minute ISR window: homepage data (top models, gigs, auctions) doesn't need
+// 5-minute ISR window: homepage data (top models, auctions) doesn't need
 // per-minute freshness, and the previous 60s value caused 6+ DB round-trips
 // per origin miss to dominate p95 page latency.
 export const revalidate = 300;
@@ -111,20 +110,6 @@ export default async function HomePage() {
     ...shuffleArray(topModelsRated.filter((m) => m.admin_rating !== 5)),
   ].map(({ admin_rating: _rating, ...model }) => model) as any[];
 
-  // Fetch upcoming + currently-running events/gigs.
-  // Multi-day events (e.g. Miami Swim Week) should keep showing on the homepage
-  // while they're in progress, not vanish once start_at passes — so we include
-  // anything whose end_at is still in the future, in addition to future starts.
-  const nowIso = new Date().toISOString();
-  const { data: upcomingEvents } = await (supabase
-    .from("gigs") as any)
-    .select("id, slug, title, type, location_city, location_state, start_at, end_at, cover_image_url, spots, spots_filled")
-    .eq("status", "open")
-    .or(`start_at.gte.${nowIso},end_at.gte.${nowIso}`)
-    .neq("title", "EXA Models Creator House - Trip 3")
-    .order("start_at", { ascending: true })
-    .limit(20);
-
   // Fetch active auctions for EXA Bids preview
   const { data: activeAuctions } = await (supabase as any)
     .from("auctions")
@@ -177,15 +162,6 @@ export default async function HomePage() {
       (m) =>
         Date.now() - new Date(m.created_at).getTime() < LIVE_WALL_FRESH_WINDOW_MS
     ).length >= LIVE_WALL_MIN_RECENT_MESSAGES;
-
-  // Upcoming Shows only shows when there's an active/upcoming event (the query
-  // already filters to open gigs whose start or end is still in the future).
-  const hasUpcomingEvents = (upcomingEvents?.length || 0) > 0;
-
-  // Layout for the shared row: render the whole section only if at least one of
-  // the two blocks qualifies, and use two columns only when both do.
-  const showEventsWallSection = hasUpcomingEvents || liveWallIsFresh;
-  const eventsWallTwoColumn = hasUpcomingEvents && liveWallIsFresh;
 
   // EXA Bids earns the premium slot beside the Spotlight teaser only when at
   // least one auction is live — an empty "no active bids" card shouldn't be
@@ -426,38 +402,17 @@ export default async function HomePage() {
           <BoostTeaser isLoggedIn={!!user} />
         )}
 
-        {/* Upcoming Shows + EXA Live Wall (side-by-side on desktop, stacked on
-            mobile). Each block renders only when it has something to show:
-            Upcoming Shows needs an active/upcoming event, the Live Wall needs
-            recent activity. Two columns only when both qualify; the whole
-            section is omitted when neither does. */}
-        {showEventsWallSection && (
+        {/* EXA Live Wall — hidden when quiet. */}
+        {liveWallIsFresh && (
           <section className="container px-8 md:px-16 py-6">
-            <div className={eventsWallTwoColumn ? "grid lg:grid-cols-2 gap-6 lg:items-start" : ""}>
-              {/* Upcoming Shows — left on desktop, top on mobile */}
-              {hasUpcomingEvents && (
-                <div>
-                  <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text mb-6">
-                    Upcoming Shows
-                  </h2>
-                  <UpcomingEventsCarousel events={upcomingEvents || []} scrollPadding="px-0" />
-                </div>
-              )}
-
-              {/* EXA Live Wall — right on desktop, below on mobile. Hidden when quiet. */}
-              {liveWallIsFresh && (
-                <div>
-                  <LiveWall
-                    initialMessages={liveWallMessages || []}
-                    currentUser={
-                      currentActor
-                        ? { actorId: currentActor.id, actorType: currentActor.type, coinBalance: currentActor.coinBalance }
-                        : null
-                    }
-                  />
-                </div>
-              )}
-            </div>
+            <LiveWall
+              initialMessages={liveWallMessages || []}
+              currentUser={
+                currentActor
+                  ? { actorId: currentActor.id, actorType: currentActor.type, coinBalance: currentActor.coinBalance }
+                  : null
+              }
+            />
           </section>
         )}
 
