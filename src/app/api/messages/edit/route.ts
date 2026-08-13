@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { assertNotSuspended } from "@/lib/auth/suspension";
+import { assertVirtualFirst } from "@/lib/moderation/virtual-first";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -43,9 +44,9 @@ export async function POST(request: NextRequest) {
     // Get sender's actor info
     const { data: sender } = await supabase
       .from("actors")
-      .select("id")
+      .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single() as { data: { id: string; type: string } | null };
 
     if (!sender) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
@@ -53,6 +54,16 @@ export async function POST(request: NextRequest) {
 
     const suspended = await assertNotSuspended(sender.id);
     if (suspended) return suspended;
+
+    // Virtual-first hard block: without this, a fan could send a clean
+    // message and edit the meetup request in afterwards.
+    const virtualFirstBlock = await assertVirtualFirst({
+      userId: user.id,
+      sender,
+      content,
+      context: "edit",
+    });
+    if (virtualFirstBlock) return virtualFirstBlock;
 
     // Fetch message — verify ownership, edit window, and that it has text
     // content. media_type (not media_url) detects media-only messages:

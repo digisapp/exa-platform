@@ -709,6 +709,12 @@ export function ChatView({
             setLocalCoinBalance(data.balance);
             coinBalanceContext?.setBalance(data.balance);
           }
+        } else if (data.code === "IN_PERSON_BLOCKED") {
+          // Virtual-first hard block: drop the bubble instead of leaving a
+          // failed message with a retry that can only fail the same way.
+          // (Backstop — the composer's own detector catches this pre-send.)
+          setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
+          toast.error(data.error);
         } else {
           toast.error(data.error || "Failed to send message");
         }
@@ -862,6 +868,7 @@ export function ChatView({
         coinBalance={localCoinBalance}
         placeholder="Message…"
         isModel={currentActor.type === "model"}
+        isAdmin={currentActor.type === "admin"}
         modelId={currentModel?.id}
         conversationId={conversation.id}
         onTyping={broadcastTyping}
