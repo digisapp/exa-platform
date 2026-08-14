@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Heart } from "lucide-react";
 import type { Metadata } from "next";
 import { getHeroPortrait } from "@/lib/hero-portrait";
@@ -142,8 +143,15 @@ export default async function CastingPage({ params }: Props) {
     <div className="min-h-dvh bg-background">
       <header className="border-b border-white/[0.06]">
         <div className="container px-4 md:px-8 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
-            EXA
+          <Link href="/" className="flex items-center shrink-0">
+            <Image
+              src="/exa-logo-white.png"
+              alt="EXA Models"
+              width={80}
+              height={32}
+              className="h-8 w-auto"
+              priority
+            />
           </Link>
           <span className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">
             Model Selects
