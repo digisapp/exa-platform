@@ -159,9 +159,9 @@ export default async function CastingPage({ params }: Props) {
         <div className="rounded-2xl border border-pink-500/20 bg-pink-500/[0.05] p-4 mb-6 flex items-start gap-3">
           <Heart className="h-5 w-5 text-pink-400 mt-0.5 flex-shrink-0" />
           <p className="text-sm text-white/75">
-            Tap the heart on the models you&apos;d like for this casting — your picks are
-            saved instantly and shared with the EXA team. Tap a photo to view a
-            model&apos;s full profile, or their Instagram handle to open it directly.
+            Tap the ❤️ to select models. Your picks are saved and shared with the
+            EXA team. Tap a model&apos;s photo to view their full profile, or tap
+            their Instagram handle to view their Instagram.
           </p>
         </div>
 
