@@ -259,19 +259,23 @@ export default function AdminModelDetailPage() {
 
       setModel(modelData);
 
-      // Fetch portfolio images for content picker
+      // Fetch portfolio images for content picker. Portfolio status only:
+      // 'exclusive' (paid) and 'private' items must never be offered as
+      // avatar/portrait material — legacy exclusive items can still have
+      // publicly-fetchable files (pre-20260712100002 uploads and http URLs),
+      // so status is the real gate, not storage location.
       const { data: images } = await (supabase as any)
         .from("content_items")
         .select("id, media_url, title, is_primary, width, height")
         .eq("model_id", modelId)
         .eq("media_type", "image")
+        .eq("status", "portfolio")
         .order("created_at", { ascending: false })
         .limit(100);
 
       if (images && isMounted) {
-        // Exclude private-bucket paid media ("exclusive/…" paths in the
-        // content-media bucket, src/lib/content-media.ts): the browser can't
-        // sign them, and PPV content isn't avatar/portrait material anyway.
+        // Belt-and-braces: also drop private-bucket paths ("exclusive/…",
+        // src/lib/content-media.ts) — the browser can't sign them anyway.
         const publicImages = images.filter(
           (img: any) => !isContentMediaPath(img.media_url)
         );

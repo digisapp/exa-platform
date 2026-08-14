@@ -81,7 +81,7 @@ export const POST = withAuth<{ id: string }>(
     // Verify the content item belongs to this model and is an image
     const { data: item } = await (adminDb as any)
       .from("content_items")
-      .select("id, media_url, media_type")
+      .select("id, media_url, media_type, status")
       .eq("id", contentItemId)
       .eq("model_id", modelId)
       .single();
@@ -100,11 +100,26 @@ export const POST = withAuth<{ id: string }>(
       );
     }
 
-    // Paid media lives in the private content-media bucket — it has no public
-    // URL and must not be copied onto a public profile field (fail closed)
+    // Only portfolio items may be published to a public profile field.
+    // Status is the gate — legacy exclusive items can still have public-bucket
+    // files (pre-20260712100002 uploads, http URLs), and 'private' items were
+    // never meant to be public at all (fail closed).
+    if (item.status !== "portfolio") {
+      return NextResponse.json(
+        {
+          error:
+            item.status === "exclusive"
+              ? "Paid content can't be used as a profile image"
+              : "Private content can't be used as a profile image",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Belt-and-braces: private content-media bucket paths have no public URL
     if (isContentMediaPath(item.media_url)) {
       return NextResponse.json(
-        { error: "Exclusive (paid) content can't be used as a profile image" },
+        { error: "Paid content can't be used as a profile image" },
         { status: 400 }
       );
     }
