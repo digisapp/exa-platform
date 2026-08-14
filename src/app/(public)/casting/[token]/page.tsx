@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import type { Metadata } from "next";
+import { getHeroPortrait } from "@/lib/hero-portrait";
 import CastingGrid, { type CastingCard } from "@/components/casting/CastingGrid";
 
 // Hearts must always render fresh — this page is a live client-review surface.
@@ -54,7 +55,7 @@ export default async function CastingPage({ params }: Props) {
   const { data: rawApps } = await service
     .from("gig_applications")
     .select(
-      "id, status, applied_at, instagram_handle, instagram_followers, model:models(id, username, profile_photo_url, height, instagram_name, instagram_followers, tiktok_username, tiktok_followers)"
+      "id, status, applied_at, instagram_handle, instagram_followers, model:models(id, username, profile_photo_url, profile_photo_width, profile_photo_height, height, instagram_name, instagram_followers, tiktok_username, tiktok_followers)"
     )
     .eq("gig_id", gig.id)
     .order("applied_at", { ascending: true });
@@ -63,33 +64,31 @@ export default async function CastingPage({ params }: Props) {
     (a: any) => a.model?.username && !["rejected", "cancelled"].includes(a.status)
   );
 
-  // Models without a profile photo fall back to their first portfolio image
-  // (same fallback the admin panel uses; portfolio bucket is public).
-  const noPhotoModelIds = apps
-    .filter((a: any) => !a.model.profile_photo_url)
-    .map((a: any) => a.model.id);
-  if (noPhotoModelIds.length > 0) {
-    const fallbackByModel: Record<string, string> = {};
-    for (const ids of chunk(noPhotoModelIds, 200)) {
+  // Card photos use the same hero-portrait pick as the profile page (owner
+  // call 2026-08-14): the model's Primary portfolio photo, else her best
+  // high-res portrait portfolio shot, with the square signup avatar only as
+  // a fallback — so the card matches what the client sees on click-through.
+  const resolveMediaUrl = (url: string) =>
+    url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
+
+  const photosByModel: Record<string, any[]> = {};
+  const modelIds: string[] = Array.from(new Set(apps.map((a: any) => a.model.id)));
+  for (const ids of chunk(modelIds, 50)) {
+    // Page in 1000s — PostgREST silently caps each response at 1000 rows
+    for (let page = 0; ; page++) {
       const { data: photos } = await service
         .from("content_items")
-        .select("model_id, media_url")
+        .select("model_id, media_url, width, height, created_at, is_primary")
         .in("model_id", ids)
         .eq("status", "portfolio")
         .eq("media_type", "image")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(page * 1000, page * 1000 + 999);
       for (const photo of photos || []) {
-        if (!fallbackByModel[photo.model_id] && photo.media_url) {
-          fallbackByModel[photo.model_id] = photo.media_url.startsWith("http")
-            ? photo.media_url
-            : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${photo.media_url}`;
-        }
+        if (!photo.media_url) continue;
+        (photosByModel[photo.model_id] ||= []).push(photo);
       }
-    }
-    for (const app of apps) {
-      if (!app.model.profile_photo_url && fallbackByModel[app.model.id]) {
-        app.model.profile_photo_url = fallbackByModel[app.model.id];
-      }
+      if (!photos || photos.length < 1000) break;
     }
   }
 
@@ -113,17 +112,31 @@ export default async function CastingPage({ params }: Props) {
     return handle || null;
   };
 
-  const cards: CastingCard[] = apps.map((a: any) => ({
-    applicationId: a.id,
-    username: a.model.username,
-    photoUrl: a.model.profile_photo_url || null,
-    height: a.model.height || null,
-    instagramHandle: cleanHandle(a.instagram_handle) || cleanHandle(a.model.instagram_name),
-    instagramFollowers: a.instagram_followers ?? a.model.instagram_followers ?? null,
-    tiktokHandle: cleanHandle(a.model.tiktok_username),
-    tiktokFollowers: a.model.tiktok_followers || null,
-    liked: hearted.has(a.id),
-  }));
+  const cards: CastingCard[] = apps.map((a: any) => {
+    const hero = getHeroPortrait({
+      profilePhotoUrl: a.model.profile_photo_url || null,
+      profilePhotoWidth: a.model.profile_photo_width ?? null,
+      profilePhotoHeight: a.model.profile_photo_height ?? null,
+      portfolioPhotos: (photosByModel[a.model.id] || []).map((p: any) => ({
+        url: resolveMediaUrl(p.media_url),
+        width: p.width ?? null,
+        height: p.height ?? null,
+        createdAt: p.created_at,
+        isPrimary: !!p.is_primary,
+      })),
+    });
+    return {
+      applicationId: a.id,
+      username: a.model.username,
+      photoUrl: hero?.url || a.model.profile_photo_url || null,
+      height: a.model.height || null,
+      instagramHandle: cleanHandle(a.instagram_handle) || cleanHandle(a.model.instagram_name),
+      instagramFollowers: a.instagram_followers ?? a.model.instagram_followers ?? null,
+      tiktokHandle: cleanHandle(a.model.tiktok_username),
+      tiktokFollowers: a.model.tiktok_followers || null,
+      liked: hearted.has(a.id),
+    };
+  });
 
   return (
     <div className="min-h-dvh bg-background">
