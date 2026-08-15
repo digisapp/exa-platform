@@ -42,8 +42,10 @@ import {
   MessageSquare,
   Phone,
   Share2,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
+import { timeAgoCompact } from "@/lib/date";
 import { ModelActionsDropdown } from "@/components/admin/AdminActions";
 import { SMSBroadcastModal } from "@/components/admin/SMSBroadcastModal";
 import { CreateRosterModal } from "@/components/admin/CreateRosterModal";
@@ -217,7 +219,7 @@ interface Model {
   deleted_at: string | null;
 }
 
-type ModelSortField = "profile_views" | "coin_balance" | "followers_count" | "instagram_followers" | "admin_rating" | "created_at" | "joined_at" | "total_earned" | "content_count" | "image_count" | "video_count" | "ppv_count" | "last_post" | "last_seen" | "message_count" | "referral_count";
+type ModelSortField = "profile_views" | "coin_balance" | "followers_count" | "instagram_followers" | "admin_rating" | "created_at" | "joined_at" | "last_active_at" | "total_earned" | "content_count" | "image_count" | "video_count" | "ppv_count" | "last_post" | "last_seen" | "message_count" | "referral_count";
 type SortDirection = "asc" | "desc";
 
 const US_STATES: { abbr: string; name: string }[] = [
@@ -404,7 +406,7 @@ export default function AdminModelsPage() {
       "Username", "First Name", "Last Name", "Email", "City", "State",
       "Height", "Hair Color", "Focus",
       "Approved", "Instagram", "IG Followers", "TT Followers", "Rating", "Profile Views",
-      "Followers", "Pics", "Videos", "Paid", "Earned", "Referrals", "Joined"
+      "Followers", "Pics", "Videos", "Paid", "Earned", "Referrals", "Joined", "Last Seen"
     ];
 
     const rows = models.map(m => [
@@ -430,6 +432,7 @@ export default function AdminModelsPage() {
       m.total_earned || 0,
       m.referral_count || 0,
       m.joined_at || m.created_at || "",
+      m.last_active_at || "",
     ]);
 
     const csvContent = [
@@ -766,6 +769,9 @@ export default function AdminModelsPage() {
                     <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("joined_at")}>
                       <div className="flex items-center"><UserPlus className="h-4 w-4 mr-1" />Joined<SortIndicator active={sortField === "joined_at"} direction={sortDirection} /></div>
                     </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("last_active_at")}>
+                      <div className="flex items-center"><Clock className="h-4 w-4 mr-1" />Last Seen<SortIndicator active={sortField === "last_active_at"} direction={sortDirection} /></div>
+                    </TableHead>
                     <TableHead><div className="flex items-center"><Sparkles className="h-4 w-4 mr-1" />New Face</div></TableHead>
                     <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("image_count")}>
                       <div className="flex items-center"><ImageIcon className="h-4 w-4 mr-1" />Pics<SortIndicator active={sortField === "image_count"} direction={sortDirection} /></div>
@@ -832,6 +838,20 @@ export default function AdminModelsPage() {
                       <TableCell><span className="text-sm text-muted-foreground">{model.state || "-"}</span></TableCell>
                       <TableCell><ModelActionsDropdown id={model.id} modelName={model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username} isApproved={model.is_approved} onAction={loadModels} /></TableCell>
                       <TableCell><span className="text-sm text-muted-foreground">{model.joined_at ? new Date(model.joined_at).toLocaleDateString() : "-"}</span></TableCell>
+                      <TableCell>
+                        {model.last_active_at ? (
+                          Date.now() - new Date(model.last_active_at).getTime() < 5 * 60 * 1000 ? (
+                            <span className="flex items-center gap-1.5 text-sm text-green-500">
+                              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                              Online
+                            </span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground whitespace-nowrap">{timeAgoCompact(model.last_active_at)}</span>
+                          )
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
                       <TableCell><NewFaceToggle modelId={model.id} isNewFace={model.new_face} onToggle={handleNewFaceToggle} /></TableCell>
                       <TableCell><span className={`text-sm ${model.image_count > 0 ? "text-green-500" : "text-muted-foreground"}`}>{model.image_count}</span></TableCell>
                       <TableCell><span className={`text-sm ${model.video_count > 0 ? "text-green-500" : "text-muted-foreground"}`}>{model.video_count}</span></TableCell>

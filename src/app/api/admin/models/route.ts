@@ -346,7 +346,7 @@ export const GET = withAuth(
       query = applyFilters(query);
 
       // Apply sorting for DB-sortable fields
-      const dbSortableFields = ["profile_views", "coin_balance", "instagram_followers", "admin_rating", "created_at"];
+      const dbSortableFields = ["profile_views", "coin_balance", "instagram_followers", "admin_rating", "created_at", "last_active_at"];
       if (dbSortableFields.includes(sortField)) {
         query = query.order(sortField, { ascending: sortDirection === "asc", nullsFirst: false });
       } else {
