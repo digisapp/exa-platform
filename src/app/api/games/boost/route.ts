@@ -120,7 +120,13 @@ export async function GET(request: NextRequest) {
     // ships the whole list in the GET query string, which grows with every
     // swipe toward the full roster and blows request-line limits around ~200
     // swiped models, 500ing the fetch and bricking the session mid-cycle.
-    const query = supabase
+    // Service client: the deck filters on rating_tier, which is not
+    // column-granted to anon (20260810 lockdown) — an anon-role filter on it
+    // fails with "permission denied" and 500s the whole game for logged-out
+    // players. The select list stays the safe public subset; the tier itself
+    // never reaches the client, and the explicit filters below match what the
+    // anon RLS policy enforced (approved only).
+    const query = adminClient
       .from("models")
       .select(`
         id,
