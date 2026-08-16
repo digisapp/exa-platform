@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
@@ -70,7 +70,12 @@ interface Props {
 
 export default async function RatesPage({ searchParams }: Props) {
   const params = await searchParams;
-  const supabase = await createClient();
+  // Service client: the page orders by rating_tier, which is not
+  // column-granted to anon (20260810 lockdown) — an anon-role ORDER BY on it
+  // fails with "permission denied" and the page silently renders empty. The
+  // select list itself stays the safe public subset; the tier never reaches
+  // the client.
+  const supabase = createServiceRoleClient();
 
   // Fetch models who have opted in to the rates page and have at least one
   // rate set. Explicit columns — select("*") pulled the full row (PII,
@@ -84,7 +89,8 @@ export default async function RatesPage({ searchParams }: Props) {
       social_companion_hourly_rate, meet_greet_rate
     `)
     .eq("is_approved", true)
-    .eq("show_on_rates_page", true);
+    .eq("show_on_rates_page", true)
+    .is("deleted_at", null);
 
   // Filter by state if provided
   if (params.state) {
