@@ -342,6 +342,77 @@ export const GET = withAuth(
       return NextResponse.json({ messages: enrichedMessages });
     }
 
+    if (action === "blocked") {
+      // Virtual-first hard-block attempts (src/lib/moderation/virtual-first.ts).
+      // Blocked messages never create a messages row, so the audit trail lives
+      // in analytics_events; metadata carries context/phrase/content snippet.
+      // analytics_events is newer than the generated DB types (call_knock cast).
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const [{ data: events, error: eventsError }, { count: blocked7d }, { count: blockedTotal }] =
+        await Promise.all([
+          (adminClient as any)
+            .from("analytics_events")
+            .select("id, created_at, user_id, metadata")
+            .eq("event_name", "message_blocked_in_person")
+            .order("created_at", { ascending: false })
+            .limit(100),
+          (adminClient as any)
+            .from("analytics_events")
+            .select("id", { count: "exact", head: true })
+            .eq("event_name", "message_blocked_in_person")
+            .gte("created_at", sevenDaysAgo),
+          (adminClient as any)
+            .from("analytics_events")
+            .select("id", { count: "exact", head: true })
+            .eq("event_name", "message_blocked_in_person"),
+        ]);
+
+      if (eventsError) {
+        console.error("Error loading blocked attempts:", eventsError);
+        return NextResponse.json({ error: "Failed to load blocked attempts" }, { status: 500 });
+      }
+
+      const userIds = [
+        ...new Set((events || []).map((e: any) => e.user_id).filter(Boolean)),
+      ] as string[];
+
+      const [{ data: fans }, { data: brands }] = await Promise.all([
+        adminClient
+          .from("fans")
+          .select("user_id, display_name, username, avatar_url, flagged_for_review")
+          .in("user_id", userIds),
+        adminClient.from("brands").select("user_id, company_name").in("user_id", userIds),
+      ]);
+
+      const fanMap = new Map((fans || []).map((f: any) => [f.user_id, f]));
+      const brandMap = new Map((brands || []).map((b: any) => [b.user_id, b]));
+
+      const attempts = (events || []).map((e: any) => {
+        const meta = (e.metadata || {}) as Record<string, any>;
+        const fan = e.user_id ? fanMap.get(e.user_id) : null;
+        const brand = e.user_id ? brandMap.get(e.user_id) : null;
+        return {
+          id: e.id,
+          created_at: e.created_at,
+          context: meta.context || null,
+          phrase: meta.phrase || null,
+          content: meta.content || null,
+          sender_type: meta.sender_type || (brand ? "brand" : "fan"),
+          sender_name:
+            fan?.display_name || fan?.username || brand?.company_name || "Unknown",
+          sender_username: fan?.username || null,
+          sender_avatar: fan?.avatar_url || null,
+          flagged_for_review: fan?.flagged_for_review || false,
+        };
+      });
+
+      return NextResponse.json({
+        attempts,
+        blocked7d: blocked7d || 0,
+        blockedTotal: blockedTotal || 0,
+      });
+    }
+
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   },
   { requireType: "admin", rateLimit: "general" }

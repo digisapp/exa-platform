@@ -36,6 +36,7 @@ import {
   Image as ImageIcon,
   Video,
   Mic,
+  ShieldAlert,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { toast } from "sonner";
@@ -73,6 +74,19 @@ interface Message {
   media_url: string | null;
 }
 
+interface BlockedAttempt {
+  id: string;
+  created_at: string;
+  context: string | null;
+  phrase: string | null;
+  content: string | null;
+  sender_type: string;
+  sender_name: string;
+  sender_username: string | null;
+  sender_avatar: string | null;
+  flagged_for_review: boolean;
+}
+
 export default function AdminMessagesPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -93,6 +107,11 @@ export default function AdminMessagesPage() {
     flaggedMessages: 0,
     activeToday: 0,
   });
+
+  // Virtual-first blocked attempts (never sent — audit trail from analytics_events)
+  const [blockedAttempts, setBlockedAttempts] = useState<BlockedAttempt[]>([]);
+  const [blockedStats, setBlockedStats] = useState({ last7d: 0, total: 0 });
+  const [loadingBlocked, setLoadingBlocked] = useState(true);
 
   const loadStats = useCallback(async () => {
     try {
@@ -141,6 +160,27 @@ export default function AdminMessagesPage() {
     }
   }, [page, search]);
 
+  const loadBlockedAttempts = useCallback(async () => {
+    setLoadingBlocked(true);
+    try {
+      const res = await fetch("/api/admin/messages?action=blocked");
+      if (!res.ok) {
+        const body = await res.text();
+        console.error("Blocked attempts request failed:", res.status, body);
+        toast.error(`Failed to load blocked attempts (${res.status})`);
+        return;
+      }
+      const data = await res.json();
+      setBlockedAttempts(data.attempts || []);
+      setBlockedStats({ last7d: data.blocked7d || 0, total: data.blockedTotal || 0 });
+    } catch (error) {
+      console.error("Failed to load blocked attempts:", error);
+      toast.error("Failed to load blocked attempts");
+    } finally {
+      setLoadingBlocked(false);
+    }
+  }, []);
+
   const loadMessages = useCallback(async (conversationId: string) => {
     setLoadingMessages(true);
     try {
@@ -164,7 +204,8 @@ export default function AdminMessagesPage() {
   useEffect(() => {
     loadStats();
     loadConversations();
-  }, [loadStats, loadConversations]);
+    loadBlockedAttempts();
+  }, [loadStats, loadConversations, loadBlockedAttempts]);
 
   const handleViewConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
@@ -255,6 +296,130 @@ export default function AdminMessagesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Virtual-first blocked attempts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldAlert className="h-5 w-5 text-amber-500" />
+            Blocked meetup &amp; contact requests
+            {blockedStats.total > 0 && (
+              <span className="text-sm font-normal text-muted-foreground">
+                {blockedStats.last7d} in the last 7 days · {blockedStats.total} all time
+              </span>
+            )}
+          </CardTitle>
+          <CardDescription>
+            Fan/brand messages stopped by the virtual-first filter — none of these were
+            delivered. Fans with 3+ blocked attempts in 7 days are auto-flagged for review.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingBlocked ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : blockedAttempts.length === 0 ? (
+            <p className="text-center text-muted-foreground py-6">
+              No blocked attempts yet
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Sender</TableHead>
+                  <TableHead>Attempted message</TableHead>
+                  <TableHead>Matched</TableHead>
+                  <TableHead>Via</TableHead>
+                  <TableHead>When</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {blockedAttempts.map((attempt) => (
+                  <TableRow key={attempt.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                          {attempt.sender_avatar ? (
+                            <Image
+                              src={attempt.sender_avatar}
+                              alt={attempt.sender_name}
+                              width={32}
+                              height={32}
+                              className="object-cover w-full h-full"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-xs">
+                              {attempt.sender_name[0]?.toUpperCase() || "?"}
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{attempt.sender_name}</p>
+                          <div className="flex items-center gap-1">
+                            <Badge
+                              variant="outline"
+                              className="text-blue-500 border-blue-500/30 text-xs"
+                            >
+                              {attempt.sender_type}
+                            </Badge>
+                            {attempt.sender_username && (
+                              <span className="text-xs text-muted-foreground">
+                                @{attempt.sender_username}
+                              </span>
+                            )}
+                            {attempt.flagged_for_review && (
+                              <Badge variant="destructive" className="text-xs">
+                                <Flag className="h-3 w-3 mr-1" />
+                                Flagged
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <p
+                        className="text-sm text-muted-foreground max-w-[280px] line-clamp-2"
+                        title={attempt.content || undefined}
+                      >
+                        {attempt.content || "—"}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      {attempt.phrase ? (
+                        <Badge
+                          variant="outline"
+                          className="text-amber-500 border-amber-500/30 text-xs"
+                        >
+                          {attempt.phrase}
+                        </Badge>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {attempt.context === "new_conversation"
+                          ? "new chat"
+                          : attempt.context || "—"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">
+                        {formatDistanceToNow(new Date(attempt.created_at), { addSuffix: true })}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+          {blockedAttempts.length >= 100 && (
+            <p className="text-xs text-muted-foreground mt-3">Showing the latest 100 attempts</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Search */}
       <Card>
