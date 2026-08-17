@@ -212,28 +212,19 @@ export default function AdminGigsPage() {
       .map((a: any) => a.model.id);
 
     if (noPhotoModelIds.length > 0) {
-      const { data: fallbackPhotos } = await (supabase as any)
-        .from("content_items")
-        .select("model_id, media_url")
-        .in("model_id", noPhotoModelIds)
-        .eq("status", "portfolio")
-        .eq("media_type", "image")
-        .order("created_at", { ascending: false });
+      // Via admin API: content_items.media_url is not column-granted to
+      // client roles (Phase B1 lockdown); the route resolves first-portfolio
+      // URLs with the service role.
+      const fallbackRes = await fetch(
+        `/api/admin/models/portfolio-fallbacks?ids=${noPhotoModelIds.slice(0, 200).join(",")}`
+      );
+      const { fallbacks: fallbackByModel = {} } = fallbackRes.ok
+        ? await fallbackRes.json()
+        : { fallbacks: {} };
 
-      if (fallbackPhotos && fallbackPhotos.length > 0) {
-        const fallbackByModel: Record<string, string> = {};
-        for (const photo of fallbackPhotos) {
-          if (!fallbackByModel[photo.model_id]) {
-            const url = photo.media_url.startsWith("http")
-              ? photo.media_url
-              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${photo.media_url}`;
-            fallbackByModel[photo.model_id] = url;
-          }
-        }
-        for (const app of apps) {
-          if (app.model && !app.model.profile_photo_url && fallbackByModel[app.model.id]) {
-            app.model.profile_photo_url = fallbackByModel[app.model.id];
-          }
+      for (const app of apps) {
+        if (app.model && !app.model.profile_photo_url && fallbackByModel[app.model.id]) {
+          app.model.profile_photo_url = fallbackByModel[app.model.id];
         }
       }
 

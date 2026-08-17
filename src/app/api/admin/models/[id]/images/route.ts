@@ -13,6 +13,38 @@ import { withAuth } from "@/lib/auth/with-auth";
  * avatar   — sets profile_photo_url to the content item's media_url
  * portrait — sets is_primary=true on the content item (drives the hero portrait)
  */
+/**
+ * GET /api/admin/models/[id]/images
+ *
+ * Portfolio images for the admin content picker. Browser admin pages can no
+ * longer read content_items.media_url directly (Phase B1 column grants), so
+ * the list is served here via the service role. Portfolio status only —
+ * 'exclusive'/'private' items must never be offered as avatar/portrait
+ * material; private-bucket paths are dropped (the browser can't sign them).
+ */
+export const GET = withAuth<{ id: string }>(
+  async ({ params }) => {
+    const { id: modelId } = params;
+    const adminDb = createServiceRoleClient();
+
+    const { data: images } = await (adminDb as any)
+      .from("content_items")
+      .select("id, media_url, title, is_primary, width, height")
+      .eq("model_id", modelId)
+      .eq("media_type", "image")
+      .eq("status", "portfolio")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    const publicImages = (images || []).filter(
+      (img: { media_url: string }) => !isContentMediaPath(img.media_url)
+    );
+
+    return NextResponse.json({ images: publicImages });
+  },
+  { requireType: "admin", rateLimit: "general" }
+);
+
 export const POST = withAuth<{ id: string }>(
   async ({ request, params, user, supabase }) => {
     const { id: modelId } = params;

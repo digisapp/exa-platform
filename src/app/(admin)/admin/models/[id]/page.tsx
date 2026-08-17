@@ -45,7 +45,6 @@ import { TikTokIcon } from "@/components/ui/tiktok-icon";
 import { formatInches } from "@/lib/measurements";
 import { MODEL_EARNING_ACTIONS } from "@/lib/coin-config";
 import { getHeroPortrait } from "@/lib/hero-portrait";
-import { isContentMediaPath } from "@/lib/content-media";
 import { toast } from "sonner";
 
 interface ModelDetails {
@@ -264,21 +263,14 @@ export default function AdminModelDetailPage() {
       // avatar/portrait material — legacy exclusive items can still have
       // publicly-fetchable files (pre-20260712100002 uploads and http URLs),
       // so status is the real gate, not storage location.
-      const { data: images } = await (supabase as any)
-        .from("content_items")
-        .select("id, media_url, title, is_primary, width, height")
-        .eq("model_id", modelId)
-        .eq("media_type", "image")
-        .eq("status", "portfolio")
-        .order("created_at", { ascending: false })
-        .limit(100);
+      // Via admin API: content_items.media_url is not column-granted to
+      // client roles (Phase B1 lockdown). The route applies the same
+      // portfolio-only + private-bucket-path filtering server-side.
+      const imagesRes = await fetch(`/api/admin/models/${modelId}/images`);
+      const { images } = imagesRes.ok ? await imagesRes.json() : { images: null };
 
       if (images && isMounted) {
-        // Belt-and-braces: also drop private-bucket paths ("exclusive/…",
-        // src/lib/content-media.ts) — the browser can't sign them anyway.
-        const publicImages = images.filter(
-          (img: any) => !isContentMediaPath(img.media_url)
-        );
+        const publicImages = images;
         setContentImages(publicImages);
         const primary = publicImages.find((img: any) => img.is_primary);
         if (primary) setPortraitItem({ id: primary.id, media_url: primary.media_url });
@@ -326,9 +318,11 @@ export default function AdminModelDetailPage() {
           const totalEarned = earnings?.reduce((sum: number, tx: any) => sum + tx.amount, 0) || 0;
 
           // Content count (content_items is single source of truth)
+          // select("id"): head-count select("*") expands to non-granted
+          // columns under Phase B1 column grants and 403s.
           const { count: contentItemsCount } = await (supabase as any)
             .from("content_items")
-            .select("*", { count: "exact", head: true })
+            .select("id", { count: "exact", head: true })
             .eq("model_id", modelId);
 
           // Message count (conversations)

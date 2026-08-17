@@ -209,24 +209,19 @@ export default function CompCardPage() {
         // QR code preview is non-critical
       }
 
-      // Fetch portfolio photos from content_items (single source of truth)
-      const resolveMediaUrl = (url: string) =>
-        url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
+      // Fetch portfolio photos via the library API — content_items.media_url
+      // is no longer column-granted to client roles (Phase B1 lockdown); the
+      // route resolves public URLs server-side for the caller's own library.
+      const libraryRes = await fetch("/api/content/library");
+      if (!libraryRes.ok) throw new Error(`library fetch failed: ${libraryRes.status}`);
+      const { portfolio } = await libraryRes.json();
 
-      const { data: contentData, error: contentError } = await (supabase as any)
-        .from("content_items")
-        .select("id, media_url, title, created_at")
-        .eq("model_id", modelData.id)
-        .eq("status", "portfolio")
-        .eq("media_type", "image")
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (contentError) throw contentError;
-
-      const allPhotos = (contentData || []).map((p: any) => ({
-        id: p.id, url: resolveMediaUrl(p.media_url), photo_url: resolveMediaUrl(p.media_url), is_primary: false, display_order: 0,
-      }));
+      const allPhotos = (portfolio || [])
+        .filter((p: any) => p.mediaType === "image")
+        .slice(0, 50)
+        .map((p: any) => ({
+          id: p.id, url: p.url, photo_url: p.url, is_primary: false, display_order: 0,
+        }));
       setPhotos(allPhotos);
 
       // Pre-select the first MAX_PHOTOS portfolio photos

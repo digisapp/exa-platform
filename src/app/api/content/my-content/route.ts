@@ -89,8 +89,11 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const typeFilter = searchParams.get("type"); // "image", "video", or null for all
 
-    // Fetch all purchased content with creator info (unified content_items system)
-    const query = (supabase as any)
+    // Fetch all purchased content with creator info (unified content_items
+    // system). Service client: the content_items embed includes media_url,
+    // which is not column-granted to client roles (Phase B1 lockdown); the
+    // buyer_id filter keeps the read scoped to this fan's own purchases.
+    const query = (createServiceRoleClient() as any)
       .from("content_purchases")
       .select(`
         id,

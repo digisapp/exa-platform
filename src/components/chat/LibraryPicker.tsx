@@ -13,8 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Camera, Video, Lock, Loader2, Check, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
-import { isContentMediaPath } from "@/lib/content-media";
 
 interface ContentItem {
   id: string;
@@ -46,69 +44,34 @@ export function LibraryPicker({
 
   const loadContent = useCallback(async () => {
     setLoading(true);
-    const supabase = createClient();
-
     try {
-      // Load from content_items (single source of truth)
-      const resolveMediaUrl = (url: string) =>
-        url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
+      // Own-library fetch via API: content_items.media_url is no longer
+      // column-granted to client roles (Phase B1 lockdown). The route derives
+      // the model from the session, applies the same private-bucket exclusion
+      // for paid items (fail closed), and resolves public URLs server-side.
+      const res = await fetch("/api/content/library");
+      if (!res.ok) throw new Error(`library fetch failed: ${res.status}`);
+      const { portfolio, exclusive } = await res.json();
 
-      const { data: contentItems } = await (supabase as any)
-        .from("content_items")
-        .select("id, media_url, media_type")
-        .eq("model_id", modelId)
-        .eq("status", "portfolio")
-        .order("created_at", { ascending: false });
-
-      setPhotos((contentItems || [])
-        .filter((c: any) => c.media_type === "image")
-        .map((c: any) => ({ id: c.id, url: resolveMediaUrl(c.media_url), type: "photo" as const })));
-      setVideos((contentItems || [])
-        .filter((c: any) => c.media_type === "video")
-        .map((c: any) => ({ id: c.id, url: resolveMediaUrl(c.media_url), type: "video" as const })));
-
-      // Load PPV content from content_items (exclusive status)
-      const { data: premiumContent } = await (supabase as any)
-        .from("content_items")
-        .select("id, media_url, media_type, coin_price, preview_url")
-        .eq("model_id", modelId)
-        .eq("status", "exclusive")
-        .gt("coin_price", 0)
-        .order("created_at", { ascending: false });
-
-      if (premiumContent) {
-        const content = premiumContent as Array<{
-          id: string;
-          media_url: string;
-          media_type: string;
-          coin_price: number;
-          preview_url: string | null;
-        }>;
-
-        const ppvItems = content
-          // New paid uploads live in the private content-media bucket
-          // ("exclusive/…" paths, src/lib/content-media.ts): the browser can't
-          // sign them and chat messages only carry http URLs or chat-media
-          // paths, so they can't be attached — exclude them (fail closed).
-          // Legacy items resolve to their (already public) portfolio URL so
-          // the recipient can actually render what they paid for.
-          .filter((p) => !isContentMediaPath(p.media_url))
-          .map((p) => ({
-            id: p.id,
-            url: resolveMediaUrl(p.media_url),
-            type: (p.media_type === "video" ? "video" : "photo") as "photo" | "video",
-            coinPrice: p.coin_price,
-            // Previews always live in the public portfolio bucket
-            thumbnail: p.preview_url ? resolveMediaUrl(p.preview_url) : p.preview_url,
-          }));
-        setPpvContent(ppvItems);
-      }
+      setPhotos((portfolio || [])
+        .filter((c: any) => c.mediaType === "image")
+        .map((c: any) => ({ id: c.id, url: c.url, type: "photo" as const })));
+      setVideos((portfolio || [])
+        .filter((c: any) => c.mediaType === "video")
+        .map((c: any) => ({ id: c.id, url: c.url, type: "video" as const })));
+      setPpvContent((exclusive || []).map((c: any) => ({
+        id: c.id,
+        url: c.url,
+        type: (c.mediaType === "video" ? "video" : "photo") as "photo" | "video",
+        coinPrice: c.coinPrice,
+        thumbnail: c.thumbnailUrl,
+      })));
     } catch (error) {
       console.error("Error loading content:", error);
     } finally {
       setLoading(false);
     }
-  }, [modelId]);
+  }, []);
 
   useEffect(() => {
     if (open) {

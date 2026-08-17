@@ -155,8 +155,10 @@ export default async function DashboardPage() {
       .eq("model_id", model.id)
       .order("created_at", { ascending: false })
       .limit(20),
-    // Portfolio photos for profile banner portrait picker
-    (supabase as any)
+    // Portfolio photos for profile banner portrait picker — adminClient:
+    // media_url is not column-granted to client roles (Phase B1 lockdown);
+    // this is the model's own portfolio (public bucket), nothing leaks.
+    (adminClient as any)
       .from("content_items")
       .select("id, media_url, media_type, width, height, is_primary, created_at")
       .eq("model_id", model.id)
