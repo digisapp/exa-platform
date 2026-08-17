@@ -59,6 +59,10 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
 
 export async function FanDashboard({ actorId }: { actorId: string }) {
   const supabase = await createClient();
+  // Service client for content_items reads: media_url is not column-granted
+  // to client roles (Phase B1 lockdown). Raw values never reach the client —
+  // every media_url below is re-signed/stripped before render.
+  const contentDb = createServiceRoleClient();
 
   // Query favorites, featured models, coin balance, live auctions, bids, and feed content in parallel
   const [
@@ -121,7 +125,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
     // Newest exclusive content for feed. No date window: exclusive paid content
     // is posted rarely, so a 30-day filter empties this pool and kills the feed's
     // fresh/followed arm. Latest-50 keeps it populated and still recency-ordered.
-    (supabase as any).from("content_items")
+    (contentDb as any).from("content_items")
       .select(`
         id, title, description, media_type, preview_url, media_url,
         coin_price, unlock_count, like_count, created_at,
@@ -132,7 +136,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .order("created_at", { ascending: false })
       .limit(50),
     // Trending exclusive content (top unlocks, all time)
-    (supabase as any).from("content_items")
+    (contentDb as any).from("content_items")
       .select(`
         id, title, description, media_type, preview_url, media_url,
         coin_price, unlock_count, like_count, created_at,
@@ -219,7 +223,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   // follows is capped at 50, safely under the .in() UUID batch guideline.
   let followedFreeContent: any[] = [];
   if (favoriteModels.length > 0) {
-    const { data } = await (supabase as any).from("content_items")
+    const { data } = await (contentDb as any).from("content_items")
       .select(`
         id, title, description, media_type, preview_url, media_url,
         coin_price, unlock_count, like_count, created_at,
