@@ -19,7 +19,6 @@ import { hapticFeedback } from "@/hooks/useHapticFeedback";
 import { CHAT_MEDIA_MAX_COINS, CHAT_MEDIA_MIN_COINS } from "@/lib/coin-config";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -44,6 +43,8 @@ interface MessageInputProps {
   coinBalance?: number;
   placeholder?: string;
   isModel?: boolean;
+  /** Admins coordinate real-world gigs in DMs — exempt from the virtual-first block. */
+  isAdmin?: boolean;
   modelId?: string;
   conversationId?: string;
   onTyping?: () => void;
@@ -61,6 +62,7 @@ export function MessageInput({
   coinBalance = 0,
   placeholder = "Message…",
   isModel = false,
+  isAdmin = false,
   modelId,
   conversationId,
   onTyping,
@@ -205,9 +207,10 @@ export function MessageInput({
   const handleSend = () => {
     if (!canSend || !hasEnoughCoins) return;
 
-    // Virtual-first guardrail: warn fans/brands before sending in-person meetup
-    // requests. Models can DM about real-life shoots without a prompt.
-    if (!isModel && detectInPersonRequest(content).matched) {
+    // Virtual-first hard block: fans/brands can't send in-person meetup or
+    // contact-exchange requests — the dialog is a stop, not a nudge (the
+    // server rejects these too). Models/admins coordinate real-life shoots.
+    if (!isModel && !isAdmin && detectInPersonRequest(content).matched) {
       setVirtualFirstWarningOpen(true);
       return;
     }
@@ -766,7 +769,8 @@ export function MessageInput({
         />
       )}
 
-      {/* Virtual-first warning — soft nudge before sending in-person meetup requests */}
+      {/* Virtual-first hard block — in-person meetup / contact-exchange
+          requests never send; the fan keeps their draft to rephrase */}
       <AlertDialog open={virtualFirstWarningOpen} onOpenChange={setVirtualFirstWarningOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -774,15 +778,7 @@ export function MessageInput({
             <AlertDialogDescription>{IN_PERSON_WARNING_COPY.body}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{IN_PERSON_WARNING_COPY.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setVirtualFirstWarningOpen(false);
-                performSend();
-              }}
-            >
-              {IN_PERSON_WARNING_COPY.confirm}
-            </AlertDialogAction>
+            <AlertDialogCancel>{IN_PERSON_WARNING_COPY.dismiss}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

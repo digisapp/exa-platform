@@ -7,6 +7,7 @@ import { z } from "zod";
 import { sendNewMessageNotificationEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
 import { messageCoinCost } from "@/lib/coin-config";
+import { assertVirtualFirst } from "@/lib/moderation/virtual-first";
 
 const adminClient = createServiceRoleClient();
 
@@ -78,6 +79,17 @@ export async function POST(request: NextRequest) {
         }, { status: 403 });
       }
     }
+
+    // Virtual-first hard block: fans/brands can't ask to meet in person or
+    // exchange off-platform contact info. Runs before the conversation is
+    // created so a blocked attempt leaves no side effects.
+    const virtualFirstBlock = await assertVirtualFirst({
+      userId: user.id,
+      sender,
+      content: initialMessage,
+      context: "new_conversation",
+    });
+    if (virtualFirstBlock) return virtualFirstBlock;
 
     // Can't message yourself
     if (sender.id === recipientId) {
