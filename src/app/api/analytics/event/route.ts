@@ -48,10 +48,12 @@ const ALLOWED_EVENTS = new Set([
   "signup_form_opened",
   "signup_validation_error",
   "signup_submitted",
-  // Emitted server-side by the virtual-first hard block (src/lib/moderation/
-  // virtual-first.ts) when a fan/brand message asking to meet in person or
-  // swap contact info is rejected; metadata carries context/phrase/content.
-  // Listed here so reporting treats it as a known event.
+  // Virtual-first hard block (src/lib/moderation/virtual-first.ts): a
+  // fan/brand message asking to meet in person or swap contact info was
+  // rejected. Emitted server-side on API-level blocks AND from the composer
+  // (MessageInput) when the dialog stops a send before it reaches the API.
+  // metadata carries context ("composer"|"send"|"new_conversation"|"edit"),
+  // phrase, and a content snippet.
   "message_blocked_in_person",
 ]);
 

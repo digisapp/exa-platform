@@ -73,6 +73,34 @@ describe("detectInPersonRequest", () => {
     }
   });
 
+  it("catches Spanish meetup and contact-exchange asks", () => {
+    for (const text of [
+      "me encantaría conocerte",
+      "podemos vernos?",
+      "quiero verte en persona",
+      "dame tu número",
+      "pásame tu whats",
+      "pasame tu whatsapp porfa", // unaccented spelling
+      "cuál es tu insta",
+      "tienes telegram?",
+      "agrégame en snap",
+      "mi whatsapp es +52 55 1234",
+    ]) {
+      expect(detectInPersonRequest(text).matched, text).toBe(true);
+    }
+  });
+
+  it("lets normal Spanish fan chat through", () => {
+    for (const text of [
+      "nos vemos! que tengas buen día", // farewell, not a meetup ask
+      "quiero verte en vivo esta noche", // watching a stream
+      "me gusta mucho tu contenido",
+      "eres hermosa, saludos desde México",
+    ]) {
+      expect(detectInPersonRequest(text).matched, text).toBe(false);
+    }
+  });
+
   it("handles empty input", () => {
     expect(detectInPersonRequest("").matched).toBe(false);
     expect(detectInPersonRequest(null).matched).toBe(false);

@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { detectInPersonRequest, IN_PERSON_WARNING_COPY } from "@/lib/in-person-request";
+import { trackEvent } from "@/lib/analytics-client";
 
 const DRAFT_PREFIX = "chat_draft_";
 
@@ -210,9 +211,22 @@ export function MessageInput({
     // Virtual-first hard block: fans/brands can't send in-person meetup or
     // contact-exchange requests — the dialog is a stop, not a nudge (the
     // server rejects these too). Models/admins coordinate real-life shoots.
-    if (!isModel && !isAdmin && detectInPersonRequest(content).matched) {
-      setVirtualFirstWarningOpen(true);
-      return;
+    if (!isModel && !isAdmin) {
+      const detection = detectInPersonRequest(content);
+      if (detection.matched) {
+        // Composer blocks never reach the server, so log them here or the
+        // admin audit trail / repeat-offender flag only sees API attempts.
+        // user_id is attached server-side from the session.
+        trackEvent("message_blocked_in_person", {
+          metadata: {
+            context: "composer",
+            phrase: detection.phrase,
+            content: content.slice(0, 300),
+          },
+        });
+        setVirtualFirstWarningOpen(true);
+        return;
+      }
     }
 
     performSend();
