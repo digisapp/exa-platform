@@ -11,8 +11,10 @@ import { logger } from "@/lib/logger";
 const ACCOUNT_FLAG_THRESHOLD = 3;
 const ACCOUNT_FLAG_WINDOW_DAYS = 7;
 
-// In the /api/analytics/event allowlist; emitted server-side only (same
-// pattern as call_knock).
+// Emitted here (server, API-level blocks) AND from the composer via
+// trackEvent in MessageInput — the compose dialog stops most attempts before
+// they ever reach the API, and those must still hit the audit trail and the
+// repeat-offender count below. In the /api/analytics/event allowlist.
 export const IN_PERSON_BLOCKED_EVENT = "message_blocked_in_person";
 
 /**

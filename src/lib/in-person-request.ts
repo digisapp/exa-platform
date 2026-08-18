@@ -36,6 +36,21 @@ const PATTERNS: RegExp[] = [
   // "my snap is adamj088", "my ig: @handle"
   /\b(my|his|her)\s+(snap|snapchat|ig|insta|instagram|whatsapp|telegram|signal|kik|discord)\s*(is|name|handle|user(name)?|:|@)/i,
   /\b(off|outside)[\s-]*platform\b/i,
+
+  // ── Spanish (LATAM funnel) ──────────────────────────────────────────
+  // Kept higher-precision than the English list: there's no Spanish message
+  // corpus to validate against yet, so only unambiguous solicitation forms.
+  // Deliberately NOT matched: "nos vemos" (common farewell, "see ya") and
+  // bare "verte" ("quiero verte en vivo" = watching a stream).
+  // "let's meet / meet you": conocernos, conocerte, vernos, encontrarnos
+  /\b(conocernos|conocerte|vernos|encontrarnos|verte\s+en\s+persona)\b/i,
+  /\ben\s+persona\b/i,
+  // "give/pass/send me your number/whats/snap…", "what's your whats"
+  /\b(dame|d[aá]me|pasame|p[aá]same|mandame|m[aá]ndame|enviame|env[ií]ame)\s+(tu\s+)?(n[uú]mero|tel[eé]fono|cel|celular|whats(app)?|snap(chat)?|insta(gram)?|ig|telegram)\b/i,
+  /\b(cu[aá]l\s+es\s+tu|tienes)\s+(n[uú]mero|tel[eé]fono|whats(app)?|snap(chat)?|insta(gram)?|ig|telegram)\b/i,
+  // "add me" / "my whats is …"
+  /\bagr[eé]game\b/i,
+  /\bmi\s+(n[uú]mero|tel[eé]fono|whats(app)?|snap(chat)?|insta(gram)?|ig|telegram)\s*(es|:)/i,
 ];
 
 export type InPersonMatch = {
