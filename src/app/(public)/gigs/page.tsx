@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import Image from "next/image";
 
 export const metadata: Metadata = {
@@ -96,7 +97,8 @@ export default async function GigsPage() {
 
     // Get profile info based on actor type
     if (actor?.type === "model" || actor?.type === "admin") {
-      const { data } = await supabase
+      // Service client: self-read includes coin_balance, not column-granted to client roles (Phase B2)
+      const { data } = await createServiceRoleClient()
         .from("models")
         .select("id, username, profile_photo_url, coin_balance")
         .eq("user_id", user.id)

@@ -11,11 +11,14 @@ function generatePassword(): string {
 }
 
 export const POST = withAuth<{ id: string }>(
-  async ({ params, supabase }) => {
+  async ({ params }) => {
     const { id } = params;
 
+    // Service client: email/first_name/last_name not column-granted to client roles (Phase B2 lockdown)
+    const serviceSupabase = createServiceRoleClient();
+
     // Get model
-    const { data: model } = await supabase
+    const { data: model } = await serviceSupabase
       .from("models")
       .select("id, email, user_id, first_name, last_name, username")
       .eq("id", id)
@@ -37,10 +40,7 @@ export const POST = withAuth<{ id: string }>(
     // Generate password
     const password = generatePassword();
 
-    // Create auth user using service role
-    const serviceSupabase = createServiceRoleClient();
-
-    // Check if user already exists in auth
+    // Check if user already exists in auth (auth admin API also needs the service role)
     let existingUser: User | null = null;
     if (model.user_id) {
       const { data: userData } = await serviceSupabase.auth.admin.getUserById(model.user_id);

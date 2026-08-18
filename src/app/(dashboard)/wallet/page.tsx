@@ -199,18 +199,25 @@ export default function WalletPage() {
 
       // Get coin balance based on actor type
       if (actor.type === "model" || actor.type === "admin") {
-        // Models are linked via user_id, not actor.id
-        const { data: model } = await supabase
-          .from("models")
-          .select("id, coin_balance, withheld_balance, country_code, zelle_info")
-          .eq("user_id", user.id)
-          .single() as { data: { id: string; coin_balance: number; withheld_balance: number; country_code: string | null; zelle_info: string | null } | null };
-        setCoinBalance(model?.coin_balance || 0);
-        setWithheldBalance(model?.withheld_balance || 0);
-        setModelCountryCode(model?.country_code || null);
-        if (model?.zelle_info) {
-          setZelleInfo(model.zelle_info);
-          setZelleInput(model.zelle_info);
+        // Models are linked via user_id, not actor.id. The id is a granted
+        // column and stays a direct read; balance/payout fields are not
+        // column-granted to client roles (Phase B2 lockdown) and come from
+        // the wallet API, which reads the caller's own row via service role.
+        const [{ data: model }, balanceRes] = await Promise.all([
+          supabase
+            .from("models")
+            .select("id")
+            .eq("user_id", user.id)
+            .single() as unknown as Promise<{ data: { id: string } | null }>,
+          fetch("/api/wallet/balance"),
+        ]);
+        const wallet = balanceRes.ok ? await balanceRes.json() : null;
+        setCoinBalance(wallet?.balance || 0);
+        setWithheldBalance(wallet?.withheldBalance || 0);
+        setModelCountryCode(wallet?.countryCode || null);
+        if (wallet?.zelleInfo) {
+          setZelleInfo(wallet.zelleInfo);
+          setZelleInput(wallet.zelleInfo);
         }
         if (model) {
           setModelId(model.id);
@@ -621,15 +628,13 @@ export default function WalletPage() {
       setShowWithdrawDialog(false);
       setWithdrawAmount("");
 
-      // Reload data
-      const { data: model } = await supabase
-        .from("models")
-        .select("coin_balance, withheld_balance")
-        .eq("id", modelId)
-        .single() as { data: { coin_balance: number; withheld_balance: number } | null };
-      if (model) {
-        setCoinBalance(model.coin_balance);
-        setWithheldBalance(model.withheld_balance || 0);
+      // Reload data via the wallet API (balance columns are not
+      // column-granted to client roles — Phase B2 lockdown)
+      const reloadRes = await fetch("/api/wallet/balance");
+      if (reloadRes.ok) {
+        const wallet = await reloadRes.json();
+        setCoinBalance(wallet.balance ?? 0);
+        setWithheldBalance(wallet.withheldBalance ?? 0);
       }
 
       const { data: withdrawalData } = await supabase

@@ -148,7 +148,8 @@ export async function PATCH(
         return NextResponse.json({ error: "Only models can sign contracts" }, { status: 403 });
       }
 
-      const { data: model } = await supabase
+      // Service client: first_name/last_name not column-granted to client roles (Phase B2 lockdown)
+      const { data: model } = await adminClient
         .from("models")
         .select("id, first_name, last_name")
         .eq("user_id", user.id)

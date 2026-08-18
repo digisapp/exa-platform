@@ -46,7 +46,9 @@ export default async function DashboardLayout({
 
   if (actor?.type === "model" || actor?.type === "admin") {
     // Models are linked via user_id, not actor.id
-    const { data } = await supabase
+    // Service client: first_name/coin_balance are not column-granted to
+    // client roles (Phase B2 lockdown); self-read, auth established above.
+    const { data } = await createServiceRoleClient()
       .from("models")
       .select("username, first_name, last_name, profile_photo_url, coin_balance")
       .eq("user_id", user.id)

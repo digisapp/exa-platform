@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { TVGrid } from "@/components/tv/tv-grid";
@@ -83,7 +84,8 @@ export default async function TVPage() {
     actorType = actor?.type || null;
 
     if (actor?.type === "model" || actor?.type === "admin") {
-      const { data: model } = (await supabase
+      // Service client: self-read includes coin_balance, not column-granted to client roles (Phase B2)
+      const { data: model } = (await createServiceRoleClient()
         .from("models")
         .select("id, username, profile_photo_url, coin_balance")
         .eq("user_id", user.id)

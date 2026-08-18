@@ -46,7 +46,8 @@ export default async function LiveAuctionPage({ params }: PageProps) {
     actorId = actor?.id || null;
 
     if (actor?.type === "model" || actor?.type === "admin") {
-      const { data } = await supabase
+      // Service client: self-read includes coin_balance, not column-granted to client roles (Phase B2)
+      const { data } = await adminClient
         .from("models")
         .select("coin_balance")
         .eq("user_id", user.id)

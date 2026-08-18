@@ -9,7 +9,8 @@ export const POST = withAuth<{ id: string }>(
 
     // Fetch just enough for the 404 check and the audit log — the actual
     // conversion is a single atomic RPC below.
-    const { data: model, error: modelError } = await (supabase
+    // Service client: email is not column-granted to client roles (Phase B2)
+    const { data: model, error: modelError } = await (createServiceRoleClient()
       .from("models") as any)
       .select("id, user_id, email")
       .eq("id", modelId)

@@ -84,7 +84,8 @@ export async function POST(request: NextRequest) {
     let coinBalance = 0;
 
     if (actor.type === "model") {
-      const { data: model } = await supabase
+      // Service client: coin_balance not column-granted to client roles (Phase B2 lockdown)
+      const { data: model } = await adminClient
         .from("models")
         .select("coin_balance")
         .eq("user_id", user.id)

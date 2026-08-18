@@ -59,7 +59,8 @@ export async function POST(request: NextRequest) {
     const { kind, contentType, verificationDraftId } = parsed.data;
 
     // Find the model owned by this user.
-    const { data: model } = await supabase
+    // Service client: identity_verified_at not column-granted to client roles (Phase B2 lockdown)
+    const { data: model } = await createServiceRoleClient()
       .from("models")
       .select("id, identity_verified_at")
       .eq("user_id", user.id)

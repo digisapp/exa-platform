@@ -369,7 +369,9 @@ export default async function ModelProfilePage({ params, searchParams }: Props) 
           .single() as { data: { coin_balance: number } | null };
         coinBalance = brandData?.coin_balance || 0;
       } else {
-        const { data: modelData } = await supabase
+        // Service client: coin_balance is not column-granted to client roles
+        // (Phase B2 lockdown); self-read for the logged-in header.
+        const { data: modelData } = await createServiceRoleClient()
           .from("models")
           .select("coin_balance")
           .eq("user_id", user.id)

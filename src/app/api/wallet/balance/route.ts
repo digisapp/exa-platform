@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
@@ -27,14 +28,22 @@ export async function GET(request: NextRequest) {
     }
 
     let balance = 0;
+    // Model-only payout fields (caller's own row) consumed by the wallet page
+    let modelExtras: { withheldBalance: number; zelleInfo: string | null; countryCode: string | null } | null = null;
 
     if (actor.type === "model") {
-      const { data } = await supabase
+      // Service client: coin_balance/withheld_balance/zelle_info/country_code not column-granted to client roles (Phase B2 lockdown)
+      const { data } = await createServiceRoleClient()
         .from("models")
-        .select("coin_balance")
+        .select("coin_balance, withheld_balance, zelle_info, country_code")
         .eq("user_id", user.id)
-        .single() as { data: { coin_balance: number } | null };
+        .single() as { data: { coin_balance: number; withheld_balance: number | null; zelle_info: string | null; country_code: string | null } | null };
       balance = data?.coin_balance ?? 0;
+      modelExtras = {
+        withheldBalance: data?.withheld_balance ?? 0,
+        zelleInfo: data?.zelle_info ?? null,
+        countryCode: data?.country_code ?? null,
+      };
     } else if (actor.type === "fan") {
       const { data } = await supabase
         .from("fans")
@@ -51,7 +60,7 @@ export async function GET(request: NextRequest) {
       balance = data?.coin_balance ?? 0;
     }
 
-    return NextResponse.json({ balance });
+    return NextResponse.json({ balance, ...(modelExtras ?? {}) });
   } catch (error) {
     logger.error("Balance fetch error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

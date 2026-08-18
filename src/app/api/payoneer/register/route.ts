@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import {
   getPayoneerClient,
@@ -37,7 +38,9 @@ export async function POST(request: NextRequest) {
     if (rateLimitResult) return rateLimitResult;
 
     // Get model
-    const { data: model } = (await supabase
+    // Service client: email/first_name/last_name/country_code not column-granted to client roles (Phase B2 lockdown)
+    const serviceClient = createServiceRoleClient();
+    const { data: model } = (await serviceClient
       .from("models")
       .select("id, email, first_name, last_name, country_code")
       .eq("user_id", user.id)
@@ -124,8 +127,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Update model's country code if not set
+    // Service client: country_code not column-granted to client roles (Phase B2 lockdown)
     if (!model.country_code) {
-      await supabase
+      await serviceClient
         .from("models")
         .update({ country_code: countryCode.toUpperCase() })
         .eq("id", model.id);

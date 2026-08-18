@@ -183,13 +183,12 @@ export default function CompCardPage() {
       if (!user) return;
       setUserEmail(user.email || "");
 
-      const { data: modelData, error: modelError } = await supabase
-        .from("models")
-        .select(
-          "id, first_name, last_name, username, height, bust, waist, hips, eye_color, hair_color, dress_size, shoe_size, instagram_name, city, state, profile_photo_url"
-        )
-        .eq("user_id", user.id)
-        .maybeSingle();
+      // Own-row fetch via API: first_name/last_name are not column-granted to
+      // client roles (Phase B2 lockdown); the route serves the caller's own
+      // full row via the service role.
+      const profileRes = await fetch("/api/model/profile");
+      const modelData = profileRes.ok ? (await profileRes.json()).model : null;
+      const modelError = modelData ? null : new Error("profile fetch failed");
 
       if (modelError) throw modelError;
       if (!modelData) return;

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import Image from "next/image";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
@@ -68,7 +69,8 @@ export default async function TravelPage() {
     actorType = actor?.type || null;
 
     if (actor?.type === "model" || actor?.type === "admin") {
-      const { data } = (await supabase
+      // Service client: self-read includes coin_balance, not column-granted to client roles (Phase B2)
+      const { data } = (await createServiceRoleClient()
         .from("models")
         .select(
           "id, username, profile_photo_url, coin_balance"

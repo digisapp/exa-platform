@@ -119,8 +119,9 @@ export default async function DashboardPage() {
     return <BrandDashboard actorId={actor.id} />;
   }
 
-  // For models, get model data
-  const { data: model } = await (supabase.from("models") as any)
+  // For models, get model data. adminClient: select("*") is impossible for
+  // client roles since the Phase B2 column grants; self-read, auth above.
+  const { data: model } = await (adminClient.from("models") as any)
     .select("*")
     .eq("user_id", user.id)
     .single();

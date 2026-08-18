@@ -118,7 +118,8 @@ export async function GET(
 
     // Get model info separately
     if (booking.model_id) {
-      const { data: model } = await supabase.from("models")
+      // Service client: email not column-granted to client roles (Phase B2 lockdown)
+      const { data: model } = await createServiceRoleClient().from("models")
         .select("id, username, profile_photo_url, city, state, email, user_id")
         .eq("id", booking.model_id)
         .maybeSingle();

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
@@ -31,7 +32,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify model belongs to user
-    const { data: model } = await supabase
+    // Service client: email/first_name/last_name not column-granted to client roles (Phase B2 lockdown)
+    const { data: model } = await createServiceRoleClient()
       .from("models")
       .select("id, email, first_name, last_name")
       .eq("id", modelId)

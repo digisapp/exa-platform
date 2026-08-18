@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { LiveWall } from "./LiveWall";
 import { enrichLiveWallAvatars } from "@/lib/live-wall-avatars";
 import { vipTierOf, type VipTierKey } from "@/lib/vip-config";
@@ -65,7 +66,8 @@ export async function LiveWallServer({ actorId, actorType, compact }: Props) {
   let displayName: string | null = null;
   if (user) {
     if (actorType === "model") {
-      const { data } = await supabase
+      // Service client: self-read includes coin_balance, not column-granted to client roles (Phase B2)
+      const { data } = await createServiceRoleClient()
         .from("models")
         .select("coin_balance")
         .eq("user_id", user.id)

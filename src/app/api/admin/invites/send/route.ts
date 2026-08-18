@@ -51,6 +51,10 @@ function getWarmupDay(startDate: Date): number {
 // Send invite emails to models
 export const POST = withAuth(
   async ({ request, supabase }) => {
+    // Service client for models reads: email/first_name/invite_* are not
+    // column-granted to client roles (Phase B2 lockdown); admin gate is
+    // enforced by withAuth above.
+    const adminDb = createServiceRoleClient();
     // Check warmup status
     const warmupStart = getWarmupStartDate();
     if (!warmupStart) {
@@ -68,7 +72,7 @@ export const POST = withAuth(
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const { count: sentTodayCount } = await supabase
+    const { count: sentTodayCount } = await adminDb
       .from("models")
       .select("id", { count: "exact", head: true })
       .not("invite_sent_at", "is", null)
@@ -106,7 +110,7 @@ export const POST = withAuth(
 
     if (sendAll) {
       // Get unclaimed models who haven't been invited yet
-      const { data: models, error } = await supabase
+      const { data: models, error } = await adminDb
         .from("models")
         .select("id, email, first_name")
         .is("user_id", null)
@@ -119,7 +123,7 @@ export const POST = withAuth(
     } else if (modelIds && Array.isArray(modelIds)) {
       // Get specific models (still respect daily limit)
       const limitedIds = modelIds.slice(0, batchLimit);
-      const { data: models, error } = await supabase
+      const { data: models, error } = await adminDb
         .from("models")
         .select("id, email, first_name")
         .in("id", limitedIds)
@@ -191,7 +195,7 @@ export const POST = withAuth(
     }
 
     // Check if there are more models to send
-    const { count: remainingPending } = await supabase
+    const { count: remainingPending } = await adminDb
       .from("models")
       .select("id", { count: "exact", head: true })
       .is("user_id", null)
@@ -218,8 +222,11 @@ export const POST = withAuth(
 // Get count of models pending invite + warmup status
 export const GET = withAuth(
   async ({ supabase }) => {
+    // Service client: invite_sent_at/email are not column-granted to client
+    // roles (Phase B2 lockdown); admin gate enforced by withAuth above.
+    const adminDb = createServiceRoleClient();
     // Count models that can be invited (excluding placeholder emails)
-    const { count: pendingCount } = await supabase
+    const { count: pendingCount } = await adminDb
       .from("models")
       .select("id", { count: "exact", head: true })
       .is("user_id", null)
@@ -228,14 +235,14 @@ export const GET = withAuth(
       .not("email", "ilike", "%roster-import.examodels.com%");
 
     // Count models that have been invited but not claimed
-    const { count: invitedCount } = await supabase
+    const { count: invitedCount } = await adminDb
       .from("models")
       .select("id", { count: "exact", head: true })
       .is("user_id", null)
       .not("invite_sent_at", "is", null);
 
     // Count models that have claimed
-    const { count: claimedCount } = await supabase
+    const { count: claimedCount } = await adminDb
       .from("models")
       .select("id", { count: "exact", head: true })
       .not("user_id", "is", null);
@@ -255,7 +262,7 @@ export const GET = withAuth(
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
-      const { count: sentTodayCount } = await supabase
+      const { count: sentTodayCount } = await adminDb
         .from("models")
         .select("id", { count: "exact", head: true })
         .not("invite_sent_at", "is", null)

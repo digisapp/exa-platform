@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
     const { gigId, note } = parsed.data;
 
     // Get the model's ID (models are linked by user_id, not actor)
-    const { data: model } = await supabase
+    // Service client: first_name/last_name/instagram_url not column-granted to client roles (Phase B2 lockdown)
+    const { data: model } = await createServiceRoleClient()
       .from("models")
       .select("id, is_approved, first_name, last_name, instagram_url")
       .eq("user_id", user.id)

@@ -11,7 +11,7 @@ const getAdminClient = () => createServiceRoleClient();
 const MAX_COMPUTED_SORT_MODELS = 10000; // Cap for computed field sorting
 
 export const GET = withAuth(
-  async ({ request, supabase }) => {
+  async ({ request }) => {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "50");
@@ -97,8 +97,9 @@ export const GET = withAuth(
       // For computed field sorting: fetch ALL matching model IDs (paged past the
       // PostgREST max_rows cap; the id tiebreak keeps paging deterministic when
       // bulk-imported models share a created_at)
+      // Service client: applyFilters references first_name/last_name/email/phone/admin_rating, not column-granted to client roles (Phase B2 lockdown)
       const { rows: allModels, count } = await fetchPaged<any>((from, to) => {
-        let q = supabase.from("models")
+        let q = adminClient.from("models")
           .select("id, user_id, created_at, claimed_at, last_active_at", { count: "exact" });
         q = applyFilters(q);
         return q.order("created_at", { ascending: false }).order("id", { ascending: true }).range(from, to);
@@ -282,7 +283,8 @@ export const GET = withAuth(
       }
 
       // Fetch full model data for paginated IDs
-      const { data: fullModels, error: fullError } = await supabase.from("models")
+      // Service client: first_name/last_name/email/phone/coin_balance/dob/admin_rating/invite_token not column-granted to client roles (Phase B2 lockdown)
+      const { data: fullModels, error: fullError } = await adminClient.from("models")
         .select(`
           id, username, first_name, last_name, email, phone, city, state, is_approved,
           profile_photo_url, profile_views, coin_balance, instagram_name,
@@ -334,7 +336,8 @@ export const GET = withAuth(
 
     } else {
       // For DB-sortable fields: use standard pagination
-      let query = supabase.from("models")
+      // Service client: first_name/last_name/email/phone/coin_balance/dob/admin_rating/invite_token not column-granted to client roles (Phase B2 lockdown)
+      let query = adminClient.from("models")
         .select(`
           id, username, first_name, last_name, email, phone, city, state, is_approved,
           profile_photo_url, profile_views, coin_balance, instagram_name,

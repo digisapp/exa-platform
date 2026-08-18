@@ -49,7 +49,8 @@ export async function POST(request: NextRequest) {
     }
     const { id_document_path, selfie_path } = parsed.data;
 
-    const { data: model } = await supabase
+    // Service client: identity_verified_at not column-granted to client roles (Phase B2 lockdown)
+    const { data: model } = await createServiceRoleClient()
       .from("models")
       .select("id, identity_verified_at")
       .eq("user_id", user.id)

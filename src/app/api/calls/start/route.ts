@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { assertNotSuspended } from "@/lib/auth/suspension";
 import { NextRequest, NextResponse } from "next/server";
 import { generateRoomName, generateToken } from "@/lib/livekit";
@@ -105,7 +106,8 @@ export async function POST(request: NextRequest) {
 
       if (recipientActorData) {
         // Try to get model info (might be a model or fan)
-        const { data: model } = await supabase
+        // Service client: first_name/email/phone/preferred_language not column-granted to client roles (Phase B2 lockdown)
+        const { data: model } = await (createServiceRoleClient() as any)
           .from("models")
           .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, phone, video_is_online, available_for_calls, preferred_language")
           .eq("user_id", recipientActorData.user_id)
@@ -128,7 +130,8 @@ export async function POST(request: NextRequest) {
       }
     } else if (recipientUsername) {
       // Use recipientUsername to find recipient
-      const { data: model } = await supabase
+      // Service client: first_name/email/phone/preferred_language not column-granted to client roles (Phase B2 lockdown)
+      const { data: model } = await (createServiceRoleClient() as any)
         .from("models")
         .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email, phone, video_is_online, available_for_calls, preferred_language")
         .eq("username", recipientUsername)

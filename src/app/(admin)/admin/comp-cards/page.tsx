@@ -56,16 +56,11 @@ export default function AdminCompCardsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { data, error } = await (supabase.from("models") as any)
-        .select("id, username, first_name, profile_photo_url, admin_rating, instagram_name")
-        .in("admin_rating", [4, 5])
-        .is("deleted_at", null)
-        .not("profile_photo_url", "is", null)
-        .not("username", "is", null)
-        .order("admin_rating", { ascending: false })
-        .order("username", { ascending: true });
-      if (error) throw error;
+      // Via admin API: names/admin_rating are not column-granted to client
+      // roles (Phase B2 lockdown).
+      const rosterRes = await fetch("/api/admin/models/roster?variant=comp-cards");
+      if (!rosterRes.ok) throw new Error("roster fetch failed");
+      const { models: data } = await rosterRes.json();
       setModels(data || []);
     } catch (err) {
       console.error("Error loading models:", err);

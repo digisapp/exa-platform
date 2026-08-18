@@ -127,32 +127,17 @@ export default function MswCastingPage() {
 
     if (!designer) { setNotParticipant(true); setLoading(false); return; }
 
-    const { data: eventBadge } = await supabase
-      .from("badges").select("id")
-      .eq("event_id", event.id).eq("badge_type", "event").eq("is_active", true)
-      .maybeSingle() as { data: { id: string } | null };
-
-    const modelIds: string[] = [];
-    if (eventBadge) {
-      const { data: holders } = await supabase
-        .from("model_badges").select("model_id").eq("badge_id", eventBadge.id) as
-        { data: { model_id: string }[] | null };
-      modelIds.push(...(holders || []).map((b) => b.model_id));
-    }
-
+    // Roster comes pre-sorted from the API: admin_rating is not column-granted
+    // to client roles (Phase B2 lockdown), and ratings never leave the server —
+    // the route sorts best-first and strips the rating before responding.
     const [modelsRes, picksRes] = await Promise.all([
-      modelIds.length
-        ? supabase.from("models")
-            .select("id, username, profile_photo_url, height, bust, waist, hips, dress_size, shoe_size, instagram_followers, city, state, admin_rating, reliability_score, focus_tags")
-            .in("id", modelIds)
-        : Promise.resolve({ data: [] }),
+      fetch(`/api/brands/msw-casting/models?event_id=${event.id}`).then((r) =>
+        r.ok ? r.json() : { models: [] }
+      ),
       fetch(`/api/brands/msw-casting/picks?event_id=${event.id}`).then((r) => r.json()),
     ]);
 
-    const sorted = ((modelsRes.data || []) as ModelRow[])
-      .sort((a, b) => (b.admin_rating ?? 0) - (a.admin_rating ?? 0) || (a.username ?? "").localeCompare(b.username ?? ""));
-
-    setModels(sorted);
+    setModels((modelsRes.models || []) as ModelRow[]);
     setPicks(new Set(picksRes.picks || []));
     setLoading(false);
   }

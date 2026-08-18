@@ -32,6 +32,27 @@ const modelPatchSchema = z.object({
   availability_status: z.string().max(50).nullable().optional(),
 });
 
+/**
+ * GET /api/admin/models/[id] — full model row for the admin detail page.
+ * Browser admin pages can no longer select("*") on models (Phase B2 column
+ * grants); the full row (names, contact, ratings) is admin-sanctioned and
+ * served via service role behind the admin gate.
+ */
+export const GET = withAuth<{ id: string }>(
+  async ({ params }) => {
+    const { data: model } = await (createServiceRoleClient() as any)
+      .from("models")
+      .select("*")
+      .eq("id", params.id)
+      .maybeSingle();
+    if (!model) {
+      return NextResponse.json({ error: "Model not found" }, { status: 404 });
+    }
+    return NextResponse.json({ model });
+  },
+  { requireType: "admin", rateLimit: "general" }
+);
+
 export const PATCH = withAuth<{ id: string }>(
   async ({ request, params, user, supabase }) => {
     const { id } = params;
