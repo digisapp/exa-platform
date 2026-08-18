@@ -40,6 +40,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // Unpublished (draft) gigs void their client link — mirror the /casting
+  // page gate so hearts can't be written through a dead link.
+  const { data: gig } = await service
+    .from("gigs")
+    .select("status")
+    .eq("id", link.gig_id)
+    .single();
+  if (!gig || gig.status === "draft") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const { data: application } = await service
     .from("gig_applications")
     .select("id, gig_id")

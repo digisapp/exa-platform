@@ -42,12 +42,15 @@ export default async function CastingPage({ params }: Props) {
     .single();
   if (!link) notFound();
 
+  // Unpublishing a gig (status → draft) voids its client link (owner call,
+  // 2026-08-18). Closed gigs keep theirs — clients review selects after
+  // applications close.
   const { data: gig } = await service
     .from("gigs")
-    .select("id")
+    .select("id, status")
     .eq("id", link.gig_id)
     .single();
-  if (!gig) notFound();
+  if (!gig || gig.status === "draft") notFound();
 
   // Privacy: username + photo + stats + social handles only — never real names
   // or ratings. Handles are deliberately included here (owner call): the whole
