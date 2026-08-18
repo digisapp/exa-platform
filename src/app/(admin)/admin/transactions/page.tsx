@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +51,9 @@ export default async function TransactionsPage() {
   }
 
   // Fetch all data in parallel using RPCs + balance queries
+  // Service client: admin aggregates read columns not granted to client
+  // roles (Phase B2 lockdown); admin gate already enforced above.
+  const adminDb = createServiceRoleClient();
   const [
     { data: statsData },
     { data: topPurchaserData },
@@ -60,21 +64,21 @@ export default async function TransactionsPage() {
     { data: recentPurchasesRaw },
   ] = await Promise.all([
     // Platform-wide stats via RPC (replaces 200-row fetch + JS filter/reduce)
-    (supabase.rpc as any)("get_admin_transaction_stats") as Promise<{ data: { stat_name: string; stat_value: number }[] | null }>,
+    (adminDb.rpc as any)("get_admin_transaction_stats") as Promise<{ data: { stat_name: string; stat_value: number }[] | null }>,
     // Top purchasers via RPC (replaces unlimited purchase fetch + JS aggregation)
-    (supabase.rpc as any)("get_top_purchasers", { p_limit: 20 }) as Promise<{ data: { actor_id: string; total_purchased: number; purchase_count: number; total_usd_cents: number }[] | null }>,
+    (adminDb.rpc as any)("get_top_purchasers", { p_limit: 20 }) as Promise<{ data: { actor_id: string; total_purchased: number; purchase_count: number; total_usd_cents: number }[] | null }>,
     // Exact revenue from Stripe amount_paid stored in purchase metadata
-    (supabase.rpc as any)("get_purchase_revenue") as Promise<{ data: { revenue_cents: number; missing_amount_count: number }[] | null }>,
+    (adminDb.rpc as any)("get_purchase_revenue") as Promise<{ data: { revenue_cents: number; missing_amount_count: number }[] | null }>,
     // Coin balances (these are already lightweight - just sums)
-    supabase.from("models").select("coin_balance") as unknown as Promise<{ data: { coin_balance: number }[] | null }>,
-    supabase.from("fans").select("coin_balance") as unknown as Promise<{ data: { coin_balance: number }[] | null }>,
+    adminDb.from("models").select("coin_balance") as unknown as Promise<{ data: { coin_balance: number }[] | null }>,
+    adminDb.from("fans").select("coin_balance") as unknown as Promise<{ data: { coin_balance: number }[] | null }>,
     // Initial 20 transactions for the All Transactions tab (with count for total)
-    (supabase.from("coin_transactions") as any)
+    (adminDb.from("coin_transactions") as any)
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
       .limit(20) as Promise<{ data: any[] | null; count: number | null }>,
     // Recent purchases for the Purchases tab
-    (supabase.from("coin_transactions") as any)
+    (adminDb.from("coin_transactions") as any)
       .select("actor_id, amount, created_at, metadata")
       .eq("action", "purchase")
       .order("created_at", { ascending: false })
@@ -114,10 +118,10 @@ export default async function TransactionsPage() {
 
     const [{ data: fans }, { data: models }] = await Promise.all([
       fanUserIds.length > 0
-        ? supabase.from("fans").select("user_id, email, display_name").in("user_id", fanUserIds) as unknown as Promise<{ data: { user_id: string; email: string; display_name: string | null }[] | null }>
+        ? adminDb.from("fans").select("user_id, email, display_name").in("user_id", fanUserIds) as unknown as Promise<{ data: { user_id: string; email: string; display_name: string | null }[] | null }>
         : Promise.resolve({ data: [] as any[] }),
       modelUserIds.length > 0
-        ? supabase.from("models").select("id, user_id, email, first_name, last_name").in("user_id", modelUserIds) as unknown as Promise<{ data: { id: string; user_id: string; email: string; first_name: string | null; last_name: string | null }[] | null }>
+        ? adminDb.from("models").select("id, user_id, email, first_name, last_name").in("user_id", modelUserIds) as unknown as Promise<{ data: { id: string; user_id: string; email: string; first_name: string | null; last_name: string | null }[] | null }>
         : Promise.resolve({ data: [] as any[] }),
     ]);
 
@@ -171,10 +175,10 @@ export default async function TransactionsPage() {
 
     const [{ data: pFans }, { data: pModels }] = await Promise.all([
       pFanUserIds.length > 0
-        ? supabase.from("fans").select("user_id, email, display_name").in("user_id", pFanUserIds) as unknown as Promise<{ data: any[] | null }>
+        ? adminDb.from("fans").select("user_id, email, display_name").in("user_id", pFanUserIds) as unknown as Promise<{ data: any[] | null }>
         : Promise.resolve({ data: [] as any[] }),
       pModelUserIds.length > 0
-        ? supabase.from("models").select("user_id, email, first_name, last_name").in("user_id", pModelUserIds) as unknown as Promise<{ data: any[] | null }>
+        ? adminDb.from("models").select("user_id, email, first_name, last_name").in("user_id", pModelUserIds) as unknown as Promise<{ data: any[] | null }>
         : Promise.resolve({ data: [] as any[] }),
     ]);
 
@@ -222,10 +226,10 @@ export default async function TransactionsPage() {
 
     const [{ data: tFans }, { data: tModels }] = await Promise.all([
       tFanUserIds.length > 0
-        ? supabase.from("fans").select("user_id, email, display_name").in("user_id", tFanUserIds) as unknown as Promise<{ data: any[] | null }>
+        ? adminDb.from("fans").select("user_id, email, display_name").in("user_id", tFanUserIds) as unknown as Promise<{ data: any[] | null }>
         : Promise.resolve({ data: [] as any[] }),
       tModelUserIds.length > 0
-        ? supabase.from("models").select("user_id, email, first_name, last_name, username").in("user_id", tModelUserIds) as unknown as Promise<{ data: any[] | null }>
+        ? adminDb.from("models").select("user_id, email, first_name, last_name, username").in("user_id", tModelUserIds) as unknown as Promise<{ data: any[] | null }>
         : Promise.resolve({ data: [] as any[] }),
     ]);
 

@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { Navbar } from "@/components/layout/navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { TopModelsGame } from "@/components/games/TopModelsGame";
@@ -43,7 +44,8 @@ export default async function TopModelsPage() {
     let username = "";
 
     if (actor?.type === "model") {
-      const { data: model } = await supabase
+      // Service client: self-read includes coin_balance, not column-granted to client roles (Phase B2)
+      const { data: model } = await createServiceRoleClient()
         .from("models")
         .select("coin_balance, profile_photo_url, username")
         .eq("user_id", user.id)

@@ -1127,9 +1127,10 @@ export default function AdminShowsPage() {
 
   async function loadModels() {
     setLoadingModels(true);
-    const { data } = await supabase.from("models")
-      .select("id, username, first_name, last_name, profile_photo_url, height, bust, waist, hips, dress_size, shoe_size, instagram_followers, admin_rating, reliability_score, city, state, focus_tags")
-      .eq("is_approved", true).not("user_id", "is", null).order("first_name", { ascending: true });
+    // Via admin API: names/admin_rating are not column-granted to client
+    // roles (Phase B2 lockdown).
+    const rosterRes = await fetch("/api/admin/models/roster?variant=shows");
+    const { models: data } = rosterRes.ok ? await rosterRes.json() : { models: [] };
     setAllModels((data || []) as ModelInfo[]);
     setLoadingModels(false);
   }

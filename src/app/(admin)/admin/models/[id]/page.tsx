@@ -241,12 +241,11 @@ export default function AdminModelDetailPage() {
     let isMounted = true;
 
     async function loadModelDetails() {
-      // Fetch model details
-      const { data: modelData, error: modelError } = await (supabase
-        .from("models") as any)
-        .select("*")
-        .eq("id", modelId)
-        .single();
+      // Fetch model details via admin API — browser select("*") on models is
+      // impossible under the Phase B2 column grants.
+      const modelRes = await fetch(`/api/admin/models/${modelId}`);
+      const modelData = modelRes.ok ? (await modelRes.json()).model : null;
+      const modelError = modelData ? null : new Error("not found");
 
       if (!isMounted) return;
 
@@ -599,12 +598,9 @@ export default function AdminModelDetailPage() {
         throw new Error(err.error || "Failed to update");
       }
 
-      // Refetch model
-      const { data: updated } = await (supabase
-        .from("models") as any)
-        .select("*")
-        .eq("id", model.id)
-        .single();
+      // Refetch model via admin API (Phase B2 column grants)
+      const refetchRes = await fetch(`/api/admin/models/${model.id}`);
+      const updated = refetchRes.ok ? (await refetchRes.json()).model : null;
       if (updated) setModel(updated);
 
       toast.success("Model updated");

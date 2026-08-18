@@ -69,7 +69,8 @@ export default async function HomePage() {
     if (actor) {
       let coinBalance = 0;
       if (actor.type === "model") {
-        const { data } = await supabase.from("models").select("coin_balance").eq("user_id", user.id).maybeSingle();
+        // Service client: self-read includes coin_balance, not column-granted to client roles (Phase B2)
+        const { data } = await createServiceRoleClient().from("models").select("coin_balance").eq("user_id", user.id).maybeSingle();
         coinBalance = data?.coin_balance ?? 0;
       } else if (actor.type === "fan") {
         const { data } = await supabase.from("fans").select("coin_balance").eq("user_id", user.id).maybeSingle();

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import twilio from "twilio";
 import { logger } from "@/lib/logger";
@@ -76,10 +77,12 @@ export async function POST(request: NextRequest) {
       const idsToCheck = (modelIds || []).filter(Boolean);
       const phonesToCheck = phoneNumbers.filter(Boolean);
 
+      // Service client: phone/sms_opt_out not column-granted to client roles (Phase B2 lockdown)
+      const serviceClient = createServiceRoleClient();
       const checks: Promise<any>[] = [];
       if (idsToCheck.length) {
         checks.push(
-          (supabase.from("models") as any)
+          (serviceClient.from("models") as any)
             .select("id, phone")
             .in("id", idsToCheck)
             .eq("sms_opt_out", true)
@@ -87,7 +90,7 @@ export async function POST(request: NextRequest) {
       }
       if (phonesToCheck.length) {
         checks.push(
-          (supabase.from("models") as any)
+          (serviceClient.from("models") as any)
             .select("id, phone")
             .in("phone", phonesToCheck)
             .eq("sms_opt_out", true)

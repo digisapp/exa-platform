@@ -93,10 +93,10 @@ export function ContentAssignDialog({
 
         if (actors && actors.length > 0) {
           const userIds = actors.map((a: any) => a.user_id).filter(Boolean);
-          const { data: models } = await supabase
-            .from("models")
-            .select("user_id, first_name, last_name, username, profile_photo_url")
-            .in("user_id", userIds);
+          // Via admin API: names are not column-granted to client roles
+          // (Phase B2 lockdown).
+          const briefRes = await fetch(`/api/admin/models/brief?by=user_id&ids=${userIds.slice(0, 200).join(",")}`);
+          const { models } = briefRes.ok ? await briefRes.json() : { models: [] };
 
           const modelMap: Record<string, any> = {};
           (models || []).forEach((m: any) => { modelMap[m.user_id] = m; });

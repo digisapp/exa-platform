@@ -136,9 +136,9 @@ export default function AdminFlyersPage() {
 
     const modelIds = [...new Set(flyerList.map((f) => f.model_id))];
     if (modelIds.length > 0) {
-      const { data: modelData } = await (supabase.from("models") as any)
-        .select("id, first_name, last_name, username, profile_photo_url, instagram_name")
-        .in("id", modelIds);
+      // Via admin API: names are not column-granted to client roles (Phase B2)
+      const briefRes = await fetch(`/api/admin/models/brief?by=id&ids=${modelIds.slice(0, 200).join(",")}`);
+      const { models: modelData } = briefRes.ok ? await briefRes.json() : { models: [] };
       const map = new Map<string, ModelInfo>();
       (modelData || []).forEach((m: ModelInfo) => map.set(m.id, m));
       setModels(map);
@@ -166,10 +166,10 @@ export default function AdminFlyersPage() {
         .eq("badge_id", badge.id)
         .limit(1);
       if (sampleBadge && sampleBadge.length > 0) {
-        const { data: sm } = await (supabase.from("models") as any)
-          .select("*")
-          .eq("id", sampleBadge[0].model_id)
-          .single();
+        // Via admin API — browser select("*") on models is impossible under
+        // the Phase B2 column grants.
+        const smRes = await fetch(`/api/admin/models/${sampleBadge[0].model_id}`);
+        const sm = smRes.ok ? (await smRes.json()).model : null;
         setSampleModel(sm || null);
       }
     } else {

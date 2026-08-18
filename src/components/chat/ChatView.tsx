@@ -602,12 +602,10 @@ export function ChatView({
           .single();
         balance = brand?.coin_balance ?? 0;
       } else if (actor.type === "model") {
-        const { data: model } = await supabase
-          .from("models")
-          .select("coin_balance")
-          .eq("id", actor.id)
-          .single();
-        balance = (model as any)?.coin_balance ?? 0;
+        // Via API: models.coin_balance is not column-granted to client roles
+        // (Phase B2 lockdown); the route reads the caller's own row.
+        const res = await fetch("/api/wallet/balance");
+        balance = res.ok ? (await res.json()).balance ?? 0 : 0;
       }
 
       setLocalCoinBalance(balance);

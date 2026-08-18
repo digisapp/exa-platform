@@ -61,15 +61,12 @@ export function ModelOutreachPanel() {
 
   async function loadModels() {
     setLoading(true);
-    const { data, error } = await (supabase as any)
-      .from("models")
-      .select(
-        "id, username, first_name, last_name, email, instagram_name, instagram_followers, profile_photo_url, created_at, user_id, claimed_at, invite_sent_at"
-      )
-      .is("user_id", null)
-      .is("claimed_at", null)
-      .not("email", "is", null)
-      .order("created_at", { ascending: false });
+    // Via admin API: email/names/invite_sent_at are not column-granted to
+    // client roles (Phase B2 lockdown).
+    const outreachRes = await fetch("/api/admin/crm/outreach-models");
+    const { data, error } = outreachRes.ok
+      ? { data: (await outreachRes.json()).models, error: null }
+      : { data: null, error: new Error("fetch failed") };
 
     if (error) {
       toast.error("Failed to load unclaimed models");

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 
@@ -19,7 +20,8 @@ export async function GET(request: NextRequest) {
     if (rateLimitResponse) return rateLimitResponse;
 
     // Get model profile
-    const { data: model, error: modelError } = await supabase
+    // Service client: coin_balance/first_name/last_name not column-granted to client roles (Phase B2 lockdown)
+    const { data: model, error: modelError } = await createServiceRoleClient()
       .from("models")
       .select("id, coin_balance, is_approved, first_name, last_name, username")
       .eq("user_id", user.id)

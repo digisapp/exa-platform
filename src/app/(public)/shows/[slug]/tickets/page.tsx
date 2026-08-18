@@ -1,6 +1,7 @@
 export const revalidate = 60;
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -137,7 +138,8 @@ export default async function TicketsPage({ params, searchParams }: Props) {
     actorType = actor?.type || null;
 
     if (actor?.type === "model" || actor?.type === "admin") {
-      const { data: model } = await supabase
+      // Service client: self-read includes coin_balance, not column-granted to client roles (Phase B2)
+      const { data: model } = await createServiceRoleClient()
         .from("models")
         .select("id, username, profile_photo_url, coin_balance")
         .eq("user_id", user.id)

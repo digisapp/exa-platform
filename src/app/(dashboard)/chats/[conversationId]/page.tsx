@@ -41,7 +41,9 @@ export default async function ChatPage({ params }: PageProps) {
 
   if (actor.type === "model" || actor.type === "admin") {
     // Models are linked via user_id, not actor.id
-    const { data } = (await supabase
+    // adminClient: select("*") is impossible for client roles since the
+    // Phase B2 column grants; self-read, auth established above.
+    const { data } = (await adminClient
       .from("models")
       .select("*")
       .eq("user_id", user.id)

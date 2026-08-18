@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
@@ -90,19 +91,22 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  // Get stats
-  const { count: totalModels } = await (supabase.from("models") as any).select("*", { count: "exact", head: true }).not("user_id", "is", null).is("deleted_at", null);
-  const { count: totalFans } = await (supabase.from("fans") as any).select("*", { count: "exact", head: true }).is("deleted_at", null);
-  const { count: totalTransactions } = await supabase.from("coin_transactions").select("*", { count: "exact", head: true });
-  const { count: pendingModelApps } = await (supabase.from("model_applications") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
-  const { count: pendingBrands } = await (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("is_verified", false);
-  const { count: pendingCalls } = await (supabase.from("call_requests") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
-  const { count: pendingVerifications } = await (supabase.from("model_verifications") as any).select("*", { count: "exact", head: true }).eq("status", "pending_review");
+  // Get stats — service client: admin dashboards aggregate over columns that
+  // are not column-granted to client roles (Phase B2 lockdown); the admin
+  // gate above already ran.
+  const adminDb = createServiceRoleClient();
+  const { count: totalModels } = await (adminDb.from("models") as any).select("*", { count: "exact", head: true }).not("user_id", "is", null).is("deleted_at", null);
+  const { count: totalFans } = await (adminDb.from("fans") as any).select("*", { count: "exact", head: true }).is("deleted_at", null);
+  const { count: totalTransactions } = await adminDb.from("coin_transactions").select("*", { count: "exact", head: true });
+  const { count: pendingModelApps } = await (adminDb.from("model_applications") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
+  const { count: pendingBrands } = await (adminDb.from("brands") as any).select("*", { count: "exact", head: true }).eq("is_verified", false);
+  const { count: pendingCalls } = await (adminDb.from("call_requests") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
+  const { count: pendingVerifications } = await (adminDb.from("model_verifications") as any).select("*", { count: "exact", head: true }).eq("status", "pending_review");
   // booking_inquiries is newer than the generated DB types
-  const { count: newBookingInquiries } = await (supabase as any).from("booking_inquiries").select("*", { count: "exact", head: true }).eq("status", "new");
+  const { count: newBookingInquiries } = await (adminDb as any).from("booking_inquiries").select("*", { count: "exact", head: true }).eq("status", "new");
 
-  const { data: modelBalances } = await (supabase.from("models") as any).select("coin_balance").is("deleted_at", null) as { data: { coin_balance: number }[] | null };
-  const { data: fanBalances } = await (supabase.from("fans") as any).select("coin_balance").is("deleted_at", null) as { data: { coin_balance: number }[] | null };
+  const { data: modelBalances } = await (adminDb.from("models") as any).select("coin_balance").is("deleted_at", null) as { data: { coin_balance: number }[] | null };
+  const { data: fanBalances } = await (adminDb.from("fans") as any).select("coin_balance").is("deleted_at", null) as { data: { coin_balance: number }[] | null };
 
   const totalCoins = (modelBalances?.reduce((sum, m) => sum + (m.coin_balance || 0), 0) || 0) +
                      (fanBalances?.reduce((sum, f) => sum + (f.coin_balance || 0), 0) || 0);

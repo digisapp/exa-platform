@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { Navbar } from "@/components/layout/navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,9 @@ export default async function SwimCrownEntrySuccessPage() {
     let avatarUrl = "";
 
     if (actor?.type === "model") {
-      const { data: model } = await supabase
+      // Service client: self-read includes first/last name (shown only to the model herself),
+      // not column-granted to client roles (Phase B2)
+      const { data: model } = await createServiceRoleClient()
         .from("models")
         .select("profile_photo_url, first_name, last_name, username")
         .eq("user_id", user.id)

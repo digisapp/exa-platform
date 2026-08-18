@@ -95,49 +95,17 @@ export default function AdminRatePage() {
       // Only models that can appear in public feeds are worth rating: must have
       // a profile photo and not be soft-deleted. Same base filters drive the
       // deck and both counters so the progress bar matches the active pool.
-      const applyPoolFilters = (q: any) => {
-        q = q.is("deleted_at", null).not("profile_photo_url", "is", null);
-        if (statusFilter === "visible_pending") {
-          q = q.eq("is_approved", true).not("invite_token", "is", null).is("user_id", null);
-        } else if (statusFilter === "visible") {
-          q = q.eq("is_approved", true);
-        } else if (statusFilter === "all_pending") {
-          q = q.not("invite_token", "is", null).is("user_id", null);
-        }
-        if (stateFilter !== "all") {
-          q = q.eq("state", stateFilter);
-        }
-        return q;
-      };
-
-      const query = applyPoolFilters(
-        supabase
-          .from("models")
-          .select("*")
-          .is("admin_rating", null)
-          .order("instagram_followers", { ascending: false, nullsFirst: false })
-      ).limit(100);
-
-      const { data, error } = await query;
-      if (error) throw error;
+      // Via admin API: the deck needs full rows and admin_rating filters,
+      // neither possible for client roles under the Phase B2 column grants.
+      // Pool filters apply server-side from the same params.
+      const queueRes = await fetch(
+        `/api/admin/rate/queue?status=${statusFilter}&state=${stateFilter}`
+      );
+      if (!queueRes.ok) throw new Error("queue fetch failed");
+      const { models: data, unratedCount, ratedCount } = await queueRes.json();
 
       setModels(data || []);
       setCurrentIndex(0);
-
-      // Get total counts
-      const { count: unratedCount } = await applyPoolFilters(
-        supabase
-          .from("models")
-          .select("*", { count: "exact", head: true })
-          .is("admin_rating", null)
-      );
-
-      const { count: ratedCount } = await applyPoolFilters(
-        supabase
-          .from("models")
-          .select("*", { count: "exact", head: true })
-          .not("admin_rating", "is", null)
-      );
 
       setTotalUnrated(unratedCount || 0);
       setTotalRated(ratedCount || 0);

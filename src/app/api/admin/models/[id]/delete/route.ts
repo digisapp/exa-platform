@@ -7,8 +7,11 @@ export const DELETE = withAuth<{ id: string }>(
   async ({ params, user, supabase }) => {
     const { id: modelId } = params;
 
+    // Service client: email/first_name/last_name not column-granted to client roles (Phase B2 lockdown)
+    const serviceClient = createServiceRoleClient();
+
     // Get the model's data first (for audit logging)
-    const { data: model, error: modelError } = await supabase
+    const { data: model, error: modelError } = await serviceClient
       .from("models")
       .select("id, user_id, email, username, first_name, last_name")
       .eq("id", modelId)
@@ -23,8 +26,6 @@ export const DELETE = withAuth<{ id: string }>(
     // migration 20260612000004, so a hard delete throws for any model who ever
     // transacted — exactly the accounts admins act on. Soft-delete also keeps the
     // account restorable via /api/admin/models/[id]/restore (the inverse of this).
-    const serviceClient = createServiceRoleClient();
-
     const { error: deleteError } = await (serviceClient.from("models") as any)
       .update({
         deleted_at: new Date().toISOString(),

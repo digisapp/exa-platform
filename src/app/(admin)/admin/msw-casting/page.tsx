@@ -95,9 +95,9 @@ export default function AdminMswCastingPage() {
       setConfirmedCount(modelIds.length);
 
       if (modelIds.length > 0) {
-        const { data: mdls } = await supabase
-          .from("models").select("id, first_name, last_name, username, profile_photo_url, height")
-          .in("id", modelIds);
+        // Via admin API: names are not column-granted to client roles (Phase B2)
+        const briefRes = await fetch(`/api/admin/models/brief?by=id&ids=${modelIds.slice(0, 200).join(",")}`);
+        const { models: mdls } = briefRes.ok ? await briefRes.json() : { models: [] };
         setModelMap(new Map(((mdls || []) as ModelRow[]).map((m) => [m.id, m])));
       }
     }

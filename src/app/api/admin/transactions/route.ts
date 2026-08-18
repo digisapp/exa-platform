@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth/with-auth";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 
 interface TransactionRow {
   id: string;
@@ -20,6 +21,9 @@ export const GET = withAuth(
   const cursorId = searchParams.get("cursorId") || null; // tie-breaker for equal timestamps
   const q = (searchParams.get("q") || "").trim();
 
+  // Service client: models email/first_name/last_name not column-granted to client roles (Phase B2 lockdown)
+  const serviceClient = createServiceRoleClient();
+
   // User search: resolve email/name/username matches to actor ids first
   let searchActorIds: string[] | null = null;
   if (q) {
@@ -31,7 +35,7 @@ export const GET = withAuth(
         .select("user_id")
         .or(`email.ilike.${pattern},display_name.ilike.${pattern}`)
         .limit(100) as unknown as Promise<{ data: { user_id: string }[] | null }>,
-      supabase
+      serviceClient
         .from("models")
         .select("user_id")
         .or(`email.ilike.${pattern},username.ilike.${pattern},first_name.ilike.${pattern},last_name.ilike.${pattern}`)
@@ -133,7 +137,7 @@ export const GET = withAuth(
       .filter((a) => a.type === "model" || a.type === "admin")
       .map((a) => a.user_id) || [];
   const { data: models } = modelUserIds.length > 0
-    ? ((await supabase
+    ? ((await serviceClient
         .from("models")
         .select("user_id, email, first_name, last_name, username")
         .in("user_id", modelUserIds)) as {

@@ -187,9 +187,10 @@ export default function FanDetailSheet({ fan, open, onClose }: FanDetailSheetPro
 
         if (modelActors?.length) {
           const userIds = modelActors.map((a: any) => a.user_id).filter(Boolean);
-          const { data: models } = await (supabase.from("models") as any)
-            .select("user_id, first_name, last_name, username")
-            .in("user_id", userIds);
+          // Via admin API: names are not column-granted to client roles
+          // (Phase B2 lockdown).
+          const briefRes = await fetch(`/api/admin/models/brief?by=user_id&ids=${userIds.slice(0, 200).join(",")}`);
+          const { models } = briefRes.ok ? await briefRes.json() : { models: [] };
 
           const userToModel = new Map<string, { name: string; username: string }>();
           models?.forEach((m: any) => {
@@ -207,9 +208,8 @@ export default function FanDetailSheet({ fan, open, onClose }: FanDetailSheetPro
       // Look up models directly by model ID (for ppv_unlock)
       const modelIdToModel = new Map<string, { name: string; username: string }>();
       if (modelIdSet.size > 0) {
-        const { data: models } = await (supabase.from("models") as any)
-          .select("id, first_name, last_name, username")
-          .in("id", Array.from(modelIdSet));
+        const briefByIdRes = await fetch(`/api/admin/models/brief?by=id&ids=${Array.from(modelIdSet).slice(0, 200).join(",")}`);
+        const { models } = briefByIdRes.ok ? await briefByIdRes.json() : { models: [] };
 
         models?.forEach((m: any) => {
           const name = [m.first_name, m.last_name].filter(Boolean).join(" ") || m.username;

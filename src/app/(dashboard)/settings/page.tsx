@@ -366,12 +366,14 @@ export default function ProfilePage() {
       setActor(actorData);
 
       if (actorData.type === "model" || actorData.type === "admin") {
-        // Models are linked via user_id, not actor.id
-        const { data: modelData } = await supabase
-          .from("models")
-          .select("*")
-          .eq("user_id", user.id)
-          .single() as { data: Model | null };
+        // Models are linked via user_id, not actor.id. Own-row fetch goes
+        // through the API: browser select("*") on models is impossible since
+        // the Phase B2 column grants (PII columns are ungranted to client
+        // roles); the route serves the caller's own full row via service role.
+        const profileRes = await fetch("/api/model/profile");
+        const modelData: Model | null = profileRes.ok
+          ? (await profileRes.json()).model
+          : null;
 
         if (modelData) {
           setModel(modelData);

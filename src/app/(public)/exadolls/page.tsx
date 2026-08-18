@@ -18,9 +18,11 @@ export const metadata: Metadata = {
 export const revalidate = 120;
 
 export default async function ExaDollsGalleryPage() {
-  const supabase = createServiceRoleClient();
+  // Service client: exa_doll columns are not column-granted to client roles (Phase B2);
+  // this ISR catalog read was already service-backed — alias renamed for the grants checker.
+  const service = createServiceRoleClient();
 
-  const { data: models } = await supabase
+  const { data: models } = await service
     .from("models")
     .select(
       "id, username, exa_doll_image_url, exa_doll_generated_at"

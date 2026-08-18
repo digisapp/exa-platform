@@ -143,7 +143,8 @@ export async function POST(request: NextRequest) {
           .single() as { data: { user_id: string } | null };
 
         if (senderActor) {
-          const { data: model } = await supabase
+          // Service client: first_name/last_name not column-granted to client roles (Phase B2 lockdown)
+          const { data: model } = await adminDb
             .from("models")
             .select("first_name, last_name")
             .eq("user_id", senderActor.user_id)
