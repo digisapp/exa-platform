@@ -2,7 +2,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart } from "lucide-react";
+import { Heart, Clock } from "lucide-react";
 import type { Metadata } from "next";
 import { getHeroPortrait } from "@/lib/hero-portrait";
 import CastingGrid, { type CastingCard } from "@/components/casting/CastingGrid";
@@ -29,6 +29,28 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: "Available Models | EXA", robots: { index: false, follow: false } };
 }
 
+function CastingHeader() {
+  return (
+    <header className="border-b border-white/[0.06]">
+      <div className="container px-4 md:px-8 py-4 flex items-center justify-between">
+        <Link href="/" className="flex items-center shrink-0">
+          <Image
+            src="/exa-logo-white.png"
+            alt="EXA Models"
+            width={80}
+            height={32}
+            className="h-8 w-auto"
+            priority
+          />
+        </Link>
+        <span className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">
+          Model Selects
+        </span>
+      </div>
+    </header>
+  );
+}
+
 export default async function CastingPage({ params }: Props) {
   const { token } = await params;
   if (!UUID_RE.test(token)) notFound();
@@ -42,15 +64,36 @@ export default async function CastingPage({ params }: Props) {
     .single();
   if (!link) notFound();
 
-  // Unpublishing a gig (status → draft) voids its client link (owner call,
+  // Unpublishing a gig (status → draft) pauses its client link (owner call,
   // 2026-08-18). Closed gigs keep theirs — clients review selects after
-  // applications close.
+  // applications close. A paused link renders a branded holding page, never a
+  // raw 404 (owner call, 2026-08-18): the client was personally sent this URL,
+  // so it must read as intentional, not broken. Unknown tokens still hard-404.
   const { data: gig } = await service
     .from("gigs")
     .select("id, status")
     .eq("id", link.gig_id)
     .single();
-  if (!gig || gig.status === "draft") notFound();
+  if (!gig) notFound();
+  if (gig.status === "draft") {
+    return (
+      <div className="min-h-dvh bg-background">
+        <CastingHeader />
+        <main className="container px-4 md:px-8 py-24 max-w-6xl text-center">
+          <div className="mx-auto w-14 h-14 rounded-full border border-pink-500/25 bg-pink-500/[0.06] flex items-center justify-center mb-6">
+            <Clock className="h-6 w-6 text-pink-400" />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">
+            This selection is being updated
+          </h1>
+          <p className="text-sm text-white/50 max-w-md mx-auto">
+            We&apos;re refreshing the model list for this project. Check back
+            shortly — this link will start working again automatically.
+          </p>
+        </main>
+      </div>
+    );
+  }
 
   // Privacy: username + photo + stats + social handles only — never real names
   // or ratings. Handles are deliberately included here (owner call): the whole
@@ -144,23 +187,7 @@ export default async function CastingPage({ params }: Props) {
 
   return (
     <div className="min-h-dvh bg-background">
-      <header className="border-b border-white/[0.06]">
-        <div className="container px-4 md:px-8 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center shrink-0">
-            <Image
-              src="/exa-logo-white.png"
-              alt="EXA Models"
-              width={80}
-              height={32}
-              className="h-8 w-auto"
-              priority
-            />
-          </Link>
-          <span className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">
-            Model Selects
-          </span>
-        </div>
-      </header>
+      <CastingHeader />
 
       <main className="container px-4 md:px-8 py-8 max-w-6xl">
         {/* Deliberately no gig title, type, location, or dates — the client
